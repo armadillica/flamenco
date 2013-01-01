@@ -8,8 +8,12 @@ Connect to it with:
 from gevent.server import StreamServer
 from gevent.pool import Pool
 import time
+from brender import *
 
+# we set a pool to allow max 100 clients to connect to the server
 pool = Pool(100)
+
+# slaves list that gets edited for every cliend connection and disconnection
 slave_list = []
 job_list = ['a', 'b', 'c']
 
@@ -33,13 +37,13 @@ def LookForTasks():
 # this handler will be run for each incoming connection in a dedicated greenlet
 def handle(socket, address):
 	print ('New connection from %s:%s' % address)
-	#socket.sendall('who are you')
+	# socket.sendall('who are you')
 	# using a makefile because we want to use readline()
 	fileobj = socket.makefile()	
 	while True:
 		line = fileobj.readline().strip()
 
-		#print(line)
+		d_print (line)
 		
 		if line.lower() == 'identify_slave':
 			slave_list.append(socket)
@@ -91,4 +95,5 @@ if __name__ == '__main__':
 	# to start the server asynchronously, use its start() method;
 	# we use blocking serve_forever() here because we have no other jobs
 	print ('Starting echo server on port 6000')
+	d_print ('test')
 	server.serve_forever()

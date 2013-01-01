@@ -5,7 +5,7 @@ import os
 import time
 
 HOST = 'localhost'    # The remote host
-PORT = 6000              # The same port as used by the server
+PORT = 6000           # The same port as used by the server
 s = None
 for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
 	af, socktype, proto, canonname, sa = res
@@ -21,13 +21,14 @@ for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
 		s = None
 		continue
 	break
+
 if s is None:
 	print('could not open socket')
 	sys.exit(1)
 	
 ## socket is now open
 s.send('identify_slave\n')
-print('identify as slave')
+print('identifying as slave')
 
 while True:
 	s.send("ready\n")
