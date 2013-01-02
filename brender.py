@@ -2,8 +2,12 @@
 
 IS_DEBUG = True
 
-# debug print, will print only it IS_DEBUG is True
 def d_print(msg):
+	"""Debug print function
+	
+	It will only print ifthe constant IS_DEBUG is True.
+	
+	"""
 	if IS_DEBUG == False:
 		pass
 	else:

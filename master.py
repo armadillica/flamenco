@@ -17,6 +17,30 @@ pool = Pool(100)
 slave_list = []
 job_list = ['a', 'b', 'c']
 
+
+class Slave:
+	
+	__hostname = "hostname"
+	__socket = "socket"
+
+	def __init__(self, **kvargs): # The constructor function called when object is created
+		self._attributes = kvargs
+
+	def set_attributes(self, key, value): # Accessor Method
+		self._attributes[key] = value
+		return
+
+	def get_attributes(self, key):
+		return self._attributes.get(key, None)
+
+	def noise(self): # self is a reference to the object
+		print("hello") # You use self so you can access attributes of the object
+		return
+
+	def __hiddenMethod(self): # A hidden method
+		print "Hard to Find"
+		return
+		
 def LookForJobs():
 	time.sleep(1)
 	print('1\n')
@@ -34,6 +58,7 @@ def LookForJobs():
 def LookForTasks():
 	return 10
 
+
 # this handler will be run for each incoming connection in a dedicated greenlet
 def handle(socket, address):
 	print ('New connection from %s:%s' % address)
@@ -46,7 +71,12 @@ def handle(socket, address):
 		d_print (line)
 		
 		if line.lower() == 'identify_slave':
-			slave_list.append(socket)
+			#slave_list.append(socket)
+			slave = Slave()
+			slave_list.append(slave)
+			slave.set_attributes('__socket', socket)
+			slave.set_attributes('__hostname', 'the hostname')
+			print ('the socket for the client is: ' + str(slave.get_attributes('__socket')))
 			while True:
 				print('client ' + str(socket) + ' is waiting')
 				line = fileobj.readline().strip()
@@ -56,12 +86,14 @@ def handle(socket, address):
 					#	socket.send('done')
 				else:
 					print('break')
-					slave_list.remove(socket)
+					#slave_list.remove(socket)
+					slave_list.remove(slave)
 					break
 					
 		if line.lower() == 'slaves':
 			print('Sending list of slaves')
 			for slave in slave_list:
+				print(slave.get_attributes('__hostname'))
 				fileobj.write(str(slave) + '\n')
 			fileobj.flush()
 		
