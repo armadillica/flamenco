@@ -12,3 +12,24 @@ def d_print(msg):
 		pass
 	else:
 		print('[debug] ' + msg)
+
+
+def slave_select(slave_id):
+"""Selects a slave from the list"""
+
+for slave in slaves_list:
+	if slave.id == slave_id:
+		return slave
+	else:
+		pass
+
+
+def slave_status(slave_id, status):
+	"""Set status of a connected slave"""
+	
+	slave_select(slave_id).socket.send(status)
+	return
+
+
+def slave_msg(slave_id, msg):
+	slave = 

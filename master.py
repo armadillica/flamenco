@@ -14,14 +14,16 @@ from brender import *
 pool = Pool(100)
 
 # slaves list that gets edited for every cliend connection and disconnection
-slave_list = []
+# we will load this list from our database at startup and edit it at runtime
+# TODO (fsiddi): implement what said above
+slaves_list = []
 job_list = ['a', 'b', 'c']
-
 
 class Slave:
 	
 	__hostname = "hostname"
 	__socket = "socket"
+	__status = "active"
 
 	def __init__(self, **kvargs): # The constructor function called when object is created
 		self._attributes = kvargs
@@ -33,7 +35,7 @@ class Slave:
 	def get_attributes(self, key):
 		return self._attributes.get(key, None)
 
-	def noise(self): # self is a reference to the object
+	def say_hello(self): # self is a reference to the object
 		print("hello") # You use self so you can access attributes of the object
 		return
 
@@ -62,7 +64,6 @@ def LookForTasks():
 # this handler will be run for each incoming connection in a dedicated greenlet
 def handle(socket, address):
 	print ('New connection from %s:%s' % address)
-	# socket.sendall('who are you')
 	# using a makefile because we want to use readline()
 	fileobj = socket.makefile()	
 	while True:
@@ -71,9 +72,9 @@ def handle(socket, address):
 		d_print (line)
 		
 		if line.lower() == 'identify_slave':
-			#slave_list.append(socket)
+			#slaves_list.append(socket)
 			slave = Slave()
-			slave_list.append(slave)
+			slaves_list.append(slave)
 			slave.set_attributes('__socket', socket)
 			slave.set_attributes('__hostname', 'the hostname')
 			print ('the socket for the client is: ' + str(slave.get_attributes('__socket')))
@@ -86,13 +87,13 @@ def handle(socket, address):
 					#	socket.send('done')
 				else:
 					print('break')
-					#slave_list.remove(socket)
-					slave_list.remove(slave)
+					#slaves_list.remove(socket)
+					slaves_list.remove(slave)
 					break
 					
 		if line.lower() == 'slaves':
-			print('Sending list of slaves')
-			for slave in slave_list:
+			print('Sending list of slaves to client')
+			for slave in slaves_list:
 				print(slave.get_attributes('__hostname'))
 				fileobj.write(str(slave) + '\n')
 			fileobj.flush()
@@ -101,10 +102,10 @@ def handle(socket, address):
 			fileobj.write('test>')
 		
 		elif line.lower() == 'b':
-			slave_list[0].send('command')
+			slaves_list[0].send('command')
 			
 		elif line.lower() == 'k':
-			slave_list[0].send('kill')
+			slaves_list[0].send('kill')
 		
 		elif line.lower() == 'quit':
 			print('Closed connection from %s:%s' % address)

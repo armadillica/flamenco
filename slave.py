@@ -19,10 +19,13 @@ import socket
 import sys
 import os
 import time
+from uuid import getnode as get_mac
 
-HOST = 'localhost'    # The remote host
-PORT = 6000           # The same port as used by the server
+HOST = 'localhost'  # the remote host
+PORT = 6000  # the same port as used by the server
 s = None
+MAC_ADDR = get_mac()  # the MAC address of the slave
+HOSTNAME = socket.gethostname()
 
 # we create the socket to connect to the server
 for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
@@ -46,7 +49,7 @@ if s is None:
 	
 # socket is now open and we identify as slaves
 s.send('identify_slave\n')
-print('identifying as slave')
+print('identifying as slave with MAC address: %s' % (str(MAC_ADDR)))
 
 # we enter the main loop where we listen/reply to the server messages.
 while True:
