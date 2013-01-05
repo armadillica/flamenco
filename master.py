@@ -13,27 +13,27 @@ from brender import *
 # we set a pool to allow max 100 clients to connect to the server
 pool = Pool(100)
 
-# slaves list that gets edited for every cliend connection and disconnection
+# clients list that gets edited for every cliend connection and disconnection
 # we will load this list from our database at startup and edit it at runtime
 # TODO (fsiddi): implement what said above
-slaves_list = []
+clients_list = []
 job_list = ['a', 'b', 'c']
 client_index = 0
 
-class Slave(object):
-	"""A slave object will be instanced everytime this class is called.
+class Client(object):
+	"""A client object will be instanced everytime this class is called.
 	
 	This is an important building block of brender. All the methods avalialbe
 	here will be calling some model method (from specific classes). For the
 	moment we do this internally. Methods that need implementation are:
 	
-	* set/get slave status
+	* set/get client status
 	* start/pause/stop order
 	
 	"""
-	__hostname = "hostname" # provided by the client
-	__socket = "socket" # provided by gevent at the handler creation
-	__status = "active" # can be active, inactive, stopped
+	__hostname = 'hostname' # provided by the client
+	__socket = 'socket' # provided by gevent at the handler creation
+	__status = 'active' # can be active, inactive, stopped
 	__mac_address = 0
 	__warning = False
 	__is_online = False
@@ -57,31 +57,31 @@ class Slave(object):
 		return
 
 
-def slave_select(key, value):
-	"""Selects a slave from the list.
+def client_select(key, value):
+	"""Selects a client from the list.
 	
 	This is meant to be a general purpose method to be called in any other method
 	that addresses a specific client.
 	
 	"""
 	d_print("Looking for client with %s: %s" % (key, value))
-	for slave in slaves_list:
-		if slave.get_attributes(key) == value:
+	for client in clients_list:
+		if client.get_attributes(key) == value:
 			# we only return the first match, maybe this is not ideal
-			return slave
+			return client
 		else:
-			print('no such slave exists')
+			print('no such client exists')
 			return False
 	d_print("No client found")
 	return False
 
 
-def set_slave_status(key, value, status):
-	"""Set status of a connected slave"""
+def set_client_status(key, value, status):
+	"""Set status of a connected client"""
 	
-	slave = slave_select(key, value) # get the slave object
-	slave.set_attributes('__status', status)
-	print('setting status for client %s to %s' % (slave.get_attributes('__hostname'), status))
+	client = client_select(key, value) # get the client object
+	client.set_attributes('__status', status)
+	print('setting status for client %s to %s' % (client.get_attributes('__hostname'), status))
 	return
 
 		
@@ -116,7 +116,7 @@ def handle(socket, address):
 	while True:
 		line = fileobj.readline().strip()
 				
-		if line.lower() == 'identify_slave':
+		if line.lower() == 'identify_client':
 			# we want to know if the cliend connected before
 			fileobj.write('mac_addr')
 			fileobj.flush()
@@ -124,59 +124,58 @@ def handle(socket, address):
 			line = fileobj.readline().strip()
 			
 			# if the client was connected in the past, there should be an instanced
-			# object in the slaves_list[]. We access it and set the __is_online
+			# object in the clients_list[]. We access it and set the __is_online
 			# variable to True, to make it run and accept incoming orders
 			
-			slave = slave_select('__mac_address', line)
-			print (slave)
+			client = client_select('__mac_address', line)
 			
-			if slave:
+			if client:
 				d_print('This client connected before')
-				slave.set_attributes('__is_online', True)
+				client.set_attributes('__is_online', True)
 				
 			else:
 				d_print('This client never connected before')
 				# create new client object with some defaults. Later on most of these
 				# values will be passed as JSON object during the first connection
-				slave = Slave(__socket = socket, 
+				client = Client(__socket = socket, 
 								__status = 'active', 
 								__is_online = True,
 								__hostname = 'no hostname set')
 				# and append it to the list
-				slaves_list.append(slave)
+				clients_list.append(client)
 
-			#d_print ('the socket for the client is: ' + str(slave.get_attributes('__socket')))
-			#print ("the id for the client is: " + str(slave.get_attributes('__id')))
+			#d_print ('the socket for the client is: ' + str(client.get_attributes('__socket')))
+			#print ("the id for the client is: " + str(client.get_attributes('__id')))
 			while True:
-				d_print('client ' + str(slave.get_attributes('__hostname')) + ' is waiting')
+				d_print('Client ' + str(client.get_attributes('__hostname')) + ' is waiting')
 				line = fileobj.readline().strip()
 				if line.lower() == 'ready':
-					print('client is ready for a job')
+					print('Client is ready for a job')
 					#if LookForJobs() == 'next':
 					#	socket.send('done')
 				else:
 					print('break')
-					slaves_list.remove(slave)
+					clients_list.remove(client)
 					break
 					
-		if line.lower() == 'slaves':
-			print('Sending list of slaves to interface')
-			for slave in slaves_list:
-				print(slave.get_attributes('__hostname'))
-				fileobj.write(str(slave) + '\n')
+		if line.lower() == 'clients':
+			print('Sending list of clients to interface')
+			for client in clients_list:
+				print(client.get_attributes('__hostname'))
+				fileobj.write(str(client) + '\n')
 			fileobj.flush()
 		
 		elif line.lower() == 'disable':
-			set_slave_status(1, 'inactive')
+			set_client_status(1, 'inactive')
 		
 		elif line.lower() == 'test':
 			fileobj.write('test>')
 		
 		elif line.lower() == 'b':
-			slaves_list[0].send('command')
+			clients_list[0].send('command')
 			
 		elif line.lower() == 'k':
-			slaves_list[0].send('kill')
+			clients_list[0].send('kill')
 		
 		elif line.lower() == 'quit':
 			print('Closed connection from %s:%s' % address)

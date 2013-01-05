@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-"""Simple slave
+"""Simple client
 
 The guy connects to the server and gets order from it. As soon as it gets
 an order, if needed, it forks a process to run the desired command. This
 way the communication channel with the server stays clean and it's always
-possible to send other commands to the slave. Some example commands that
+possible to send other commands to the client. Some example commands that
 need to be implemented.
 
-* Enable/Disable slave
+* Enable/Disable client
 * Execute order (like render frames chunk)
-* Check slave status
+* Check client status
 * Check order status
 * Pause/Resume order
 * Kill order
@@ -25,7 +25,7 @@ from brender import *
 HOST = 'localhost'  # the remote host
 PORT = 6000  # the same port as used by the server
 s = None
-MAC_ADDR = get_mac()  # the MAC address of the slave
+MAC_ADDR = get_mac()  # the MAC address of the client
 HOSTNAME = socket.gethostname()
 
 # we create the socket to connect to the server
@@ -45,19 +45,19 @@ for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
 	break
 
 if s is None:
-	print('could not open socket')
+	print('[Error] Could not open socket')
 	sys.exit(1)
 	
-# socket is now open and we identify as slaves
-s.send('identify_slave\n')
-print('identifying as slave with hostname: %s' % (str(HOSTNAME)))
-d_print('we should be waiting')
+# socket is now open and we identify as clients
+s.send('identify_client\n')
+print("identifying as client with hostname: %s" % (str(HOSTNAME)))
+d_print("Waiting for response")
 line = s.recv(4096)
 if line == 'mac_addr':
-	d_print("we got " + line)
+	d_print("Sending MAC address")
 	s.send((str(MAC_ADDR) + '\n'))
 else:
-	print('dasd')
+	print("[Error] The identification procedure failed somehow")
 
 # we enter the main loop where we listen/reply to the server messages.
 while True:
