@@ -12,3 +12,12 @@ def d_print(msg):
 		pass
 	else:
 		print('[debug] ' + msg)
+
+
+# some random model functions
+
+# load clients from database
+# CRUD clients from database
+
+# later on we will deal with jobs
+# and orders

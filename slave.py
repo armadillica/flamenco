@@ -20,6 +20,7 @@ import sys
 import os
 import time
 from uuid import getnode as get_mac
+from brender import *
 
 HOST = 'localhost'  # the remote host
 PORT = 6000  # the same port as used by the server
@@ -49,7 +50,14 @@ if s is None:
 	
 # socket is now open and we identify as slaves
 s.send('identify_slave\n')
-print('identifying as slave with MAC address: %s' % (str(MAC_ADDR)))
+print('identifying as slave with hostname: %s' % (str(HOSTNAME)))
+d_print('we should be waiting')
+line = s.recv(4096)
+if line == 'mac_addr':
+	d_print("we got " + line)
+	s.send((str(MAC_ADDR) + '\n'))
+else:
+	print('dasd')
 
 # we enter the main loop where we listen/reply to the server messages.
 while True:
@@ -61,11 +69,16 @@ while True:
 	# we print the incoming command and then evalutate it
 	print ("master said " + str(line))
 	if line == 'command':
-		print('awesome')
+		print('We will run commands here')
+		
+	elif line == 'mac_addr':
+		s.send((str(MAC_ADDR) + '\n'))
+		
 	elif line == 'kill':
 		s.send("quit\n")
 		time.sleep(2)
 		sys.exit(0)
+		
 	else:
 		print('other command came in')	
 

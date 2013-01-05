@@ -34,7 +34,9 @@ class Slave(object):
 	__hostname = "hostname" # provided by the client
 	__socket = "socket" # provided by gevent at the handler creation
 	__status = "active" # can be active, inactive, stopped
+	__mac_address = 0
 	__warning = False
+	__is_online = False
 
 	def __init__(self, **kwargs): # the constructor function called when object is created
 		self._attributes = kwargs
@@ -55,25 +57,29 @@ class Slave(object):
 		return
 
 
-def slave_select(slave_id):
+def slave_select(key, value):
 	"""Selects a slave from the list.
 	
 	This is meant to be a general purpose method to be called in any other method
 	that addresses a specific client.
 	
 	"""
-
+	d_print("Looking for client with %s: %s" % (key, value))
 	for slave in slaves_list:
-		if slave.get_attributes('__id') == slave_id:
+		if slave.get_attributes(key) == value:
+			# we only return the first match, maybe this is not ideal
 			return slave
 		else:
-			pass
+			print('no such slave exists')
+			return False
+	d_print("No client found")
+	return False
 
 
-def set_slave_status(slave_id, status):
+def set_slave_status(key, value, status):
 	"""Set status of a connected slave"""
 	
-	slave = slave_select(slave_id)
+	slave = slave_select(key, value) # get the slave object
 	slave.set_attributes('__status', status)
 	print('setting status for client %s to %s' % (slave.get_attributes('__hostname'), status))
 	return
@@ -102,22 +108,45 @@ def LookForTasks():
 
 
 # this handler will be run for each incoming connection in a dedicated greenlet
+
 def handle(socket, address):
 	print ('New connection from %s:%s' % address)
 	# using a makefile because we want to use readline()
 	fileobj = socket.makefile()	
 	while True:
 		line = fileobj.readline().strip()
-
-		d_print (line)
-		
+				
 		if line.lower() == 'identify_slave':
-			#slaves_list.append(socket)
-			slave = Slave(__hostname ='the hostnames', __status = 'active')
-			slaves_list.append(slave)
-			slave.set_attributes('__socket', socket)
-			d_print ('the socket for the client is: ' + str(slave.get_attributes('__socket')))
-			print ('the id for the client is: ' + str(slave.get_attributes('__id')))
+			# we want to know if the cliend connected before
+			fileobj.write('mac_addr')
+			fileobj.flush()
+			d_print("Waiting for mac address")
+			line = fileobj.readline().strip()
+			
+			# if the client was connected in the past, there should be an instanced
+			# object in the slaves_list[]. We access it and set the __is_online
+			# variable to True, to make it run and accept incoming orders
+			
+			slave = slave_select('__mac_address', line)
+			print (slave)
+			
+			if slave:
+				d_print('This client connected before')
+				slave.set_attributes('__is_online', True)
+				
+			else:
+				d_print('This client never connected before')
+				# create new client object with some defaults. Later on most of these
+				# values will be passed as JSON object during the first connection
+				slave = Slave(__socket = socket, 
+								__status = 'active', 
+								__is_online = True,
+								__hostname = 'no hostname set')
+				# and append it to the list
+				slaves_list.append(slave)
+
+			#d_print ('the socket for the client is: ' + str(slave.get_attributes('__socket')))
+			#print ("the id for the client is: " + str(slave.get_attributes('__id')))
 			while True:
 				d_print('client ' + str(slave.get_attributes('__hostname')) + ' is waiting')
 				line = fileobj.readline().strip()
@@ -131,7 +160,7 @@ def handle(socket, address):
 					break
 					
 		if line.lower() == 'slaves':
-			print('Sending list of slaves to client')
+			print('Sending list of slaves to interface')
 			for slave in slaves_list:
 				print(slave.get_attributes('__hostname'))
 				fileobj.write(str(slave) + '\n')
@@ -165,10 +194,11 @@ def handle(socket, address):
 		
 
 if __name__ == '__main__':
+	# we load the clients from the database into the list as objects
+	print("[boot] Loading clients from database")
 	# to make the server use SSL, pass certfile and keyfile arguments to the constructor
 	server = StreamServer(('0.0.0.0', 6000), handle, spawn=pool)
 	# to start the server asynchronously, use its start() method;
 	# we use blocking serve_forever() here because we have no other jobs
-	print ('Starting echo server on port 6000')
-	d_print ('test')
+	print ('[boot] Starting echo server on port 6000')
 	server.serve_forever()
