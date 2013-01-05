@@ -18,8 +18,9 @@ pool = Pool(100)
 # TODO (fsiddi): implement what said above
 slaves_list = []
 job_list = ['a', 'b', 'c']
+client_index = 0
 
-class Slave:
+class Slave(object):
 	"""A slave object will be instanced everytime this class is called.
 	
 	This is an important building block of brender. All the methods avalialbe
@@ -30,15 +31,14 @@ class Slave:
 	* start/pause/stop order
 	
 	"""
-	__id = 0
 	__hostname = "hostname" # provided by the client
 	__socket = "socket" # provided by gevent at the handler creation
 	__status = "active" # can be active, inactive, stopped
 	__warning = False
 
-	def __init__(self, **kvargs): # the constructor function called when object is created
-		self._attributes = kvargs
-
+	def __init__(self, **kwargs): # the constructor function called when object is created
+		self._attributes = kwargs
+	
 	def set_attributes(self, key, value): # accessor Method
 		self._attributes[key] = value
 		return
@@ -113,17 +113,16 @@ def handle(socket, address):
 		
 		if line.lower() == 'identify_slave':
 			#slaves_list.append(socket)
-			slave = Slave()
+			slave = Slave(__hostname ='the hostnames', __status = 'active')
 			slaves_list.append(slave)
-			slave.set_attributes('__id', 1)
 			slave.set_attributes('__socket', socket)
-			slave.set_attributes('__hostname', 'the hostname')
-			print ('the socket for the client is: ' + str(slave.get_attributes('__socket')))
+			d_print ('the socket for the client is: ' + str(slave.get_attributes('__socket')))
+			print ('the id for the client is: ' + str(slave.get_attributes('__id')))
 			while True:
-				print('client ' + str(socket) + ' is waiting')
+				d_print('client ' + str(slave.get_attributes('__hostname')) + ' is waiting')
 				line = fileobj.readline().strip()
 				if line.lower() == 'ready':
-					print('ready for a job')
+					print('client is ready for a job')
 					#if LookForJobs() == 'next':
 					#	socket.send('done')
 				else:
