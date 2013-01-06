@@ -78,9 +78,9 @@ def client_select(key, value):
 
 def set_client_attribute(*attributes):
 	"""Set attributes of a connected client
-		
-		set_client_attribute(('__status', 'disabled'), ('__status', 'enabled'))
-		set_client_attribute(('__hostname', command[1]), ('__status', 'disabled'))
+			
+	set_client_attribute(('__status', 'disabled'), ('__status', 'enabled'))
+	set_client_attribute(('__hostname', command[1]), ('__status', 'disabled'))
 
 	"""
 
