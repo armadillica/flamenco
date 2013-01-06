@@ -70,17 +70,26 @@ def client_select(key, value):
 			# we only return the first match, maybe this is not ideal
 			return client
 		else:
-			print("no such client exists")
+			print("[Warning] No such client exists")
 			return False
-	d_print("[Warning] No client found")
+	d_print("[Warning] No client is avalialbe in the list")
 	return False
 
 
 def set_client_attribute(*attributes):
 	"""Set attributes of a connected client
-			
+	
+	This function accepts tuples as arguments. At the moment only two tuples
+	are supported as input. See an example here:
+
 	set_client_attribute(('__status', 'disabled'), ('__status', 'enabled'))
 	set_client_attribute(('__hostname', command[1]), ('__status', 'disabled'))
+
+	The first tuple is used for selecting one (and in the future more) clients
+	from the clients_list and the second one sets the attributes to the
+	selected client.
+	Tis function makes use of the client_select function above and is limited
+	by its functionality.
 
 	"""
 
