@@ -33,7 +33,7 @@ class Client(object):
 	"""
 	__hostname = 'hostname' # provided by the client
 	__socket = 'socket' # provided by gevent at the handler creation
-	__status = 'active' # can be active, inactive, stopped
+	__status = 'enabled' # can be enabled, disabled, stopped
 	__mac_address = 0
 	__warning = False
 	__is_online = False
@@ -70,18 +70,34 @@ def client_select(key, value):
 			# we only return the first match, maybe this is not ideal
 			return client
 		else:
-			print('no such client exists')
+			print("no such client exists")
 			return False
-	d_print("No client found")
+	d_print("[Warning] No client found")
 	return False
 
 
-def set_client_status(key, value, status):
-	"""Set status of a connected client"""
-	
-	client = client_select(key, value) # get the client object
-	client.set_attributes('__status', status)
-	print('setting status for client %s to %s' % (client.get_attributes('__hostname'), status))
+def set_client_attribute(*attributes):
+	"""Set attributes of a connected client
+		
+		set_client_attribute(('__status', 'disabled'), ('__status', 'enabled'))
+		set_client_attribute(('__hostname', command[1]), ('__status', 'disabled'))
+
+	"""
+
+	selection_attribute = attributes[0]
+	d_print('selection ' + selection_attribute[0] + " " + selection_attribute[1])
+	target_attribute = attributes[1]
+	d_print('target ' + target_attribute[0])
+	client = client_select(selection_attribute[0], 
+							selection_attribute[1]) # get the client object
+								
+	client.set_attributes(target_attribute[0],
+							target_attribute[1])
+
+	print('setting %s for client %s to %s' % (
+		target_attribute[0], 
+		client.get_attributes('__hostname'), 
+		target_attribute[1]))
 	return
 
 		
@@ -101,13 +117,8 @@ def LookForJobs():
 		return('done')
 
 
-def LookForTasks():
-	"""This is just testing code that never runs"""
-	
-	return 10
-
-
 # this handler will be run for each incoming connection in a dedicated greenlet
+
 
 def handle(socket, address):
 	print ('New connection from %s:%s' % address)
@@ -137,10 +148,12 @@ def handle(socket, address):
 				d_print('This client never connected before')
 				# create new client object with some defaults. Later on most of these
 				# values will be passed as JSON object during the first connection
-				client = Client(__socket = socket, 
-								__status = 'active', 
-								__is_online = True,
-								__hostname = 'no hostname set')
+				client = Client(__hostname = 'me',
+								__mac_address = line,
+								__socket = socket,
+								__status = 'enabled',
+								__warning = False,
+								__is_online = True)
 				# and append it to the list
 				clients_list.append(client)
 
@@ -165,9 +178,17 @@ def handle(socket, address):
 				fileobj.write(str(client) + '\n')
 			fileobj.flush()
 		
-		elif line.lower() == 'disable':
-			set_client_status(1, 'inactive')
-		
+		elif line.lower().startswith('disable'):
+			command = line.split()
+			if len(command) > 1:
+				if command[1] == 'ALL':
+					set_client_attribute(('__status', 'disabled'), ('__status', 'disabled'))
+				else:
+					print(command[1])
+					set_client_attribute(('__hostname', command[1]), ('__status', 'disabled'))
+			else:
+				fileobj.write('[Warning] No client selected\n')
+				
 		elif line.lower() == 'test':
 			fileobj.write('test>')
 		
