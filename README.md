@@ -12,6 +12,7 @@ To install gevent on OSX, che this docs out:
 * http://stackoverflow.com/questions/7630388/how-can-i-install-python-library-gevent-on-mac-osx-lion
 * Install libevent (brew install libevent)
 * Install gevent (easy_install gevent)
+* Install peewee (easy_install peewee)
 
 ## Architecture
 At the moment there are 3 files:

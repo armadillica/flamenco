@@ -29,6 +29,8 @@ class Client(object):
 	
 	* set/get client status
 	* start/pause/stop order
+	* get render status
+	* get various client information (such as hostname or memory usage)
 	
 	"""
 	__hostname = 'hostname' # provided by the client
@@ -127,8 +129,6 @@ def LookForJobs():
 
 
 # this handler will be run for each incoming connection in a dedicated greenlet
-
-
 def handle(socket, address):
 	print ('New connection from %s:%s' % address)
 	# using a makefile because we want to use readline()
