@@ -1,14 +1,14 @@
 brender
 =======
 
-Development repo for brender 2.0 (the original verions is here https://github.com/oenvoyage/brender)
+Development repo for brender 2.0 (the original version is here https://github.com/oenvoyage/brender)
 
 ## Installation
 Basic requirement at the moment are:
 * Python 2.7
 * gevent (awesome lib for concurrency)
 
-To install gevent on OSX, che this docs out:
+To install gevent on OSX, check this docs out:
 * http://stackoverflow.com/questions/7630388/how-can-i-install-python-library-gevent-on-mac-osx-lion
 * Install libevent (brew install libevent)
 * Install gevent (easy_install gevent)
