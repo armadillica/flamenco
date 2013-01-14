@@ -22,9 +22,13 @@ class Orders(Model):
 
 
 for client in Clients.select():
-		print client.hostname, client.asd.count(), 'orders'
-		for order in client.asd:
-			print '    ', order.order
+	print client.hostname, client.asd.count(), 'orders'
+	for order in client.asd:
+		print '    ', order.order
+
+for order in Orders.select():
+	mac = order.client.asd.hostname.select()
+	print mac
 
 
 """
