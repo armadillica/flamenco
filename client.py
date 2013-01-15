@@ -22,6 +22,7 @@ import time
 from uuid import getnode as get_mac
 from brender import *
 
+
 HOST = 'localhost'  # the remote host
 PORT = 6000  # the same port as used by the server
 s = None

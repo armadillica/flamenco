@@ -53,10 +53,11 @@ def remove_clients():
 
 	Should be refactored?
 	"""
+	clients_count = Clients.select().count()
 	for client in Clients.select():
 		print("Removing client " + client.hostname)
 		client.delete_instance()
-	print("Removed all the clients")
+	print("Removed all the " + str(clients_count) + " clients")
 
 
 def create_orders(orders_amount):
@@ -86,6 +87,15 @@ def disable_clients():
 		client.status = 'disabled'
 		client.save()
 		print("Changing status to 'disabled' for client " + str(client.hostname))
+
+
+def load_clients():
+	clients_list = []
+	for client in Clients.select():
+		clients_list.append(client)
+	
+	return clients_list
+
 
 
 #create_databases()

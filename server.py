@@ -9,11 +9,13 @@ from gevent.server import StreamServer
 from gevent.pool import Pool
 import time
 from brender import *
+from model import *
+
 
 # we set a pool to allow max 100 clients to connect to the server
 pool = Pool(100)
 
-# clients list that gets edited for every cliend connection and disconnection
+# clients list that gets edited for every client connection and disconnection
 # we will load this list from our database at startup and edit it at runtime
 # TODO (fsiddi): implement what said above
 clients_list = []
@@ -114,6 +116,20 @@ def set_client_attribute(*attributes):
 	else:
 		print("[Warning] The command failed")
 
+
+def load_from_database():
+	clients_database_list = load_clients()
+	for db_client in clients_database_list:
+		client = Client(__hostname = db_client.hostname,
+								__mac_address = db_client.mac_address,
+								__socket = 'no_socket',
+								__status = db_client.status,
+								__warning = db_client.warning,
+								__is_online = db_client.is_online)
+				# and append it to the list
+		clients_list.append(client)
+	print("[boot] " + str(len(clients_database_list)) + " clients loaded from database")
+	return
 		
 def LookForJobs():
 	"""This is just testing code that never runs"""
@@ -240,11 +256,15 @@ def handle(socket, address):
 		
 
 if __name__ == '__main__':
-	# we load the clients from the database into the list as objects
-	print("[boot] Loading clients from database")
-	# to make the server use SSL, pass certfile and keyfile arguments to the constructor
-	server = StreamServer(('0.0.0.0', 6000), handle, spawn=pool)
-	# to start the server asynchronously, use its start() method;
-	# we use blocking serve_forever() here because we have no other jobs
-	print ('[boot] Starting echo server on port 6000')
-	server.serve_forever()
+	try:
+		# we load the clients from the database into the list as objects
+		print("[boot] Loading clients from database")
+		load_from_database()
+		# to make the server use SSL, pass certfile and keyfile arguments to the constructor
+		server = StreamServer(('0.0.0.0', 6000), handle, spawn=pool)
+		# to start the server asynchronously, use its start() method;
+		# we use blocking serve_forever() here because we have no other jobs
+		print ('[boot] Starting echo server on port 6000')
+		server.serve_forever()
+	except KeyboardInterrupt:
+		print(" Quitting brender")
