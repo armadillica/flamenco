@@ -96,7 +96,15 @@ def load_clients():
 	
 	return clients_list
 
-
+def create_client(attributes):
+	new_client = Clients.create(mac_address = attributes['mac_address'],
+		hostname = attributes['hostname'],
+		status = attributes['status'],
+		warning = attributes['warning'],
+		is_online = attributes['is_online'],
+		config =attributes['config'])
+	print("Database filled with the new client.")
+	return new_client
 
 #create_databases()
 

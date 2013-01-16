@@ -117,20 +117,29 @@ def set_client_attribute(*attributes):
 		print("[Warning] The command failed")
 
 
+def initialize_runtime_client(db_client):
+	client = Client(__hostname = db_client.hostname,
+	__mac_address = db_client.mac_address,
+	__socket = 'no_socket',
+	__status = db_client.status,
+	__warning = db_client.warning,
+	__is_online = db_client.is_online)
+	return client
+
+
 def load_from_database():
 	clients_database_list = load_clients()
 	for db_client in clients_database_list:
-		client = Client(__hostname = db_client.hostname,
-								__mac_address = db_client.mac_address,
-								__socket = 'no_socket',
-								__status = db_client.status,
-								__warning = db_client.warning,
-								__is_online = db_client.is_online)
-				# and append it to the list
-		clients_list.append(client)
+			clients_list.append(initialize_runtime_client(db_client))
 	print("[boot] " + str(len(clients_database_list)) + " clients loaded from database")
 	return
-		
+
+def add_client_to_database(new_client_attributes):
+	print("[EPIC]")
+	return initialize_runtime_client(create_client(new_client_attributes))
+
+
+
 def LookForJobs():
 	"""This is just testing code that never runs"""
 	
@@ -176,13 +185,17 @@ def handle(socket, address):
 				d_print('This client never connected before')
 				# create new client object with some defaults. Later on most of these
 				# values will be passed as JSON object during the first connection
-				client = Client(__hostname = 'me',
+				"""client = Client(__hostname = 'me',
 								__mac_address = line,
 								__socket = socket,
 								__status = 'enabled',
 								__warning = False,
 								__is_online = True)
+				"""
 				# and append it to the list
+				new_client_attributes = {'hostname': 'me', 'mac_address': line, 'status': 'enabled', 'warning': False, 'is_online': True, 'config': 'bla'}
+				client = add_client_to_database(new_client_attributes)
+				client.set_attributes('__socket', socket)
 				clients_list.append(client)
 
 			#d_print ('the socket for the client is: ' + str(client.get_attributes('__socket')))
