@@ -35,12 +35,12 @@ class Client(object):
 	* get various client information (such as hostname or memory usage)
 	
 	"""
-	__hostname = 'hostname' # provided by the client
-	__socket = 'socket' # provided by gevent at the handler creation
-	__status = 'enabled' # can be enabled, disabled, stopped
-	__mac_address = 0
-	__warning = False
-	__is_online = False
+	hostname = 'hostname' # provided by the client
+	socket = 'socket' # provided by gevent at the handler creation
+	status = 'enabled' # can be enabled, disabled, stopped
+	mac_address = 0
+	warning = False
+	is_online = False
 
 	def __init__(self, **kwargs): # the constructor function called when object is created
 		self._attributes = kwargs
@@ -85,8 +85,8 @@ def set_client_attribute(*attributes):
 	This function accepts tuples as arguments. At the moment only two tuples
 	are supported as input. See an example here:
 
-	set_client_attribute(('__status', 'disabled'), ('__status', 'enabled'))
-	set_client_attribute(('__hostname', command[1]), ('__status', 'disabled'))
+	set_client_attribute(('status', 'disabled'), ('status', 'enabled'))
+	set_client_attribute(('hostname', command[1]), ('status', 'disabled'))
 
 	The first tuple is used for selecting one (and in the future more) clients
 	from the clients_list and the second one sets the attributes to the
@@ -109,7 +109,7 @@ def set_client_attribute(*attributes):
 
 		print('setting %s for client %s to %s' % (
 			target_attribute[0], 
-			client.get_attributes('__hostname'), 
+			client.get_attributes('hostname'), 
 			target_attribute[1]))
 		return
 	else:
@@ -117,13 +117,13 @@ def set_client_attribute(*attributes):
 
 
 def initialize_runtime_client(db_client):
-	client = Client(__id = db_client.id,
-		__hostname = db_client.hostname,
-		__mac_address = db_client.mac_address,
-		__socket = 'no_socket',
-		__status = db_client.status,
-		__warning = db_client.warning,
-		__is_online = db_client.is_online)
+	client = Client(id = db_client.id,
+		hostname = db_client.hostname,
+		mac_address = db_client.mac_address,
+		socket = 'no_socket',
+		status = db_client.status,
+		warning = db_client.warning,
+		is_online = db_client.is_online)
 	return client
 
 
@@ -176,36 +176,36 @@ def handle(socket, address):
 			line = fileobj.readline().strip()
 			
 			# if the client was connected in the past, there should be an instanced
-			# object in the clients_list[]. We access it and set the __is_online
+			# object in the clients_list[]. We access it and set the is_online
 			# variable to True, to make it run and accept incoming orders
 			
-			client = client_select('__mac_address', int(line))
+			client = client_select('mac_address', int(line))
 			
 			if client:
 				d_print('This client connected before')
-				client.set_attributes('__is_online', True)
+				client.set_attributes('is_online', True)
 				
 			else:
 				d_print('This client never connected before')
 				# create new client object with some defaults. Later on most of these
 				# values will be passed as JSON object during the first connection
-				"""client = Client(__hostname = 'me',
-								__mac_address = line,
-								__socket = socket,
-								__status = 'enabled',
-								__warning = False,
-								__is_online = True)
+				"""client = Client(hostname = 'me',
+								mac_address = line,
+								socket = socket,
+								status = 'enabled',
+								warning = False,
+								is_online = True)
 				"""
 				# and append it to the list
 				new_client_attributes = {'hostname': 'me', 'mac_address': line, 'status': 'enabled', 'warning': False, 'is_online': True, 'config': 'bla'}
 				client = add_client_to_database(new_client_attributes)
-				client.set_attributes('__socket', socket)
+				client.set_attributes('socket', socket)
 				clients_list.append(client)
 
-			#d_print ('the socket for the client is: ' + str(client.get_attributes('__socket')))
-			#print ("the id for the client is: " + str(client.get_attributes('__id')))
+			#d_print ('the socket for the client is: ' + str(client.get_attributes('socket')))
+			#print ("the id for the client is: " + str(client.get_attributes('id')))
 			while True:
-				d_print('Client ' + str(client.get_attributes('__hostname')) + ' is waiting')
+				d_print('Client ' + str(client.get_attributes('hostname')) + ' is waiting')
 				line = fileobj.readline().strip()
 				if line.lower() == 'ready':
 					print('Client is ready for a job')
@@ -219,7 +219,7 @@ def handle(socket, address):
 		if line.lower() == 'clients':
 			print('[<-] Sending list of clients to interface')
 			for client in clients_list:
-				list_of_clients = client.get_attributes('__hostname') + " " + str(client.get_attributes('__mac_address'))
+				list_of_clients = client.get_attributes('hostname') + " " + str(client.get_attributes('mac_address'))
 				d_print(list_of_clients)
 				fileobj.write(list_of_clients + '\n')
 			fileobj.flush()
@@ -228,10 +228,10 @@ def handle(socket, address):
 			command = line.split()
 			if len(command) > 1:
 				if command[1] == 'ALL':
-					set_client_attribute(('__status', 'enabled'), ('__status', 'disabled'))
+					set_client_attribute(('status', 'enabled'), ('status', 'disabled'))
 				else:
 					print(command[1])
-					set_client_attribute(('__hostname', command[1]), ('__status', 'disabled'))
+					set_client_attribute(('hostname', command[1]), ('status', 'disabled'))
 			else:
 				fileobj.write('[Warning] No client selected. Specify a '
 					'client name or use the \'ALL\' argument.\n')
@@ -240,10 +240,10 @@ def handle(socket, address):
 			command = line.split()
 			if len(command) > 1:
 				if command[1] == 'ALL':
-					set_client_attribute(('__status', 'disabled'), ('__status', 'enabled'))
+					set_client_attribute(('status', 'disabled'), ('status', 'enabled'))
 				else:
 					#print(command[1])
-					set_client_attribute(('__hostname', command[1]), ('__status', 'enabled'))
+					set_client_attribute(('hostname', command[1]), ('status', 'enabled'))
 			else:
 				fileobj.write('[Warning] No client selected. Specify a '
 					'client name or use the \'ALL\' argument.\n')
