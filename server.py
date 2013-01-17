@@ -122,7 +122,7 @@ def initialize_runtime_client(db_client):
 		socket = False,
 		status = db_client.status,
 		warning = db_client.warning,
-		config = False)
+		config = db_client.config)
 	return client
 
 
@@ -141,6 +141,7 @@ def add_client_to_database(new_client_attributes):
 def save_to_database():
 	for client in clients_list:
 		save_runtime_client(client)
+	print(str(len(clients_list)) + " clients saved successfully")
 
 
 def LookForJobs():

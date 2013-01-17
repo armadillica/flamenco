@@ -113,7 +113,6 @@ def save_runtime_client(client):
 	db_client.warning = client.get_attributes('warning')
 	db_client.config = client.get_attributes('config')
 	db_client.save()
-	print("Client " + db_client.hostname + " saved successfully")
 
 #create_databases()
 
