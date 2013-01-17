@@ -34,8 +34,27 @@ The idea is to use a light PHP framework that will allow the user to connect to 
 This allows to keep data centralized and share an API across different interfaces (could be a native iOS/Android application for example).
 After some quite intense research the framework of choice is CodeIgniter. A more detailed roadmap for the web interface will be published later on.
 
+## Implementation details
+Here we explain how the software works in some of its most important parts.
+
+### Startup
+Before we start running the server we load from the database a list of clients and run them throug an inizialize_runtime_client function that create the client object we use in the application. These objects are appended to the runtime_clients list. We do this because accessing clients from memory is much faster!
+
+### Client connection
+When a client connects we check if it was there before (if it is in the runtime_clients list loaded from the database at startup). If it's there we enable it, if not, we: 
+
+* first create a new entry in the database
+* extract the entry and use the id to
+* initialize a new runtime_client
+* we append the client to the runtime_clients list and use it
+
+### Shutdown
+When we shut down brender we must save the current status of the runtime clients in the database. There is a save_to_database function that does that.
+
+
 ## List of commands
 No real commands are currently available. At the moment only test inputs are available, but this is a list of possible inputs:
+
 * `clients` - lists all available clients (could support filtering arguments, such as `all`, `enabled`, etc.)
 * `enable` (plus filtering arguments) - enables selected clients
 * `disable` (plus filtering arguments) - disables selected clients

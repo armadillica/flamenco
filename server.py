@@ -75,7 +75,7 @@ def client_select(key, value):
 			return client
 		else:
 			pass
-	d_print("[Warning] No client is avalialbe in the list")
+	print("[Warning] No client in the list matches the selection criteria")
 	return False
 
 
@@ -117,12 +117,13 @@ def set_client_attribute(*attributes):
 
 
 def initialize_runtime_client(db_client):
-	client = Client(__hostname = db_client.hostname,
-	__mac_address = db_client.mac_address,
-	__socket = 'no_socket',
-	__status = db_client.status,
-	__warning = db_client.warning,
-	__is_online = db_client.is_online)
+	client = Client(__id = db_client.id,
+		__hostname = db_client.hostname,
+		__mac_address = db_client.mac_address,
+		__socket = 'no_socket',
+		__status = db_client.status,
+		__warning = db_client.warning,
+		__is_online = db_client.is_online)
 	return client
 
 
@@ -134,9 +135,13 @@ def load_from_database():
 	return
 
 def add_client_to_database(new_client_attributes):
-	print("[EPIC]")
+	print("Adding a new client to the database")
 	return initialize_runtime_client(create_client(new_client_attributes))
 
+
+def save_to_database():
+	for client in clients_list:
+		save_runtime_client(client)
 
 
 def LookForJobs():
@@ -175,7 +180,6 @@ def handle(socket, address):
 			# variable to True, to make it run and accept incoming orders
 			
 			client = client_select('__mac_address', int(line))
-			d_print(str(client))
 			
 			if client:
 				d_print('This client connected before')
@@ -280,4 +284,5 @@ if __name__ == '__main__':
 		print ('[boot] Starting echo server on port 6000')
 		server.serve_forever()
 	except KeyboardInterrupt:
+		save_to_database()
 		print(" Quitting brender")
