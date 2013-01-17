@@ -74,8 +74,7 @@ def client_select(key, value):
 			# we only return the first match, maybe this is not ideal
 			return client
 		else:
-			print("[Warning] No such client exists")
-			return False
+			pass
 	d_print("[Warning] No client is avalialbe in the list")
 	return False
 
@@ -175,7 +174,8 @@ def handle(socket, address):
 			# object in the clients_list[]. We access it and set the __is_online
 			# variable to True, to make it run and accept incoming orders
 			
-			client = client_select('__mac_address', line)
+			client = client_select('__mac_address', int(line))
+			d_print(str(client))
 			
 			if client:
 				d_print('This client connected before')
