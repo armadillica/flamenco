@@ -82,6 +82,7 @@ def create_orders(orders_amount):
 	else:
 		print("[warning] No clients available")
 
+
 def disable_clients():
 	for client in Clients.select():
 		client.status = 'disabled'
@@ -95,6 +96,7 @@ def load_clients():
 		clients_list.append(client)
 	
 	return clients_list
+
 
 def create_client(attributes):
 	new_client = Clients.create(mac_address = attributes['mac_address'],
@@ -115,7 +117,7 @@ def save_runtime_client(client):
 	db_client.is_online = client.get_attributes('is_online')
 	db_client.config = client.get_attributes('config')
 	db_client.save()
-	print("Client " + db_client.hostname + " saved succefully")
+	print("Client " + db_client.hostname + " saved successfully")
 
 #create_databases()
 

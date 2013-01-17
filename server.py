@@ -40,7 +40,6 @@ class Client(object):
 	status = 'enabled' # can be enabled, disabled, stopped
 	mac_address = 0
 	warning = False
-	is_online = False
 
 	def __init__(self, **kwargs): # the constructor function called when object is created
 		self._attributes = kwargs
@@ -123,7 +122,6 @@ def initialize_runtime_client(db_client):
 		socket = 'no_socket',
 		status = db_client.status,
 		warning = db_client.warning,
-		is_online = db_client.is_online)
 	return client
 
 
@@ -183,7 +181,6 @@ def handle(socket, address):
 			
 			if client:
 				d_print('This client connected before')
-				client.set_attributes('is_online', True)
 				
 			else:
 				d_print('This client never connected before')
@@ -194,13 +191,13 @@ def handle(socket, address):
 								socket = socket,
 								status = 'enabled',
 								warning = False,
-								is_online = True)
 				"""
 				# and append it to the list
-				new_client_attributes = {'hostname': 'me', 'mac_address': line, 'status': 'enabled', 'warning': False, 'is_online': True, 'config': 'bla'}
+				new_client_attributes = {'hostname': 'me', 'mac_address': line, 'status': 'enabled', 'warning': False, 'config': 'bla'}
 				client = add_client_to_database(new_client_attributes)
-				client.set_attributes('socket', socket)
-				clients_list.append(client)
+			
+			client.set_attributes('socket', socket)
+			clients_list.append(client)
 
 			#d_print ('the socket for the client is: ' + str(client.get_attributes('socket')))
 			#print ("the id for the client is: " + str(client.get_attributes('id')))
