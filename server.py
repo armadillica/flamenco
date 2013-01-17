@@ -173,33 +173,35 @@ def handle(socket, address):
 			fileobj.write('mac_addr')
 			fileobj.flush()
 			d_print("Waiting for mac address")
-			line = fileobj.readline().strip()
+			line = fileobj.readline().strip().split()
 			
 			# if the client was connected in the past, there should be an instanced
 			# object in the clients_list[]. We access it and set the is_online
 			# variable to True, to make it run and accept incoming orders
 			
-			client = client_select('mac_address', int(line))
+			client = client_select('mac_address', int(line[0]))
 			
 			if client:
 				d_print('This client connected before')
+				client.set_attributes('socket', socket)
 				
 			else:
 				d_print('This client never connected before')
 				# create new client object with some defaults. Later on most of these
 				# values will be passed as JSON object during the first connection
-				"""client = Client(hostname = 'me',
-								mac_address = line,
-								socket = socket,
-								status = 'enabled',
-								warning = False,
-				"""
-				# and append it to the list
-				new_client_attributes = {'hostname': 'me', 'mac_address': line, 'status': 'enabled', 'warning': False, 'config': 'bla'}
+				new_client_attributes = {
+					'hostname': line[1], 
+					'mac_address': line[0], 
+					'status': 'enabled', 
+					'warning': False, 
+					'config': 'bla'
+				}
+
 				client = add_client_to_database(new_client_attributes)
 			
-			client.set_attributes('socket', socket)
-			clients_list.append(client)
+				# we assign the socket to the client and append it to the list
+				client.set_attributes('socket', socket)
+				clients_list.append(client)
 
 			#d_print ('the socket for the client is: ' + str(client.get_attributes('socket')))
 			#print ("the id for the client is: " + str(client.get_attributes('id')))
@@ -218,7 +220,7 @@ def handle(socket, address):
 		if line.lower() == 'clients':
 			print('[<-] Sending list of clients to interface')
 			for client in clients_list:
-				list_of_clients = client.get_attributes('hostname') + " " + str(client.get_attributes('mac_address'))
+				list_of_clients = client.get_attributes('hostname') + " " + str(client.get_attributes('status'))
 				d_print(list_of_clients)
 				fileobj.write(list_of_clients + '\n')
 			fileobj.flush()

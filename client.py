@@ -56,7 +56,7 @@ d_print("Waiting for response")
 line = s.recv(4096)
 if line == 'mac_addr':
 	d_print("Sending MAC address")
-	s.send((str(MAC_ADDR) + '\n'))
+	s.send(str(MAC_ADDR) + ' ' + str(HOSTNAME) + '\n')
 else:
 	print("[Error] The identification procedure failed somehow")
 
@@ -73,7 +73,7 @@ while True:
 		print('We will run commands here')
 		
 	elif line == 'mac_addr':
-		s.send((str(MAC_ADDR) + '\n'))
+		s.send(str(MAC_ADDR) + '\n')
 		
 	elif line == 'kill':
 		s.send("quit\n")
