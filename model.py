@@ -9,7 +9,6 @@ class Clients(Model):
     hostname = CharField()
     status = CharField()
     warning = BooleanField()
-    is_online = BooleanField()
     config = CharField()
 
     class Meta:
@@ -43,7 +42,6 @@ def create_clients(clients_amount):
 			hostname = 'asd_' + str(i),
 			status = 'enabled',
 			warning = False,
-			is_online = False,
 			config ='JSON string')
 	print("Database filled with " + str(clients_amount) + " clients.")
 
@@ -103,7 +101,6 @@ def create_client(attributes):
 		hostname = attributes['hostname'],
 		status = attributes['status'],
 		warning = attributes['warning'],
-		is_online = attributes['is_online'],
 		config =attributes['config'])
 	print("New client " + attributes['hostname'] + " was added")
 	return new_client
@@ -114,7 +111,6 @@ def save_runtime_client(client):
 	db_client.hostname = client.get_attributes('hostname')
 	db_client.status = client.get_attributes('status')
 	db_client.warning = client.get_attributes('warning')
-	db_client.is_online = client.get_attributes('is_online')
 	db_client.config = client.get_attributes('config')
 	db_client.save()
 	print("Client " + db_client.hostname + " saved successfully")

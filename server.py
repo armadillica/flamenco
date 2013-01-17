@@ -119,9 +119,10 @@ def initialize_runtime_client(db_client):
 	client = Client(id = db_client.id,
 		hostname = db_client.hostname,
 		mac_address = db_client.mac_address,
-		socket = 'no_socket',
+		socket = False,
 		status = db_client.status,
 		warning = db_client.warning,
+		config = False)
 	return client
 
 
