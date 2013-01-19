@@ -9,22 +9,17 @@
     
     <script src="<?php echo(JS); ?>/jquery-1.7.2.min.js"></script>
     <script src="<?php echo(JS); ?>/jquery.brender.js"></script>
-    <script src="<?php echo(JS); ?>/bootstrap-alert.js"></script>
-    <script src="<?php echo(JS); ?>/bootstrap-modal.js"></script>
-    <script src="<?php echo(JS); ?>/bootstrap-dropdown.js"></script>
-    <script src="<?php echo(JS); ?>/bootstrap-scrollspy.js"></script>
-    <script src="<?php echo(JS); ?>/bootstrap-tab.js"></script>
-
+    <script src="<?php echo(JS); ?>/bootstrap.min.js"></script>
 
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
-    <link href="<?php echo(CSS); ?>/bootstrap.css" rel="stylesheet">
+    <link href="<?php echo(CSS); ?>/bootstrap.min.css" rel="stylesheet">
     <style type="text/css">
       body {
         padding-top: 120px;
         padding-bottom: 40px;
       }
     </style>
-    <link href="<?php echo(CSS); ?>/bootstrap-responsive.css" rel="stylesheet">
+    <link href="<?php echo(CSS); ?>/bootstrap-responsive.min.css" rel="stylesheet">
     <link href="<?php echo(CSS); ?>/brender.css" rel="stylesheet">
 
     <!-- IE6-8 support of HTML5 elements -->

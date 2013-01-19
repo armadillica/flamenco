@@ -1,4 +1,9 @@
 *.pyc
 .DS_Store
 *.sqlite
-/temp/
+/temp/*
+*bootstrap.js
+
+dashboard/webroot/css/bootstrap-responsive.css
+dashboard/webroot/css/bootstrap.css
+
