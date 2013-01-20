@@ -186,9 +186,12 @@ def handle(socket, address):
 			
 			# if the client was connected in the past, there should be an instanced
 			# object in the clients_list[]. We access it and set the is_online
-			# variable to True, to make it run and accept incoming orders
+			# variable to True, to make it run and accept incoming orders.
+			# Since the client_select methog returns a list we have to select the
+			# first and only item in order to make it work (that's why we have the
+			# trailing [0] in the selection query for the mac_address here)
 			
-			client = client_select('mac_address', int(line[0]))
+			client = client_select('mac_address', int(line[0]))[0]
 			
 			if client:
 				d_print('This client connected before')
@@ -279,7 +282,7 @@ def handle(socket, address):
 			break
 		
 		#print("line is " + line)
-		fileobj.write('> ')
+		#fileobj.write('> ')
 		fileobj.flush()
 		#print("done with the loop")
 		#time.sleep(1)
