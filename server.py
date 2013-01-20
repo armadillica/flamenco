@@ -8,6 +8,7 @@ Connect to it with:
 from gevent.server import StreamServer
 from gevent.pool import Pool
 import time
+import json
 from brender import *
 from model import *
 
@@ -231,10 +232,14 @@ def handle(socket, address):
 					
 		if line.lower() == 'clients':
 			print('[<-] Sending list of clients to interface')
+			table_rows = []
 			for client in clients_list:
-				list_of_clients = client.get_attributes('hostname') + " " + client.is_online()
-				d_print(list_of_clients)
-				fileobj.write(list_of_clients + '\n')
+				#list_of_clients = client.get_attributes('hostname') + " " + client.is_online()
+				#d_print(list_of_clients)
+				#fileobj.write(list_of_clients + '\n')
+				table_rows.append([client.get_attributes('hostname'),  client.is_online()])
+			table_data = json.dumps(json_output('dataTable', table_rows))
+			fileobj.write(table_data + '\n')
 			fileobj.flush()
 		
 		elif line.lower().startswith('disable'):

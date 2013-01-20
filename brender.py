@@ -14,10 +14,18 @@ def d_print(msg):
 		print('[debug] ' + msg)
 
 
-# some random model functions
+def json_output(format, table_rows_list):
+	if format == 'dataTable':
+		output = {"aaData": table_rows_list}
+		return output
+	else:
+		output = {"data": table_rows_list}
+		return str(output)
 
-# load clients from database
-# CRUD clients from database
+te = [["Trident","Internet Explorer 4.0","Win 95+","4","X"],
+	["Trident","Internet Explorer 5.0","Win 95+","5","C"]]
+
+#print(json_output('dataTable', te))
 
 # later on we will deal with jobs
 # and orders
