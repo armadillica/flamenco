@@ -12,4 +12,11 @@ $(document).ready(function() {
 	$.ajaxSetup ({
 		cache: false
 	});	
+
+	$('#clients').dataTable( {
+		"bProcessing": true,
+		"iDisplayLength": 25,
+		"sAjaxSource": '/clients/list.json'
+	} );
+
 });

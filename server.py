@@ -192,9 +192,11 @@ def handle(socket, address):
 			# first and only item in order to make it work (that's why we have the
 			# trailing [0] in the selection query for the mac_address here)
 			
-			client = client_select('mac_address', int(line[0]))[0]
+			#client = client_select('mac_address', int(line[0]))[0]
+			client = client_select('mac_address', int(line[0]))
 			
 			if client:
+				client = client[0]
 				d_print('This client connected before')
 				client.set_attributes('socket', socket)
 				
@@ -241,7 +243,10 @@ def handle(socket, address):
 			table_data = json.dumps(json_output('dataTable', table_rows))
 			fileobj.write(table_data + '\n')
 			fileobj.flush()
-		
+			fileobj.close()
+			print('[x] Closed connection from %s:%s' % address)
+			break
+
 		elif line.lower().startswith('disable'):
 			command = line.split()
 			if len(command) > 1:

@@ -8,8 +8,17 @@ function d_print($string_to_print){
 	}
 }
 
-function ask_server($arg_1)
-{
+
+function match_extension($route, $extension) {
+	if (substr_compare($route, $extension, -strlen($extension), strlen($extension)) === 0) {
+		return True;
+	} else {
+		return False;
+	}
+}
+
+
+function ask_server_legacy($arg_1) {
 	$address = $GLOBALS['address'];
 	$service_port = $GLOBALS['service_port'];
 
@@ -37,15 +46,37 @@ function ask_server($arg_1)
 	d_print("OK");
 
 	d_print("Reading response:");
+	
 	$x = 1;
 	while ($x == 1) {
 		$out = socket_read($socket, 2048);
 		echo $out;
 		$x = 2;
 	}
-
+	
 	d_print("Closing socket...");
 	socket_close($socket);
 	d_print("OK");
+}
+
+
+function ask_server($request) {
+
+	$address = $GLOBALS['address'];
+	$service_port = $GLOBALS['service_port'];
+
+	$socket = stream_socket_client("tcp://$address:$service_port", $errno, $errstr, 30);
+	
+
+	if (!$socket) {
+	    echo "$errstr ($errno)<br />\n";
+	} else {
+
+	    fwrite($socket, $request);
+	    while (!feof($socket)) {
+	        echo fgets($socket, 128); 
+	    }
+	    fclose($socket);
+	}
 }
 ?>

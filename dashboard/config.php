@@ -1,6 +1,4 @@
 <?php
-error_reporting(E_ALL);
-
 $debug = False;
 /* Get the port for the service. */
 $service_port = 6000;

@@ -16,7 +16,7 @@ def d_print(msg):
 
 def json_output(format, table_rows_list):
 	if format == 'dataTable':
-		output = {"aaData": table_rows_list}
+		output = {'aaData': table_rows_list}
 		return output
 	else:
 		output = {"data": table_rows_list}

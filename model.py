@@ -39,7 +39,7 @@ def create_clients(clients_amount):
 	"""
 	for i in range(clients_amount):
 		Clients.create(mac_address = 123 + i,
-			hostname = 'asd_' + str(i),
+			hostname = 'client_' + str(i),
 			status = 'enabled',
 			warning = False,
 			config ='JSON string')
@@ -106,6 +106,13 @@ def create_client(attributes):
 	return new_client
 
 
+def show_clients():
+	for client in Clients.select():
+		print client.hostname, client.fk_client.count(), 'fk_client'
+		for order in client.fk_client:
+			print '    ', order.order
+
+
 def save_runtime_client(client):
 	db_client = Clients.get(Clients.id == client.get_attributes('id'))
 	db_client.hostname = client.get_attributes('hostname')
@@ -121,9 +128,4 @@ def save_runtime_client(client):
 #create_orders(5)
 #disable_clients()
 
-"""
-for client in Clients.select():
-	print client.hostname, client.asd.count(), 'orders'
-	for order in client.asd:
-		print '    ', order.order
-"""
+#show_clients()

@@ -13,15 +13,14 @@
 
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
     <link href="<?php echo(CSS); ?>/bootstrap.min.css" rel="stylesheet">
-    <style type="text/css">
-      body {
-        padding-top: 120px;
-        padding-bottom: 40px;
-      }
-    </style>
     <link href="<?php echo(CSS); ?>/bootstrap-responsive.min.css" rel="stylesheet">
     <link href="<?php echo(CSS); ?>/brender.css" rel="stylesheet">
 
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css">
+    <!-- DataTables -->
+    <script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
+    
     <!-- IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>

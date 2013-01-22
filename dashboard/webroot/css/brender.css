@@ -1,11 +1,12 @@
 body {
-  margin: 0;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  line-height: 18px;
-  color: #333333;
-  background: #ffffff url(../img/bg-main.jpg) repeat;
-  
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    line-height: 18px;
+    color: #333333;
+    background: #ffffff url(../img/bg-main.jpg) repeat;
+    padding-top: 120px;
+    padding-bottom: 40px;
 }
 
 h1,
