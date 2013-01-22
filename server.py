@@ -237,7 +237,9 @@ def handle(socket, address):
 			print('[<-] Sending list of clients to interface')
 			table_rows = []
 			for client in clients_list:
-				table_rows.append([client.get_attributes('hostname'),  client.is_online()])
+				table_rows.append({"DT_RowId": client.get_attributes('id'),
+				"0" : client.get_attributes('hostname'),
+				"1" : client.is_online()})
 			table_data = json.dumps(json_output('dataTable', table_rows))
 			fileobj.write(table_data + '\n')
 			fileobj.flush()

@@ -13,8 +13,8 @@
 					</tr>
 				</thead>
 				<tbody>
-					
-				</tbody>
+
+				</tbody> 
 				<tfoot>
 					<tr>
 						<th>Hostname</th>

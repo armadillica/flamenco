@@ -16,6 +16,7 @@ $(document).ready(function() {
 	$('#clients').dataTable( {
 		"bProcessing": true,
 		"iDisplayLength": 25,
+		//"sAjaxSource": '/json_source_2.txt'
 		"sAjaxSource": '/clients/list.json'
 	} );
 
