@@ -5,7 +5,7 @@
 	<div class="row">
 		<div class="span12">
 
-			<table cellpadding="0" cellspacing="0" border="0" class="display" id="clients">
+			<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="clients">
 				<thead>
 					<tr>
 						<th width="30%">Hostname</th>

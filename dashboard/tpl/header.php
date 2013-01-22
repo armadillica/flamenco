@@ -8,18 +8,15 @@
     <meta name="author" content="">
     
     <script src="<?php echo(JS); ?>/jquery-1.7.2.min.js"></script>
-    <script src="<?php echo(JS); ?>/jquery.brender.js"></script>
     <script src="<?php echo(JS); ?>/bootstrap.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
+    <script src="<?php echo(JS); ?>/jquery.brender.js"></script>
 
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'>
     <link href="<?php echo(CSS); ?>/bootstrap.min.css" rel="stylesheet">
     <link href="<?php echo(CSS); ?>/bootstrap-responsive.min.css" rel="stylesheet">
+<!--     <link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css"> -->
     <link href="<?php echo(CSS); ?>/brender.css" rel="stylesheet">
-
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css">
-    <!-- DataTables -->
-    <script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
     
     <!-- IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
