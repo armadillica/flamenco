@@ -129,7 +129,12 @@ $(document).ready(function() {
 		"sAjaxSource": '/clients/list.json',
 		"fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
 			if (aData[1] == "enabled"){
-				$('td:eq(1)', nRow).html('<b>enabled</b>');
+				$('td:eq(1)', nRow).html('<span class="btn btn-mini btn-success">enabled</span>');
+			}
+			if (aData[2] == "offline"){
+				$('td:eq(2)', nRow).html('<span class="label label-important">offline</apn>');
+			} else if (aData[2] == "online"){
+				$('td:eq(2)', nRow).html('<span class="label label-success">online</apn>');
 			}
     	}
 	});

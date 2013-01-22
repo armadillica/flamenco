@@ -52,11 +52,11 @@ class Client(object):
 	def get_attributes(self, key):
 		return self._attributes.get(key, None)
 
-	def is_online(self): # self is a reference to the object
+	def get_status(self): # self is a reference to the object
 		if self._attributes['socket'] == False:
-			return 'Offline'
+			return 'offline'
 		else:
-			return 'Online'
+			return 'online'
 
 	def __hiddenMethod(self): # a hidden method
 		print "Hard to Find"
@@ -187,7 +187,7 @@ def handle(socket, address):
 			line = fileobj.readline().strip().split()
 			
 			# if the client was connected in the past, there should be an instanced
-			# object in the clients_list[]. We access it and set the is_online
+			# object in the clients_list[]. We access it and set the get_status
 			# variable to True, to make it run and accept incoming orders.
 			# Since the client_select methog returns a list we have to select the
 			# first and only item in order to make it work (that's why we have the
@@ -229,18 +229,20 @@ def handle(socket, address):
 					#if LookForJobs() == 'next':
 					#	socket.send('done')
 				else:
-					print('break')
-					clients_list.remove(client)
+					print('Clients is being disconnected')
+					client.set_attributes('socket', False)
 					break
 					
 		if line.lower() == 'clients':
 			print('[<-] Sending list of clients to interface')
 			table_rows = []
 			for client in clients_list:
+				connection = client.get_status()
 				table_rows.append({"DT_RowId": client.get_attributes('id'),
+				"DT_RowClass": connection,
 				"0" : client.get_attributes('hostname'),
 				"1" : client.get_attributes('status'),
-				"2" : client.is_online()})
+				"2" : connection})
 			table_data = json.dumps(json_output('dataTable', table_rows))
 			fileobj.write(table_data + '\n')
 			fileobj.flush()
