@@ -172,13 +172,14 @@ def LookForJobs():
 
 # this handler will be run for each incoming connection in a dedicated greenlet
 def handle(socket, address):
-	print ('New connection from %s:%s' % address)
+	#print ('New connection from %s:%s' % address)
 	# using a makefile because we want to use readline()
 	fileobj = socket.makefile()	
 	while True:
 		line = fileobj.readline().strip()
 				
 		if line.lower() == 'identify_client':
+			print ('New connection from %s:%s' % address)
 			# we want to know if the cliend connected before
 			fileobj.write('mac_addr')
 			fileobj.flush()
@@ -236,15 +237,11 @@ def handle(socket, address):
 			print('[<-] Sending list of clients to interface')
 			table_rows = []
 			for client in clients_list:
-				#list_of_clients = client.get_attributes('hostname') + " " + client.is_online()
-				#d_print(list_of_clients)
-				#fileobj.write(list_of_clients + '\n')
 				table_rows.append([client.get_attributes('hostname'),  client.is_online()])
 			table_data = json.dumps(json_output('dataTable', table_rows))
 			fileobj.write(table_data + '\n')
 			fileobj.flush()
-			fileobj.close()
-			print('[x] Closed connection from %s:%s' % address)
+			fileobj.close() # very important, otherwise PHP does not get EOF
 			break
 
 		elif line.lower().startswith('disable'):
