@@ -13,11 +13,16 @@ $(document).ready(function() {
 		cache: false
 	});	
 
-	$('#clients').dataTable( {
+	$('#clients').dataTable({
 		"bProcessing": true,
 		"iDisplayLength": 25,
 		//"sAjaxSource": '/json_source_2.txt'
-		"sAjaxSource": '/clients/list.json'
-	} );
+		"sAjaxSource": '/clients/list.json',
+		"fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
+			if (aData[1] == "enabled"){
+				$('td:eq(1)', nRow).html('<b>enabled</b>');
+			}
+    	}
+	});
 
 });

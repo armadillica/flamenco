@@ -239,7 +239,8 @@ def handle(socket, address):
 			for client in clients_list:
 				table_rows.append({"DT_RowId": client.get_attributes('id'),
 				"0" : client.get_attributes('hostname'),
-				"1" : client.is_online()})
+				"1" : client.get_attributes('status'),
+				"2" : client.is_online()})
 			table_data = json.dumps(json_output('dataTable', table_rows))
 			fileobj.write(table_data + '\n')
 			fileobj.flush()

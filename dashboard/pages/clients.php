@@ -9,7 +9,8 @@
 				<thead>
 					<tr>
 						<th width="30%">Hostname</th>
-						<th width="70%">Status</th>
+						<th width="30%">Status</th>
+						<th width="40%">Connection</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -19,6 +20,7 @@
 					<tr>
 						<th>Hostname</th>
 						<th>Status</th>
+						<th>Connection</th>
 					</tr>
 				</tfoot>
 			</table>	
