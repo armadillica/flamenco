@@ -46,16 +46,19 @@ def create_clients(clients_amount):
 	print("Database filled with " + str(clients_amount) + " clients.")
 
 
-def remove_clients():
+def delete_clients(clients):
 	"""Removes all clients found in the clients table.
 
 	Should be refactored?
 	"""
-	clients_count = Clients.select().count()
-	for client in Clients.select():
-		print("Removing client " + client.hostname)
-		client.delete_instance()
-	print("Removed all the " + str(clients_count) + " clients")
+	if clients == 'ALL':
+		clients_count = Clients.select().count()
+		for client in Clients.select():
+			print("Removing client " + client.hostname)
+			client.delete_instance()
+		print("Removed all the " + str(clients_count) + " clients")
+	else:
+		print("Specify client id")
 
 
 def create_orders(orders_amount):
@@ -124,7 +127,7 @@ def save_runtime_client(client):
 #create_databases()
 
 #create_clients(10)
-#remove_clients()
+#delete_clients('ALL')
 #create_orders(5)
 #disable_clients()
 

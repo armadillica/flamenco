@@ -22,10 +22,6 @@ def json_output(format, table_rows_list):
 		output = {"data": table_rows_list}
 		return str(output)
 
-te = [["Trident","Internet Explorer 4.0","Win 95+","4","X"],
-	["Trident","Internet Explorer 5.0","Win 95+","5","C"]]
-
-#print(json_output('dataTable', te))
 
 # later on we will deal with jobs
 # and orders

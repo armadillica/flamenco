@@ -38,7 +38,7 @@ class Client(object):
 	"""
 	hostname = 'hostname' # provided by the client
 	socket = 'socket' # provided by gevent at the handler creation
-	status = 'enabled' # can be enabled, disabled, stopped
+	status = 'enabled' # can be enabled or disabled
 	mac_address = 0
 	warning = False
 
@@ -110,7 +110,6 @@ def set_client_attribute(*attributes):
 	client = client_select(selection_attribute[0], 
 							selection_attribute[1]) # get the client object
 	
-
 	if (client):
 		for c in client:
 			c.set_attributes(target_attribute[0],
@@ -143,6 +142,7 @@ def load_from_database():
 	print("[boot] " + str(len(clients_database_list)) + " clients loaded from database")
 	return
 
+
 def add_client_to_database(new_client_attributes):
 	print("Adding a new client to the database")
 	return initialize_runtime_client(create_client(new_client_attributes))
@@ -151,7 +151,7 @@ def add_client_to_database(new_client_attributes):
 def save_to_database():
 	for client in clients_list:
 		save_runtime_client(client)
-	print(str(len(clients_list)) + " clients saved successfully")
+	print("\n[shutdown] " + str(len(clients_list)) + " clients saved successfully")
 
 
 def LookForJobs():
@@ -296,9 +296,7 @@ def handle(socket, address):
 		#print("line is " + line)
 		#fileobj.write('> ')
 		fileobj.flush()
-		#print("done with the loop")
-		#time.sleep(1)
-		
+				
 
 if __name__ == '__main__':
 	try:
@@ -313,4 +311,4 @@ if __name__ == '__main__':
 		server.serve_forever()
 	except KeyboardInterrupt:
 		save_to_database()
-		print(" Quitting brender")
+		print("[shutdown] Quitting brender")
