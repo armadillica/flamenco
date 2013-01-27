@@ -25,3 +25,15 @@ def json_output(format, table_rows_list):
 
 # later on we will deal with jobs
 # and orders
+
+# JSON parsing API
+"""
+
+item		ALWAYS
+action		ALWAYS
+filters 	FOR RUD
+values		FOR CU
+
+"""
+
+

@@ -45,8 +45,24 @@ if ($output_type == 'page') {
 	require('tpl/footer.php');
 
 } else if ($output_type == 'data') {
+	#require('pages/json_io.php');
 
-	ask_server("clients\n");
+	$item = $_GET["item"];
+	$action = $_GET["action"];
+	if (isset($_GET["filters"])) {
+		$filters = $_GET["filters"];
+	} else {
+		$filters = '';
+	}
+	if (isset($_GET["values"])) {
+		$values = $_GET["values"];
+	} else {
+		$values = '';
+	}
+
+	//echo $item . $action . $filters;
+
+	ask_server("{'item': '$item', 'action': '$action', 'filters': '$filters', 'values':'$values'}");
 }
 
 ## echo($route);

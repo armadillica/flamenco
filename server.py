@@ -124,6 +124,102 @@ def set_client_attribute(*attributes):
 		print("[Warning] The command failed")
 
 
+def json_io(fileobj, json_input):
+
+	# d_print(str(json_input))
+
+	# we are going to check for the keys in the json_input. Based on that,
+	# we initialize the variables needed to run the actual commands
+	"""
+	This code tries to be too smart at the moment.
+
+	for key in json_input.keys():
+		if key == 'item':
+			item = json_input['item']
+		elif key == 'action':
+			action = json_input['action']
+		elif key == 'filters':
+			filters = json_input['filters']
+		elif key == 'values':
+			values = json_input['values']
+		else:
+			d_print("[Warning] Unkown keys injected!")
+	"""
+
+	item = json_input['item']
+	action = json_input['action']
+	filters = json_input['filters']
+	values = json_input['values']
+
+	if item == 'client':
+		if action == 'read':
+			if len(filters) == 0:
+				# assume parameter is 'all'
+				print('[<-] Sending list of clients to interface')
+				table_rows = []
+				for client in clients_list:
+					connection = client.get_status()
+					table_rows.append({"DT_RowId": client.get_attributes('id'),
+					"DT_RowClass": connection,
+					"0" : client.get_attributes('hostname'),
+					"1" : client.get_attributes('status'),
+					"2" : connection})
+				table_data = json.dumps(json_output('dataTable', table_rows))
+				fileobj.write(table_data + '\n')
+				fileobj.flush()
+				fileobj.close() # very important, otherwise PHP does not get EOF
+
+			else:
+				for key in filters:
+					pass # do the filtering
+		elif action == 'create':
+			d_print("[Error] Can't perform this action via JSON")
+			pass
+			if key in values:
+				pass # use the settings
+		elif action == 'delete':
+			if len(filters) == 0:
+				pass # assume parameter is 'all'
+			else:
+				for key in filters:
+					pass # do the filtering and KILL THEM
+		elif action == 'update':
+			if len(filters) == 0:
+				pass # assume parameter is 'all'
+				filters_key = 'status'
+				filters_value = 'enabled'
+			else:
+				filters = eval(filters) # cast into dictionary
+				if len(filters.keys()) == 1:
+					filters_key = filters.keys()[0]
+					filters_value = filters[filters_key]
+				else:
+					for key in filters.keys():
+						pass # do the filtering
+
+			if len(values) == 0:
+				pass # FAIL
+			else:
+				values = eval(values) # cast into dictionary
+				if len(values.keys()) == 1:
+					values_key = values.keys()[0]
+					values_value = values[values_key]
+				else:
+					for key in values.keys():
+						pass # do the filtering
+
+			#print (values_key, values_value, filters_key,filters_value)
+			set_client_attribute((filters_key, filters_value), (values_key, values_value))
+
+
+	elif item == 'job':
+		pass
+
+
+	elif item == 'brender_server':
+		pass
+
+
 def initialize_runtime_client(db_client):
 	client = Client(id = db_client.id,
 		hostname = db_client.hostname,
@@ -275,12 +371,12 @@ def handle(socket, address):
 				
 		elif line.lower() == 'test':
 			fileobj.write('test>')
-		
-		elif line.lower() == 'b':
-			clients_list[0].send('command')
-			
-		elif line.lower() == 'k':
-			clients_list[0].send('kill')
+
+		elif line.startswith('{'):
+			#line = dict(line)
+			#line = {'item': 'client', 'action': 'read', 'filters': ''}
+			json_io(fileobj, eval(line))
+			break
 
 		elif line.lower() == 'save':
 			save_to_database()

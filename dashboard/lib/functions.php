@@ -66,7 +66,7 @@ function ask_server($request) {
 	$service_port = $GLOBALS['service_port'];
 
 	$socket = stream_socket_client("tcp://$address:$service_port", $errno, $errstr, 30);
-	
+	$request = $request . "\n";
 
 	if (!$socket) {
 	    echo "$errstr ($errno)<br />\n";
@@ -74,7 +74,7 @@ function ask_server($request) {
 
 	    fwrite($socket, $request);
 	    while (!feof($socket)) {
-	        echo fgets($socket, 128); 
+	        echo fgets($socket, 512); 
 	    }
 	    fclose($socket);
 	}

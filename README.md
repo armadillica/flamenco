@@ -71,8 +71,60 @@ When a client connects we check if it was there before (if it is in the runtime_
 ### Shutdown
 When we shut down brender we must save the current status of the runtime clients in the database. There is a save_to_database function that does that. At the moment that function is very slow, compared to the load_from_database, why? This has to be investigated.
 
+### API
+The brender API consists in the exchange of JSON strings between a client and the server. At the moment it works like this:
 
-## List of commands
+* Open a connection to the server (new socket)
+* Send data to the server (as JSON)
+* Get response
+* Eventually close the connection
+
+We build the JSON request by defining item, action, filter and values. Item and action are mandatory, whereas filter and values depend on the action. Here you have an example:
+
+`{'item': 'client', 'action': 'update', 'filter': 'enabled', 'values': 'disabled'}`
+
+The following table gives a better overview of the JSON string components.
+
+<table>
+    <thead>
+   		<tr>
+        	<th>Key</th>
+        	<th>Type</th>
+        	<th>Included</th>
+        	<th>Example</th>
+        </tr>
+    </thead>
+    <tbody>
+    	<tr>
+    		<td>item</td>
+    		<td>string</td>
+    		<td>ALWAYS</td>
+    		<td>'clients'</td>
+    	</tr>
+    	<tr>
+    		<td>action</td>
+    		<td>string</td>
+    		<td>ALWAYS</td>
+    		<td>'update'</td>
+    	</tr>
+    	<tr>
+    		<td>filters</td>
+    		<td>dictionary</td>
+    		<td>Read Update Delete</td>
+    		<td>{'status': 'enabled'}</td>
+    	</tr>
+    	<tr>
+    		<td>values</td>
+    		<td>dictionary</td>
+    		<td>Create Update</td>
+    		<td>{'status': 'disabled'}</td>
+    	</tr>
+    </tbody>
+</table>
+
+
+
+## List of commands - to be updated
 No real commands are currently available. At the moment only test inputs are available, but this is a list of possible inputs:
 
 * `clients` - lists all available clients (could support filtering arguments, such as `all`, `enabled`, etc.)
