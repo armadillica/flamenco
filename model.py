@@ -19,9 +19,10 @@ class Projects(Model):
 	name = CharField()
 	description = CharField()
 	project_path = CharField()
+	render_output_path = CharField()
 	render_engine_path = CharField()
 	is_active = BooleanField()
-	config = CharField()
+	config = CharField() # using SVN, using Dropbox
 
 	class Meta:
 		database = db

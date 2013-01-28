@@ -151,6 +151,11 @@ def json_io(fileobj, json_input):
 	filters = json_input['filters']
 	values = json_input['values']
 
+	if len(filters) > 0: 
+		filters = eval(filters)
+	if len(values) > 0:
+		values = eval(values)
+
 	if item == 'client':
 		if action == 'read':
 			if len(filters) == 0:
@@ -189,7 +194,6 @@ def json_io(fileobj, json_input):
 				filters_key = 'status'
 				filters_value = 'enabled'
 			else:
-				filters = eval(filters) # cast into dictionary
 				if len(filters.keys()) == 1:
 					filters_key = filters.keys()[0]
 					filters_value = filters[filters_key]
@@ -200,7 +204,6 @@ def json_io(fileobj, json_input):
 			if len(values) == 0:
 				pass # FAIL
 			else:
-				values = eval(values) # cast into dictionary
 				if len(values.keys()) == 1:
 					values_key = values.keys()[0]
 					values_value = values[values_key]
@@ -218,6 +221,29 @@ def json_io(fileobj, json_input):
 
 	elif item == 'brender_server':
 		pass
+
+
+	elif item == 'project':
+		if action == 'create':
+			if len(values) > 0:
+				Projects.create(
+					name = values['name'],
+					description = values['description'],
+					project_path = values['project_path'],
+					render_output_path = values['render_output_path'],
+					render_engine_path = values['render_engine_path'],
+					is_active = values['is_active'],
+					config = values['config'])
+			else:
+				pass
+		elif action == 'read':
+			pass
+		elif action == 'update':
+			pass
+		elif action == 'delete':
+			pass
+		else:
+			pass
 
 
 def initialize_runtime_client(db_client):
