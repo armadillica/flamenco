@@ -48,38 +48,43 @@ for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
 if s is None:
 	print('[Error] Could not open socket')
 	sys.exit(1)
-	
-# socket is now open and we identify as clients
-s.send('identify_client\n')
-print("identifying as client with hostname: %s" % (str(HOSTNAME)))
-d_print("Waiting for response")
-line = s.recv(4096)
-if line == 'mac_addr':
-	d_print("Sending MAC address")
-	s.send(str(MAC_ADDR) + ' ' + str(HOSTNAME) + '\n')
-else:
-	print("[Error] The identification procedure failed somehow")
 
-# we enter the main loop where we listen/reply to the server messages.
-while True:
-	s.send("ready\n")
-	# we wait for an order (recv is blocking)
-	print("waiting...")
+try:
+	# socket is now open and we identify as clients
+	s.send('identify_client\n')
+	print("identifying as client with hostname: %s" % (str(HOSTNAME)))
+	d_print("Waiting for response")
 	line = s.recv(4096)
-	
-	# we print the incoming command and then evalutate it
-	print ("master said " + str(line))
-	if line == 'command':
-		print('We will run commands here')
-		
-	elif line == 'mac_addr':
-		s.send(str(MAC_ADDR) + '\n')
-		
-	elif line == 'kill':
-		s.send("quit\n")
-		time.sleep(2)
-		sys.exit(0)
-		
+	if line == 'mac_addr':
+		d_print("Sending MAC address")
+		s.send(str(MAC_ADDR) + ' ' + str(HOSTNAME) + '\n')
 	else:
-		print('other command came in')	
+		print("[Error] The identification procedure failed somehow")
+
+	# we enter the main loop where we listen/reply to the server messages.
+	while True:
+		s.send("ready\n")
+		# we wait for an order (recv is blocking)
+		print("waiting...")
+		line = s.recv(4096)
+		
+		# we print the incoming command and then evalutate it
+		print ("master said " + str(line))
+		if line == 'command':
+			print('We will run commands here')
+			
+		elif line == 'mac_addr':
+			s.send(str(MAC_ADDR) + '\n')
+			
+		elif line == 'kill':
+			s.send("quit\n")
+			time.sleep(2)
+			sys.exit(0)
+			
+		else:
+			print('other command came in')	
+
+except KeyboardInterrupt:
+	print("\n")
+	print("[shutdown] Quitting client")
 
