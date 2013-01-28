@@ -151,11 +151,6 @@ def json_io(fileobj, json_input):
 	filters = json_input['filters']
 	values = json_input['values']
 
-	if len(filters) > 0: 
-		filters = eval(filters)
-	if len(values) > 0:
-		values = eval(values)
-
 	if item == 'client':
 		if action == 'read':
 			if len(filters) == 0:
@@ -237,7 +232,20 @@ def json_io(fileobj, json_input):
 			else:
 				pass
 		elif action == 'read':
-			pass
+			if len(filters) == 0:
+				# assume parameter is 'all'
+				print('[<-] Sending list of projects to interface')
+				table_rows = []
+				for project in Projects.select():
+					table_rows.append({"DT_RowId": project.id,
+					"DT_RowClass": project.is_active,
+					"0" : project.description,
+					"1" : project.description,
+					"2" : project.is_active})
+				table_data = json.dumps(json_output('dataTable', table_rows))
+				fileobj.write(table_data + '\n')
+				fileobj.flush()
+				fileobj.close() # very important, otherwise PHP does not get EOF
 		elif action == 'update':
 			pass
 		elif action == 'delete':
@@ -401,7 +409,8 @@ def handle(socket, address):
 		elif line.startswith('{'):
 			#line = dict(line)
 			#line = {'item': 'client', 'action': 'read', 'filters': ''}
-			json_io(fileobj, eval(line))
+			line = json.loads(line)
+			json_io(fileobj, line)
 			break
 
 		elif line.lower() == 'save':
