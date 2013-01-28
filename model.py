@@ -5,30 +5,83 @@ import random
 db = SqliteDatabase('brender.sqlite')
 
 class Clients(Model):
-    mac_address = IntegerField()
-    hostname = CharField()
-    status = CharField()
-    warning = BooleanField()
-    config = CharField()
+	mac_address = IntegerField()
+	hostname = CharField()
+	status = CharField()
+	warning = BooleanField()
+	config = CharField()
 
-    class Meta:
-        database = db
+	class Meta:
+		database = db
 
-class Orders(Model):
-    client = ForeignKeyField(Clients, related_name='fk_client')
-    order = CharField()
 
-    class Meta:
-        database = db
+class Projects(Model):
+	name = CharField()
+	description = CharField()
+	project_path = CharField()
+	render_engine_path = CharField()
+	is_active = BooleanField()
+	config = CharField()
+
+	class Meta:
+		database = db
+
+
+class Sequences(Model):
+	project = ForeignKeyField(Projects, related_name='fk_project')
+	name = CharField()
+	description = CharField()
+	config = CharField()
+
+	class Meta:
+		database = db
+
+
+class Shots(Model):
+	sequence = ForeignKeyField(Sequences, related_name='fk_sequence')
+	name = CharField()
+	description = CharField()
+	frame_start = IntegerField()
+	frame_end = IntegerField()
+	chunk_size = IntegerField()
+	settings = CharField() # yolo settings
+	stage = CharField() # lighting
+	notes = CharField() # add more realism
+	status = CharField() # started and waiting / stopped / running / paused
+
+	class Meta:
+		database = db
+
+
+class Frames(Model):
+	shot = ForeignKeyField(Shots, related_name='fk_shot')
+	command = CharField()
+	stats = CharField()
+
+	class Meta:
+		database = db
+
+
+class Jobs(Model):
+	client = ForeignKeyField(Clients, related_name='fk_client')
+	#shot = ForeignKeyField(Shots, related_name='fk_shot')
+	command = CharField() 
+
+	class Meta:
+		database = db
 
 
 def create_databases():
 	"""Create the required databases during installation.
 
-	Based on the classes specified above (currently Clients and Orders)
+	Based on the classes specified above (currently Clients and Jobs)
 	"""
 	Clients.create_table()
-	Orders.create_table()
+	Projects.create_table()
+	Sequences.create_table()
+	Shots.create_table()
+	Frames.create_table()
+	Jobs.create_table()
 
 
 def create_clients(clients_amount):
@@ -61,10 +114,10 @@ def delete_clients(clients):
 		print("Specify client id")
 
 
-def create_orders(orders_amount):
-	"""Creates the specified amount of orders.
+def create_jobs(jobs_amount):
+	"""Creates the specified amount of jobs.
 
-	Orders are fake and get randomly assigned do the existing clients
+	Jobs are fake and get randomly assigned do the existing clients
 	by picking their row id from a list generate on the fly.
 	"""
 	clients_count = Clients.select().count()
@@ -74,12 +127,12 @@ def create_orders(orders_amount):
 		for client in Clients.select():
 			client_ids.append(client.id)
 
-		for i in range(orders_amount):
+		for i in range(jobs_amount):
 			random_id = random.choice(client_ids)
-			Orders.create(client = random_id,
-				order = "hello " + str(random_id))
+			Jobs.create(client = random_id,
+				command = "hello " + str(random_id))
 
-		print("Added " + str(orders_amount) + " orders.")
+		print("Added " + str(jobs_amount) + " jobs.")
 	else:
 		print("[warning] No clients available")
 
@@ -128,7 +181,10 @@ def save_runtime_client(client):
 
 #create_clients(10)
 #delete_clients('ALL')
-#create_orders(5)
+#create_jobs(10)
 #disable_clients()
 
 #show_clients()
+
+#print Clients.select().count()
+
