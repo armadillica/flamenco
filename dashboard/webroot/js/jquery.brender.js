@@ -47,7 +47,7 @@ $(document).ready(function() {
 			data: {
 				item: "client", 
 				action: "update", 
-				values: "{'status': 'disabled'}"
+				values: '{"status": "disabled"}'
 			}
 		}).done(function() {
 			location.reload();
@@ -66,8 +66,8 @@ $(document).ready(function() {
 			data: {
 				item: "client", 
 				action: "update", 
-				filters: "{'status': 'disabled'}",
-				values: "{'status': 'enabled'}"
+				filters: '{"status": "disabled"}',
+				values: '{"status": "enabled"}'
 			}
 		}).done(function() {
 			location.reload();

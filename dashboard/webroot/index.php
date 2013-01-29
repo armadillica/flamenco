@@ -52,17 +52,24 @@ if ($output_type == 'page') {
 	if (isset($_GET["filters"])) {
 		$filters = $_GET["filters"];
 	} else {
-		$filters = '';
+		$filters = '""';
 	}
 	if (isset($_GET["values"])) {
 		$values = $_GET["values"];
 	} else {
-		$values = '';
+		$values = '""';
 	}
 
 	//echo $item . $action . $filters;
+	//echo('{"item": "' . $item . '", "action": "' . $action . '", "filters": "' . $filters . '", "values":"' . $values . '"}');
 
-	ask_server("{'item': '$item', 'action': '$action', 'filters': '$filters', 'values':'$values'}");
+	$json_string = stripslashes('{"item": "' . $item . '", "action": "' . $action . '", "filters": ' . $filters . ', "values":' . $values . '}');
+
+	//echo $json_string;
+	ask_server($json_string);
+
+
+	//echo ('{"item":"client","action":"read","actions":"{""}","filters":""}');
 }
 
 ## echo($route);

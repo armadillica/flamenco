@@ -32,7 +32,6 @@ class Sequences(Model):
 	project = ForeignKeyField(Projects, related_name='fk_project')
 	name = CharField()
 	description = CharField()
-	config = CharField()
 
 	class Meta:
 		database = db
@@ -40,6 +39,7 @@ class Sequences(Model):
 
 class Shots(Model):
 	sequence = ForeignKeyField(Sequences, related_name='fk_sequence')
+	blendfile_path = CharField()
 	name = CharField()
 	description = CharField()
 	frame_start = IntegerField()
@@ -179,7 +179,6 @@ def save_runtime_client(client):
 	db_client.save()
 
 #create_databases()
-
 #create_clients(10)
 #delete_clients('ALL')
 #create_jobs(10)

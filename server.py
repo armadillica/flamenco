@@ -239,7 +239,7 @@ def json_io(fileobj, json_input):
 				for project in Projects.select():
 					table_rows.append({"DT_RowId": project.id,
 					"DT_RowClass": project.is_active,
-					"0" : project.description,
+					"0" : project.name,
 					"1" : project.description,
 					"2" : project.is_active})
 				table_data = json.dumps(json_output('dataTable', table_rows))
@@ -247,7 +247,101 @@ def json_io(fileobj, json_input):
 				fileobj.flush()
 				fileobj.close() # very important, otherwise PHP does not get EOF
 		elif action == 'update':
+			if len(values) > 0:
+				if len(filters) > 0:
+					pass
+				else: 
+					pass # apply to all
+
+			else:
+				pass #can't update with not new values!
+		elif action == 'delete':
 			pass
+		else:
+			pass
+
+
+	elif item == 'sequence':
+		if action == 'create':
+			if len(values) > 0:
+				Sequences.create(
+					project = values['fk_project'],
+					name = values['name'],
+					description = values['description'])
+				print ("[info] Sequence %s created" % (values['name']))
+			else:
+				pass
+		elif action == 'read':
+			if len(filters) == 0:
+				# assume parameter is 'all'
+				print('[<-] Sending list of sequences to interface')
+				table_rows = []
+				for sequence in Sequences.select():
+					table_rows.append({"DT_RowId": sequence.id,
+					"0" : sequence.name,
+					"1" : sequence.description})
+				table_data = json.dumps(json_output('dataTable', table_rows))
+				fileobj.write(table_data + '\n')
+				fileobj.flush()
+				fileobj.close() # very important, otherwise PHP does not get EOF
+		elif action == 'update':
+			if len(values) > 0:
+				if len(filters) > 0:
+					pass
+				else: 
+					pass # apply to all
+
+			else:
+				pass #can't update with not new values!
+		elif action == 'delete':
+			pass
+		else:
+			pass
+
+
+	elif item == 'shot':
+		if action == 'create':
+			if len(values) > 0:
+				Shots.create(
+					sequence = values['fk_sequence'],
+					name = values['name'],
+					description = values['description'],
+					frame_start = values['frame_start'],
+					frame_end = values['frame_end'],
+					chunk_size = values['chunk_size'],
+					settings = values['settings'],
+					stage = values['stage'],
+					notes = values['notes'],
+					status = values['status'])
+				print ("[info] Shot %s created" % (values['name']))
+			else:
+				pass
+		elif action == 'read':
+			if len(filters) == 0:
+				# assume parameter is 'all'
+				print('[<-] Sending list of shots to interface')
+				table_rows = []
+				for shot in Shots.select():
+					table_rows.append({"DT_RowId": shot.id,
+					"0" : shot.name,
+					"1" : shot.description,
+					"2" : shot.frame_start,
+					"3" : shot.frame_end,
+					"4" : shot.chunk_size,
+					"5" : shot.status})
+				table_data = json.dumps(json_output('dataTable', table_rows))
+				fileobj.write(table_data + '\n')
+				fileobj.flush()
+				fileobj.close() # very important, otherwise PHP does not get EOF
+		elif action == 'update':
+			if len(values) > 0:
+				if len(filters) > 0:
+					pass
+				else: 
+					pass # apply to all
+
+			else:
+				pass #can't update with not new values!
 		elif action == 'delete':
 			pass
 		else:
