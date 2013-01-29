@@ -104,7 +104,7 @@ def set_client_attribute(*attributes):
 	"""
 
 	selection_attribute = attributes[0]
-	d_print('selection ' + selection_attribute[0] + " " + selection_attribute[1])
+	d_print('selection ' + selection_attribute[0] + " " + str(selection_attribute[1]))
 	target_attribute = attributes[1]
 	d_print('target ' + target_attribute[0])
 	client = client_select(selection_attribute[0], 
@@ -159,11 +159,12 @@ def json_io(fileobj, json_input):
 				table_rows = []
 				for client in clients_list:
 					connection = client.get_status()
-					table_rows.append({"DT_RowId": client.get_attributes('id'),
-					"DT_RowClass": connection,
-					"0" : client.get_attributes('hostname'),
-					"1" : client.get_attributes('status'),
-					"2" : connection})
+					table_rows.append({
+						"DT_RowId": "client_" + str(client.get_attributes('id')),
+						"DT_RowClass": connection,
+						"0" : client.get_attributes('hostname'),
+						"1" : client.get_attributes('status'),
+						"2" : connection})
 				table_data = json.dumps(json_output('dataTable', table_rows))
 				fileobj.write(table_data + '\n')
 				fileobj.flush()
