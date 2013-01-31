@@ -1,13 +1,13 @@
 <?php
 $route = (empty($_GET['rt'])) ? '' : $_GET['rt'];
 $page_body = 'index.php';
-$is_fluid = '';
+$current_page = '';
 
 $output_type = 'page';
 
 if (empty($route)) {
 		$page_body = 'pages/clients.php';
-		$is_fluid = '';
+		$current_page = 'overview';
 
 } else if (match_extension($route, '.json')) {
 		$output_type = 'data';
@@ -21,13 +21,13 @@ if (empty($route)) {
 		
 		case 'clients':
 			$page_body = 'pages/clients.php';
-			$is_fluid = '';
+			$current_page = 'clients';
 			print($parts[1]);
 			break;
 			
 		default: 
 			$page_body = 'pages/404.php';
-			$is_fluid = '';
+			$current_page = '';
 			break;
 	}
 	

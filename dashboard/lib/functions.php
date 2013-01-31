@@ -79,4 +79,12 @@ function ask_server($request) {
 	    fclose($socket);
 	}
 }
+
+
+function is_current_page($current_page, $page_name) {
+	if ($current_page == $page_name) {
+		echo 'class="active"';
+	} 
+}
+
 ?>

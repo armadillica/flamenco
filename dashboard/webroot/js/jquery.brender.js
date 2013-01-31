@@ -67,7 +67,7 @@ $(document).ready(function() {
 				values: '{"status": "disabled"}'
 			}
 		}).done(function() {
-			//location.reload();
+			location.reload();
 			/*
 			if ($('.status-toggle').hasClass('btn-success')) {
 				$('.status-toggle').removeClass('btn-success').addClass('btn-warning');

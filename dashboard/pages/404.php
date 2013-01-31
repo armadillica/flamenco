@@ -1,2 +1,3 @@
-<div id="not_found" class="container">
-	<h1 class="bold">404</h1>
+	<div class="page-header">
+	    <h1>404 - Page not found</h1>
+	</div>

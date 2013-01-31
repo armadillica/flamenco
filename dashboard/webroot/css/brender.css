@@ -321,3 +321,8 @@ div.DTFC_LeftBodyWrapper tbody tr:first-child td {
 div.DTFC_LeftFootWrapper table {
     border-top: none;
 }
+
+
+.well.side-nav {
+  padding: 8px 0;
+}
