@@ -65,8 +65,23 @@ class Jobs(Model):
 		database = db
 
 
+class Orders(Model):
+	"""docstring for Orders"""
+
+	job = ForeignKeyField(Jobs, related_name='fk_job')
+	client = ForeignKeyField(Clients, related_name='fk_client')
+	chunk_start = IntegerField()
+	chunk_end = IntegerField()
+	current_frame = IntegerField()
+
+	class Meta:
+		database = db
+		
+
+
 class Frames(Model):
 	job = ForeignKeyField(Jobs, related_name='fk_job')
+	number = CharField()
 	command = CharField()
 	stats = CharField() # log data
 
@@ -252,7 +267,7 @@ def install_brender():
 #create_jobs(10)
 #disable_clients()
 
-add_random_jobs(10)
+#add_random_jobs(10)
 
 #show_clients()
 

@@ -19,6 +19,7 @@ import socket
 import sys
 import os
 import time
+import json
 from uuid import getnode as get_mac
 from brender import *
 
@@ -46,30 +47,30 @@ for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
 	break
 
 if s is None:
-	print('[Error] Could not open socket')
+	print('[error] Could not open socket: is the server running?')
 	sys.exit(1)
 
 try:
 	# socket is now open and we identify as clients
 	s.send('identify_client\n')
-	print("identifying as client with hostname: %s" % (str(HOSTNAME)))
-	d_print("Waiting for response")
+	print('[info] Identifying as client with hostname: %s' % (str(HOSTNAME)))
+	d_print('Waiting for response')
 	line = s.recv(4096)
 	if line == 'mac_addr':
-		d_print("Sending MAC address")
+		d_print('Sending MAC address')
 		s.send(str(MAC_ADDR) + ' ' + str(HOSTNAME) + '\n')
 	else:
-		print("[Error] The identification procedure failed somehow")
+		print('[error] The identification procedure failed somehow')
 
 	# we enter the main loop where we listen/reply to the server messages.
 	while True:
-		s.send("ready\n")
+		s.send('ready\n')
 		# we wait for an order (recv is blocking)
-		print("waiting...")
+		print('Waiting...')
 		line = s.recv(4096)
 		
 		# we print the incoming command and then evalutate it
-		print ("master said " + str(line))
+		print ('[info] Server said ' + str(line))
 		if line == 'command':
 			print('We will run commands here')
 			
@@ -77,14 +78,25 @@ try:
 			s.send(str(MAC_ADDR) + '\n')
 			
 		elif line == 'kill':
-			s.send("quit\n")
+			s.send('quit\n')
 			time.sleep(2)
 			sys.exit(0)
+
+		elif line.startswith('{'):
+			order = json.loads(line)
+
+			if order['is_final'] == True:
+				s.send('finished\n')
+
+			else:
+				s.send('busy\n')
 			
 		else:
-			print('other command came in')	
+			print('[info] Other command came in')	
+			time.sleep(1)
+			s.send('busy\n')
 
 except KeyboardInterrupt:
-	print("\n")
-	print("[shutdown] Quitting client")
+	print('\n')
+	print('[shutdown] Quitting client')
 

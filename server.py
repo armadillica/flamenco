@@ -426,20 +426,55 @@ def save_to_database():
 	print("\n[shutdown] " + str(len(clients_list)) + " clients saved successfully")
 
 
-def LookForJobs():
-	"""This is just testing code that never runs"""
+def look_for_jobs():
 	
-	time.sleep(1)
-	print('1\n')
-	time.sleep(1)
-	print('2\n')
-	if len(job_list) > 0:
-		print('removed job ' + str(job_list[0]))
-		job_list.remove(job_list[0])
-		return('next')
+	if Jobs.select().count() > 0:
+		time.sleep(1)
+		d_print('selecting jobs')
+		order = {"is_final": False }
+
+		for job in Jobs.select():
+			if job.status == 'running':
+
+				# If the job is at the very first chunk
+				if job.frame_start == job.current_frame:
+					chunk_start = job.frame_start
+					chunk_end = chunk_start + job.chunk_size
+					
+					job.current_frame = chunk_end
+					job.save()		
+
+				else:
+					# If any we update the current frame for the job
+					chunk_start = job.current_frame + 1
+					chunk_end = chunk_start + job.chunk_size
+					d_print('updated current frame ' + str(chunk_end))
+
+					# Any chunk within start and end frame
+					if chunk_end < job.frame_end:
+						job.current_frame = chunk_end
+						job.save()
+
+					# If the job is at the very last chunk
+					else:
+						job.current_frame = job.frame_end
+						chunk_end = job.frame_end
+						job.status = 'finishing'
+						job.save()
+
+						order.update({"is_final": True})
+
+				order.update({
+					"job_id": job.id,
+					"filepath": job.filepath,
+					"chunk_start": chunk_start,
+					"chunk_end": chunk_end})
+				
+				return json.dumps(order)
 	else:
-		print('no jobs at the moment')
-		return('done')
+		print("[info] No jobs at the moment, feed the farm")
+		return False
+
 
 
 # this handler will be run for each incoming connection in a dedicated greenlet
@@ -497,9 +532,24 @@ def handle(socket, address):
 				d_print('Client ' + str(client.get_attributes('hostname')) + ' is waiting')
 				line = fileobj.readline().strip()
 				if line.lower() == 'ready':
-					print('Client is ready for a job')
-					#if LookForJobs() == 'next':
-					#	socket.send('done')
+					print('Client is wating for an order')
+					order = look_for_jobs()
+					if order:
+						socket.send(str(order))
+					else:
+						print("[info] no orders generated")
+
+				elif line.lower() == 'busy':
+					print('Order successfully executed - frame delivered')
+
+				# Only run at the very last fram of a job
+				elif line.lower() == 'finished':
+					print('Order successfully executed - last frame of the job delivered')
+
+				elif line.lower() == 'warning':
+					print('[warning] the client seems to have issues')
+					client.set_attributes('warning', True)
+
 				else:
 					print('Clients is being disconnected')
 					client.set_attributes('socket', False)
