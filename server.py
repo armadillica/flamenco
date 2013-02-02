@@ -211,9 +211,6 @@ def json_io(fileobj, json_input):
 			set_client_attribute((filters_key, filters_value), (values_key, values_value))
 
 
-	elif item == 'job':
-		pass
-
 
 	elif item == 'brender_server':
 		pass
@@ -279,8 +276,9 @@ def json_io(fileobj, json_input):
 				table_rows = []
 				for sequence in Sequences.select():
 					table_rows.append({"DT_RowId": sequence.id,
-					"0" : sequence.name,
-					"1" : sequence.description})
+					"0" : sequence.project.name,
+					"1" : sequence.name,
+					"2" : sequence.description})
 				table_data = json.dumps(json_output('dataTable', table_rows))
 				fileobj.write(table_data + '\n')
 				fileobj.flush()
@@ -330,6 +328,55 @@ def json_io(fileobj, json_input):
 					"3" : shot.status,
 					"4" : shot.stage,
 					"5" : shot.notes})
+				table_data = json.dumps(json_output('dataTable', table_rows))
+				fileobj.write(table_data + '\n')
+				fileobj.flush()
+				fileobj.close() # very important, otherwise PHP does not get EOF
+		elif action == 'update':
+			if len(values) > 0:
+				if len(filters) > 0:
+					pass
+				else: 
+					pass # apply to all
+
+			else:
+				pass #can't update with not new values!
+		elif action == 'delete':
+			pass
+		else:
+			pass
+
+
+	elif item == 'job':
+		if action == 'create':
+			if len(values) > 0:	
+				Jobs.create(
+					shot = 1,
+					frame_start = 2,
+					frame_end = 50,
+					chunk_size = 5,
+					current_frame = 2,
+					filepath = 'path',
+					render_settings = 'will refer to settins table',
+					status = 'running',
+					priority = 10,
+					owner = 'fsiddi')
+				print ("[info] Shot %s created" % (values['name']))
+			else:
+				pass
+		elif action == 'read':
+			if len(filters) == 0:
+				# assume parameter is 'all'
+				print('[<-] Sending list of jobs to interface')
+				table_rows = []
+				for job in Jobs.select():
+					table_rows.append({"DT_RowId": job.id,
+					"0" : job.shot.name,
+					"1" : job.frame_start,
+					"2" : job.frame_end,
+					"3" : job.render_settings,
+					"4" : job.status,
+					"5" : job.owner})
 				table_data = json.dumps(json_output('dataTable', table_rows))
 				fileobj.write(table_data + '\n')
 				fileobj.flush()

@@ -76,7 +76,9 @@
               <li <?php echo ($current_page == 'shots') ? 'class="active"' : ""; ?>>
                 <a href="<?php echo(__WWW_PATH); ?>/shots/">Shots</a>
               </li>
-              <li><a href="#">Sequences</a></li>
+              <li <?php echo ($current_page == 'sequences') ? 'class="active"' : ""; ?>>
+                <a href="<?php echo(__WWW_PATH); ?>/sequences/">Sequences</a>
+              </li>
               <li class="nav-header">Stats</li>
               <li><a href="#">Server status</a></li>
               <li><a href="#">Render times</a></li>

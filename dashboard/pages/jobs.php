@@ -13,12 +13,12 @@
 			<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="jobs">
 				<thead>
 					<tr>
-						<th width="30%">Tumbnail</th>
-						<th width="20%">Shot</th>
-						<th width="20%">Progress</th>
-						<th width="10%">Scene name</th>
-						<th width="10%">Settings</th>
-						<th width="10%">Start-End</th>
+						<th width="20%">Tumbnail</th>
+						<th width="10%">Frame Start</th>
+						<th width="10%">Frame End</th>
+						<th width="20%">Settings</th>
+						<th width="20%">Status</th>
+						<th width="20%">Owner</th>
 					</tr>
 				</thead>
 				<tbody>

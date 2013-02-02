@@ -117,27 +117,35 @@ def delete_clients(clients):
 		print("Specify client id")
 
 
-def create_jobs(jobs_amount):
+def add_random_jobs(jobs_amount):
 	"""Creates the specified amount of jobs.
 
 	Jobs are fake and get randomly assigned do the existing clients
 	by picking their row id from a list generate on the fly.
 	"""
-	clients_count = Clients.select().count()
-	if clients_count > 0:
-		# We build an index of the client ids
-		client_ids = []
-		for client in Clients.select():
-			client_ids.append(client.id)
+	shots_count = Shots.select().count()
+	if shots_count > 0:
+		# We build an index of the shot ids
+		shot_ids = []
+		for shot in Shots.select():
+			shot_ids.append(shot.id)
 
 		for i in range(jobs_amount):
-			random_id = random.choice(client_ids)
-			Jobs.create(client = random_id,
-				command = "hello " + str(random_id))
+			random_id = random.choice(shot_ids)
+			Jobs.create(shot = random_id,
+				frame_start = 2,
+				frame_end = 50,
+				chunk_size = 5,
+				current_frame = 2,
+				filepath = 'path',
+				render_settings = 'will refer to settins table',
+				status = 'running',
+				priority = 10,
+				owner = 'fsiddi')
 
-		print("Added " + str(jobs_amount) + " jobs.")
+		print("Added " + str(jobs_amount) + " shots.")
 	else:
-		print("[warning] No clients available")
+		print("[warning] No shots available")
 
 def create_shots(shots_amount):
 	"""Creates the specified amount of jobs.
@@ -243,6 +251,8 @@ def install_brender():
 #delete_clients('ALL')
 #create_jobs(10)
 #disable_clients()
+
+add_random_jobs(10)
 
 #show_clients()
 

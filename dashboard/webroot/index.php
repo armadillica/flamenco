@@ -36,7 +36,13 @@ if (empty($route)) {
 			$current_page = 'shots';
 			print($parts[1]);
 			break;
-			
+		
+		case 'sequences':
+			$page_body = 'pages/sequences.php';
+			$current_page = 'sequences';
+			print($parts[1]);
+			break;	
+
 		default: 
 			$page_body = 'pages/404.php';
 			$current_page = '';

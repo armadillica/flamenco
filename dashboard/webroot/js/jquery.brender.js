@@ -96,6 +96,28 @@ $(document).ready(function() {
 		});
 	});
 
+	var sequencesTable = $('#sequences').dataTable({
+		"bProcessing": true,
+		"iDisplayLength": 25,
+		"sAjaxSource": '/data.json',
+		"fnServerParams": function (aoData) {
+			aoData.push( 
+				{"name": "item", "value": "sequence"}, 
+				{"name": "action", "value": "read"});
+		}
+	});
+	
+
+	var shotsTable = $('#shots').dataTable({
+		"bProcessing": true,
+		"iDisplayLength": 25,
+		"sAjaxSource": '/data.json',
+		"fnServerParams": function (aoData) {
+			aoData.push( 
+				{"name": "item", "value": "shot"}, 
+				{"name": "action", "value": "read"});
+		}
+	});
 
 	var jobsTable = $('#jobs').dataTable({
 		"bProcessing": true,
@@ -108,15 +130,6 @@ $(document).ready(function() {
 		}
 	});
 
-	var shotsTable = $('#shots').dataTable({
-		"bProcessing": true,
-		"iDisplayLength": 25,
-		"sAjaxSource": '/data.json',
-		"fnServerParams": function (aoData) {
-			aoData.push( 
-				{"name": "item", "value": "shot"}, 
-				{"name": "action", "value": "read"});
-		}
-	});
+
 
 });
