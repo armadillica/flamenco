@@ -324,12 +324,12 @@ def json_io(fileobj, json_input):
 				table_rows = []
 				for shot in Shots.select():
 					table_rows.append({"DT_RowId": shot.id,
-					"0" : shot.name,
-					"1" : shot.description,
-					"2" : shot.frame_start,
-					"3" : shot.frame_end,
-					"4" : shot.chunk_size,
-					"5" : shot.status})
+					"0" : shot.sequence.name,
+					"1" : shot.name,
+					"2" : shot.description,
+					"3" : shot.status,
+					"4" : shot.stage,
+					"5" : shot.notes})
 				table_data = json.dumps(json_output('dataTable', table_rows))
 				fileobj.write(table_data + '\n')
 				fileobj.flush()

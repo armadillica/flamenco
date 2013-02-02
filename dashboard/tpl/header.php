@@ -56,7 +56,7 @@
       <div class="span2">
           <div class="well side-nav">
             <ul class="nav nav-list">
-              <li class="nav-header">Main</li>
+              <li class="nav-header">Rendering</li>
               <li <?php echo ($current_page == 'overview') ? 'class="active"' : ""; ?>>
                 <a href="<?php echo(__WWW_PATH); ?>/">Overview</a>
               </li>
@@ -72,6 +72,11 @@
               <li <?php echo ($current_page == 'job') ? 'class="active"' : ""; ?>>
                 <a href="#">New Job</a>
               </li>
+              <li class="nav-header">Tasks</li>
+              <li <?php echo ($current_page == 'shots') ? 'class="active"' : ""; ?>>
+                <a href="<?php echo(__WWW_PATH); ?>/shots/">Shots</a>
+              </li>
+              <li><a href="#">Sequences</a></li>
               <li class="nav-header">Stats</li>
               <li><a href="#">Server status</a></li>
               <li><a href="#">Render times</a></li>

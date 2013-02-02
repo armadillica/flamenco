@@ -18,11 +18,11 @@ class Clients(Model):
 class Projects(Model):
 	name = CharField()
 	description = CharField()
-	project_path = CharField()
-	render_output_path = CharField()
-	render_engine_path = CharField()
+	project_path = CharField() # dic for OS
+	render_output_path = CharField() # dic for OS
+	render_engine_path = CharField() # dic for OS
 	is_active = BooleanField()
-	config = CharField() # using SVN, using Dropbox
+	settings = CharField() # framerate, using SVN, using Dropbox
 
 	class Meta:
 		database = db
@@ -39,34 +39,36 @@ class Sequences(Model):
 
 class Shots(Model):
 	sequence = ForeignKeyField(Sequences, related_name='fk_sequence')
-	blendfile_path = CharField()
 	name = CharField()
 	description = CharField()
-	frame_start = IntegerField()
-	frame_end = IntegerField()
-	chunk_size = IntegerField()
-	settings = CharField() # yolo settings
+	status = CharField() # todo / in progress / review / rendering
 	stage = CharField() # lighting
 	notes = CharField() # add more realism
-	status = CharField() # started and waiting / stopped / running / paused
-
-	class Meta:
-		database = db
-
-
-class Frames(Model):
-	shot = ForeignKeyField(Shots, related_name='fk_shot')
-	command = CharField()
-	stats = CharField()
 
 	class Meta:
 		database = db
 
 
 class Jobs(Model):
-	client = ForeignKeyField(Clients, related_name='fk_client')
-	#shot = ForeignKeyField(Shots, related_name='fk_shot')
-	command = CharField() 
+	shot = ForeignKeyField(Shots, related_name='fk_shot')
+	frame_start = IntegerField()
+	frame_end = IntegerField()
+	chunk_size = IntegerField()
+	current_frame = IntegerField()
+	filepath = CharField() 
+	render_settings = CharField() # yolo settings (pre render / render / post)
+	status = CharField() # started and waiting / stopped / running / paused
+	priority = IntegerField()
+	owner = CharField() # will eventually become a foreign field
+
+	class Meta:
+		database = db
+
+
+class Frames(Model):
+	job = ForeignKeyField(Jobs, related_name='fk_job')
+	command = CharField()
+	stats = CharField() # log data
 
 	class Meta:
 		database = db
@@ -81,8 +83,8 @@ def create_databases():
 	Projects.create_table()
 	Sequences.create_table()
 	Shots.create_table()
-	Frames.create_table()
 	Jobs.create_table()
+	Frames.create_table()	
 
 
 def create_clients(clients_amount):
@@ -137,12 +139,62 @@ def create_jobs(jobs_amount):
 	else:
 		print("[warning] No clients available")
 
+def create_shots(shots_amount):
+	"""Creates the specified amount of jobs.
 
-def disable_clients():
-	for client in Clients.select():
-		client.status = 'disabled'
-		client.save()
-		print("Changing status to 'disabled' for client " + str(client.hostname))
+	Jobs are fake and get randomly assigned do the existing clients
+	by picking their row id from a list generate on the fly.
+	"""
+	sequences_count = Sequences.select().count()
+	if sequences_count > 0:
+		# We build an index of the client ids
+		sequence_ids = []
+		for sequence in Sequences.select():
+			sequence_ids.append(sequence.id)
+
+		for i in range(shots_amount):
+			random_id = random.choice(sequence_ids)
+			Shots.create(sequence = random_id,
+				name = str(i),
+				description = 'Shot description',
+				status = 'In progress',
+				stage = 'Lighting',
+				notes = 'Fix this and that')
+
+
+		print("Added " + str(shots_amount) + " shots.")
+	else:
+		print("[warning] Something wrong")
+
+
+def fill_with_data():
+
+	Projects.create(name = 'Test project',
+		description = 'Test project',
+		project_path = '{"linux":"/path","osx":"/path","windows":"/path"}',
+		render_output_path = '{"linux":"/path","osx":"/path","windows":"/path"}',
+		render_engine_path = '{"linux":"/path","osx":"/path","windows":"/path"}',
+		is_active = True,
+		settings = '{"framerate":24,"use_svn":False,"use_dropbox":False}')
+
+	print "project created"
+
+	Sequences.create(project = 1,
+		name = '01_01',
+		description = 'Sequence 1')
+
+	create_shots(10)
+
+	Jobs.create(shot = 1,
+		frame_start = 2,
+		frame_end = 50,
+		chunk_size = 5,
+		current_frame = 2,
+		filepath = 'path',
+		render_settings = 'will refer to settins table',
+		status = 'running',
+		priority = 10,
+		owner = 'fsiddi')
 
 
 def load_clients():
@@ -178,8 +230,16 @@ def save_runtime_client(client):
 	db_client.config = client.get_attributes('config')
 	db_client.save()
 
-#create_databases()
-#create_clients(10)
+
+def install_brender():
+	create_databases()
+	create_clients(10)
+	fill_with_data()
+
+
+#install_brender()
+
+#create_shots(20)
 #delete_clients('ALL')
 #create_jobs(10)
 #disable_clients()

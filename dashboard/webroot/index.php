@@ -24,6 +24,18 @@ if (empty($route)) {
 			$current_page = 'clients';
 			print($parts[1]);
 			break;
+
+		case 'jobs':
+			$page_body = 'pages/jobs.php';
+			$current_page = 'jobs';
+			print($parts[1]);
+			break;
+
+		case 'shots':
+			$page_body = 'pages/shots.php';
+			$current_page = 'shots';
+			print($parts[1]);
+			break;
 			
 		default: 
 			$page_body = 'pages/404.php';
