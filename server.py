@@ -468,7 +468,8 @@ def look_for_jobs():
 					"job_id": job.id,
 					"filepath": job.filepath,
 					"chunk_start": chunk_start,
-					"chunk_end": chunk_end})
+					"chunk_end": chunk_end,
+					"current_frame": chunk_start})
 				
 				return json.dumps(order)
 	else:
@@ -541,6 +542,17 @@ def handle(socket, address):
 
 				elif line.lower() == 'busy':
 					print('Order successfully executed - frame delivered')
+					line = fileobj.readline().strip()
+					while line.lower() == 'busy':
+						print('Order successfully executed - frame delivered')
+						line = fileobj.readline().strip()
+
+					if line == 'chunk_finished':
+						print('Chunk finished')
+					elif line == 'job_finished':
+						print('Job finished') #add id and more info
+					# TODO next step is to save order to database
+					# and then save frames into database
 
 				# Only run at the very last fram of a job
 				elif line.lower() == 'finished':
