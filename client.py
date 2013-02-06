@@ -3,7 +3,7 @@
 
 The guy connects to the server and gets order from it. As soon as it gets
 an order, if needed, it forks a process to run the desired command. This
-way the communication channel with the server stays clean and it's always
+way the communication channel with the server stays clean and it'server_socket always
 possible to send other commands to the client. Some example commands that
 need to be implemented.
 
@@ -26,7 +26,7 @@ from brender import *
 
 HOST = 'localhost'  # the remote host
 PORT = 6000  # the same port as used by the server
-s = None
+server_socket = None
 MAC_ADDR = get_mac()  # the MAC address of the client
 HOSTNAME = socket.gethostname()
 
@@ -34,40 +34,40 @@ HOSTNAME = socket.gethostname()
 for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
 	af, socktype, proto, canonname, sa = res
 	try:
-		s = socket.socket(af, socktype, proto)
+		server_socket = socket.socket(af, socktype, proto)
 	except socket.error as msg:
-		s = None
+		server_socket = None
 		continue
 	try:
-		s.connect(sa)
+		server_socket.connect(sa)
 	except socket.error as msg:
-		s.close()
-		s = None
+		server_socket.close()
+		server_socket = None
 		continue
 	break
 
-if s is None:
+if server_socket is None:
 	print('[error] Could not open socket: is the server running?')
 	sys.exit(1)
 
 try:
 	# socket is now open and we identify as clients
-	s.send('identify_client\n')
-	print('[info] Identifying as client with hostname: %s' % (str(HOSTNAME)))
+	server_socket.send('identify_client\n')
+	print('[info] Identifying as client with hostname: %server_socket' % (str(HOSTNAME)))
 	d_print('Waiting for response')
-	line = s.recv(4096)
+	line = server_socket.recv(4096)
 	if line == 'mac_addr':
 		d_print('Sending MAC address')
-		s.send(str(MAC_ADDR) + ' ' + str(HOSTNAME) + '\n')
+		server_socket.send(str(MAC_ADDR) + ' ' + str(HOSTNAME) + '\n')
 	else:
 		print('[error] The identification procedure failed somehow')
 
 	# we enter the main loop where we listen/reply to the server messages.
 	while True:
-		s.send('ready\n')
+		server_socket.send('ready\n')
 		# we wait for an order (recv is blocking)
 		print('Waiting...')
-		line = s.recv(4096)
+		line = server_socket.recv(4096)
 		
 		# we print the incoming command and then evalutate it
 		print ('[info] Server said ' + str(line))
@@ -75,10 +75,10 @@ try:
 			print('We will run commands here')
 			
 		elif line == 'mac_addr':
-			s.send(str(MAC_ADDR) + '\n')
+			server_socket.send(str(MAC_ADDR) + '\n')
 			
 		elif line == 'kill':
-			s.send('quit\n')
+			server_socket.send('quit\n')
 			time.sleep(2)
 			sys.exit(0)
 
@@ -86,15 +86,15 @@ try:
 			order = json.loads(line)
 
 			if order['is_final'] == True:
-				s.send('finished\n')
+				server_socket.send('finished\n')
 
 			else:
-				s.send('busy\n')
+				server_socket.send('busy\n')
 			
 		else:
 			print('[info] Other command came in')	
 			time.sleep(1)
-			s.send('busy\n')
+			server_socket.send('busy\n')
 
 except KeyboardInterrupt:
 	print('\n')
