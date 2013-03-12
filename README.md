@@ -20,21 +20,28 @@ To install gevent on OSX, check this docs out:
 * Install peewee (easy_install peewee)
 
 ## Architecture
-At the moment there are 3 files:
+At the moment there are two main files and one folder:
 
 * master.py - the server that handles all the client connections and dispatches orders
-* client.py - a stupid client that connects to the master and waits for orders
-* php_client.php - a test script to talk to the master from a php script (proof of concept for web interface)
+* client.py - a client that connects to the master and waits for orders
+* dashboard - contains a simple web application that provides a GUI for managin server and clients
 
 Is is possible to connect to the master via telnet using the command `telent localhost 6000`.
-A command prompt will appear and it will be possible to talk to the master.
+A command prompt will appear and it will be possible to talk to the master (at the moment some basic commands are still usable, but the idea is to make it support only normal API strings - see the syntax below).
 
-### Immediate future planning
+### Past steps
 The next milestone for the development is to achive a solid system for enabling and disabling clients (both via command line interface and web interface). This will be achieved in several steps:
 
 * develop a versatile attributes CRUD API for the objects (both via CLI and WI)
 * integrate an ORM such as `pewee` for handling a mirrored database with all the clients, jobs, etc
 * create the foundation for the web interface and implement the basic client enable and disable features
+
+### Current steps
+Complete the project, sequence, shot, frames, job management system, including a documentation of the functions involved, as well as the API calls.
+
+### Next steps
+Here we will write a list of the future steps to be taken (this includes design goals and features). Will be updated soon.
+
 
 ### About the web interface
 The idea is to use a light PHP framework that will allow the user to connect to the master and give inputs. All the database work related to the farm will not be directly accessible by the client. Web interface and master.py will talk to each other via sockets using JSON strings.
@@ -43,10 +50,18 @@ After some quite intense research we dropped the idea of using CodeIgniter as a 
 
 * fully configurable url routing
 * web interface with dataDables and data loaded via AJAX
-* JSON data output (was a pain to get it working)
+* JSON data output (was a pain to get it working because we forgot to close the socket once the query was completed)
 
 ### How to use the web interface
-It's quite simple. The web interface is situated in the folder called `dashboard`. Set the Apache home directory in that folder and you should be able to see it via the web browser. Will add soon a diagram about what each file does.
+It's quite simple. The web interface is situated in the folder called `dashboard`. Set the Apache home directory in that folder and you should be able to see it via the web browser. Here is a list of the main files and folders:
+
+* config.php - basic configuration (server address and port)
+* index.pgp - sets up the routing and point to the webroot folder
+* lib - contains any library used by the application (currently only one functions.php file)
+* pages - content of each page of the application
+* tpl - templates used to wrap page contents
+* webroot - contains all the frontend elements (css, javascript, images and icons)
+
 
 Frameworks and tools used by the interface are:
 
@@ -124,7 +139,7 @@ The following table gives a better overview of the JSON string components.
 
 
 
-## List of commands - to be updated
+## List of commands - outdated
 No real commands are currently available. At the moment only test inputs are available, but this is a list of possible inputs:
 
 * `clients` - lists all available clients (could support filtering arguments, such as `all`, `enabled`, etc.)
