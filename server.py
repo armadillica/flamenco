@@ -609,7 +609,8 @@ def handle(socket, address):
 				
 		elif line.lower() == 'test':
 			fileobj.write('test>')
-
+		
+		# This will actually replace any way to talk to the server ('clients', 'save', ect).
 		elif line.startswith('{'):
 			#line = dict(line)
 			#line = {'item': 'client', 'action': 'read', 'filters': ''}
@@ -636,6 +637,8 @@ def handle(socket, address):
 if __name__ == '__main__':
 	try:
 		# we load the clients from the database into the list as objects
+		# might be wise to just read them all the time from the database
+		# instead of putting them in memory. To be decided.
 		print("[boot] Loading clients from database")
 		load_from_database()
 		# to make the server use SSL, pass certfile and keyfile arguments to the constructor

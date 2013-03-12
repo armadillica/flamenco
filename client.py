@@ -1,17 +1,22 @@
 #!/usr/bin/env python
 """Simple client
 
-The guy connects to the server and gets order from it. As soon as it gets
+The client connects to the server and gets order from it. As soon as it gets
 an order, if needed, it forks a process to run the desired command. This
 way the communication channel with the server stays clean and it'server_socket always
 possible to send other commands to the client. Some example commands that
 need to be implemented.
+This client could be run as some sort of 'daemon', started as soon as the
+operating system is booted.
 
 * Enable/Disable client
-* Execute order (like render frames chunk)
+* Execute order (like render a chunk of frames)
+* Parse software log when rendering and store it
+* Process image output to generate thumbnails
+* Upload data to a shared folder (secure server, LAN, ect)
 * Check client status
 * Check order status
-* Pause/Resume order
+* Pause/Resume order (like pause the actual process - PID)
 * Kill order
 
 """
