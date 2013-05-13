@@ -226,7 +226,7 @@ def json_io(fileobj, json_input):
 					render_output_path = values['render_output_path'],
 					render_engine_path = values['render_engine_path'],
 					is_active = values['is_active'],
-					config = values['config'])
+					settings = values['settings'])
 			else:
 				pass
 		elif action == 'read':
@@ -235,11 +235,13 @@ def json_io(fileobj, json_input):
 				print('[<-] Sending list of projects to interface')
 				table_rows = []
 				for project in Projects.select():
-					table_rows.append({"DT_RowId": project.id,
+					table_rows.append({
+					"DT_RowId": project.id,
 					"DT_RowClass": project.is_active,
 					"0" : project.name,
 					"1" : project.description,
-					"2" : project.is_active})
+					"2" : project.settings,
+					"3" : project.is_active})
 				table_data = json.dumps(json_output('dataTable', table_rows))
 				fileobj.write(table_data + '\n')
 				fileobj.flush()
@@ -427,9 +429,13 @@ def save_to_database():
 
 
 def look_for_jobs():
+	""" 
+	With this function we get in a loop until there is no job left to do 
+	in the database 
+	"""
 	
 	if Jobs.select().count() > 0:
-		time.sleep(1)
+		time.sleep(1) # For debug we wait 1 second
 		d_print('selecting jobs')
 		order = {"is_final": False }
 

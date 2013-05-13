@@ -43,6 +43,12 @@ if (empty($route)) {
 			print($parts[1]);
 			break;	
 
+		case 'projects':
+			$page_body = 'pages/projects.php';
+			$current_page = 'projects';
+			print($parts[1]);
+			break;	
+
 		default: 
 			$page_body = 'pages/404.php';
 			$current_page = '';

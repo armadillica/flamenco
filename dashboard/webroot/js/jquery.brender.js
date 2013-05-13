@@ -130,6 +130,17 @@ $(document).ready(function() {
 		}
 	});
 
+	var jobsTable = $('#projects').dataTable({
+		"bProcessing": true,
+		"iDisplayLength": 25,
+		"sAjaxSource": '/data.json',
+		"fnServerParams": function (aoData) {
+			aoData.push( 
+				{"name": "item", "value": "project"}, 
+				{"name": "action", "value": "read"});
+		}
+	});
+
 
 
 });

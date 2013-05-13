@@ -9,7 +9,8 @@
     
     <script src="<?php echo(JS); ?>/jquery-1.7.2.min.js"></script>
     <script src="<?php echo(JS); ?>/bootstrap.min.js"></script>
-    <script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script>
+    <!-- <script type="text/javascript" charset="utf8" src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.min.js"></script> -->
+    <script src="<?php echo(JS); ?>/jquery.dataTables.min.js"></script>
     <script src="<?php echo(JS); ?>/custom.brender.js"></script>
     <script src="<?php echo(JS); ?>/jquery.brender.js"></script>
 
