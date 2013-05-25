@@ -91,19 +91,22 @@ try:
 		elif line.startswith('{'):
 			order = json.loads(line)
 
-			current_frame = order['current_frame']
-			print current_frame, order['chunk_end']
-			while current_frame < order['chunk_end'] + 1:
-				print current_frame
-				current_frame = current_frame + 1
-				server_socket.send('busy\n')
+			if order['type'] == "order":
 
-			d_print(str(order['is_final']))
+				current_frame = order['current_frame']
+				print current_frame, order['chunk_end']
+				while current_frame < order['chunk_end'] + 1:
+					print current_frame
+					current_frame = current_frame + 1
+					server_socket.send('busy\n')
 
-			if order['is_final'] == False:
-				server_socket.send('chunk_finished\n')
-			else:
-				server_socket.send('job_finished\n')
+				d_print(str(order['is_final']))
+
+				if order['is_final'] == False:
+					server_socket.send('chunk_finished\n')
+				else:
+					server_socket.send('job_finished\n')
+					print('[info] The job has beencompleted')
 			
 		else:
 			print('[info] Other command came in')	

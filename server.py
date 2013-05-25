@@ -431,13 +431,14 @@ def save_to_database():
 def look_for_jobs():
 	""" 
 	With this function we get in a loop until there is no job left to do 
-	in the database 
+	in the database. 
+	We also generate an order to be executed by the clients.
 	"""
 	
 	if Jobs.select().count() > 0:
 		time.sleep(1) # For debug we wait 1 second
 		d_print('selecting jobs')
-		order = {"is_final": False }
+		message_for_client = {"is_final": False }
 
 		for job in Jobs.select():
 			if job.status == 'running':
@@ -468,9 +469,10 @@ def look_for_jobs():
 						job.status = 'finishing'
 						job.save()
 
-						order.update({"is_final": True})
+						message_for_client.update({"is_final": True})
 
-				order.update({
+				message_for_client.update({
+					"type": "order",
 					"job_id": job.id,
 					"filepath": job.filepath,
 					"chunk_start": chunk_start,
