@@ -105,8 +105,10 @@ try:
 				current_frame = current_frame + 1
 				server_socket.send('busy\n')
 
-			d_print(str(order['is_final']))
+			# d_print(str(order['is_final']))
 
+			# we check if we are at the last chunk of a job or not
+			# based on that, we will mark the job as finished or not
 			if order['is_final'] == False:
 				server_socket.send('chunk_finished\n')
 			else:

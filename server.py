@@ -428,7 +428,7 @@ def save_to_database():
 	print("\n[shutdown] " + str(len(clients_list)) + " clients saved successfully")
 
 
-def look_for_jobs():
+def get_render_order():
 	""" 
 	With this function we get in a loop until there is no job left to do 
 	in the database. 
@@ -546,7 +546,7 @@ def handle(socket, address):
 				line = fileobj.readline().strip()
 				if line.lower() == 'ready':
 					print('Client is wating for an order')
-					order = look_for_jobs()
+					order = get_render_order()
 					if order:
 						socket.send(str(order))
 					else:
