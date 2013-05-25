@@ -137,6 +137,18 @@ The following table gives a better overview of the JSON string components.
     </tbody>
 </table>
 
+###Communication between server and client
+In order to get clear communication between server and clients, we have setup a JSON based protocol there too.
+
+`{'type': 'system', 'command': 'mac_address'}`
+
+At the moment the only types available are:
+
+* system: for system specific command (get memory usage, MAC address, etc)
+* render: a render order (with several parameters, such as blender path, chunk start and end, etc)
+
+
+We have the convention that an `order` is a JONS string going from the server to the client, while a `response` is a JSON string going from client to server.
 
 
 ## List of commands - outdated

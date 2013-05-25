@@ -80,7 +80,13 @@ try:
 		
 		# we print the incoming command and then evalutate it
 		print ('[info] Server said ' + str(line))
-		order = json.loads(line)
+
+		# we make sure we are getting a JSON sring
+		try:
+			order = json.loads(line)
+		except:
+			break
+		
 
 		if order['type'] == 'system':
 			if order['command'] == 'mac_addr':
@@ -91,7 +97,7 @@ try:
 				time.sleep(2)
 				sys.exit(0)
 
-		elif order['type'] == 'order':
+		elif order['type'] == 'render':
 			current_frame = order['current_frame']
 			print current_frame, order['chunk_end']
 			while current_frame < order['chunk_end'] + 1:
@@ -105,7 +111,7 @@ try:
 				server_socket.send('chunk_finished\n')
 			else:
 				server_socket.send('job_finished\n')
-				print('[info] The job has beencompleted')
+				print('[info] The job has been completed')
 			
 		else:
 			print('[info] Other command came in')	
