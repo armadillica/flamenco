@@ -438,7 +438,7 @@ def look_for_jobs():
 	if Jobs.select().count() > 0:
 		time.sleep(1) # For debug we wait 1 second
 		d_print('selecting jobs')
-		message_for_client = {"is_final": False }
+		order = {"is_final": False }
 
 		for job in Jobs.select():
 			if job.status == 'running':
@@ -469,10 +469,10 @@ def look_for_jobs():
 						job.status = 'finishing'
 						job.save()
 
-						message_for_client.update({"is_final": True})
+						order.update({"is_final": True})
 
-				message_for_client.update({
-					"type": "order",
+				order.update({
+					"type": "render",
 					"job_id": job.id,
 					"filepath": job.filepath,
 					"chunk_start": chunk_start,
@@ -497,8 +497,12 @@ def handle(socket, address):
 		if line.lower() == 'identify_client':
 			print ('New connection from %s:%s' % address)
 			# we want to know if the cliend connected before
-			fileobj.write('mac_addr')
-			fileobj.flush()
+			#fileobj.write('mac_addr')
+			#fileobj.flush()
+			order = {"type": "system", "command": "mac_address"}
+			
+			socket.send(str(json.dumps(order)))
+
 			d_print("Waiting for mac address")
 			line = fileobj.readline().strip().split()
 			

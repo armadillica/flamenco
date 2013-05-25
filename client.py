@@ -62,7 +62,10 @@ try:
 	print('[info] Identifying as client with hostname: %server_socket' % (str(HOSTNAME)))
 	d_print('Waiting for response')
 	line = server_socket.recv(4096)
-	if line == 'mac_addr':
+
+	# we get a JSON string command for identification
+	order = json.loads(line)
+	if order['command'] == 'mac_address':
 		d_print('Sending MAC address')
 		server_socket.send(str(MAC_ADDR) + ' ' + str(HOSTNAME) + '\n')
 	else:
@@ -77,36 +80,32 @@ try:
 		
 		# we print the incoming command and then evalutate it
 		print ('[info] Server said ' + str(line))
-		if line == 'command':
-			print('We will run commands here')
+		order = json.loads(line)
+
+		if order['type'] == 'system':
+			if order['command'] == 'mac_addr':
+				server_socket.send(str(MAC_ADDR) + '\n')
 			
-		elif line == 'mac_addr':
-			server_socket.send(str(MAC_ADDR) + '\n')
-			
-		elif line == 'kill':
-			server_socket.send('quit\n')
-			time.sleep(2)
-			sys.exit(0)
+			elif order['command'] == 'kill':
+				server_socket.send('quit\n')
+				time.sleep(2)
+				sys.exit(0)
 
-		elif line.startswith('{'):
-			order = json.loads(line)
+		elif order['type'] == 'order':
+			current_frame = order['current_frame']
+			print current_frame, order['chunk_end']
+			while current_frame < order['chunk_end'] + 1:
+				print current_frame
+				current_frame = current_frame + 1
+				server_socket.send('busy\n')
 
-			if order['type'] == "order":
+			d_print(str(order['is_final']))
 
-				current_frame = order['current_frame']
-				print current_frame, order['chunk_end']
-				while current_frame < order['chunk_end'] + 1:
-					print current_frame
-					current_frame = current_frame + 1
-					server_socket.send('busy\n')
-
-				d_print(str(order['is_final']))
-
-				if order['is_final'] == False:
-					server_socket.send('chunk_finished\n')
-				else:
-					server_socket.send('job_finished\n')
-					print('[info] The job has beencompleted')
+			if order['is_final'] == False:
+				server_socket.send('chunk_finished\n')
+			else:
+				server_socket.send('job_finished\n')
+				print('[info] The job has beencompleted')
 			
 		else:
 			print('[info] Other command came in')	
