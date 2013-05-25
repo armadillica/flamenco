@@ -24,13 +24,13 @@ At the moment there are two main files and one folder:
 
 * master.py - the server that handles all the client connections and dispatches orders
 * client.py - a client that connects to the master and waits for orders
-* dashboard - contains a simple web application that provides a GUI for managin server and clients
+* dashboard - contains a simple web application that provides a GUI for managing server and clients
 
-Is is possible to connect to the master via telnet using the command `telent localhost 6000`.
+It is possible to connect to the master via telnet using the command `telent localhost 6000`.
 A command prompt will appear and it will be possible to talk to the master (at the moment some basic commands are still usable, but the idea is to make it support only normal API strings - see the syntax below).
 
 ### Past steps
-The next milestone for the development is to achive a solid system for enabling and disabling clients (both via command line interface and web interface). This will be achieved in several steps:
+The next milestone for the development is to achieve a solid system for enabling and disabling clients (both via command line interface and web interface). This will be achieved in several steps:
 
 * develop a versatile attributes CRUD API for the objects (both via CLI and WI)
 * integrate an ORM such as `pewee` for handling a mirrored database with all the clients, jobs, etc
@@ -49,14 +49,14 @@ This allows to keep data centralized and share an API across different interface
 After some quite intense research we dropped the idea of using CodeIgniter as a framweork and built ourselves a simpler one. The current framework provides:
 
 * fully configurable url routing
-* web interface with dataDables and data loaded via AJAX
+* web interface with dataTables and data loaded via AJAX
 * JSON data output (was a pain to get it working because we forgot to close the socket once the query was completed)
 
 ### How to use the web interface
 It's quite simple. The web interface is situated in the folder called `dashboard`. Set the Apache home directory in that folder and you should be able to see it via the web browser. Here is a list of the main files and folders:
 
 * config.php - basic configuration (server address and port)
-* index.pgp - sets up the routing and point to the webroot folder
+* index.php - sets up the routing and point to the webroot folder
 * lib - contains any library used by the application (currently only one functions.php file)
 * pages - content of each page of the application
 * tpl - templates used to wrap page contents
@@ -73,7 +73,7 @@ Frameworks and tools used by the interface are:
 Here we explain how the software works in some of its most important parts.
 
 ### Startup
-Before we start running the server we load from the database a list of clients and run them throug an inizialize_runtime_client function that create the client object we use in the application. These objects are appended to the runtime_clients list. We do this because accessing clients from memory is much faster!
+Before we start running the server we load from the database a list of clients and run them through an initialize_runtime_client function that create the client object we use in the application. These objects are appended to the runtime_clients list. We do this because accessing clients from memory is much faster!
 
 ### Client connection
 When a client connects we check if it was there before (if it is in the runtime_clients list loaded from the database at startup). If it's there we enable it, if not, we: 

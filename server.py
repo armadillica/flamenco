@@ -26,7 +26,7 @@ client_index = 0
 class Client(object):
 	"""A client object will be instanced everytime this class is called.
 	
-	This is an important building block of brender. All the methods avalialbe
+	This is an important building block of brender. All the methods available
 	here will be calling some model method (from specific classes). For the
 	moment we do this internally. Methods that need implementation are:
 	
@@ -98,7 +98,7 @@ def set_client_attribute(*attributes):
 	The first tuple is used for selecting one (and in the future more) clients
 	from the clients_list and the second one sets the attributes to the
 	selected client.
-	Tis function makes use of the client_select function above and is limited
+	This function makes use of the client_select function above and is limited
 	by its functionality.
 
 	"""
@@ -143,7 +143,7 @@ def json_io(fileobj, json_input):
 		elif key == 'values':
 			values = json_input['values']
 		else:
-			d_print("[Warning] Unkown keys injected!")
+			d_print("[Warning] Unknown keys injected!")
 	"""
 
 	item = json_input['item']
@@ -254,7 +254,7 @@ def json_io(fileobj, json_input):
 					pass # apply to all
 
 			else:
-				pass #can't update with not new values!
+				pass a #can't update with not new values!
 		elif action == 'delete':
 			pass
 		else:
@@ -277,7 +277,8 @@ def json_io(fileobj, json_input):
 				print('[<-] Sending list of sequences to interface')
 				table_rows = []
 				for sequence in Sequences.select():
-					table_rows.append({"DT_RowId": sequence.id,
+					table_rows.append({
+					"DT_RowId": sequence.id,
 					"0" : sequence.project.name,
 					"1" : sequence.name,
 					"2" : sequence.description})
@@ -293,7 +294,7 @@ def json_io(fileobj, json_input):
 					pass # apply to all
 
 			else:
-				pass #can't update with not new values!
+				pass # can't update with no new values!
 		elif action == 'delete':
 			pass
 		else:
@@ -323,7 +324,8 @@ def json_io(fileobj, json_input):
 				print('[<-] Sending list of shots to interface')
 				table_rows = []
 				for shot in Shots.select():
-					table_rows.append({"DT_RowId": shot.id,
+					table_rows.append({
+					"DT_RowId": shot.id,
 					"0" : shot.sequence.name,
 					"1" : shot.name,
 					"2" : shot.description,
@@ -342,7 +344,7 @@ def json_io(fileobj, json_input):
 					pass # apply to all
 
 			else:
-				pass #can't update with not new values!
+				pass # can't update with no new values!
 		elif action == 'delete':
 			pass
 		else:
@@ -359,7 +361,7 @@ def json_io(fileobj, json_input):
 					chunk_size = 5,
 					current_frame = 2,
 					filepath = 'path',
-					render_settings = 'will refer to settins table',
+					render_settings = 'will refer to settings table',
 					status = 'running',
 					priority = 10,
 					owner = 'fsiddi')
@@ -372,7 +374,8 @@ def json_io(fileobj, json_input):
 				print('[<-] Sending list of jobs to interface')
 				table_rows = []
 				for job in Jobs.select():
-					table_rows.append({"DT_RowId": job.id,
+					table_rows.append({
+					"DT_RowId": job.id,
 					"0" : job.shot.name,
 					"1" : job.frame_start,
 					"2" : job.frame_end,
@@ -496,7 +499,7 @@ def handle(socket, address):
 				
 		if line.lower() == 'identify_client':
 			print ('New connection from %s:%s' % address)
-			# we want to know if the cliend connected before
+			# we want to know if the client connected before
 			#fileobj.write('mac_addr')
 			#fileobj.flush()
 			order = {"type": "system", "command": "mac_address"}
@@ -509,7 +512,7 @@ def handle(socket, address):
 			# if the client was connected in the past, there should be an instanced
 			# object in the clients_list[]. We access it and set the get_status
 			# variable to True, to make it run and accept incoming orders.
-			# Since the client_select methog returns a list we have to select the
+			# Since the client_select method returns a list we have to select the
 			# first and only item in order to make it work (that's why we have the
 			# trailing [0] in the selection query for the mac_address here)
 			
@@ -566,7 +569,7 @@ def handle(socket, address):
 					# TODO next step is to save order to database
 					# and then save frames into database
 
-				# Only run at the very last fram of a job
+				# Only run at the very last frame of a job
 				elif line.lower() == 'finished':
 					print('Order successfully executed - last frame of the job delivered')
 

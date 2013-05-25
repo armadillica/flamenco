@@ -214,7 +214,7 @@ def fill_with_data():
 		chunk_size = 5,
 		current_frame = 2,
 		filepath = 'path',
-		render_settings = 'will refer to settins table',
+		render_settings = 'will refer to settings table',
 		status = 'running',
 		priority = 10,
 		owner = 'fsiddi')
