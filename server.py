@@ -254,7 +254,7 @@ def json_io(fileobj, json_input):
 					pass # apply to all
 
 			else:
-				pass a #can't update with not new values!
+				pass #can't update with not new values!
 		elif action == 'delete':
 			pass
 		else:
