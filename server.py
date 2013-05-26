@@ -482,7 +482,8 @@ def get_render_order():
 					"chunk_end": chunk_end,
 					"current_frame": chunk_start})
 				
-				return json.dumps(order)
+				#return json.dumps(order)
+				return order
 	else:
 		print("[info] No jobs at the moment, feed the farm")
 		return False
@@ -551,7 +552,7 @@ def handle(socket, address):
 					print('Client is wating for an order')
 					order = get_render_order()
 					if order:
-						socket.send(str(order))
+						socket.send(str(json.dumps(order)))
 					else:
 						print("[info] no orders generated")
 
@@ -565,9 +566,12 @@ def handle(socket, address):
 					if line == 'chunk_finished':
 						print('Chunk finished')
 					elif line == 'job_finished':
-						print('Job finished') #add id and more info
-					# TODO next step is to save order to database
-					# and then save frames into database
+						# print some info about the job we just finished
+						print('Job ' + str(order['job_id']) + ' finished') 
+						# and we save the finished status in the database
+						query = Jobs.update(status='finished').where(Jobs.id == order['job_id'])
+						query.execute()
+						# we will deal with individual frames of a job later on
 
 				# Only run at the very last frame of a job
 				elif line.lower() == 'finished':
