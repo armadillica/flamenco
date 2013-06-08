@@ -19,114 +19,15 @@ pool = Pool(100)
 # clients list that gets edited for every client connection and disconnection
 # we will load this list from our database at startup and edit it at runtime
 # TODO (fsiddi): implement what said above
-clients_list = []
 clients_dict = {}
 client_index = 0
 
-class Client(object):
-	"""A client object will be instanced everytime this class is called.
-	
-	This is an important building block of brender. All the methods available
-	here will be calling some model method (from specific classes). For the
-	moment we do this internally. Methods that need implementation are:
-	
-	* set/get client status
-	* start/pause/stop order
-	* get render status
-	* get various client information (such as hostname or memory usage)
-	
-	"""
-	hostname = 'hostname' # provided by the client
-	socket = 'socket' # provided by gevent at the handler creation
-	status = 'enabled' # can be enabled or disabled
-	mac_address = 0
-	warning = False
-
-	def __init__(self, **kwargs): # the constructor function called when object is created
-		self._attributes = kwargs
-	
-	def set_attributes(self, key, value): # accessor Method
-		self._attributes[key] = value
-		return
-
-	def get_attributes(self, key):
-		return self._attributes.get(key, None)
-
-	def get_status(self): # self is a reference to the object
-		if self._attributes['socket'] == False:
-			return 'offline'
-		else:
-			return 'online'
-
-	def __hiddenMethod(self): # a hidden method
-		print "Hard to Find"
-		return
 
 def get_client_status(mac_address):
 	if clients_dict[mac_address] != False:
 		return 'online'
 	else:
 		return 'offline'
-
-def client_select(key, value):
-	"""Selects a client from the list.
-	
-	This is meant to be a general purpose method to be called in any other method
-	that addresses a specific client.
-	
-	"""
-	selected_clients = []
-	d_print("Looking for client with %s: %s" % (key, value))
-	for client in clients_list:
-		if client.get_attributes(key) == value:
-			# we only return the first match, maybe this is not ideal
-			selected_clients.append(client)
-		else:
-			pass
-
-	if len(selected_clients) > 0:
-		return selected_clients
-	else:
-		print("[Warning] No client in the list matches the selection criteria")
-		return False
-
-
-def set_client_attribute(*attributes):
-	"""Set attributes of a connected client
-	
-	This function accepts tuples as arguments. At the moment only two tuples
-	are supported as input. See an example here:
-
-	set_client_attribute(('status', 'disabled'), ('status', 'enabled'))
-	set_client_attribute(('hostname', command[1]), ('status', 'disabled'))
-
-	The first tuple is used for selecting one (and in the future more) clients
-	from the clients_list and the second one sets the attributes to the
-	selected client.
-	This function makes use of the client_select function above and is limited
-	by its functionality.
-
-	"""
-
-	selection_attribute = attributes[0]
-	d_print('selection ' + selection_attribute[0] + " " + str(selection_attribute[1]))
-	target_attribute = attributes[1]
-	d_print('target ' + target_attribute[0])
-	client = client_select(selection_attribute[0], 
-							selection_attribute[1]) # get the client object
-	
-	if (client):
-		for c in client:
-			c.set_attributes(target_attribute[0],
-									target_attribute[1])
-
-			print('setting %s for client %s to %s' % (
-				target_attribute[0], 
-				c.get_attributes('hostname'), 
-				target_attribute[1]))
-		return
-	else:
-		print("[Warning] The command failed")
 
 
 def json_io(fileobj, json_input):
@@ -291,16 +192,7 @@ def json_io(fileobj, json_input):
 
 
 	elif item == 'sequence':
-		if action == 'create':
-			if len(values) > 0:
-				Sequences.create(
-					project = values['fk_project'],
-					name = values['name'],
-					description = values['description'])
-				print ("[info] Sequence %s created" % (values['name']))
-			else:
-				pass
-		elif action == 'read':
+		if action == 'read':
 			if len(filters) == 0:
 				# assume parameter is 'all'
 				print('[<-] Sending list of sequences to interface')
@@ -315,39 +207,12 @@ def json_io(fileobj, json_input):
 				fileobj.write(table_data + '\n')
 				fileobj.flush()
 				fileobj.close() # very important, otherwise PHP does not get EOF
-		elif action == 'update':
-			if len(values) > 0:
-				if len(filters) > 0:
-					pass
-				else: 
-					pass # apply to all
-
-			else:
-				pass # can't update with no new values!
-		elif action == 'delete':
-			pass
 		else:
 			pass
 
 
 	elif item == 'shot':
-		if action == 'create':
-			if len(values) > 0:
-				Shots.create(
-					sequence = values['fk_sequence'],
-					name = values['name'],
-					description = values['description'],
-					frame_start = values['frame_start'],
-					frame_end = values['frame_end'],
-					chunk_size = values['chunk_size'],
-					settings = values['settings'],
-					stage = values['stage'],
-					notes = values['notes'],
-					status = values['status'])
-				print ("[info] Shot %s created" % (values['name']))
-			else:
-				pass
-		elif action == 'read':
+		if action == 'read':
 			if len(filters) == 0:
 				# assume parameter is 'all'
 				print('[<-] Sending list of shots to interface')
@@ -365,39 +230,12 @@ def json_io(fileobj, json_input):
 				fileobj.write(table_data + '\n')
 				fileobj.flush()
 				fileobj.close() # very important, otherwise PHP does not get EOF
-		elif action == 'update':
-			if len(values) > 0:
-				if len(filters) > 0:
-					pass
-				else: 
-					pass # apply to all
-
-			else:
-				pass # can't update with no new values!
-		elif action == 'delete':
-			pass
 		else:
 			pass
 
 
 	elif item == 'job':
-		if action == 'create':
-			if len(values) > 0:	
-				Jobs.create(
-					shot = 1,
-					frame_start = 2,
-					frame_end = 50,
-					chunk_size = 5,
-					current_frame = 2,
-					filepath = 'path',
-					render_settings = 'will refer to settings table',
-					status = 'running',
-					priority = 10,
-					owner = 'fsiddi')
-				print ("[info] Shot %s created" % (values['name']))
-			else:
-				pass
-		elif action == 'read':
+		if action == 'read':
 			if len(filters) == 0:
 				# assume parameter is 'all'
 				print('[<-] Sending list of jobs to interface')
@@ -415,49 +253,8 @@ def json_io(fileobj, json_input):
 				fileobj.write(table_data + '\n')
 				fileobj.flush()
 				fileobj.close() # very important, otherwise PHP does not get EOF
-		elif action == 'update':
-			if len(values) > 0:
-				if len(filters) > 0:
-					pass
-				else: 
-					pass # apply to all
-
-			else:
-				pass #can't update with not new values!
-		elif action == 'delete':
-			pass
 		else:
 			pass
-
-
-def initialize_runtime_client(db_client):
-	client = Client(id = db_client.id,
-		hostname = db_client.hostname,
-		mac_address = db_client.mac_address,
-		socket = False,
-		status = db_client.status,
-		warning = db_client.warning,
-		config = db_client.config)
-	return client
-
-
-def load_from_database():
-	clients_database_list = load_clients()
-	for db_client in clients_database_list:
-			clients_list.append(initialize_runtime_client(db_client))
-	print("[boot] " + str(len(clients_database_list)) + " clients loaded from database")
-	return
-
-
-def add_client_to_database(new_client_attributes):
-	print("Adding a new client to the database")
-	return initialize_runtime_client(create_client(new_client_attributes))
-
-
-def save_to_database():
-	for client in clients_list:
-		save_runtime_client(client)
-	print("\n[shutdown] " + str(len(clients_list)) + " clients saved successfully")
 
 
 def get_render_order():
@@ -611,48 +408,6 @@ def handle(socket, address):
 					client.set_attributes('socket', False)
 					break
 					
-		if line.lower() == 'clients':
-			print('[<-] Sending list of clients to interface')
-			table_rows = []
-			for client in clients_list:
-				connection = client.get_status()
-				table_rows.append({"DT_RowId": client.get_attributes('id'),
-				"DT_RowClass": connection,
-				"0" : client.get_attributes('hostname'),
-				"1" : client.get_attributes('status'),
-				"2" : connection})
-			table_data = json.dumps(json_output('dataTable', table_rows))
-			fileobj.write(table_data + '\n')
-			fileobj.flush()
-			fileobj.close() # very important, otherwise PHP does not get EOF
-			break
-
-		elif line.lower().startswith('disable'):
-			command = line.split()
-			if len(command) > 1:
-				if command[1] == 'ALL':
-					set_client_attribute(('status', 'enabled'), ('status', 'disabled'))
-				else:
-					print(command[1])
-					set_client_attribute(('hostname', command[1]), ('status', 'disabled'))
-			else:
-				fileobj.write('[Warning] No client selected. Specify a '
-					'client name or use the \'ALL\' argument.\n')
-
-		elif line.lower().startswith('enable'): # Here we have a lot of code duplication!
-			command = line.split()
-			if len(command) > 1:
-				if command[1] == 'ALL':
-					set_client_attribute(('status', 'disabled'), ('status', 'enabled'))
-				else:
-					#print(command[1])
-					set_client_attribute(('hostname', command[1]), ('status', 'enabled'))
-			else:
-				fileobj.write('[Warning] No client selected. Specify a '
-					'client name or use the \'ALL\' argument.\n')
-				
-		elif line.lower() == 'test':
-			fileobj.write('test>')
 		
 		# This will actually replace any way to talk to the server ('clients', 'save', ect).
 		elif line.startswith('{'):
@@ -661,9 +416,6 @@ def handle(socket, address):
 			line = json.loads(line)
 			json_io(fileobj, line)
 			break
-
-		elif line.lower() == 'save':
-			save_to_database()
 		
 		elif line.lower() == 'quit':
 			print('[x] Closed connection from %s:%s' % address)
