@@ -20,7 +20,7 @@ pool = Pool(100)
 # we will load this list from our database at startup and edit it at runtime
 # TODO (fsiddi): implement what said above
 clients_list = []
-job_list = ['a', 'b', 'c']
+clients_dict = {}
 client_index = 0
 
 class Client(object):
@@ -62,6 +62,11 @@ class Client(object):
 		print "Hard to Find"
 		return
 
+def get_client_status(mac_address):
+	if clients_dict[mac_address] != False:
+		return 'online'
+	else:
+		return 'offline'
 
 def client_select(key, value):
 	"""Selects a client from the list.
@@ -157,6 +162,7 @@ def json_io(fileobj, json_input):
 				# assume parameter is 'all'
 				print('[<-] Sending list of clients to interface')
 				table_rows = []
+				'''
 				for client in clients_list:
 					connection = client.get_status()
 					table_rows.append({
@@ -165,6 +171,20 @@ def json_io(fileobj, json_input):
 						"0" : client.get_attributes('hostname'),
 						"1" : client.get_attributes('status'),
 						"2" : connection})
+				'''
+
+				for client in Clients.select():
+					# right now this is quite intensive, since it loops
+					# trhough all the clients via the clients_dic and it
+					# does does so for every client
+					connection = get_client_status(client.mac_address)
+					table_rows.append({
+						"DT_RowId": "client_" + str(client.id),
+						"DT_RowClass": 'connection',
+						"0" : client.hostname,
+						"1" : client.status,
+						"2" : connection})
+
 				table_data = json.dumps(json_output('dataTable', table_rows))
 				fileobj.write(table_data + '\n')
 				fileobj.flush()
@@ -185,6 +205,8 @@ def json_io(fileobj, json_input):
 				for key in filters:
 					pass # do the filtering and KILL THEM
 		elif action == 'update':
+			# TODO: make it work for differenc selections (one, an arbitrary
+			# number, or all the nodes available). This is fairly urgent.
 			if len(filters) == 0:
 				pass # assume parameter is 'all'
 				filters_key = 'status'
@@ -208,9 +230,16 @@ def json_io(fileobj, json_input):
 						pass # do the filtering
 
 			#print (values_key, values_value, filters_key,filters_value)
-			set_client_attribute((filters_key, filters_value), (values_key, values_value))
+			#set_client_attribute((filters_key, filters_value), (values_key, values_value))
 
+			#query = Clients.update(status = values_value).where(getattr(Clients, filters_key) == filters_value)
+			#query.execute()
 
+			# smartass ugly code for filtering ONE client out of the database
+			# and changing the desired property
+			filtered_client = Clients.get(getattr(Clients, filters_key) == filters_value)
+			setattr(filtered_client, values_key, values_value)
+			filtered_client.save()
 
 	elif item == 'brender_server':
 		pass
@@ -518,35 +547,31 @@ def handle(socket, address):
 			# trailing [0] in the selection query for the mac_address here)
 			
 			#client = client_select('mac_address', int(line[0]))[0]
-			client = client_select('mac_address', int(line[0]))
-			
-			if client:
-				client = client[0]
+			#client = client_select('mac_address', int(line[0]))
+			try:
+				client = Clients.get(Clients.mac_address == int(line[0]))
 				d_print('This client connected before')
-				client.set_attributes('socket', socket)
-				
-			else:
+				clients_dict[client.mac_address] = socket
+
+			except:
 				d_print('This client never connected before')
 				# create new client object with some defaults. Later on most of these
 				# values will be passed as JSON object during the first connection
-				new_client_attributes = {
-					'hostname': line[1], 
-					'mac_address': line[0], 
-					'status': 'enabled', 
-					'warning': False, 
-					'config': 'bla'
-				}
-
-				client = add_client_to_database(new_client_attributes)
+				
+				client = Clients.create(
+					hostname = line[1], 
+					mac_address = line[0], 
+					status = 'enabled', 
+					warning = False, 
+					config = 'bla')
+				
+				clients_dict[line[0]] = socket;
 			
-				# we assign the socket to the client and append it to the list
-				client.set_attributes('socket', socket)
-				clients_list.append(client)
 
 			#d_print ('the socket for the client is: ' + str(client.get_attributes('socket')))
 			#print ("the id for the client is: " + str(client.get_attributes('id')))
 			while True:
-				d_print('Client ' + str(client.get_attributes('hostname')) + ' is waiting')
+				d_print('Client ' + str(client.hostname) + ' is ready')
 				line = fileobj.readline().strip()
 				if line.lower() == 'ready':
 					print('Client is wating for an order')
@@ -659,7 +684,7 @@ if __name__ == '__main__':
 		# might be wise to just read them all the time from the database
 		# instead of putting them in memory. To be decided.
 		print("[boot] Loading clients from database")
-		load_from_database()
+		clients_dict = load_clients()
 		# to make the server use SSL, pass certfile and keyfile arguments to the constructor
 		server = StreamServer(('0.0.0.0', 6000), handle, spawn=pool)
 		# to start the server asynchronously, use its start() method;
@@ -667,5 +692,5 @@ if __name__ == '__main__':
 		print ('[boot] Starting echo server on port 6000')
 		server.serve_forever()
 	except KeyboardInterrupt:
-		save_to_database()
+		# save_to_database()
 		print("[shutdown] Quitting brender")

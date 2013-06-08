@@ -59,7 +59,7 @@ if server_socket is None:
 try:
 	# socket is now open and we identify as clients
 	server_socket.send('identify_client\n')
-	print('[info] Identifying as client with hostname: %server_socket' % (str(HOSTNAME)))
+	print('[info] Identifying as client with hostname: %s' % (str(HOSTNAME)))
 	d_print('Waiting for response')
 	line = server_socket.recv(4096)
 

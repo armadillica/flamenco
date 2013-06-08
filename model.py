@@ -221,11 +221,18 @@ def fill_with_data():
 
 
 def load_clients():
+	'''
 	clients_list = []
 	for client in Clients.select():
 		clients_list.append(client)
 	
 	return clients_list
+	'''
+	clients_dict = {}
+	for client in Clients.select():
+		clients_dict[client.mac_address] = False
+	
+	return clients_dict
 
 
 def create_client(attributes):
