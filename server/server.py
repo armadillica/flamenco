@@ -3,10 +3,12 @@ import urllib
 import time
 
 from flask import Flask, render_template, jsonify, redirect, url_for, request
+from model import *
 from uuid import getnode as get_mac
 
 MAC_ADDR = get_mac()  # the MAC address of the client
 HOSTNAME = socket.gethostname()
+
 
 app = Flask(__name__)
 app.config.update(
@@ -45,14 +47,37 @@ def login():
     error = None
     if request.method == 'POST':
         #return str(request.json['foo'])
-        #params = urllib.urlencode({'client': 1, 'eggs': 2})
+        
+        #ip_address = request.form['ip_address']
+        ip_address = '127.0.0.1'
+        port = request.form['port']
+        mac_address = request.form['mac_address']
+
+        try:
+            worker = Clients.get(Clients.mac_address == mac_address)
+            print('This worker connected before')
+
+        except:
+            print('This worker never connected before')
+            # create new worker object with some defaults. Later on most of these
+            # values will be passed as JSON object during the first connection
+            
+            worker = Clients.create(
+                hostname = line[1], 
+                mac_address = line[0], 
+                status = 'enabled', 
+                warning = False, 
+                config = 'bla')
+            
+            clients_dict[line[0]] = socket;
+
+        #params = urllib.urlencode({'worker': 1, 'eggs': 2})
         
         # we verify the identity of the worker (will check on database)
-        f = urllib.urlopen("http://127.0.0.1:5000/")
+        f = urllib.urlopen('http://' + ip_address + ':' + port)
         print 'The following worker just connected:'
         print f.read()
-        ip_address = request.form['ip_address']
-        mac_address = request.form['mac_address']
+        
         return ip_address
     # the code below is executed if the request method
     # was GET or the credentials were invalid
