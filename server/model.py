@@ -4,7 +4,7 @@ import random
 
 db = SqliteDatabase('brender.sqlite')
 
-class Clients(Model):
+class Workers(Model):
 	mac_address = IntegerField()
 	hostname = CharField()
 	status = CharField()
@@ -34,7 +34,7 @@ class Orders(Model):
 	"""docstring for Orders"""
 
 	job = ForeignKeyField(Jobs, related_name='fk_job')
-	client = ForeignKeyField(Clients, related_name='fk_client')
+	worker = ForeignKeyField(Workers, related_name='fk_worker')
 	chunk_start = IntegerField()
 	chunk_end = IntegerField()
 	current_frame = IntegerField()
@@ -47,47 +47,47 @@ class Orders(Model):
 def create_databases():
 	"""Create the required databases during installation.
 
-	Based on the classes specified above (currently Clients and Jobs)
+	Based on the classes specified above (currently Workers and Jobs)
 	"""
-	Clients.create_table()
+	Workers.create_table()
 	Jobs.create_table()
 
 
 
-def create_clients(clients_amount):
-	"""Create the specified amount of clients.
+def create_workers(workers_amount):
+	"""Create the specified amount of workers.
 
 	Assigns some random values as hostname and mac_address. Used only
 	for testing purposes.
 	"""
-	for i in range(clients_amount):
-		Clients.create(mac_address = 123 + i,
-			hostname = 'client_' + str(i),
+	for i in range(workers_amount):
+		Workers.create(mac_address = 123 + i,
+			hostname = 'worker_' + str(i),
 			status = 'enabled',
 			warning = False,
 			config ='JSON string')
-	print("Database filled with " + str(clients_amount) + " clients.")
+	print("Database filled with " + str(workers_amount) + " workers.")
 
 
-def delete_clients(clients):
-	"""Removes all clients found in the clients table.
+def delete_workers(workers):
+	"""Removes all workers found in the workers table.
 
 	Should be refactored?
 	"""
-	if clients == 'ALL':
-		clients_count = Clients.select().count()
-		for client in Clients.select():
-			print("Removing client " + client.hostname)
-			client.delete_instance()
-		print("Removed all the " + str(clients_count) + " clients")
+	if workers == 'ALL':
+		workers_count = Workers.select().count()
+		for worker in Workers.select():
+			print("Removing worker " + worker.hostname)
+			worker.delete_instance()
+		print("Removed all the " + str(workers_count) + " workers")
 	else:
-		print("Specify client id")
+		print("Specify worker id")
 
 
 def add_random_jobs(jobs_amount):
 	"""Creates the specified amount of jobs.
 
-	Jobs are fake and get randomly assigned do the existing clients
+	Jobs are fake and get randomly assigned do the existing workers
 	by picking their row id from a list generate on the fly.
 	"""
 	shots_count = Shots.select().count()
@@ -147,39 +147,39 @@ def fill_with_data():
 		owner = 'fsiddi')
 
 
-def create_client(attributes):
-	new_client = Clients.create(mac_address = attributes['mac_address'],
+def create_worker(attributes):
+	new_worker = Workers.create(mac_address = attributes['mac_address'],
 		hostname = attributes['hostname'],
 		status = attributes['status'],
 		warning = attributes['warning'],
 		config =attributes['config'])
-	print("New client " + attributes['hostname'] + " was added")
-	return new_client
+	print("New worker " + attributes['hostname'] + " was added")
+	return new_worker
 
 
-def show_clients():
-	for client in Clients.select():
-		print client.hostname, client.fk_client.count(), 'fk_client'
-		for order in client.fk_client:
+def show_workers():
+	for worker in Workers.select():
+		print worker.hostname, worker.fk_worker.count(), 'fk_worker'
+		for order in worker.fk_worker:
 			print '    ', order.order
 
 
 def install_brender():
 	create_databases()
-	create_clients(10)
+	create_workers(10)
 	fill_with_data()
 
 
 #install_brender()
 
 #create_shots(20)
-#delete_clients('ALL')
+#delete_workers('ALL')
 #create_jobs(10)
-#disable_clients()
+#disable_workers()
 
 #add_random_jobs(10)
 
-#show_clients()
+#show_workers()
 
-#print Clients.select().count()
+#print Workers.select().count()
 

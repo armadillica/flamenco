@@ -52,9 +52,10 @@ def login():
         ip_address = '127.0.0.1'
         port = request.form['port']
         mac_address = request.form['mac_address']
+        hostname = request.form['hostname']
 
         try:
-            worker = Clients.get(Clients.mac_address == mac_address)
+            worker = Workers.get(Workers.mac_address == mac_address)
             print('This worker connected before')
 
         except:
@@ -62,14 +63,14 @@ def login():
             # create new worker object with some defaults. Later on most of these
             # values will be passed as JSON object during the first connection
             
-            worker = Clients.create(
-                hostname = line[1], 
-                mac_address = line[0], 
+            worker = Workers.create(
+                hostname = hostname, 
+                mac_address = mac_address, 
                 status = 'enabled', 
                 warning = False, 
                 config = 'bla')
             
-            clients_dict[line[0]] = socket;
+            print('Worker has been added')
 
         #params = urllib.urlencode({'worker': 1, 'eggs': 2})
         

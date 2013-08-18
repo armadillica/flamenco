@@ -34,7 +34,8 @@ def register_worker():
     values = {
         'mac_address': MAC_ADDRESS,
         'ip_address': IP_ADDRESS,
-        'port': PORT
+        'port': PORT,
+        'hostname': HOSTNAME
         }
 
     params = urllib.urlencode(values)
