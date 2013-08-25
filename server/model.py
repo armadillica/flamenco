@@ -34,9 +34,10 @@ class Shots(Model):
 
 class Jobs(Model):
 	"""docstring for Jobs"""
-
-	shot = ForeignKeyField(Shots, related_name='fk_shot')
-	worker = ForeignKeyField(Workers, related_name='fk_worker')
+	#shot = ForeignKeyField(Shots, related_name='fk_shot')
+	#worker = ForeignKeyField(Workers, related_name='fk_worker')
+	shot_id = IntegerField()
+	worker_id = IntegerField()
 	chunk_start = IntegerField()
 	chunk_end = IntegerField()
 	current_frame = IntegerField()

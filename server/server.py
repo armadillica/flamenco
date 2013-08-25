@@ -20,6 +20,9 @@ def send_orders():
     for worker in Workers.select().where(Workers.status == 'available'):
         print worker.hostname
 
+def create_jobs():
+    print 'creating jobs'
+
 @app.route("/")
 def index():
 	return redirect(url_for('info'))
@@ -62,7 +65,6 @@ def shots():
 
 @app.route('/shots/start/<int:shot_id>')
 def shot_start(shot_id):
-
     try:
         shot = Shots.get(Shots.id == shot_id)
     except Exception, e:
@@ -76,10 +78,71 @@ def shot_start(shot_id):
         shot.save()
         send_orders()
         return 'Shot started'
-    
+
+@app.route('/shots/add')
+def shot_add():
+    print 'adding shot'
+
+    shot = Shots.create(
+        production_shot_id = 1,
+        frame_start = 2,
+        frame_end = 50,
+        chunk_size = 5,
+        current_frame = 2,
+        filepath = '/path',
+        render_settings = 'will refer to settings table',
+        status = 'running',
+        priority = 10,
+        owner = 'fsiddi')
+
+    print 'parsing shot'
+
+    shot_frames_count = shot.frame_end - shot.frame_start
+    shot_chunks_remainder = shot_frames_count % shot.chunk_size
+    shot_chunks_division = shot_frames_count / shot.chunk_size
+
+    if shot_chunks_remainder == 0:
+        print 'we have exact chunks'
+    elif shot_chunks_remainder == shot.chunk_size:
+        print 'we have 1 chunk only'
+    #elif shot_chunks_remainder > 0 and shot_chunks_remainder < shot.chunk_size:
+    else:
+        print 'shot_chunks_remainder' , shot_chunks_remainder
+        print 'shot_frames_count', shot_frames_count
+        print 'shot_chunks_division' , shot_chunks_division
+
+        total_chunks = shot_chunks_division + 1
+        chunk_start = shot.frame_start
+        chunk_end = shot.frame_start + shot.chunk_size - 1
+
+        for chunk in range(total_chunks - 1):
+            print 'making chunk'
+            print shot.id
+            Jobs.create(
+                shot_id = 1,
+                worker_id = 12,
+                chunk_start = chunk_start,
+                chunk_end = chunk_end,
+                current_frame = chunk_start)
+
+            chunk_start = chunk_end + 1
+            chunk_end = chunk_start + shot.chunk_size - 1
+
+        chunk_end = chunk_start + shot_chunks_remainder - 1
+        Jobs.create(
+            shot_id = 1,
+            worker_id = 12,
+            chunk_start = chunk_start,
+            chunk_end = chunk_end,
+            current_frame = chunk_start)
+
+
+
+    create_jobs()
+    return 'done'
 
 @app.route('/connect', methods=['POST', 'GET'])
-def login():
+def connect():
     error = None
     if request.method == 'POST':
         #return str(request.json['foo'])
