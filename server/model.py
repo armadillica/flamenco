@@ -16,8 +16,8 @@ class Workers(Model):
 	class Meta:
 		database = db
 
-class Jobs(Model):
-	shot_id = IntegerField()
+class Shots(Model):
+	production_shot_id = IntegerField()
 	frame_start = IntegerField()
 	frame_end = IntegerField()
 	chunk_size = IntegerField()
@@ -32,10 +32,10 @@ class Jobs(Model):
 		database = db
 
 
-class Orders(Model):
-	"""docstring for Orders"""
+class Jobs(Model):
+	"""docstring for Jobs"""
 
-	job = ForeignKeyField(Jobs, related_name='fk_job')
+	shot = ForeignKeyField(Shots, related_name='fk_shot')
 	worker = ForeignKeyField(Workers, related_name='fk_worker')
 	chunk_start = IntegerField()
 	chunk_end = IntegerField()
@@ -52,7 +52,7 @@ def create_databases():
 	Based on the classes specified above (currently Workers and Jobs)
 	"""
 	Workers.create_table()
-	Jobs.create_table()
+	Shots.create_table()
 
 
 
@@ -86,7 +86,7 @@ def delete_workers(workers):
 		print("Specify worker id")
 
 
-def add_random_jobs(jobs_amount):
+def add_random_shots(jobs_amount):
 	"""Creates the specified amount of jobs.
 
 	Jobs are fake and get randomly assigned do the existing workers
@@ -97,7 +97,7 @@ def add_random_jobs(jobs_amount):
 
 	for i in range(jobs_amount):
 		random_id = random.choice(shot_ids)
-		Jobs.create(shot = random_id,
+		Shots.create(shot = random_id,
 			frame_start = 2,
 			frame_end = 50,
 			chunk_size = 5,
@@ -131,7 +131,7 @@ def fill_with_data():
 
 	create_shots(10)
 
-	Jobs.create(shot = 1,
+	Shots.create(shot = 1,
 		frame_start = 2,
 		frame_end = 50,
 		chunk_size = 5,

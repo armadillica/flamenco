@@ -49,39 +49,34 @@ def workers():
             "ip_address" : worker.ip_address}
     return jsonify(workers)
 
-@app.route('/jobs/')
-def jobs():
-    jobs = {}
-    for job in Jobs.select():
-        jobs[job.id] = {
-            "frame_start" : job.frame_start,
-            "frame_end" : job.frame_end,
-            "current_frame" : job.current_frame,
-            "status" : job.status}
-    return jsonify(jobs)
+@app.route('/shots/')
+def shots():
+    shots = {}
+    for shot in Shots.select():
+        shots[shot.id] = {
+            "frame_start" : shot.frame_start,
+            "frame_end" : shot.frame_end,
+            "current_frame" : shot.current_frame,
+            "status" : shot.status}
+    return jsonify(shots)
 
-@app.route('/jobs/start/<int:job_id>')
-def job_start(job_id):
+@app.route('/shots/start/<int:shot_id>')
+def shot_start(shot_id):
 
     try:
-        job = Jobs.get(Jobs.id == job_id)
+        shot = Shots.get(Shots.id == shot_id)
     except Exception, e:
-        print e , '--> Job not found'
-        return 'Job not found'
+        print e , '--> Shot not found'
+        return 'Shot not found'
 
-    if job.status == 'started':
-        return 'job already started'
+    if shot.status == 'started':
+        return 'Shot already started'
     else:
-        job.status = 'started'
-        job.save()
+        shot.status = 'started'
+        shot.save()
         send_orders()
-        return 'job started'
+        return 'Shot started'
     
-
-
-@app.route('/hellos/<int:client_id>')
-def hello(client_id):
-    return 'client %d' % client_id
 
 @app.route('/connect', methods=['POST', 'GET'])
 def login():
