@@ -40,7 +40,7 @@ def register_worker():
 
     params = urllib.urlencode(values)
     f = urllib.urlopen(BRENDER_SERVER + '/connect', params)
-    print f.read()
+    #print f.read()
 
 # we use muliprocessing to register the client the worker to the server
 # while the worker app starts up

@@ -16,12 +16,9 @@ app.config.update(
 	SERVER_NAME='brender-server:9999'
 )
 
-def ping_server():
-	print 'We are starting!'
-
-def start_worker():
-        ping_server()
-        app.run()
+def send_orders():
+    for worker in Workers.select().where(Workers.status == 'available'):
+        print worker.hostname
 
 @app.route("/")
 def index():
@@ -33,9 +30,53 @@ def info():
     	mac_addr = MAC_ADDR,
     	hostname = HOSTNAME)
 
-@app.route('/hellos/')
-def clients():
-    return 'hellos!'
+@app.route('/workers/')
+def workers():
+    workers = {}
+    for worker in Workers.select():
+        try:
+            f = urllib.urlopen('http://' + worker.ip_address + ':' + str(worker.port))
+            print f.read()
+        except Exception, e:
+            print e , '--> Worker', worker.hostname, 'not online'
+            worker.status = 'offline'
+            worker.save()
+        
+        workers[worker.hostname] = {
+            "id": worker.id,
+            "hostname" : worker.hostname,
+            "status" : worker.status,
+            "ip_address" : worker.ip_address}
+    return jsonify(workers)
+
+@app.route('/jobs/')
+def jobs():
+    jobs = {}
+    for job in Jobs.select():
+        jobs[job.id] = {
+            "frame_start" : job.frame_start,
+            "frame_end" : job.frame_end,
+            "current_frame" : job.current_frame,
+            "status" : job.status}
+    return jsonify(jobs)
+
+@app.route('/jobs/start/<int:job_id>')
+def job_start(job_id):
+
+    try:
+        job = Jobs.get(Jobs.id == job_id)
+    except Exception, e:
+        print e , '--> Job not found'
+        return 'Job not found'
+
+    if job.status == 'started':
+        return 'job already started'
+    else:
+        job.status = 'started'
+        job.save()
+        send_orders()
+        return 'job started'
+    
 
 
 @app.route('/hellos/<int:client_id>')
@@ -54,11 +95,15 @@ def login():
         mac_address = request.form['mac_address']
         hostname = request.form['hostname']
 
-        try:
-            worker = Workers.get(Workers.mac_address == mac_address)
-            print('This worker connected before')
+        worker = Workers.get(Workers.mac_address == mac_address)
 
-        except:
+        if worker:
+            print('This worker connected before, updating IP address')
+            worker.ip_address = ip_address
+            worker.port = port
+            worker.save()
+
+        else:
             print('This worker never connected before')
             # create new worker object with some defaults. Later on most of these
             # values will be passed as JSON object during the first connection
@@ -68,7 +113,9 @@ def login():
                 mac_address = mac_address, 
                 status = 'enabled', 
                 warning = False, 
-                config = 'bla')
+                config = 'bla',
+                ip_address = ip_address,
+                port = port)
             
             print('Worker has been added')
 
@@ -84,5 +131,9 @@ def login():
     # was GET or the credentials were invalid
     return jsonify(error = error)
 
+@app.route('/order', methods=['POST'])
+def order():
+    return 'aa'
+
 if __name__ == "__main__":
-    start_worker()
+    app.run()

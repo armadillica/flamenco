@@ -10,12 +10,14 @@ class Workers(Model):
 	status = CharField()
 	warning = BooleanField()
 	config = CharField()
+	ip_address = CharField()
+	port = IntegerField()
 
 	class Meta:
 		database = db
 
 class Jobs(Model):
-	shot = IntegerField()
+	shot_id = IntegerField()
 	frame_start = IntegerField()
 	frame_end = IntegerField()
 	chunk_size = IntegerField()
@@ -90,29 +92,23 @@ def add_random_jobs(jobs_amount):
 	Jobs are fake and get randomly assigned do the existing workers
 	by picking their row id from a list generate on the fly.
 	"""
-	shots_count = Shots.select().count()
-	if shots_count > 0:
-		# We build an index of the shot ids
-		shot_ids = []
-		for shot in Shots.select():
-			shot_ids.append(shot.id)
 
-		for i in range(jobs_amount):
-			random_id = random.choice(shot_ids)
-			Jobs.create(shot = random_id,
-				frame_start = 2,
-				frame_end = 50,
-				chunk_size = 5,
-				current_frame = 2,
-				filepath = 'path',
-				render_settings = 'will refer to settins table',
-				status = 'running',
-				priority = 10,
-				owner = 'fsiddi')
+	shot_ids = [2,3,4,5,5,6]
 
-		print("Added " + str(jobs_amount) + " shots.")
-	else:
-		print("[warning] No shots available")
+	for i in range(jobs_amount):
+		random_id = random.choice(shot_ids)
+		Jobs.create(shot = random_id,
+			frame_start = 2,
+			frame_end = 50,
+			chunk_size = 5,
+			current_frame = 2,
+			filepath = 'path',
+			render_settings = 'will refer to settins table',
+			status = 'running',
+			priority = 10,
+			owner = 'fsiddi')
+
+	print("Added " + str(jobs_amount) + " shots.")
 
 
 
