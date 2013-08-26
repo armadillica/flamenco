@@ -41,6 +41,8 @@ class Jobs(Model):
 	chunk_start = IntegerField()
 	chunk_end = IntegerField()
 	current_frame = IntegerField()
+	status = CharField()
+	priority = IntegerField()
 
 	class Meta:
 		database = db

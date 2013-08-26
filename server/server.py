@@ -103,7 +103,9 @@ def shot_add():
             worker_id = 12,
             chunk_start = chunk_start,
             chunk_end = chunk_end,
-            current_frame = chunk_start)
+            current_frame = chunk_start,
+            status = 'ready',
+            priority = 50)
 
     shot_frames_count = shot.frame_end - shot.frame_start
     shot_chunks_remainder = shot_frames_count % shot.chunk_size
@@ -152,6 +154,19 @@ def shot_add():
 
 
     create_jobs()
+
+    print 'refresh list of available workers'
+
+    for worker in Workers.select().where(Workers.status == 'available'):
+
+        # pick the job with the highest priority (it means the lowest number)
+        job = Jobs.select().order_by(Jobs.priority.desc()).limit(1).get()
+        job.status = 'running'
+
+        # now we build the actual job to send to the worker
+        print job.status
+
+
     return 'done'
 
 @app.route('/connect', methods=['POST', 'GET'])
