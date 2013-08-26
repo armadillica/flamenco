@@ -11,7 +11,6 @@ class Workers(Model):
 	warning = BooleanField()
 	config = CharField()
 	ip_address = CharField()
-	port = IntegerField()
 
 	class Meta:
 		database = db

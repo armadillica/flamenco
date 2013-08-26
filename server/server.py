@@ -16,9 +16,17 @@ app.config.update(
 	SERVER_NAME='brender-server:9999'
 )
 
-def send_orders():
-    for worker in Workers.select().where(Workers.status == 'available'):
-        print worker.hostname
+def send_orders(ip_address, method, post_params = False):
+    # post_params must be a dictionay
+    if post_params:
+        params = urllib.urlencode(post_params)
+        f = urllib.urlopen('http://' + ip_address + method, params)
+    else:
+        f = urllib.urlopen('http://' + ip_address + method)
+    
+    print 'message sent, reply follows:'
+    print f.read()
+    
 
 def create_jobs():
     print 'creating jobs'
@@ -38,7 +46,7 @@ def workers():
     workers = {}
     for worker in Workers.select():
         try:
-            f = urllib.urlopen('http://' + worker.ip_address + ':' + str(worker.port))
+            f = urllib.urlopen('http://' + worker.ip_address)
             print f.read()
         except Exception, e:
             print e , '--> Worker', worker.hostname, 'not online'
@@ -164,6 +172,8 @@ def shot_add():
         job.status = 'running'
 
         # now we build the actual job to send to the worker
+        send_orders(worker.ip_address, '/info')
+
         print job.status
 
 
@@ -176,8 +186,7 @@ def connect():
         #return str(request.json['foo'])
         
         #ip_address = request.form['ip_address']
-        ip_address = '127.0.0.1'
-        port = request.form['port']
+        ip_address = '127.0.0.1:5000'
         mac_address = request.form['mac_address']
         hostname = request.form['hostname']
 
@@ -186,7 +195,6 @@ def connect():
         if worker:
             print('This worker connected before, updating IP address')
             worker.ip_address = ip_address
-            worker.port = port
             worker.save()
 
         else:
@@ -200,15 +208,14 @@ def connect():
                 status = 'enabled', 
                 warning = False, 
                 config = 'bla',
-                ip_address = ip_address,
-                port = port)
+                ip_address = ip_address)
             
             print('Worker has been added')
 
         #params = urllib.urlencode({'worker': 1, 'eggs': 2})
         
         # we verify the identity of the worker (will check on database)
-        f = urllib.urlopen('http://' + ip_address + ':' + port)
+        f = urllib.urlopen('http://' + ip_address)
         print 'The following worker just connected:'
         print f.read()
         
