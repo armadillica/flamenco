@@ -4,7 +4,7 @@ import time
 import sys
 
 from multiprocessing import Process
-from flask import Flask, render_template, jsonify, redirect, url_for
+from flask import Flask, render_template, jsonify, redirect, url_for, request
 from uuid import getnode as get_mac_address
 
 BRENDER_SERVER = 'http://brender-server:9999'
