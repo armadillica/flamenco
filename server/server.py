@@ -28,8 +28,61 @@ def send_orders(ip_address, method, post_params = False):
     print f.read()
     
 
-def create_jobs():
-    print 'creating jobs'
+def create_jobs(shot):
+    def create_job(chunk_start, chunk_end):
+        Jobs.create(
+            shot_id = 1,
+            worker_id = 12,
+            chunk_start = chunk_start,
+            chunk_end = chunk_end,
+            current_frame = chunk_start,
+            status = 'ready',
+            priority = 50)
+
+    shot_frames_count = shot.frame_end - shot.frame_start
+    shot_chunks_remainder = shot_frames_count % shot.chunk_size
+    shot_chunks_division = shot_frames_count / shot.chunk_size
+
+    if shot_chunks_remainder == 0:
+        print 'we have exact chunks'
+
+        total_chunks = shot_chunks_division
+        chunk_start = shot.frame_start
+        chunk_end = shot.frame_start + shot.chunk_size - 1
+
+        for chunk in range(total_chunks - 1):
+            print 'making chunk for shot', shot.id
+            
+            create_job(chunk_start, chunk_end)
+            
+            chunk_start = chunk_end + 1
+            chunk_end = chunk_start + shot.chunk_size - 1
+
+    elif shot_chunks_remainder == shot.chunk_size:
+        print 'we have 1 chunk only'
+
+        create_job(shot.frame_start, hot.frame_end)
+
+    #elif shot_chunks_remainder > 0 and shot_chunks_remainder < shot.chunk_size:
+    else:
+        print 'shot_chunks_remainder' , shot_chunks_remainder
+        print 'shot_frames_count', shot_frames_count
+        print 'shot_chunks_division' , shot_chunks_division
+
+        total_chunks = shot_chunks_division + 1
+        chunk_start = shot.frame_start
+        chunk_end = shot.frame_start + shot.chunk_size - 1
+
+        for chunk in range(total_chunks - 1):
+            print 'making chunk for shot', shot.id
+            
+            create_job(chunk_start, chunk_end)
+            
+            chunk_start = chunk_end + 1
+            chunk_end = chunk_start + shot.chunk_size - 1
+
+        chunk_end = chunk_start + shot_chunks_remainder - 1
+        create_job(chunk_start, chunk_end)
 
 @app.route("/")
 def index():
@@ -105,63 +158,7 @@ def shot_add():
 
     print 'parsing shot'
 
-    def create_job(chunk_start, chunk_end):
-        Jobs.create(
-            shot_id = 1,
-            worker_id = 12,
-            chunk_start = chunk_start,
-            chunk_end = chunk_end,
-            current_frame = chunk_start,
-            status = 'ready',
-            priority = 50)
-
-    shot_frames_count = shot.frame_end - shot.frame_start
-    shot_chunks_remainder = shot_frames_count % shot.chunk_size
-    shot_chunks_division = shot_frames_count / shot.chunk_size
-
-    if shot_chunks_remainder == 0:
-        print 'we have exact chunks'
-
-        total_chunks = shot_chunks_division
-        chunk_start = shot.frame_start
-        chunk_end = shot.frame_start + shot.chunk_size - 1
-
-        for chunk in range(total_chunks - 1):
-            print 'making chunk for shot', shot.id
-            
-            create_job(chunk_start, chunk_end)
-            
-            chunk_start = chunk_end + 1
-            chunk_end = chunk_start + shot.chunk_size - 1
-
-    elif shot_chunks_remainder == shot.chunk_size:
-        print 'we have 1 chunk only'
-
-        create_job(shot.frame_start, hot.frame_end)
-
-    #elif shot_chunks_remainder > 0 and shot_chunks_remainder < shot.chunk_size:
-    else:
-        print 'shot_chunks_remainder' , shot_chunks_remainder
-        print 'shot_frames_count', shot_frames_count
-        print 'shot_chunks_division' , shot_chunks_division
-
-        total_chunks = shot_chunks_division + 1
-        chunk_start = shot.frame_start
-        chunk_end = shot.frame_start + shot.chunk_size - 1
-
-        for chunk in range(total_chunks - 1):
-            print 'making chunk for shot', shot.id
-            
-            create_job(chunk_start, chunk_end)
-            
-            chunk_start = chunk_end + 1
-            chunk_end = chunk_start + shot.chunk_size - 1
-
-        chunk_end = chunk_start + shot_chunks_remainder - 1
-        create_job(chunk_start, chunk_end)
-
-
-    create_jobs()
+    create_jobs(shot)
 
     print 'refresh list of available workers'
 
