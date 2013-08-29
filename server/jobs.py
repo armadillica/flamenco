@@ -1,4 +1,5 @@
 from model import *
+from utils import *
 
 def create_job(chunk_start, chunk_end):
     Jobs.create(
