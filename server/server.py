@@ -168,15 +168,18 @@ def shot_add():
     for worker in Workers.select().where(Workers.status == 'available'):
 
         # pick the job with the highest priority (it means the lowest number)
-        job = Jobs.select().where(Jobs.status == 'ready').order_by(Jobs.priority.desc()).limit(1).get()
+        job = Jobs.select().where(
+            Jobs.status == 'ready'
+        ).order_by(Jobs.priority.desc()).limit(1).get()
+
         job.status = 'running'
         job.save()
 
         # now we build the actual job to send to the worker
         job_parameters = {
-            'pre-run' : 'svn up or other things'
-            'command' : 'blender_path -b /filepath.blend -o /render_out -a'
-            'post-frame' : 'post frame'
+            'pre-run' : 'svn up or other things',
+            'command' : 'blender_path -b /filepath.blend -o /render_out -a',
+            'post-frame' : 'post frame',
             'post-run' : 'clear variables, empty /tmp'
         }
 
