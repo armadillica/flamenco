@@ -84,6 +84,31 @@ def create_jobs(shot):
         chunk_end = chunk_start + shot_chunks_remainder - 1
         create_job(chunk_start, chunk_end)
 
+
+def dispatch_jobs():
+    for worker in Workers.select().where(Workers.status == 'available'):
+
+        # pick the job with the highest priority (it means the lowest number)
+        job = Jobs.select().where(
+            Jobs.status == 'ready'
+        ).order_by(Jobs.priority.desc()).limit(1).get()
+
+        job.status = 'running'
+        job.save()
+
+        # now we build the actual job to send to the worker
+        job_parameters = {
+            'pre-run' : 'svn up or other things',
+            'command' : 'blender_path -b /filepath.blend -o /render_out -a',
+            'post-frame' : 'post frame',
+            'post-run' : 'clear variables, empty /tmp'
+        }
+
+        # and we send the job to the worker
+        send_orders(worker.ip_address, '/run_job', job_parameters)
+
+        print job.status
+
 @app.route("/")
 def index():
 	return redirect(url_for('info'))
@@ -162,29 +187,7 @@ def shot_add():
 
     print 'refresh list of available workers'
 
-    for worker in Workers.select().where(Workers.status == 'available'):
-
-        # pick the job with the highest priority (it means the lowest number)
-        job = Jobs.select().where(
-            Jobs.status == 'ready'
-        ).order_by(Jobs.priority.desc()).limit(1).get()
-
-        job.status = 'running'
-        job.save()
-
-        # now we build the actual job to send to the worker
-        job_parameters = {
-            'pre-run' : 'svn up or other things',
-            'command' : 'blender_path -b /filepath.blend -o /render_out -a',
-            'post-frame' : 'post frame',
-            'post-run' : 'clear variables, empty /tmp'
-        }
-
-        # and we send the job to the worker
-        send_orders(worker.ip_address, '/run_job', job_parameters)
-
-        print job.status
-
+    dispatch_jobs()
 
     return 'done'
 
