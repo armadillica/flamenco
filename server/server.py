@@ -5,11 +5,6 @@ import time
 from flask import Flask, render_template, jsonify, redirect, url_for, request
 from model import *
 from jobs import *
-from uuid import getnode as get_mac
-
-MAC_ADDR = get_mac()  # the MAC address of the client
-HOSTNAME = socket.gethostname()
-
 
 app = Flask(__name__)
 app.config.update(
@@ -17,16 +12,9 @@ app.config.update(
 	SERVER_NAME='brender-server:9999'
 )
 
-
 @app.route("/")
 def index():
-	return redirect(url_for('info'))
-
-@app.route("/info")
-def info():
-    return jsonify(status = 'running',
-    	mac_addr = MAC_ADDR,
-    	hostname = HOSTNAME)
+	return jsonify(status = 'ok')
 
 @app.route('/workers/')
 def workers():
@@ -155,10 +143,6 @@ def connect():
     # the code below is executed if the request method
     # was GET or the credentials were invalid
     return jsonify(error = error)
-
-@app.route('/order', methods=['POST'])
-def order():
-    return 'aa'
 
 if __name__ == "__main__":
     app.run()
