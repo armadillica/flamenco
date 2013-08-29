@@ -26,19 +26,18 @@ def http_request(ip_address, method, post_params = False):
     
     print 'message sent, reply follows:'
     print f.read()
-    
+
+def create_job(chunk_start, chunk_end):
+    Jobs.create(
+        shot_id = 1,
+        worker_id = 12,
+        chunk_start = chunk_start,
+        chunk_end = chunk_end,
+        current_frame = chunk_start,
+        status = 'ready',
+        priority = 50)   
 
 def create_jobs(shot):
-    def create_job(chunk_start, chunk_end):
-        Jobs.create(
-            shot_id = 1,
-            worker_id = 12,
-            chunk_start = chunk_start,
-            chunk_end = chunk_end,
-            current_frame = chunk_start,
-            status = 'ready',
-            priority = 50)
-
     shot_frames_count = shot.frame_end - shot.frame_start
     shot_chunks_remainder = shot_frames_count % shot.chunk_size
     shot_chunks_division = shot_frames_count / shot.chunk_size
@@ -190,6 +189,17 @@ def shot_add():
     dispatch_jobs()
 
     return 'done'
+
+@app.route('/jobs/')
+def jobs():
+    jobs = {}
+    for job in Jobs.select():
+        jobs[job.id] = {
+            "chunk_start" : job.chunk_start,
+            "chunk_end" : job.chunk_end,
+            "current_frame" : job.current_frame,
+            "status" : job.status}
+    return jsonify(jobs)
 
 @app.route('/connect', methods=['POST', 'GET'])
 def connect():
