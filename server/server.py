@@ -16,7 +16,7 @@ app.config.update(
 	SERVER_NAME='brender-server:9999'
 )
 
-def send_orders(ip_address, method, post_params = False):
+def http_request(ip_address, method, post_params = False):
     # post_params must be a dictionay
     if post_params:
         params = urllib.urlencode(post_params)
@@ -105,7 +105,7 @@ def dispatch_jobs():
         }
 
         # and we send the job to the worker
-        send_orders(worker.ip_address, '/run_job', job_parameters)
+        http_request(worker.ip_address, '/run_job', job_parameters)
 
         print job.status
 
@@ -162,7 +162,7 @@ def shot_start(shot_id):
     else:
         shot.status = 'started'
         shot.save()
-        send_orders()
+        http_request()
         return 'Shot started'
 
 @app.route('/shots/add')
