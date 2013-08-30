@@ -5,6 +5,7 @@ import time
 from flask import Flask, render_template, jsonify, redirect, url_for, request
 from model import *
 from jobs import *
+from workers import *
 
 app = Flask(__name__)
 app.config.update(
@@ -34,6 +35,28 @@ def workers():
             "status" : worker.status,
             "ip_address" : worker.ip_address}
     return jsonify(workers)
+
+@app.route('/workers/edit', methods=['POST'])
+def all_workers_edit():
+    worker_ids = request.form['id']
+    worker_status = request.form['status']
+    worker_config = request.form['config']
+    if worker_ids:
+        for worker_id in list_integers_string(worker_ids):
+            worker = Workers.get(Workers.id == worker_id)
+            update_worker(worker, worker_status, worker_config)
+
+        return 'done'
+    else:
+        print 'we edit all the workers'
+        for worker in Workers.select():
+            update_worker(worker, worker_status, worker_config)
+
+    return 'asd'
+
+@app.route('/workers/edit/<int:worker_id>')
+def workers_edit(worker_id):
+    return str(worker_id)
 
 @app.route('/shots/')
 def shots():
