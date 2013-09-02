@@ -13,29 +13,7 @@ $(document).ready(function() {
 		cache: false
 	});	
 
-	var clientsTable = $('#clients').dataTable({
-		"bProcessing": true,
-		"iDisplayLength": 25,
-		//"sAjaxSource": '/json_source_2.txt'
-		"sAjaxSource": '/data.json',
-		"fnServerParams": function (aoData) {
-      		aoData.push( 
-      			{"name": "item", "value": "client"}, 
-      			{"name": "action", "value": "read"});
-      	},
-		"fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
-			if (aData[1] == "enabled"){
-				$('td:eq(1)', nRow).html('<span class="status-toggle btn btn-mini btn-success">enabled</span>');
-			} else if (aData[1] == "disabled"){
-				$('td:eq(1)', nRow).html('<span class="status-toggle btn btn-mini btn-warning">disabled</span>');
-			}
-			if (aData[2] == "offline"){
-				$('td:eq(2)', nRow).html('<span class="label label-important">offline</apn>');
-			} else if (aData[2] == "online"){
-				$('td:eq(2)', nRow).html('<span class="label label-success">online</apn>');
-			}
-    	}
-	});
+	
 
 	$(document).on("click", ".status-toggle", function() {
 		var status = $(this).html();
@@ -96,17 +74,6 @@ $(document).ready(function() {
 		});
 	});
 
-	var sequencesTable = $('#sequences').dataTable({
-		"bProcessing": true,
-		"iDisplayLength": 25,
-		"sAjaxSource": '/data.json',
-		"fnServerParams": function (aoData) {
-			aoData.push( 
-				{"name": "item", "value": "sequence"}, 
-				{"name": "action", "value": "read"});
-		}
-	});
-	
 
 	var shotsTable = $('#shots').dataTable({
 		"bProcessing": true,
@@ -126,17 +93,6 @@ $(document).ready(function() {
 		"fnServerParams": function (aoData) {
 			aoData.push( 
 				{"name": "item", "value": "job"}, 
-				{"name": "action", "value": "read"});
-		}
-	});
-
-	var jobsTable = $('#projects').dataTable({
-		"bProcessing": true,
-		"iDisplayLength": 25,
-		"sAjaxSource": '/data.json',
-		"fnServerParams": function (aoData) {
-			aoData.push( 
-				{"name": "item", "value": "project"}, 
 				{"name": "action", "value": "read"});
 		}
 	});

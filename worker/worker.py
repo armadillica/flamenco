@@ -23,7 +23,7 @@ IP_ADDRESS = socket.gethostbyname(HOSTNAME + '.local') + ':' + str(PORT)
 app = Flask(__name__)
 app.config.update(
     DEBUG = True,
-    #SERVER_NAME = 'localhost:' + PORT
+    SERVER_NAME = 'localhost' + str(PORT)
 )
 
 

@@ -1,18 +1,51 @@
-brender
-=======
+# brender-flask
 
-Development repo for brender 2.0 (the original version is here https://github.com/oenvoyage/brender)
 
-## Installation
+Development repo for brender 2.0 (the original version is here https://github.com/oenvoyage/brender). This is the Flask-based version, a new direction taken after getting some feedback from Sergey and Keir.
+
+## Developer installation
 Basic requirement at the moment are:
 
 * Python 2.7
-* gevent (awesome lib for concurrency)
+* Flask
 * peewee (ORM library)
-* PHP 5 (for the web interface)
-* Apache (for the web interface)
+* virtualenv (optional)
 
-To install gevent on OSX, check this docs out:
+Following the Flask idea, we install the server, workers and dashboard unsing virtualenv. Text copied from the Flask guide. 
+
+```
+$ sudo easy_install virtualenv
+```
+
+Once you have virtualenv installed, just fire up a shell and create your own environment. You may want to create this folder inside of the brender folder:
+
+```
+$ cd brender
+$ virtualenv venv
+New python executable in venv/bin/python
+Installing distribute............done.
+```
+
+Now, whenever you want to work on a project, you only have to activate the corresponding environment. On OS X and Linux, do the following:
+
+```
+$ . venv/bin/activate
+```
+
+Now you can just enter the following command to get Flask activated in your virtualenv:
+
+```
+$ pip install Flask
+```
+
+At this point you should install peewee as well:
+
+```
+$ easy_install install peewee
+```
+
+
+OUTATED: To install gevent on OSX, check this docs out:
 
 * http://stackoverflow.com/questions/7630388/how-can-i-install-python-library-gevent-on-mac-osx-lion
 * Install libevent (brew install libevent)
@@ -20,27 +53,21 @@ To install gevent on OSX, check this docs out:
 * Install peewee (easy_install peewee)
 
 ## Architecture
-At the moment there are two main files and one folder:
+At the moment the content of the `brender` folder is quite messy due to refactoring. The important subfolders are:
 
-* master.py - the server that handles all the client connections and dispatches orders
-* client.py - a client that connects to the master and waits for orders
-* dashboard - contains a simple web application that provides a GUI for managing server and clients
+* `server` containing the server files
+* `worker` containing the worker files (render nodes)
+* `dashboard` containing the dashboard (web interface to talk to the server)
 
-It is possible to connect to the master via telnet using the command `telent localhost 6000`.
-A command prompt will appear and it will be possible to talk to the master (at the moment some basic commands are still usable, but the idea is to make it support only normal API strings - see the syntax below).
+This structure explains also the naming conventions adopted to distinguish the different parts of brender. 
+Each folder contains an individual Falsk application. Server and Worker exchange JSON formatted message between each other via HTTP, using GET or POST methods.
+Dashboard connect to the Server only and accepts connection from clients (Browsers).
 
-### Past steps
-The next milestone for the development is to achieve a solid system for enabling and disabling clients (both via command line interface and web interface). This will be achieved in several steps:
+At the moment we have the following addresses:
 
-* develop a versatile attributes CRUD API for the objects (both via CLI and WI)
-* integrate an ORM such as `pewee` for handling a mirrored database with all the clients, jobs, etc
-* create the foundation for the web interface and implement the basic client enable and disable features
-
-### Current steps
-Complete the project, sequence, shot, frames, job management system, including a documentation of the functions involved, as well as the API calls.
-
-### Next steps
-Here we will write a list of the future steps to be taken (this includes design goals and features). Will be updated soon.
+* http://brender-server:9999
+* http://localhost:5000
+* http://brender-flask 
 
 
 ### About the web interface
@@ -52,15 +79,6 @@ After some quite intense research we dropped the idea of using CodeIgniter as a 
 * web interface with dataTables and data loaded via AJAX
 * JSON data output (was a pain to get it working because we forgot to close the socket once the query was completed)
 
-### How to use the web interface
-It's quite simple. The web interface is situated in the folder called `dashboard`. Set the Apache home directory in that folder and you should be able to see it via the web browser. Here is a list of the main files and folders:
-
-* config.php - basic configuration (server address and port)
-* index.php - sets up the routing and point to the webroot folder
-* lib - contains any library used by the application (currently only one functions.php file)
-* pages - content of each page of the application
-* tpl - templates used to wrap page contents
-* webroot - contains all the frontend elements (css, javascript, images and icons)
 
 
 Frameworks and tools used by the interface are:
@@ -137,23 +155,3 @@ The following table gives a better overview of the JSON string components.
     </tbody>
 </table>
 
-###Communication between server and client
-In order to get clear communication between server and clients, we have setup a JSON based protocol there too.
-
-`{'type': 'system', 'command': 'mac_address'}`
-
-At the moment the only types available are:
-
-* system: for system specific command (get memory usage, MAC address, etc)
-* render: a render order (with several parameters, such as blender path, chunk start and end, etc)
-
-
-We have the convention that an `order` is a JONS string going from the server to the client, while a `response` is a JSON string going from client to server.
-
-
-## List of commands - outdated
-No real commands are currently available. At the moment only test inputs are available, but this is a list of possible inputs:
-
-* `clients` - lists all available clients (could support filtering arguments, such as `all`, `enabled`, etc.)
-* `enable` (plus filtering arguments) - enables selected clients
-* `disable` (plus filtering arguments) - disables selected clients

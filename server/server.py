@@ -37,7 +37,7 @@ def workers():
     return jsonify(workers)
 
 @app.route('/workers/edit', methods=['POST'])
-def all_workers_edit():
+def workers_edit():
     worker_ids = request.form['id']
     worker_status = request.form['status']
     worker_config = request.form['config']
@@ -46,17 +46,13 @@ def all_workers_edit():
             worker = Workers.get(Workers.id == worker_id)
             update_worker(worker, worker_status, worker_config)
 
-        return 'done'
+        return jsonify(result = 'success')
     else:
         print 'we edit all the workers'
         for worker in Workers.select():
             update_worker(worker, worker_status, worker_config)
 
-    return 'asd'
-
-@app.route('/workers/edit/<int:worker_id>')
-def workers_edit(worker_id):
-    return str(worker_id)
+    return jsonify(result = 'success')
 
 @app.route('/shots/')
 def shots():
