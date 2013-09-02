@@ -44,13 +44,28 @@ At this point you should install peewee as well:
 $ easy_install install peewee
 ```
 
+Congratulations, brender and its dependencies should be correctly installed and ready to run. As a final step we should add a couple of hostnames into the `/ets/hosts` file:
 
-OUTATED: To install gevent on OSX, check this docs out:
+```
+brender-server	127.0.0.1
+brender-flask	127.0.0.1
+```
 
-* http://stackoverflow.com/questions/7630388/how-can-i-install-python-library-gevent-on-mac-osx-lion
-* Install libevent (brew install libevent)
-* Install gevent (easy_install gevent)
-* Install peewee (easy_install peewee)
+You might also want to create an sqlite database inside of the `server` folder:
+
+```
+$ cd server/
+$ touch brender.sqlite
+```
+
+## Running brender
+It's pretty simple. Use the following commands from inside the `brender` folder:
+
+```
+$ python server/server.py  			# will start the server
+$ python worker/worker.py			# will start the worker
+$ python dashboard/dashboard.py		# will start the dashboard
+```
 
 ## Architecture
 At the moment the content of the `brender` folder is quite messy due to refactoring. The important subfolders are:
@@ -67,7 +82,7 @@ At the moment we have the following addresses:
 
 * http://brender-server:9999
 * http://localhost:5000
-* http://brender-flask 
+* http://brender-flask:8888 
 
 
 ### About the web interface
