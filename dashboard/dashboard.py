@@ -34,7 +34,14 @@ def workers():
     workers_list = []
 
     for key, val in workers.iteritems():
-        workers_list.append([key, val['ip_address'], val['status']])
+        val['checkbox'] = '<input type="checkbox" />'
+        workers_list.append([
+            val['checkbox'], 
+            key, 
+            val['ip_address'], 
+            val['connection'],
+            val['status']
+        ])
         #print v
 
     entries = json.dumps(workers_list)
