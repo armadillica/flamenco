@@ -40,19 +40,21 @@ def workers():
 @app.route('/workers/edit', methods=['POST'])
 def workers_edit():
     worker_ids = request.form['id']
-    worker_status = request.form['status']
-    worker_connection = request.form['connection']
-    worker_config = request.form['config']
+    worker_data = {
+        "status" : request.form['status'],
+        "config" : request.form['config']
+    }
+
     if worker_ids:
         for worker_id in list_integers_string(worker_ids):
             worker = Workers.get(Workers.id == worker_id)
-            update_worker(worker, worker_status, worker_connection, worker_config)
+            update_worker(worker, worker_data)
 
         return jsonify(result = 'success')
     else:
         print 'we edit all the workers'
         for worker in Workers.select():
-            update_worker(worker, worker_status, worker_connection, worker_config)
+            update_worker(worker, worker_data)
 
     return jsonify(result = 'success')
 
@@ -60,11 +62,20 @@ def workers_edit():
 def shots():
     shots = {}
     for shot in Shots.select():
+        if shot.frame_start == shot.current_frame:
+            percentage_done = 0
+        else:
+            frame_count = shot.frame_end - shot.frame_start + 1
+            current_frame = shot.current_frame - shot.frame_start + 1
+            percentage_done = 100 / frame_count * current_frame
+
         shots[shot.id] = {
             "frame_start" : shot.frame_start,
             "frame_end" : shot.frame_end,
             "current_frame" : shot.current_frame,
-            "status" : shot.status}
+            "status" : shot.status,
+            "percentage_done" : percentage_done,
+            "render_settings" : shot.render_settings}
     return jsonify(shots)
 
 @app.route('/shots/start/<int:shot_id>')

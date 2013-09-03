@@ -47,8 +47,42 @@ def workers():
 
     entries = json.dumps(workers_list)
 
-
     return render_template('workers.html', entries=entries)
+
+@app.route("/workers/edit", methods=['POST'])
+def workers_edit():
+    worker_ids = request.form['id']
+    worker_status = request.form['status']
+
+    worker_config = {'system' : 'linux', 'blender': 'local'}
+    params = urllib.urlencode({'id': worker_ids, 'status': worker_status, 'config' : worker_config})
+    f = urllib.urlopen("http://brender-server:9999/workers/edit", params)
+
+    return jsonify (status = 'ok')
+
+
+@app.route("/shots/")
+def shots_index():
+    shots = http_request('brender-server:9999', '/shots')
+    #print shots
+    shots = json.loads(shots)
+    shots_list = []
+
+    for key, val in shots.iteritems():
+        val['checkbox'] = '<input type="checkbox" />'
+        shots_list.append({
+            "DT_RowId" : "worker_" + str(key),
+            "0" : val['checkbox'], 
+            "1" : key, 
+            "2" : val['percentage_done'], 
+            "3" : val['render_settings'],
+            "4" : val['status']
+            })
+        #print v
+
+    entries = json.dumps(shots_list)
+    
+    return render_template('shots.html', entries=entries)
 
 if __name__ == "__main__":
     app.run()
