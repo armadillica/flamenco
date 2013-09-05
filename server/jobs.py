@@ -1,9 +1,9 @@
 from model import *
 from utils import *
 
-def create_job(chunk_start, chunk_end):
+def create_job(shot_id, chunk_start, chunk_end):
     Jobs.create(
-        shot_id = 1,
+        shot_id = shot_id,
         worker_id = 12,
         chunk_start = chunk_start,
         chunk_end = chunk_end,
@@ -27,7 +27,7 @@ def create_jobs(shot):
         for chunk in range(total_chunks - 1):
             print 'making chunk for shot', shot.id
             
-            create_job(chunk_start, chunk_end)
+            create_job(shot.id, chunk_start, chunk_end)
             
             chunk_start = chunk_end + 1
             chunk_end = chunk_start + shot.chunk_size - 1
@@ -35,7 +35,7 @@ def create_jobs(shot):
     elif shot_chunks_remainder == shot.chunk_size:
         print 'we have 1 chunk only'
 
-        create_job(shot.frame_start, hot.frame_end)
+        create_job(shot.id, shot.frame_start, hot.frame_end)
 
     #elif shot_chunks_remainder > 0 and shot_chunks_remainder < shot.chunk_size:
     else:
@@ -50,13 +50,13 @@ def create_jobs(shot):
         for chunk in range(total_chunks - 1):
             print 'making chunk for shot', shot.id
             
-            create_job(chunk_start, chunk_end)
+            create_job(shot.id, chunk_start, chunk_end)
             
             chunk_start = chunk_end + 1
             chunk_end = chunk_start + shot.chunk_size - 1
 
         chunk_end = chunk_start + shot_chunks_remainder - 1
-        create_job(chunk_start, chunk_end)
+        create_job(shot.id, chunk_start, chunk_end)
 
 
 def dispatch_jobs():
