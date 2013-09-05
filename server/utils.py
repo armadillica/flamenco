@@ -16,3 +16,12 @@ def list_integers_string(string_list):
 	integers_list = string_list.split(',')
 	integers_list = map(int, integers_list)
 	return integers_list
+
+def frame_percentage(item):
+    if item.frame_start == item.current_frame:
+            return 0
+    else:
+        frame_count = item.frame_end - item.frame_start + 1
+        current_frame = item.current_frame - item.frame_start + 1
+        percentage_done = 100 / frame_count * current_frame
+        return percentage_done

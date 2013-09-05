@@ -69,7 +69,7 @@ def shots_index():
     shots_list = []
 
     for key, val in shots.iteritems():
-        val['checkbox'] = '<input type="checkbox" />'
+        val['checkbox'] = '<input type="checkbox" value="' +  key + '" />'
         shots_list.append({
             "DT_RowId" : "worker_" + str(key),
             "0" : val['checkbox'], 
@@ -83,6 +83,30 @@ def shots_index():
     entries = json.dumps(shots_list)
     
     return render_template('shots.html', entries=entries, title='shots')
+
+
+@app.route("/jobs/")
+def jobs_index():
+    jobs = http_request('brender-server:9999', '/jobs')
+    #print shots
+    jobs = json.loads(jobs)
+    jobs_list = []
+
+    for key, val in jobs.iteritems():
+        val['checkbox'] = '<input type="checkbox" value="' +  key + '" />'
+        jobs_list.append({
+            "DT_RowId" : "worker_" + str(key),
+            "0" : val['checkbox'],
+            "1" : key, 
+            "2" : val['percentage_done'], 
+            "3" : val['priority'],
+            "4" : val['status']
+            })
+        #print v
+
+    entries = json.dumps(jobs_list)
+    
+    return render_template('jobs.html', entries=entries, title='jobs')
 
 if __name__ == "__main__":
     app.run()

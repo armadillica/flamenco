@@ -6,6 +6,7 @@ from flask import Flask, render_template, jsonify, redirect, url_for, request
 from model import *
 from jobs import *
 from workers import *
+from shots import *
 
 app = Flask(__name__)
 app.config.update(
@@ -120,15 +121,34 @@ def shot_add():
 
     return 'done'
 
+@app.route('/shots/delete', methods=['POST'])
+def shots_delete():
+    shot_ids = request.form['id']
+    shots_list =list_integers_string(shot_ids)
+    for shot_id in shots_list:
+        delete_shot(shot_id)
+    return 'done'
+
 @app.route('/jobs/')
 def jobs():
     jobs = {}
     for job in Jobs.select():
+
+        if job.chunk_start == job.current_frame:
+            percentage_done = 0
+        else:
+            frame_count = job.chunk_end - job.chunk_start + 1
+            current_frame = job.current_frame - job.chunk_start + 1
+            percentage_done = 100 / frame_count * current_frame
+
         jobs[job.id] = {
+            "shot_id" : job.shot_id,
             "chunk_start" : job.chunk_start,
             "chunk_end" : job.chunk_end,
             "current_frame" : job.current_frame,
-            "status" : job.status}
+            "status" : job.status,
+            "percentage_done" : percentage_done,
+            "priority" : job.priority}
     return jsonify(jobs)
 
 @app.route('/connect', methods=['POST', 'GET'])
