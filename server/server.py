@@ -126,7 +126,11 @@ def shots_delete():
     shot_ids = request.form['id']
     shots_list =list_integers_string(shot_ids)
     for shot_id in shots_list:
-        delete_shot(shot_id)
+        print 'working on', shot_id, '-', str(type(shot_id))
+        # first we delete the associated jobs (no foreign keys)
+        delete_jobs(shot_id)
+        # then we delete the shot
+        delete_shot(shot_id)        
     return 'done'
 
 @app.route('/jobs/')
@@ -150,6 +154,7 @@ def jobs():
             "percentage_done" : percentage_done,
             "priority" : job.priority}
     return jsonify(jobs)
+
 
 @app.route('/connect', methods=['POST', 'GET'])
 def connect():

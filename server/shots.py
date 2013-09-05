@@ -8,4 +8,4 @@ def delete_shot(shot_id):
 	    print e
 	    return 'error'
 	shot.delete_instance()
-	print 'deleted shot', shot_id
+	print 'Deleted shot', shot_id

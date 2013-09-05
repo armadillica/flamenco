@@ -82,3 +82,21 @@ def dispatch_jobs():
         http_request(worker.ip_address, '/run_job', job_parameters)
 
         print job.status
+
+
+def delete_job(job_id):
+    # At the moment this function is not used anywhere
+    try:
+        job = Jobs.get(Jobs.id == job_id)
+    except Exception, e:
+        print e
+        return 'error'
+    job.delete_instance()
+    print 'Deleted job', job_id
+
+
+def delete_jobs(shot_id):
+    delete_query = Jobs.delete().where(Jobs.shot_id == shot_id)
+    delete_query.execute()
+    print 'All jobs deleted for shot', shot_id
+
