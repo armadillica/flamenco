@@ -47,7 +47,7 @@ def workers():
 
     entries = json.dumps(workers_list)
 
-    return render_template('workers.html', entries=entries)
+    return render_template('workers.html', entries=entries, title='workers')
 
 @app.route("/workers/edit", methods=['POST'])
 def workers_edit():
@@ -82,7 +82,7 @@ def shots_index():
 
     entries = json.dumps(shots_list)
     
-    return render_template('shots.html', entries=entries)
+    return render_template('shots.html', entries=entries, title='shots')
 
 if __name__ == "__main__":
     app.run()

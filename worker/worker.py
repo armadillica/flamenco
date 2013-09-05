@@ -23,7 +23,7 @@ IP_ADDRESS = socket.gethostbyname(HOSTNAME + '.local') + ':' + str(PORT)
 app = Flask(__name__)
 app.config.update(
     DEBUG = True,
-    SERVER_NAME = 'localhost' + str(PORT)
+    #SERVER_NAME = 'brender-worker:' + str(PORT)
 )
 
 
@@ -68,6 +68,10 @@ def run_job():
     print request.form['command']
     return jsonify(status = 'ok')
 
+@app.route('/update', methods=['POST'])
+def update():
+    print 'updating'
+    return 'done'
 
 if __name__ == "__main__":
     start_worker()
