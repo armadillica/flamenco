@@ -4,6 +4,8 @@ import json
 
 from flask import Flask, render_template, jsonify, redirect, url_for, request
 
+BRENDER_SERVER = 'brender-server:9999'
+
 def http_request(ip_address, method, post_params = False):
     # post_params must be a dictionay
     if post_params:
@@ -28,7 +30,7 @@ def index():
 
 @app.route("/workers/")
 def workers():
-    workers = http_request('brender-server:9999', '/workers')
+    workers = http_request(BRENDER_SERVER, '/workers')
     #print shots
     workers = json.loads(workers)
     workers_list = []
@@ -63,7 +65,7 @@ def workers_edit():
 
 @app.route("/shots/")
 def shots_index():
-    shots = http_request('brender-server:9999', '/shots')
+    shots = http_request(BRENDER_SERVER, '/shots')
     #print shots
     shots = json.loads(shots)
     shots_list = []
@@ -71,7 +73,7 @@ def shots_index():
     for key, val in shots.iteritems():
         val['checkbox'] = '<input type="checkbox" value="' +  key + '" />'
         shots_list.append({
-            "DT_RowId" : "worker_" + str(key),
+            "DT_RowId" : "shot_" + str(key),
             "0" : val['checkbox'], 
             "1" : key, 
             "2" : val['percentage_done'], 
@@ -84,10 +86,17 @@ def shots_index():
     
     return render_template('shots.html', entries=entries, title='shots')
 
+@app.route("/shots/delete" , methods=['POST'])
+def shots_delete():
+    shot_ids = request.form['id']
+    print shot_ids
+    params = {'id': shot_ids }
+    shots = http_request(BRENDER_SERVER, '/shots/delete', params)
+    return 'done'
 
 @app.route("/jobs/")
 def jobs_index():
-    jobs = http_request('brender-server:9999', '/jobs')
+    jobs = http_request(BRENDER_SERVER, '/jobs')
     #print shots
     jobs = json.loads(jobs)
     jobs_list = []

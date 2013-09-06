@@ -15,59 +15,47 @@
 			],
 
 			"fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
-				var btn_status = "";
-				if (aData[3] == "offline"){
-					$('td:eq(3)', nRow).html('<span class="label label-important">offline</apn>');
-					btn_status = "disabled";
-				} else if (aData[3] == "online"){
-					$('td:eq(3)', nRow).html('<span class="label label-success">online</apn>');
-				}
-
-				if (aData[4] == "enabled"){
-					$('td:eq(4)', nRow).html('<span class="status-toggle btn btn-mini btn-success ' + btn_status + '">enabled</span>');
-				} else if (aData[4] == "disabled"){
-					$('td:eq(4)', nRow).html('<span class="status-toggle btn btn-mini btn-warning ' + btn_status + '">disabled</span>');
-				}
 
 				$('td:eq(2)', nRow).html('<div class="progress"><div class="bar" style="width: ' + aData[2] + '%;"></div></div>');
 	    	}
 		});
 
-		$(document).on("click", ".status-toggle", function() {
-			var status = $(this).html();
-			var tableRow = $(this).parents("tr");
-			var rowPosition = shotsTable.fnGetPosition(tableRow[0]);
-			var clientId = tableRow.attr("id").split("_")[1];
-
-			if (status == 'enabled') {
-				query = 'item=client&action=update&filters={"id":' + clientId +'}&values={"status":"disabled"}' ;
-				$.getJSON('ajax/test.json', query, function() {
-					console.log('Worker is now disabled');
-					shotsTable.fnUpdate('disabled', rowPosition ,4);
-				});
-			} else if (status == 'disabled') {
-				query = 'item=client&action=update&filters={"id":' + clientId +'}&values={"status":"enabled"}' ;
-				$.getJSON('ajax/test.json', query, function() {
-					console.log('Worker is now enabled');
-					shotsTable.fnUpdate('enabled', rowPosition ,4);
-				});
-			}
-		});
 
 		$(document).on("click", "#shot-delete", function() {
 			console.log('delete');
 
+			var shots = new Array();
+
 			var checkbox_list = $( "tbody input:checked" );
 			for (var i = checkbox_list.length - 1; i >= 0; i--) {
 				var checkbox = checkbox_list[i];
-				console.log($(checkbox).val());
+				shots.push($(checkbox).val());
 			};
+
+			console.log(shots);
+			shot_ids = shots.join();
   			
+  			$.post("/shots/delete", { 'id' : shot_ids})
+  			.done(function(data) {
+  				// we reuse the checkbox list to delete the table rows we just
+  				// removed in the database table
+  				for (var i = checkbox_list.length - 1; i >= 0; i--) {
+					var checkbox = checkbox_list[i];
+					var tableRow = $(checkbox).parents("tr");
+					// make sure to treat tableRow as an array and onlu get
+					// the first value (there is only one actually)
+					var aPos = shotsTable.fnGetPosition( tableRow[0] );
+					shotsTable.fnDeleteRow(aPos);
+				};
+				console.log('Shot removed from table');
+			});
+
 		});
 
 		$(document).on("click", ".check-all", function(){
 			$("table input[type=checkbox]").attr('checked', $(this).is(':checked'));
 		});
+
 
 	});
 </script>
@@ -78,9 +66,16 @@
 	</div>
 	<div class="row">
 		<div class="span10">
-			<div id="shot-disable" class="btn btn-warning">Disable</div>
-			<div id="shos-enable" class="btn btn-success">Enable</div>
-			<div id="shot-delete" class="btn btn-danger">Delete</div>
+			<div class="btn-toolbar">
+				<div class="btn-group">
+					<div id="shot-disable" class="btn">Start</div>
+					<div id="shos-enable" class="btn">Stop</div>
+					<div id="shos-pause" class="btn">Pause</div>
+				</div>
+				<div class="btn-group">
+					<div id="shot-delete" class="btn btn-danger">Delete</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<hr>
