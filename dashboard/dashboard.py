@@ -7,7 +7,7 @@ from flask import Flask, render_template, jsonify, redirect, url_for, request
 BRENDER_SERVER = 'brender-server:9999'
 
 def http_request(ip_address, method, post_params = False):
-    # post_params must be a dictionay
+    # post_params must be a dictionnary
     if post_params:
         params = urllib.urlencode(post_params)
         f = urllib.urlopen('http://' + ip_address + method, params)
