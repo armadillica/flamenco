@@ -10,10 +10,10 @@
 			"fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
 				var btn_status = "";
 				if (aData[3] == "offline"){
-					$('td:eq(3)', nRow).html('<span class="label label-important">offline</apn>');
+					$('td:eq(3)', nRow).html('<span class="label label-important">offline</span>');
 					btn_status = "disabled";
 				} else if (aData[3] == "online"){
-					$('td:eq(3)', nRow).html('<span class="label label-success">online</apn>');
+					$('td:eq(3)', nRow).html('<span class="label label-success">online</span>');
 				}
 
 				if (aData[4] == "enabled"){

@@ -44,8 +44,8 @@
           <a class="brand" href="{{ url_for('index') }}">brender</a>
           <div class="nav-collapse">
             <ul class="nav pull-right">
-              <li class="active"><a href="<?php echo(__WWW_PATH); ?>/">Overview</a></li>
-              <li><a href="<?php echo(__WWW_PATH); ?>/workers/">Workers</a></li>
+              <li class="active"><a href="{{__WWW_PATH}}/">Overview</a></li>
+              <li><a href="{{__WWW_PATH}}/workers/">Workers</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -77,7 +77,7 @@
               <li><a href="#">Render times</a></li>
               <li class="nav-header">Settings</li>
               <li><a href="#">Server</a></li>
-              <li><a href="<?php echo(__WWW_PATH); ?>/projects/">Projects</a></li>
+              <li><a href="{{__WWW_PATH}}/projects/">Projects</a></li>
               <li><a href="#">Render configs</a></li>
               <li><a href="#">Logs</a></li>
             </ul>
@@ -94,7 +94,7 @@
     </div>
     <hr>
     <footer>
-        <p>brender 2.0 is distribuited under GPL 2.0 license and was originally developed by Olivier Amrein and Francesco Siddi.</p>
+        <p>brender 2.0 is distributed under GPL 2.0 license and was originally developed by Olivier Amrein and Francesco Siddi.</p>
     </footer>
 
   </div> <!-- /container -->
