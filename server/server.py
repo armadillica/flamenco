@@ -21,12 +21,16 @@ def index():
 @app.route('/workers/')
 def workers():
     workers = {}
+
     for worker in Workers.select():
         try:
             f = urllib.urlopen('http://' + worker.ip_address)
             print f.read()
+            worker.connection = 'online'
+            worker.save()
         except Exception, e:
-            print e , '--> Worker', worker.hostname, 'not online'
+            print e.getcode()
+            print '--> Worker', worker.hostname, 'not online'
             worker.connection = 'offline'
             worker.save()
         
@@ -186,7 +190,8 @@ def connect():
             worker = Workers.create(
                 hostname = hostname, 
                 mac_address = mac_address, 
-                status = 'enabled', 
+                status = 'enabled',
+                connection = 'online', 
                 warning = False, 
                 config = 'bla',
                 ip_address = ip_address)
