@@ -29,11 +29,10 @@ def workers():
             worker.connection = 'online'
             worker.save()
         except Exception, e:
-            print e.getcode()
             print '--> Worker', worker.hostname, 'not online'
             worker.connection = 'offline'
             worker.save()
-        
+
         workers[worker.hostname] = {
             "id": worker.id,
             "hostname" : worker.hostname,
