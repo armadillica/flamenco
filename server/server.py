@@ -167,7 +167,11 @@ def connect():
         mac_address = request.form['mac_address']
         hostname = request.form['hostname']
 
-        worker = Workers.get(Workers.mac_address == mac_address)
+        try:
+            worker = Workers.get(Workers.mac_address == mac_address)
+        except Exception, e:
+            print e , '--> Worker not found'
+            worker = False
 
         if worker:
             print('This worker connected before, updating IP address')
