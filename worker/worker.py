@@ -17,7 +17,7 @@ else:
     PORT = 5000
 
 # we get the IP address and attach the port number to it
-IP_ADDRESS = socket.gethostbyname(HOSTNAME + '.local') + ':' + str(PORT)
+IP_ADDRESS = socket.gethostbyname(HOSTNAME) + ':' + str(PORT)
 
 # we initialize the app
 app = Flask(__name__)
