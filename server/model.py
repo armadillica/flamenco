@@ -5,6 +5,12 @@ import random
 db = SqliteDatabase('brender.sqlite')
 
 class Workers(Model):
+	"""Workers are the render nodes of the farm
+
+	The creation of a Worker in the database happens automatically a soon
+	as it connects to the server and its MAC address does not match any
+	of the one alreay present in the database.
+	"""
 	mac_address = IntegerField()
 	hostname = CharField()
 	status = CharField()
@@ -17,6 +23,12 @@ class Workers(Model):
 		database = db
 
 class Shots(Model):
+	"""A Shot one of the basic units of brender
+
+	The creation of a shot can happen in different ways:
+	* within brender (using a shot creation form)
+	* via a query from an external software (e.g. Attract)
+	"""
 	production_shot_id = IntegerField()
 	frame_start = IntegerField()
 	frame_end = IntegerField()
@@ -33,7 +45,16 @@ class Shots(Model):
 
 
 class Jobs(Model):
-	"""docstring for Jobs"""
+	"""Jobs are created after a Shot is added
+
+	Jobs can be reassigned individually to a different worker, but can be
+	deleted and recreated all together. A job is made of "orders" or
+	instructions, for example:
+	* Check out SVN revision 1954
+	* Clean the /tmp folder
+	* Render frames 1 to 5 of scene_1.blend
+	* Send email with results to user@brender-farm.org
+	"""
 	#shot = ForeignKeyField(Shots, related_name='fk_shot')
 	#worker = ForeignKeyField(Workers, related_name='fk_worker')
 	shot_id = IntegerField()
@@ -48,22 +69,23 @@ class Jobs(Model):
 		database = db
 
 
-
 def create_databases():
 	"""Create the required databases during installation.
 
-	Based on the classes specified above (currently Workers and Jobs)
+	Based on the classes specified above. This function is embedded in
+	the install_brender function.
 	"""
 	Workers.create_table()
 	Shots.create_table()
+	Jobs.create_table
 
 
-
-def create_workers(workers_amount):
+def add_random_workers(workers_amount):
 	"""Create the specified amount of workers.
 
 	Assigns some random values as hostname and mac_address. Used only
 	for testing purposes.
+	TODO: make sure that all the properties of a worker are added here
 	"""
 	for i in range(workers_amount):
 		Workers.create(mac_address = 123 + i,
@@ -74,111 +96,20 @@ def create_workers(workers_amount):
 	print("Database filled with " + str(workers_amount) + " workers.")
 
 
-def delete_workers(workers):
-	"""Removes all workers found in the workers table.
-
-	Should be refactored?
-	"""
-	if workers == 'ALL':
-		workers_count = Workers.select().count()
-		for worker in Workers.select():
-			print("Removing worker " + worker.hostname)
-			worker.delete_instance()
-		print("Removed all the " + str(workers_count) + " workers")
-	else:
-		print("Specify worker id")
-
-
-def add_random_shots(jobs_amount):
-	"""Creates the specified amount of jobs.
-
-	Jobs are fake and get randomly assigned do the existing workers
-	by picking their row id from a list generate on the fly.
-	"""
-
-	shot_ids = [2,3,4,5,5,6]
-
-	for i in range(jobs_amount):
-		random_id = random.choice(shot_ids)
-		Shots.create(shot = random_id,
-			frame_start = 2,
-			frame_end = 50,
-			chunk_size = 5,
-			current_frame = 2,
-			filepath = 'path',
-			render_settings = 'will refer to settins table',
-			status = 'running',
-			priority = 10,
-			owner = 'fsiddi')
-
-	print("Added " + str(jobs_amount) + " shots.")
-
-
-
-
-def fill_with_data():
-
-	Projects.create(name = 'Test project',
-		description = 'Test project',
-		project_path = '{"linux":"/path","osx":"/path","windows":"/path"}',
-		render_output_path = '{"linux":"/path","osx":"/path","windows":"/path"}',
-		render_engine_path = '{"linux":"/path","osx":"/path","windows":"/path"}',
-		is_active = True,
-		settings = '{"framerate":24,"use_svn":False,"use_dropbox":False}')
-
-	print "project created"
-
-	Sequences.create(project = 1,
-		name = '01_01',
-		description = 'Sequence 1')
-
-	create_shots(10)
-
-	Shots.create(shot = 1,
-		frame_start = 2,
-		frame_end = 50,
-		chunk_size = 5,
-		current_frame = 2,
-		filepath = 'path',
-		render_settings = 'will refer to settings table',
-		status = 'running',
-		priority = 10,
-		owner = 'fsiddi')
-
-
-def create_worker(attributes):
-	new_worker = Workers.create(mac_address = attributes['mac_address'],
-		hostname = attributes['hostname'],
-		status = attributes['status'],
-		warning = attributes['warning'],
-		config =attributes['config'])
-	print("New worker " + attributes['hostname'] + " was added")
-	return new_worker
-
-
-def show_workers():
-	for worker in Workers.select():
-		print worker.hostname, worker.fk_worker.count(), 'fk_worker'
-		for order in worker.fk_worker:
-			print '    ', order.order
-
 
 def install_brender():
+	"""Creates the tables in the database
+
+	Optionally it can populate the tables with some data to demonstrate
+	the behavior of the DataTables in the interface. This function must
+	be run manually only once upon installation of the system.
+
+	Just run python model.py with line 113 uncommented. 
+	"""
 	create_databases()
-	create_workers(10)
-	fill_with_data()
+	# create_workers(10)
 
 
 #install_brender()
 
-#create_shots(20)
-#delete_workers('ALL')
-#create_jobs(10)
-#disable_workers()
-
-#add_random_jobs(10)
-
-#show_workers()
-
-#print Workers.select().count()
 
