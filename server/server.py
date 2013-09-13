@@ -214,7 +214,7 @@ def connect():
         print 'The following worker just connected:'
         print f.read()
         
-        return ip_address
+        return 'You are now connected to the server'
     # the code below is executed if the request method
     # was GET or the credentials were invalid
     return jsonify(error = error)
