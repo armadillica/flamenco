@@ -1,7 +1,7 @@
-# brender-flask
+# brender 2.0
 
 
-Development repo for brender 2.0 (the original version is here https://github.com/oenvoyage/brender). This is the Flask-based version, a new direction taken after getting some feedback from Sergey and Keir.
+Development repo for brender 2.0 (the original version 1.0 is here https://github.com/oenvoyage/brender). This is the Flask-based version, a new direction taken after getting some feedback from Sergey and Keir.
 
 ## Developer installation
 Basic requirement at the moment are:
@@ -41,14 +41,14 @@ $ pip install Flask
 At this point you should install peewee as well:
 
 ```
-$ easy_install install peewee
+$ easy_install peewee
 ```
 
 Congratulations, brender and its dependencies should be correctly installed and ready to run. As a final step we should add a couple of hostnames into the `/ets/hosts` file:
 
 ```
-brender-server	127.0.0.1
-brender-flask	127.0.0.1
+127.0.0.1	brender-server	
+127.0.0.1	brender-flask	
 ```
 
 You might also want to create an sqlite database inside of the `server` folder:
@@ -59,13 +59,15 @@ $ touch brender.sqlite
 ```
 
 ## Running brender
-It's pretty simple. Use the following commands from inside the `brender` folder:
+It's pretty simple. Move into each one of the three folders and run - in three different terminals:
 
 ```
-$ python server/server.py  			# will start the server
-$ python worker/worker.py			# will start the worker
-$ python dashboard/dashboard.py		# will start the dashboard
+$ python server.py  		# will start the server
+$ python worker.py			# will start the worker
+$ python dashboard.py		# will start the dashboard
 ```
+
+If you now visit `http://brender-flask:8888` with your web browser you should see the dashboard!
 
 ## Architecture
 At the moment the content of the `brender` folder is quite messy due to refactoring. The important subfolders are:
@@ -86,87 +88,10 @@ At the moment we have the following addresses:
 
 
 ### About the web interface
-The idea is to use a light PHP framework that will allow the user to connect to the master and give inputs. All the database work related to the farm will not be directly accessible by the client. Web interface and master.py will talk to each other via sockets using JSON strings.
-This allows to keep data centralized and share an API across different interfaces (could be a native iOS/Android application for example).
-After some quite intense research we dropped the idea of using CodeIgniter as a framweork and built ourselves a simpler one. The current framework provides:
-
-* fully configurable url routing
-* web interface with dataTables and data loaded via AJAX
-* JSON data output (was a pain to get it working because we forgot to close the socket once the query was completed)
-
-
-
 Frameworks and tools used by the interface are:
 
 * jQuery
-* bootstrap
-* dataTables 
+* Bootstrap
+* DataTables 
 
-## Implementation details
-Here we explain how the software works in some of its most important parts.
-
-### Startup
-Before we start running the server we load from the database a list of clients and run them through an initialize_runtime_client function that create the client object we use in the application. These objects are appended to the runtime_clients list. We do this because accessing clients from memory is much faster!
-
-### Client connection
-When a client connects we check if it was there before (if it is in the runtime_clients list loaded from the database at startup). If it's there we enable it, if not, we: 
-
-* first create a new entry in the database
-* extract the entry and use the id to
-* initialize a new runtime_client
-* we append the client to the runtime_clients list and use it
-
-### Shutdown
-When we shut down brender we must save the current status of the runtime clients in the database. There is a save_to_database function that does that. At the moment that function is very slow, compared to the load_from_database, why? This has to be investigated.
-
-### API
-The brender API consists in the exchange of JSON strings between a client and the server. At the moment it works like this:
-
-* Open a connection to the server (new socket)
-* Send data to the server (as JSON)
-* Get response
-* Eventually close the connection
-
-We build the JSON request by defining item, action, filter and values. Item and action are mandatory, whereas filter and values depend on the action. Here you have an example:
-
-`{'item': 'client', 'action': 'update', 'filter': 'enabled', 'values': 'disabled'}`
-
-The following table gives a better overview of the JSON string components.
-
-<table>
-    <thead>
-   		<tr>
-        	<th>Key</th>
-        	<th>Type</th>
-        	<th>Included</th>
-        	<th>Example</th>
-        </tr>
-    </thead>
-    <tbody>
-    	<tr>
-    		<td>item</td>
-    		<td>string</td>
-    		<td>ALWAYS</td>
-    		<td>'clients'</td>
-    	</tr>
-    	<tr>
-    		<td>action</td>
-    		<td>string</td>
-    		<td>ALWAYS</td>
-    		<td>'update'</td>
-    	</tr>
-    	<tr>
-    		<td>filters</td>
-    		<td>dictionary</td>
-    		<td>Read Update Delete</td>
-    		<td>{'status': 'enabled'}</td>
-    	</tr>
-    	<tr>
-    		<td>values</td>
-    		<td>dictionary</td>
-    		<td>Create Update</td>
-    		<td>{'status': 'disabled'}</td>
-    	</tr>
-    </tbody>
-</table>
 
