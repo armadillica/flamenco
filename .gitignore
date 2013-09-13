@@ -1,8 +1,11 @@
+*.sublime-project
+*.sublime-workspace
 *.pyc
 .DS_Store
 *.sqlite
 /temp/*
 *bootstrap.js
+venv/
 
 dashboard/webroot/css/bootstrap-responsive.css
 dashboard/webroot/css/bootstrap.css
