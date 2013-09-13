@@ -18,6 +18,7 @@ app.config.update(
 def index():
 	return jsonify(status = 'ok')
 
+
 @app.route('/workers/')
 def workers():
     workers = {}
@@ -25,13 +26,10 @@ def workers():
     for worker in Workers.select():
         try:
             f = urllib.urlopen('http://' + worker.ip_address)
-            print f.read()
             worker.connection = 'online'
-            worker.save()
         except Exception, e:
-            print '--> Worker', worker.hostname, 'not online'
+            print '[Warning] Worker', worker.hostname, 'is not online'
             worker.connection = 'offline'
-            worker.save()
 
         workers[worker.hostname] = {
             "id": worker.id,
@@ -39,6 +37,18 @@ def workers():
             "status" : worker.status,
             "connection" : worker.connection,
             "ip_address" : worker.ip_address}
+
+    """
+    This is a temporary solution for saving the workers connections: 
+    we read them from the workers dict we just created and build an 
+    update query for each one of them. It seems not possible to save
+    the objects on the fly in the Workers.select() loop above.
+    """
+    
+    for k, v in workers.iteritems():
+        update_query = Workers.update(connection=v['connection']).where(Workers.id == v['id'])
+        update_query.execute()
+
     return jsonify(workers)
 
 @app.route('/workers/edit', methods=['POST'])
