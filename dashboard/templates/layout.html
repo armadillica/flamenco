@@ -69,8 +69,8 @@
               <li {% if title == 'jobs': %} class="active"{% endif %}>
                 <a href="{{ url_for('jobs_index') }}">Jobs</a>
               </li>
-              <li >
-                <a href="#">Add Shot</a>
+              <li {% if title == 'add_shot': %} class="active"{% endif %}>
+                <a href="{{ url_for('shots_add') }}">Add Shot</a>
               </li>
               <li class="nav-header">Stats</li>
               <li><a href="#">Server status</a></li>

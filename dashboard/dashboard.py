@@ -94,6 +94,27 @@ def shots_delete():
     shots = http_request(BRENDER_SERVER, '/shots/delete', params)
     return 'done'
 
+@app.route("/shots/add" , methods=['GET', 'POST'])
+def shots_add():
+    if request.method == 'POST':
+        shot_values = {
+            'production_shot_id' : 1,
+            'frame_start' : request.form['frame_start'],
+            'frame_end' : request.form['frame_end'],
+            'chunk_size' : request.form['chunk_size'],
+            'current_frame' : request.form['frame_start'],
+            'filepath' : request.form['filepath'],
+            'render_settings' : 'will refer to settings table',
+            'status' : 'running',
+            'priority' : 10,
+            'owner' : 'fsiddi'
+        }
+
+        return http_request(BRENDER_SERVER, '/shots/add', shot_values)
+    else:
+        return render_template('add_shot.html', title='add_shot')
+
+
 @app.route("/jobs/")
 def jobs_index():
     jobs = http_request(BRENDER_SERVER, '/jobs')

@@ -108,17 +108,17 @@ def shot_start(shot_id):
         http_request()
         return 'Shot started'
 
-@app.route('/shots/add')
+@app.route('/shots/add', methods=['POST'])
 def shot_add():
     print 'adding shot'
 
     shot = Shots.create(
         production_shot_id = 1,
-        frame_start = 2,
-        frame_end = 50,
-        chunk_size = 5,
-        current_frame = 2,
-        filepath = '/path',
+        frame_start = int(request.form['frame_start']),
+        frame_end = int(request.form['frame_end']),
+        chunk_size = int(request.form['chunk_size']),
+        current_frame = int(request.form['frame_start']),
+        filepath = request.form['filepath'],
         render_settings = 'will refer to settings table',
         status = 'running',
         priority = 10,

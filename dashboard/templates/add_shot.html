@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block body %}
+	<form class="form-horizontal" action="{{ url_for('shots_add') }}" method=post>
+		<fieldset>
+
+		<!-- Form Name -->
+		<legend>Add shot</legend>
+
+		<!-- Text input-->
+		<div class="control-group">
+		  <label class="control-label" for="name">Name</label>
+		  <div class="controls">
+		    <input id="name" name="name" type="text" placeholder="a2s31" class="input-xlarge" required="">
+		  </div>
+		</div>
+
+		<!-- Text input-->
+		<div class="control-group">
+		  <label class="control-label" for="filepath">Filepath</label>
+		  <div class="controls">
+		    <input id="filepath" name="filepath" type="text" placeholder="/test" class="input-xlarge" required="">
+		    
+		  </div>
+		</div>
+
+		<!-- Text input-->
+		<div class="control-group">
+		  <label class="control-label" for="frame_start">Frame Start</label>
+		  <div class="controls">
+		    <input id="frame_start" name="frame_start" type="text" placeholder="1" class="input-xlarge" required="">
+		    
+		  </div>
+		</div>
+
+		<!-- Text input-->
+		<div class="control-group">
+		  <label class="control-label" for="frame_end">Frame End</label>
+		  <div class="controls">
+		    <input id="frame_end" name="frame_end" type="text" placeholder="10" class="input-xlarge" required="">
+		    
+		  </div>
+		</div>
+
+		<!-- Text input-->
+		<div class="control-group">
+		  <label class="control-label" for="chunk_size">Chunk size</label>
+		  <div class="controls">
+		    <input id="chunk_size" name="chunk_size" type="text" placeholder="2" class="input-xlarge" required="">
+		    
+		  </div>
+		</div>
+
+		<!-- Button -->
+		<div class="control-group">
+		  <label class="control-label" for="submit"></label>
+		  <div class="controls">
+		    <button id="submit" name="submit" class="btn btn-default">Add shot</button>
+		  </div>
+		</div>
+
+		</fieldset>
+	</form>
+
+{% endblock %}
