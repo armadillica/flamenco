@@ -28,16 +28,16 @@
 			var status = $(this).html();
 			var tableRow = $(this).parents("tr");
 			var rowPosition = workersTable.fnGetPosition(tableRow[0]);
-			var clientId = tableRow.attr("id").split("_")[1];
+			var workerId = tableRow.attr("id").split("_")[1];
 
 			if (status == 'enabled') {
-				data = {id : clientId, status: 'disabled'};
+				data = {id : workerId, status: 'disabled'};
 				$.post('/workers/edit', data, function() {
 					console.log('Worker is now disabled');
 					workersTable.fnUpdate('disabled', rowPosition ,4);
 				});
 			} else if (status == 'disabled') {
-				data = {id : clientId, status: 'enabled'};
+				data = {id : workerId, status: 'enabled'};
 				$.post('/workers/edit', data, function() {
 					console.log('Worker is now enabled');
 					workersTable.fnUpdate('enabled', rowPosition ,4);
@@ -54,8 +54,8 @@
 	</div>
 	<div class="row">
 		<div class="span10">
-			<div id="clients-disable-all" class="btn btn-warning">Disable All</div>
-			<div id="clients-enable-all" class="btn btn-success">EnableAll</div>
+			<div id="workers-disable-all" class="btn btn-warning">Disable All</div>
+			<div id="workers-enable-all" class="btn btn-success">EnableAll</div>
 		</div>
 	</div>
 	<hr>
