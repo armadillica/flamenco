@@ -4,7 +4,13 @@ import random
 
 db = SqliteDatabase('brender.sqlite')
 
-class Workers(Model):
+# create a base model class that our application's models will extend
+class BaseModel(Model):
+    class Meta:
+        database = db
+
+
+class Workers(BaseModel):
 	"""Workers are the render nodes of the farm
 
 	The creation of a Worker in the database happens automatically a soon
@@ -19,10 +25,8 @@ class Workers(Model):
 	ip_address = CharField()
 	connection = CharField()
 
-	class Meta:
-		database = db
 
-class Shots(Model):
+class Shots(BaseModel):
 	"""A Shot one of the basic units of brender
 
 	The creation of a shot can happen in different ways:
@@ -41,11 +45,8 @@ class Shots(Model):
 	priority = IntegerField()
 	owner = CharField() # will eventually become a foreign field
 
-	class Meta:
-		database = db
 
-
-class Jobs(Model):
+class Jobs(BaseModel):
 	"""Jobs are created after a Shot is added
 
 	Jobs can be reassigned individually to a different worker, but can be
@@ -65,9 +66,6 @@ class Jobs(Model):
 	current_frame = IntegerField()
 	status = CharField()
 	priority = IntegerField()
-
-	class Meta:
-		database = db
 
 
 def create_databases():
