@@ -34,6 +34,7 @@ class Shots(Model):
 	frame_end = IntegerField()
 	chunk_size = IntegerField()
 	current_frame = IntegerField()
+	shot_name = CharField() 
 	filepath = CharField() 
 	render_settings = CharField() # yolo settings (pre render / render / post)
 	status = CharField() # started and waiting / stopped / running / paused

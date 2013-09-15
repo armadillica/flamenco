@@ -13,4 +13,4 @@ def update_worker(worker, worker_data):
     	if val:
     		setattr(worker, key, val)
     worker.save()
-    print 'status', worker.status
+    print 'status ', worker.status

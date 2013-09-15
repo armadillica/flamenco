@@ -31,7 +31,7 @@ def index():
 @app.route("/workers/")
 def workers():
     workers = http_request(BRENDER_SERVER, '/workers')
-    #print shots
+    #print workers
     workers = json.loads(workers)
     workers_list = []
 
@@ -76,9 +76,10 @@ def shots_index():
             "DT_RowId" : "shot_" + str(key),
             "0" : val['checkbox'], 
             "1" : key, 
-            "2" : val['percentage_done'], 
-            "3" : val['render_settings'],
-            "4" : val['status']
+            "2" : val['shot_name'], 
+            "3" : val['percentage_done'], 
+            "4" : val['render_settings'],
+            "5" : val['status']
             })
         #print v
 
@@ -99,6 +100,7 @@ def shots_add():
     if request.method == 'POST':
         shot_values = {
             'production_shot_id' : 1,
+            'shot_name' : request.form['shot_name'],
             'frame_start' : request.form['frame_start'],
             'frame_end' : request.form['frame_end'],
             'chunk_size' : request.form['chunk_size'],

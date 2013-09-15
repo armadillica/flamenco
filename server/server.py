@@ -88,6 +88,7 @@ def shots():
             "frame_end" : shot.frame_end,
             "current_frame" : shot.current_frame,
             "status" : shot.status,
+            "shot_name" : shot.shot_name,
             "percentage_done" : percentage_done,
             "render_settings" : shot.render_settings}
     return jsonify(shots)
@@ -98,14 +99,14 @@ def shot_start(shot_id):
         shot = Shots.get(Shots.id == shot_id)
     except Exception, e:
         print e , '--> Shot not found'
-        return 'Shot not found'
+        return 'Shot %d not found' %shot_id
 
     if shot.status == 'started':
         return 'Shot already started'
     else:
         shot.status = 'started'
         shot.save()
-        http_request()
+        #http_request()
         return 'Shot started'
 
 @app.route('/shots/add', methods=['POST'])
@@ -119,12 +120,13 @@ def shot_add():
         chunk_size = int(request.form['chunk_size']),
         current_frame = int(request.form['frame_start']),
         filepath = request.form['filepath'],
+        shot_name = request.form['shot_name'],
         render_settings = 'will refer to settings table',
         status = 'running',
         priority = 10,
         owner = 'fsiddi')
 
-    print 'parsing shot'
+    print 'parsing shot to create jobs'
 
     create_jobs(shot)
 
