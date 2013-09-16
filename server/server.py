@@ -14,7 +14,7 @@ app.config.update(
 	SERVER_NAME='brender-server:9999'
 )
 
-@app.route("/")
+@app.route('/')
 def index():
 	return jsonify(status = 'ok')
 

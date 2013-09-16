@@ -24,11 +24,11 @@ app.config.update(
 )
 
 
-@app.route("/")
+@app.route('/')
 def index():
     return redirect(url_for('workers'))
 
-@app.route("/workers/")
+@app.route('/workers/')
 def workers():
     workers = http_request(BRENDER_SERVER, '/workers')
     #print workers
@@ -51,7 +51,7 @@ def workers():
 
     return render_template('workers.html', entries=entries, title='workers')
 
-@app.route("/workers/edit", methods=['POST'])
+@app.route('/workers/edit', methods=['POST'])
 def workers_edit():
     worker_ids = request.form['id']
     worker_status = request.form['status']
@@ -63,7 +63,7 @@ def workers_edit():
     return jsonify (status = 'ok')
 
 
-@app.route("/shots/")
+@app.route('/shots/')
 def shots_index():
     shots = http_request(BRENDER_SERVER, '/shots')
     #print shots
@@ -87,7 +87,7 @@ def shots_index():
     
     return render_template('shots.html', entries=entries, title='shots')
 
-@app.route("/shots/delete" , methods=['POST'])
+@app.route('/shots/delete' , methods=['POST'])
 def shots_delete():
     shot_ids = request.form['id']
     print shot_ids
@@ -95,7 +95,7 @@ def shots_delete():
     shots = http_request(BRENDER_SERVER, '/shots/delete', params)
     return 'done'
 
-@app.route("/shots/add" , methods=['GET', 'POST'])
+@app.route('/shots/add' , methods=['GET', 'POST'])
 def shots_add():
     if request.method == 'POST':
         shot_values = {
@@ -118,7 +118,7 @@ def shots_add():
         return render_template('add_shot.html', title='add_shot')
 
 
-@app.route("/jobs/")
+@app.route('/jobs/')
 def jobs_index():
     jobs = http_request(BRENDER_SERVER, '/jobs')
     #print shots

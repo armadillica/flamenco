@@ -52,11 +52,11 @@ def start_worker():
         registration_process.join()
         
         
-@app.route("/")
+@app.route('/')
 def index():
     return redirect(url_for('info'))
 
-@app.route("/info")
+@app.route('/info')
 def info():
     return jsonify(status = 'running',
         ip_address = IP_ADDRESS,
