@@ -44,8 +44,8 @@
           <a class="brand" href="{{ url_for('index') }}">brender</a>
           <div class="nav-collapse">
             <ul class="nav pull-right">
-              <li class="active"><a href="{{__WWW_PATH}}/">Overview</a></li>
-              <li><a href="{{__WWW_PATH}}/workers/">Workers</a></li>
+              <li class="active"><a href="{{ url_for('index') }}">Overview</a></li>
+              <li><a href="{{ url_for('workers') }}">Workers</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -77,10 +77,12 @@
               <li><a href="#">Render times</a></li>
               <li class="nav-header">Settings</li>
               <li><a href="#">Server</a></li>
-              <li><a href="{{__WWW_PATH}}/projects/">Projects</a></li>
+              <li><a href="#">Projects</a></li>
               <li><a href="#">Render configs</a></li>
               <li><a href="#">Logs</a></li>
-              <li><a href="{{__WWW_PATH}}/test/">Test</a></li>
+              <li {% if title == 'sandbox': %} class="active"{% endif %}>
+                <a href="{{ url_for('test_page') }}">Test</a>
+              </li>
             </ul>
           </div>
       </div>
