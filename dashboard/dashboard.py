@@ -62,6 +62,16 @@ def workers_edit():
 
     return jsonify (status = 'ok')
 
+@app.route('/workers/run_command', methods=['POST'])
+def workers_run_command():
+    arguments = '-al'
+    command = 'ls'
+    #params = urllib.urlencode({'command': 'command', 'arguments': 'arguments'})
+    f = urllib.urlopen("http://brender-server:9999/workers/run_command")
+
+    return jsonify (status = 'ok')
+
+
 
 @app.route('/shots/')
 def shots_index():
@@ -140,6 +150,12 @@ def jobs_index():
     entries = json.dumps(jobs_list)
     
     return render_template('jobs.html', entries=entries, title='jobs')
+
+
+@app.route('/test/')
+def test_page():
+	
+    return render_template('test_page.html', title='test page')
 
 @app.errorhandler(404)
 def page_not_found(error):

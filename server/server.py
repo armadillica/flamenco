@@ -72,6 +72,18 @@ def workers_edit():
 
     return jsonify(result = 'success')
 
+@app.route('/workers/run_command')
+def worker_run_command():
+    print "server run command point"
+    #command = request.form['command']
+    #arguments = request.form['arguments']
+    ip_address = '127.0.0.1:5000'
+    
+    return http_request(ip_address, '/run_command')
+    #return "test"
+    #return jsonify(result = 'success')
+
+
 @app.route('/shots/')
 def shots():
     shots = {}

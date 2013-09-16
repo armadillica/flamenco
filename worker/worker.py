@@ -2,6 +2,7 @@ import socket
 import urllib
 import time
 import sys
+import subprocess
 
 from multiprocessing import Process
 from flask import Flask, render_template, jsonify, redirect, url_for, request
@@ -63,9 +64,28 @@ def info():
         mac_address = MAC_ADDRESS,
         hostname = HOSTNAME)
 
+@app.route('/run_command')
+def run_command():
+
+    blender_path = "/Applications/blender/Blender_2_68/blender.app/Contents/MacOS/blender"
+    file_path = "/Users/o/Dropbox/brender/test_blends/monkey.blend"
+    options = "-s 1 -e 2 -a"
+    render_command = '%s -b %s %s' % (blender_path, file_path, options);
+    
+    print "i'm the worker and i run the following test command %s" % render_command
+
+
+    subp = subprocess.Popen(render_command, stdout=subprocess.PIPE, shell=True)
+    (output, err) = subp.communicate()
+    #print output
+    with open('log.log','w') as f:
+    	f.write(str(output))
+    return jsonify(status = 'ok command run')
+
 @app.route('/run_job', methods=['POST'])
 def run_job():
-    print request.form['command']
+    print "we are running the job"
+    # job is a stack of commands : pre-script, rendering, post-script 
     return jsonify(status = 'ok')
 
 @app.route('/update', methods=['POST'])
