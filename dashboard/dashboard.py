@@ -152,10 +152,9 @@ def jobs_index():
     return render_template('jobs.html', entries=entries, title='jobs')
 
 
-@app.route('/test/')
-def test_page():
-	
-    return render_template('test_page.html', title='test page')
+@app.route('/sandbox/')
+def sandbox():
+    return render_template('sandbox.html', title='sandbox')
 
 @app.errorhandler(404)
 def page_not_found(error):

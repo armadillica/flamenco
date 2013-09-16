@@ -80,8 +80,9 @@
               <li><a href="#">Projects</a></li>
               <li><a href="#">Render configs</a></li>
               <li><a href="#">Logs</a></li>
+              <li class="nav-header">Development</li>
               <li {% if title == 'sandbox': %} class="active"{% endif %}>
-                <a href="{{ url_for('test_page') }}">Test</a>
+                <a href="{{ url_for('sandbox') }}">Sandbox</a>
               </li>
             </ul>
           </div>
