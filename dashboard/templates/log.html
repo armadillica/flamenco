@@ -27,9 +27,9 @@ $(".morelink").click(function(){
     <h1>Log</h1>
     <h3>{% if result %} {{ result }} {% endif %}</h3>
     <br/>
-    <form action="/log/" method=post>
+    <form action="/log/" method="POST">
       <div class="input-append">
-        <input class="span2" id="appendedInputButton" type="text" placeholder="ex: /User/koder/log.log" name='result'>
+        <input class="span2" id="appendedInputButton" type="text" placeholder="ex: /User/koder/log.log" name="result">
         <button class="btn" type="submit">Go!</button>
       </div>
     </form>

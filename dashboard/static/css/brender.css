@@ -331,3 +331,10 @@ div.DTFC_LeftFootWrapper table {
 .progress {
   margin-bottom: 0;
 }
+
+.Online {
+    color:green;
+}
+.Offline {
+    color:red;
+}
