@@ -51,13 +51,6 @@ Congratulations, brender and its dependencies should be correctly installed and 
 127.0.0.1	brender-flask	
 ```
 
-You might also want to create an sqlite database inside of the `server` folder:
-
-```
-$ cd server/
-$ touch brender.sqlite
-```
-
 ## Running brender
 It's pretty simple. Move into each one of the three folders and run - in three different terminals:
 
