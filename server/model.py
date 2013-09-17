@@ -78,7 +78,7 @@ def create_tables():
 	"""
 	Workers.create_table()
 	Shots.create_table()
-	Jobs.create_table
+	Jobs.create_table()
 
 
 def add_random_workers(workers_amount):
@@ -102,7 +102,7 @@ def create_database():
 	"""Checks if the database exists
 
 	We check for the existence of the file on disc. If the file is not 
-	found we create one an we pupulate it with the brender schema from
+	found we create one and we populate it with the brender schema from
 	this file.
 
 	"""
