@@ -12,7 +12,7 @@
     <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/custom.brender.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.brender.js') }}"></script>
-
+    <script src="{{ url_for('static', filename='js/jquery.readmore-readless.js') }}" type="text/javascript"></script>
     <!-- <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'> -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/bootstrap-responsive.min.css') }}" rel="stylesheet">
@@ -73,13 +73,13 @@
                 <a href="{{ url_for('shots_add') }}">Add Shot</a>
               </li>
               <li class="nav-header">Stats</li>
-              <li><a href="#">Server status</a></li>
+              <li><a href="{{ url_for('status') }}">Server status</a></li>
               <li><a href="#">Render times</a></li>
               <li class="nav-header">Settings</li>
               <li><a href="#">Server</a></li>
               <li><a href="#">Projects</a></li>
               <li><a href="#">Render configs</a></li>
-              <li><a href="#">Logs</a></li>
+              <li><a href="{{ url_for('log') }}">Logs</a></li>
               <li class="nav-header">Development</li>
               <li {% if title == 'sandbox': %} class="active"{% endif %}>
                 <a href="{{ url_for('sandbox') }}">Sandbox</a>
@@ -89,7 +89,10 @@
       </div>
       <div class="span10">
         {% for message in get_flashed_messages() %}
-          <div class=flash>{{ message }}</div>
+          <div class="alert">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message }}
+          </div>
         {% endfor %}
         {% block body %}{% endblock %}
 
