@@ -2,7 +2,9 @@ from peewee import *
 from datetime import date
 import random
 
-db = SqliteDatabase('brender.sqlite')
+DATABASE = 'brender.sqlite'
+
+db = SqliteDatabase(DATABASE)
 
 # create a base model class that our application's models will extend
 class BaseModel(Model):
@@ -68,7 +70,7 @@ class Jobs(BaseModel):
 	priority = IntegerField()
 
 
-def create_databases():
+def create_tables():
 	"""Create the required databases during installation.
 
 	Based on the classes specified above. This function is embedded in
@@ -96,18 +98,21 @@ def add_random_workers(workers_amount):
 
 
 
-def install_brender():
-	"""Creates the tables in the database
+def create_database():
+	"""Checks if the database exists
 
-	Optionally it can populate the tables with some data to demonstrate
-	the behavior of the DataTables in the interface. This function must
-	be run manually only once upon installation of the system.
+	We check for the existence of the file on disc. If the file is not 
+	found we create one an we pupulate it with the brender schema from
+	this file.
 
-	Just run python model.py with line 113 uncommented. 
 	"""
-	create_databases()
-	# create_workers(10)
+	try:
+	    with open(DATABASE): pass
+	except IOError:
+	    print '[Info] Creating brender.sqlite database'
+	    open(DATABASE, 'a').close()
+	    create_tables()
+	    print '[Info] Database created'
 
 
-#install_brender()
-
+create_database()
