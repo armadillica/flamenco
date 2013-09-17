@@ -1,5 +1,9 @@
+from flask import Blueprint, render_template, abort, jsonify, request
+
 from model import *
 from utils import *
+
+jobs_module = Blueprint('jobs_module', __name__)
 
 def create_job(shot_id, chunk_start, chunk_end):
     Jobs.create(
@@ -100,3 +104,25 @@ def delete_jobs(shot_id):
     delete_query.execute()
     print 'All jobs deleted for shot', shot_id
 
+
+@jobs_module.route('/jobs/')
+def jobs():
+    jobs = {}
+    for job in Jobs.select():
+
+        if job.chunk_start == job.current_frame:
+            percentage_done = 0
+        else:
+            frame_count = job.chunk_end - job.chunk_start + 1
+            current_frame = job.current_frame - job.chunk_start + 1
+            percentage_done = 100 / frame_count * current_frame
+
+        jobs[job.id] = {
+            "shot_id" : job.shot_id,
+            "chunk_start" : job.chunk_start,
+            "chunk_end" : job.chunk_end,
+            "current_frame" : job.current_frame,
+            "status" : job.status,
+            "percentage_done" : percentage_done,
+            "priority" : job.priority}
+    return jsonify(jobs)
