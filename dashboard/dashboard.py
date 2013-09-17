@@ -1,8 +1,10 @@
 import urllib
 import time
 import json
+import os 
+import glob
 
-from flask import Flask, render_template, jsonify, redirect, url_for, request
+from flask import Flask, render_template, jsonify, redirect, url_for, request, flash
 
 BRENDER_SERVER = 'brender-server:9999'
 
@@ -152,6 +154,26 @@ def jobs_index():
     return render_template('jobs.html', entries=entries, title='jobs')
 
 
+@app.route('/status/', methods=['GET'])
+def status():
+    server_status = 'Online'
+    return render_template('status.html', title='status', server_status=server_status)
+
+
+@app.route('/log/', methods=['GET','POST'])
+def log():
+
+    if request.method == 'POST':
+        result = request.form['result']
+        if result:
+            file = open(result)
+            lines = file.readlines()
+            return render_template('log.html', title='status', lines=lines, result=result)
+        else:
+            flash('No Log Path')
+    return render_template('log.html', title='status')
+
+
 @app.route('/sandbox/')
 def sandbox():
     return render_template('sandbox.html', title='sandbox')
@@ -159,6 +181,8 @@ def sandbox():
 @app.errorhandler(404)
 def page_not_found(error):
 	return render_template('404_error.html'),404
+
+app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 if __name__ == "__main__":
     app.run()
