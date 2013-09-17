@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block footer_scripts %}
+<script type="text/javascript">
+$(function(){
+  $("p:gt("+($("p").length-35)+")").addClass("show special");
+  $('.' + "show").show();
+});
+
+$(".morelink").click(function(){
+    if($("p").hasClass("hide")) {
+      $("p").addClass("show");
+      $('.' + "show").show();
+      $("p").removeClass("hide");
+      $('.' + "morelink").text('Show Less Log');
+    } else {
+      $("p").addClass("hide");
+      $('.' + "hide").hide();
+      $("p").removeClass("show");
+      $('.' + "special").show();
+      $('.' + "morelink").text('Show More Log');
+    }
+});
+</script>
+{% endblock %}
+{% block body %}
+  <div class="page-header">
+    <h1>Log</h1>
+    <h3>{% if result %} {{ result }} {% endif %}</h3>
+    <br/>
+    <form action="/log/" method=post>
+      <div class="input-append">
+        <input class="span2" id="appendedInputButton" type="text" placeholder="ex: /User/koder/log.log" name='result'>
+        <button class="btn" type="submit">Go!</button>
+      </div>
+    </form>
+  </div>
+      <div id="log">
+        {% for line in lines %}
+          <p class="hide">{{ line }}</p>
+        {% endfor %}
+        <a class="morelink">Show More Log</a>
+      </div>
+  
+
+{% endblock %}
