@@ -92,6 +92,8 @@ def add_random_workers(workers_amount):
 		Workers.create(mac_address = 123 + i,
 			hostname = 'worker_' + str(i),
 			status = 'enabled',
+			ip_address ='192.168.1.' + str(i),
+			connection = 'offline',
 			warning = False,
 			config ='JSON string')
 	print("Database filled with " + str(workers_amount) + " workers.")

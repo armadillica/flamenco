@@ -15,6 +15,7 @@ app.config.update(
 
 @app.route('/')
 def index():
+	#add_random_workers(2)
 	return jsonify(status = 'ok')
 
 
@@ -24,8 +25,8 @@ def connect():
     if request.method == 'POST':
         #return str(request.json['foo'])
         
-        #ip_address = request.form['ip_address']
-        ip_address = '127.0.0.1:5000'
+        ip_address = request.form['ip_address']
+        #ip_address = '127.0.0.1:5000'
         mac_address = request.form['mac_address']
         hostname = request.form['hostname']
 
@@ -59,11 +60,14 @@ def connect():
         #params = urllib.urlencode({'worker': 1, 'eggs': 2})
         
         # we verify the identity of the worker (will check on database)
-        f = urllib.urlopen('http://' + ip_address)
-        print 'The following worker just connected:'
-        print f.read()
-        
-        return 'You are now connected to the server'
+        try:
+        	f = urllib.urlopen('http://' + ip_address)
+        	print 'The following worker just connected:'
+        	print f.read()
+        	return 'You are now connected to the server'
+        except: 
+        	error = "server could not connect to worker with ip=" + ip_address
+
     # the code below is executed if the request method
     # was GET or the credentials were invalid
     return jsonify(error = error)
