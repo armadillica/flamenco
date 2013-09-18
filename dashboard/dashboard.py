@@ -153,10 +153,16 @@ def jobs_index():
     
     return render_template('jobs.html', entries=entries, title='jobs')
 
+def check_connection(host_address):
+	try:
+		http_request(host_address, '/')
+		return "online"
+	except:
+		return "offline"		
 
 @app.route('/status/', methods=['GET'])
 def status():
-    server_status = 'Online'
+    server_status = check_connection(BRENDER_SERVER)
     return render_template('status.html', title='status', server_status=server_status)
 
 

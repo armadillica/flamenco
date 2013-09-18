@@ -43,9 +43,9 @@ def register_worker():
     params = urllib.urlencode(values)
     try:
     	f = urllib.urlopen(BRENDER_SERVER + '/connect', params)
+    	#print f.read()
     except:
-	print "[Warning] Could not connect to server to register"
-    #print f.read()
+		print "[Warning] Could not connect to server to register"
 
 # we use muliprocessing to register the client the worker to the server
 # while the worker app starts up
