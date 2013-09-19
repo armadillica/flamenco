@@ -177,11 +177,14 @@ def log():
     if request.method == 'POST':
         result = request.form['result']
         if result:
-            file = open(result)
-            lines = file.readlines()
-            return render_template('log.html', title='status', lines=lines, result=result)
+            try:
+                file = open(result)
+                lines = file.readlines()
+                return render_template('log.html', title='status', lines=lines, result=result)
+            except IOError:
+                flash('Couldn\'t open file. Please make sure the log file exists at ' + result)
         else:
-            flash('No Log Path')
+            flash('No log to read Please input a filepath ex: /User/koder/log.log')
     return render_template('log.html', title='status')
 
 
