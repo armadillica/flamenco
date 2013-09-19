@@ -1,7 +1,10 @@
 {% extends "layout.html" %}
 {% block body %}
   <div class="page-header">
-      <h1>Status <strong class="{{server_status}}">{{ server_status }}</strong></h1>
+  		<h1>Server Status</h1>
   </div>
+ 	{% for status in status_list %}
+		<p><strong>{{ status.items()[0][0] }}</strong> <span class="label {{ 'label-success' if status.items()[0][1] == 'Online' else 'label-warning' }}">{{ status.items()[0][1] }}</span></p>
+	{% endfor %}
 
 {% endblock %}
