@@ -1,9 +1,9 @@
 import urllib
 import time
 import json
-import os 
+import os
 import glob
-
+import socket
 from flask import Flask, render_template, jsonify, redirect, url_for, request, flash
 
 BRENDER_SERVER = 'brender-server:9999'
@@ -15,15 +15,23 @@ def http_request(ip_address, method, post_params = False):
         f = urllib.urlopen('http://' + ip_address + method, params)
     else:
         f = urllib.urlopen('http://' + ip_address + method)
-    
+
     print 'message sent, reply follows:'
     return f.read()
 
+def test_socket(socket_name, ip, port):
+    sn = socket_name
+    socket_stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = socket_stream.connect_ex((ip, port))
+    state ='Online' if result == 0 else 'Offline'
+    return {sn : state}
+
 app = Flask(__name__)
 app.config.update(
-	DEBUG=True,
-	SERVER_NAME='brender-flask:8888'
+    DEBUG=True,
+    SERVER_NAME='brender-flask:8888'
 )
+app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT' # used for flash messages
 
 
 @app.route('/')
@@ -41,9 +49,9 @@ def workers():
         val['checkbox'] = '<input type="checkbox" />'
         workers_list.append({
             "DT_RowId" : "worker_" + str(val['id']),
-            "0" : val['checkbox'], 
-            "1" : key, 
-            "2" : val['ip_address'], 
+            "0" : val['checkbox'],
+            "1" : key,
+            "2" : val['ip_address'],
             "3" : val['connection'],
             "4" :val['status']
         })
@@ -86,17 +94,16 @@ def shots_index():
         val['checkbox'] = '<input type="checkbox" value="' +  key + '" />'
         shots_list.append({
             "DT_RowId" : "shot_" + str(key),
-            "0" : val['checkbox'], 
-            "1" : key, 
-            "2" : val['shot_name'], 
-            "3" : val['percentage_done'], 
+            "0" : val['checkbox'],
+            "1" : key,
+            "2" : val['shot_name'],
+            "3" : val['percentage_done'],
             "4" : val['render_settings'],
             "5" : val['status']
             })
         #print v
 
     entries = json.dumps(shots_list)
-    
     return render_template('shots.html', entries=entries, title='shots')
 
 @app.route('/shots/delete' , methods=['POST'])
@@ -124,7 +131,6 @@ def shots_add():
             'owner' : 'fsiddi'
         }
 
-
         return http_request(BRENDER_SERVER, '/shots/add', shot_values)
     else:
         return render_template('add_shot.html', title='add_shot')
@@ -142,22 +148,27 @@ def jobs_index():
         jobs_list.append({
             "DT_RowId" : "worker_" + str(key),
             "0" : val['checkbox'],
-            "1" : key, 
-            "2" : val['percentage_done'], 
+            "1" : key,
+            "2" : val['percentage_done'],
             "3" : val['priority'],
             "4" : val['status']
             })
         #print v
 
     entries = json.dumps(jobs_list)
-    
     return render_template('jobs.html', entries=entries, title='jobs')
 
 
 @app.route('/status/', methods=['GET'])
 def status():
-    server_status = 'Online'
-    return render_template('status.html', title='status', server_status=server_status)
+    status_list = []
+    s_status = test_socket('Server Status', '0.0.0.0', 9999)
+    w_status = test_socket('Worker Status', '0.0.0.0', 5000)
+    d_status = test_socket('Dashboard Status', '0.0.0.0', 8888)
+    status_list.append(s_status)
+    status_list.append(w_status)
+    status_list.append(d_status)
+    return render_template('status.html', title='status', status_list=status_list)
 
 
 @app.route('/log/', methods=['GET','POST'])
@@ -180,9 +191,8 @@ def sandbox():
 
 @app.errorhandler(404)
 def page_not_found(error):
-	return render_template('404_error.html'),404
+    return render_template('404_error.html'),404
 
-app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 if __name__ == "__main__":
     app.run()

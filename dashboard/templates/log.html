@@ -2,20 +2,20 @@
 {% block footer_scripts %}
 <script type="text/javascript">
 $(function(){
-  $("p:gt("+($("p").length-35)+")").addClass("show special");
+  $("#log > p:gt("+($("#log > p").length-35)+")").addClass("show special");
   $('.' + "show").show();
 });
 
 $(".morelink").click(function(){
-    if($("p").hasClass("hide")) {
-      $("p").addClass("show");
+    if($("#log > p").hasClass("hide")) {
+      $("#log > p").addClass("show");
       $('.' + "show").show();
-      $("p").removeClass("hide");
+      $("#log > p").removeClass("hide");
       $('.' + "morelink").text('Show Less Log');
     } else {
-      $("p").addClass("hide");
+      $("#log > p").addClass("hide");
       $('.' + "hide").hide();
-      $("p").removeClass("show");
+      $("#log > p").removeClass("show");
       $('.' + "special").show();
       $('.' + "morelink").text('Show More Log');
     }
@@ -38,7 +38,9 @@ $(".morelink").click(function(){
         {% for line in lines %}
           <p class="hide">{{ line }}</p>
         {% endfor %}
-        <a class="morelink">Show More Log</a>
+        {% if lines %}
+          <a class="morelink">Show More Log</a>
+        {% endif %}
       </div>
   
 
