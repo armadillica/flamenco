@@ -25,8 +25,10 @@ def connect():
     if request.method == 'POST':
         #return str(request.json['foo'])
         
-        ip_address = request.form['ip_address']
-        #ip_address = '127.0.0.1:5000'
+        #ip_address = request.form['ip_address']
+
+        # Right now we assume that the port is 5000
+        ip_address = request.remote_addr + ':5000'
         mac_address = request.form['mac_address']
         hostname = request.form['hostname']
 
@@ -76,5 +78,5 @@ if __name__ == "__main__":
     app.register_blueprint(workers_module)
     app.register_blueprint(jobs_module)
     app.register_blueprint(shots_module)
-    app.run()
+    app.run(host='0.0.0.0')
     
