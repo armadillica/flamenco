@@ -53,6 +53,32 @@
 
 		});
 
+		$(document).on("click", "#shot-start, #shot-stop, #shot-pause", function() {
+
+			var shots = new Array();
+
+			var checkbox_list = $( "tbody input:checked" );
+			for (var i = checkbox_list.length - 1; i >= 0; i--) {
+				var checkbox = checkbox_list[i];
+				shots.push($(checkbox).val());
+			};
+			
+			if (shots) {
+				alert(" shots " + shots);
+			};
+			console.log(shots);
+			shot_ids = shots.join();
+  			
+  			status = $(this).html();
+  			params = { 'id' : shot_ids}
+  			// params = { 'id' : shot_ids, 'status' : status}
+  			$.post("/shots/update", params)
+  			.done(function(data) {
+				console.log('Shot update : ' + status);
+			});
+
+		});
+
 		$(document).on("click", ".check-all", function(){
 			$("table input[type=checkbox]").attr('checked', $(this).is(':checked'));
 		});

@@ -37,21 +37,34 @@ def shots():
             "render_settings" : shot.render_settings}
     return jsonify(shots)
 
+
+@shots_module.route('/shots/update', methods=['POST'])
+def shot_update():
+    #status = request.form['status']
+    # TODO parse 
+    shot_ids = request.form['id']
+    shots_list = list_integers_string(shot_ids)
+    for shot_id in shots_list:
+    	#print "updating shot %s = %s " % (shot_id,status)
+    	print "updating shot %s " % shot_id
+    return "TEMP done updating shots "
+
+
 @shots_module.route('/shots/start/<int:shot_id>')
 def shot_start(shot_id):
     try:
         shot = Shots.get(Shots.id == shot_id)
     except Exception, e:
         print e , '--> Shot not found'
-        return 'Shot %d not found' %shot_id
+        return 'Shot %d not found' % shot_id
 
     if shot.status == 'started':
-        return 'Shot already started'
+        return 'Shot &d already started'  % shot_id
     else:
         shot.status = 'started'
         shot.save()
         #http_request()
-        return 'Shot started'
+        return 'Shot &d started'  % shot_id
 
 @shots_module.route('/shots/add', methods=['POST'])
 def shot_add():

@@ -107,6 +107,16 @@ def shots_delete():
     shots = http_request(BRENDER_SERVER, '/shots/delete', params)
     return 'done'
 
+@app.route('/shots/update' , methods=['POST'])
+def shots_start():
+    #status = request.form['status']
+    shot_ids = request.form['id']
+    #params = {'id': shot_ids, 'status' : status}
+    params = {'id': shot_ids}
+    shots = http_request(BRENDER_SERVER, '/shots/update', params)
+    return 'done'
+    
+    
 @app.route('/shots/add' , methods=['GET', 'POST'])
 def shots_add():
     if request.method == 'POST':
