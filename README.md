@@ -16,6 +16,11 @@ Following the Flask idea, we install the server, workers and dashboard unsing vi
 ```
 $ sudo easy_install virtualenv
 ```
+On Linux this might work better:
+
+```
+$ sudo apt-get install python-virtualenv
+```
 
 Once you have virtualenv installed, just fire up a shell and create your own environment. You may want to create this folder inside of the brender folder:
 
