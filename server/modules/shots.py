@@ -7,13 +7,13 @@ from utils import *
 shots_module = Blueprint('shots_module', __name__)
 
 def delete_shot(shot_id):
-	try:
-		shot = Shots.get(Shots.id == shot_id)
-	except Exception, e:
-	    print e
-	    return 'error'
-	shot.delete_instance()
-	print 'Deleted shot', shot_id
+    try:
+        shot = Shots.get(Shots.id == shot_id)
+    except Exception, e:
+        print e
+        return 'error'
+    shot.delete_instance()
+    print 'Deleted shot', shot_id
 
 
 @shots_module.route('/shots/')
@@ -40,13 +40,12 @@ def shots():
 
 @shots_module.route('/shots/update', methods=['POST'])
 def shot_update():
-    #status = request.form['status']
+    status = request.form['status']
     # TODO parse 
     shot_ids = request.form['id']
     shots_list = list_integers_string(shot_ids)
     for shot_id in shots_list:
-    	#print "updating shot %s = %s " % (shot_id,status)
-    	print "updating shot %s " % shot_id
+        print "updating shot %s = %s " % (shot_id,status)
     return "TEMP done updating shots "
 
 

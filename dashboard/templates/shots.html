@@ -63,18 +63,15 @@
         shots.push($(checkbox).val());
       };
       
-      if (shots) {
-        alert(" shots " + shots);
-      };
-      console.log(shots);
+      //console.log(shots);
       shot_ids = shots.join();
         
-        status = $(this).html();
-        params = { 'id' : shot_ids}
-        // params = { 'id' : shot_ids, 'status' : status}
-        $.post("/shots/update", params)
+      status = $(this).html();
+      params = { 'id' : shot_ids, 'status' : status}
+      
+      $.post("/shots/update", params)
         .done(function(data) {
-        console.log('Shot update : ' + status);
+        console.log('Shot ' + shot_ids + ' update: ' + status);
       });
 
     });
