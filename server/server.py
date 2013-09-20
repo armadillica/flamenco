@@ -27,10 +27,11 @@ def connect():
         
         #ip_address = request.form['ip_address']
 
-        # Right now we assume that the port is 5000
-        ip_address = request.remote_addr + ':5000'
+        # We assemble the remote_addr value with the port value sent from the worker  
+        ip_address = request.remote_addr + ':' + str(request.form['port'])
         mac_address = request.form['mac_address']
         hostname = request.form['hostname']
+        system = request.form['system']
 
         try:
             worker = Workers.get(Workers.mac_address == mac_address)
@@ -47,6 +48,7 @@ def connect():
             print('This worker never connected before')
             # create new worker object with some defaults. Later on most of these
             # values will be passed as JSON object during the first connection
+
             
             worker = Workers.create(
                 hostname = hostname, 
@@ -54,7 +56,8 @@ def connect():
                 status = 'enabled',
                 connection = 'online', 
                 warning = False, 
-                config = 'bla',
+                config = '{}',
+                system = system,
                 ip_address = ip_address)
             
             print('Worker has been added')

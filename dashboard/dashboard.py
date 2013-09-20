@@ -43,9 +43,10 @@ def workers():
             "DT_RowId" : "worker_" + str(val['id']),
             "0" : val['checkbox'], 
             "1" : key, 
-            "2" : val['ip_address'], 
-            "3" : val['connection'],
-            "4" :val['status']
+            "2" : val['system'],
+            "3" : val['ip_address'], 
+            "4" : val['connection'],
+            "5" : val['status']
         })
         #print v
 

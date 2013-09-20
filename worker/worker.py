@@ -3,6 +3,7 @@ import urllib
 import time
 import sys
 import subprocess
+import platform
 
 from multiprocessing import Process
 from flask import Flask, render_template, jsonify, redirect, url_for, request
@@ -11,14 +12,12 @@ from uuid import getnode as get_mac_address
 BRENDER_SERVER = 'http://brender-server:9999'
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
+SYSTEM = platform.system() + ' ' + platform.release()
 
 if (len(sys.argv) > 1):
     PORT = sys.argv[1]
 else:
     PORT = 5000
-
-# we get the IP address and attach the port number to it
-IP_ADDRESS = socket.gethostbyname(HOSTNAME) + ':' + str(PORT)
 
 # we initialize the app
 app = Flask(__name__)
@@ -36,8 +35,9 @@ def register_worker():
 
     values = {
         'mac_address': MAC_ADDRESS,
-        'ip_address': IP_ADDRESS,
-        'hostname': HOSTNAME
+        'port' : PORT,
+        'hostname': HOSTNAME,
+        'system' : SYSTEM,
         }
 
     params = urllib.urlencode(values)
@@ -63,9 +63,9 @@ def index():
 @app.route('/info')
 def info():
     return jsonify(status = 'running',
-        ip_address = IP_ADDRESS,
         mac_address = MAC_ADDRESS,
-        hostname = HOSTNAME)
+        hostname = HOSTNAME,
+        system = SYSTEM)
 
 @app.route('/run_command')
 def run_command():

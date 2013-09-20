@@ -9,17 +9,17 @@
 
 			"fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
 				var btn_status = "";
-				if (aData[3] == "offline"){
-					$('td:eq(3)', nRow).html('<span class="label label-important">offline</span>');
+				if (aData[4] == "offline"){
+					$('td:eq(4)', nRow).html('<span class="label label-important">offline</span>');
 					btn_status = "disabled";
-				} else if (aData[3] == "online"){
-					$('td:eq(3)', nRow).html('<span class="label label-success">online</span>');
+				} else if (aData[4] == "online"){
+					$('td:eq(4)', nRow).html('<span class="label label-success">online</span>');
 				}
 
-				if (aData[4] == "enabled"){
-					$('td:eq(4)', nRow).html('<span class="status-toggle btn btn-mini btn-success ' + btn_status + '">enabled</span>');
-				} else if (aData[4] == "disabled"){
-					$('td:eq(4)', nRow).html('<span class="status-toggle btn btn-mini btn-warning ' + btn_status + '">disabled</span>');
+				if (aData[5] == "enabled"){
+					$('td:eq(5)', nRow).html('<span class="status-toggle btn btn-mini btn-success ' + btn_status + '">enabled</span>');
+				} else if (aData[5] == "disabled"){
+					$('td:eq(5)', nRow).html('<span class="status-toggle btn btn-mini btn-warning ' + btn_status + '">disabled</span>');
 				}
 	    	}
 		});
@@ -65,8 +65,9 @@
 				<thead>
 					<tr>
 						<th width="5%"><input type="checkbox"></th>
-						<th width="30%">Hostname</th>
-						<th width="30%">IP Address</th>
+						<th width="20%">Hostname</th>
+						<th width="20%">System</th>
+						<th width="20%">IP Address</th>
 						<th width="20%">Connection</th>
 						<th width="20%">Status</th>
 					</tr>
@@ -78,6 +79,7 @@
 					<tr>
 						<th></th>
 						<th>Hostname</th>
+						<th>System</th>
 						<th>IP Address</th>
 						<th>Connection</th>
 						<th>Status</th>

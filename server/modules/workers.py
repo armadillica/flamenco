@@ -38,6 +38,7 @@ def workers():
             "hostname" : worker.hostname,
             "status" : worker.status,
             "connection" : worker.connection,
+            "system" : worker.system,
             "ip_address" : worker.ip_address}
 
     """

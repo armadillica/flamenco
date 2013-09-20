@@ -24,6 +24,7 @@ class Workers(BaseModel):
 	status = CharField()
 	warning = BooleanField()
 	config = CharField()
+	system = CharField()
 	ip_address = CharField()
 	connection = CharField()
 
