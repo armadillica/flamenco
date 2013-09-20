@@ -6,6 +6,14 @@
 			"bProcessing": true,
 			"iDisplayLength": 25,
 			"aaData": {{ entries | safe }},
+			"aoColumns": [
+                 { "bSortable": false },
+                 null,
+                 null,
+                 null,
+                 null,
+                 null
+             ],
 
 			"fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
 				var btn_status = "";
@@ -44,6 +52,10 @@
 				});
 			}
 		});
+		
+		$(document).on("click", ".check-all", function(){
+    		$("table input[type=checkbox]").attr('checked', $(this).is(':checked'));
+    	});
 
 	});
 </script>
@@ -64,7 +76,7 @@
 			<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="workers">
 				<thead>
 					<tr>
-						<th width="5%"><input type="checkbox"></th>
+						<th width="5%"><input class="check-all" type="checkbox"></th>
 						<th width="20%">Hostname</th>
 						<th width="20%">System</th>
 						<th width="20%">IP Address</th>
