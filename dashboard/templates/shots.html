@@ -62,7 +62,12 @@
         var checkbox = checkbox_list[i];
         shots.push($(checkbox).val());
       };
-      
+
+	  if (shots.length == 0) {
+	  	alert("please select or or more shots");
+	  	return false;
+	  };
+	        
       //console.log(shots);
       shot_ids = shots.join();
         
