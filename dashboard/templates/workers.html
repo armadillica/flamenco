@@ -42,13 +42,13 @@
 				data = {id : workerId, status: 'disabled'};
 				$.post('/workers/edit', data, function() {
 					console.log('Worker is now disabled');
-					workersTable.fnUpdate('disabled', rowPosition ,4);
+					workersTable.fnUpdate('disabled', rowPosition ,5);
 				});
 			} else if (status == 'disabled') {
 				data = {id : workerId, status: 'enabled'};
 				$.post('/workers/edit', data, function() {
 					console.log('Worker is now enabled');
-					workersTable.fnUpdate('enabled', rowPosition ,4);
+					workersTable.fnUpdate('enabled', rowPosition ,5);
 				});
 			}
 		});
