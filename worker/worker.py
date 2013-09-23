@@ -67,20 +67,20 @@ def info():
         hostname = HOSTNAME,
         system = SYSTEM)
 
-@app.route('/run_command')
+@app.route('/render_chunk', methods=['POST'])
 def run_command():
-
+    file_path = request.form['file_path']
+    start = request.form['start']
+    end = request.form['end']
     blender_path = "/Applications/blender/Blender_2_68/blender.app/Contents/MacOS/blender"
-    file_path = "/Users/o/Dropbox/brender/test_blends/monkey.blend"
-    options = "-s 1 -e 2 -a"
+    options = "-s %s -e %s -a" % (start,end)
     render_command = '%s -b %s %s' % (blender_path, file_path, options);
-    
     print "i'm the worker and i run the following test command %s" % render_command
 
 
     subp = subprocess.Popen(render_command, stdout=subprocess.PIPE, shell=True)
     (output, err) = subp.communicate()
-    #print output
+    print output
     with open('log.log','w') as f:
     	f.write(str(output))
     return jsonify(status = 'ok command run')

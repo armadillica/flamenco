@@ -75,13 +75,17 @@ def workers_edit():
 
     return jsonify(result = 'success')
 
-@workers_module.route('/workers/run_command')
-def worker_run_command():
-    print "server run command point"
-    #command = request.form['command']
-    #arguments = request.form['arguments']
+@workers_module.route('/workers/render_chunk')
+def worker_render_chunk():
+    print "server run command breakpoint"
     ip_address = '127.0.0.1:5000'
-    
-    return http_request(ip_address, '/run_command')
-    #return "test"
+    params = {
+    	'file_path': '/Users/o/Dropbox/brender/test_blends/cubes.blend',
+    	'start': 2,
+    	'end': 8
+    	}
+    http_request(ip_address, '/render_chunk',params)
+
+    return jsonify(result = 'render chunk sent to client')
+
     #return jsonify(result = 'success')

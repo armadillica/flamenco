@@ -65,12 +65,12 @@ def workers_edit():
 
     return jsonify (status = 'ok')
 
-@app.route('/workers/run_command', methods=['POST'])
-def workers_run_command():
-    arguments = '-al'
-    command = 'ls'
-    #params = urllib.urlencode({'command': 'command', 'arguments': 'arguments'})
-    f = urllib.urlopen("http://brender-server:9999/workers/run_command")
+@app.route('/workers/render_chunk', methods=['POST'])
+def workers_render_chunk():
+    #arguments = '-al'
+    #command = 'ls'
+    ##params = urllib.urlencode({'command': 'command', 'arguments': 'arguments'})
+    f = urllib.urlopen("http://brender-server:9999/workers/render_chunk")
 
     return jsonify (status = 'ok')
 
