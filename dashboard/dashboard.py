@@ -1,7 +1,7 @@
 import urllib
 import time
 import json
-import os 
+import os
 import glob
 
 from flask import Flask, render_template, jsonify, redirect, url_for, request, flash
@@ -15,7 +15,7 @@ def http_request(ip_address, method, post_params = False):
         f = urllib.urlopen('http://' + ip_address + method, params)
     else:
         f = urllib.urlopen('http://' + ip_address + method)
-    
+
     print 'message sent, reply follows:'
     return f.read()
 
@@ -41,10 +41,10 @@ def workers():
         val['checkbox'] = '<input type="checkbox" />'
         workers_list.append({
             "DT_RowId" : "worker_" + str(val['id']),
-            "0" : val['checkbox'], 
-            "1" : key, 
+            "0" : val['checkbox'],
+            "1" : key,
             "2" : val['system'],
-            "3" : val['ip_address'], 
+            "3" : val['ip_address'],
             "4" : val['connection'],
             "5" : val['status']
         })
@@ -87,17 +87,17 @@ def shots_index():
         val['checkbox'] = '<input type="checkbox" value="' +  key + '" />'
         shots_list.append({
             "DT_RowId" : "shot_" + str(key),
-            "0" : val['checkbox'], 
-            "1" : key, 
-            "2" : val['shot_name'], 
-            "3" : val['percentage_done'], 
+            "0" : val['checkbox'],
+            "1" : key,
+            "2" : val['shot_name'],
+            "3" : val['percentage_done'],
             "4" : val['render_settings'],
             "5" : val['status']
             })
         #print v
 
     entries = json.dumps(shots_list)
-    
+
     return render_template('shots.html', entries=entries, title='shots')
 
 @app.route('/shots/delete' , methods=['POST'])
@@ -115,8 +115,8 @@ def shots_start():
     params = {'id': shot_ids, 'status' : status}
     shots = http_request(BRENDER_SERVER, '/shots/update', params)
     return 'done'
-    
-    
+
+
 @app.route('/shots/add' , methods=['GET', 'POST'])
 def shots_add():
     if request.method == 'POST':
@@ -152,15 +152,15 @@ def jobs_index():
         jobs_list.append({
             "DT_RowId" : "worker_" + str(key),
             "0" : val['checkbox'],
-            "1" : key, 
-            "2" : val['percentage_done'], 
+            "1" : key,
+            "2" : val['percentage_done'],
             "3" : val['priority'],
             "4" : val['status']
             })
         #print v
 
     entries = json.dumps(jobs_list)
-    
+
     return render_template('jobs.html', entries=entries, title='jobs')
 
 def check_connection(host_address):
@@ -168,7 +168,7 @@ def check_connection(host_address):
 		http_request(host_address, '/')
 		return "online"
 	except:
-		return "offline"		
+		return "offline"
 
 @app.route('/status/', methods=['GET'])
 def status():
@@ -182,11 +182,14 @@ def log():
     if request.method == 'POST':
         result = request.form['result']
         if result:
-            file = open(result)
-            lines = file.readlines()
-            return render_template('log.html', title='status', lines=lines, result=result)
+            try:
+                file = open(result)
+                lines = file.readlines()
+                return render_template('log.html', title='status', lines=lines, result=result)
+            except IOError:
+                flash('Couldn\'t open file. Please make sure the log file exists at ' + result)
         else:
-            flash('No Log Path')
+            flash('No log to read Please input a filepath ex: /User/koder/log.log')
     return render_template('log.html', title='status')
 
 
