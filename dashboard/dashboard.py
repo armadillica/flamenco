@@ -28,7 +28,10 @@ app.config.update(
 
 @app.route('/')
 def index():
-    return redirect(url_for('workers'))
+    if check_connection(BRENDER_SERVER) == 'online':
+    	return redirect(url_for('workers'))
+    else:
+    	return "[error] Dashboard could not connect to server"
 
 @app.route('/workers/')
 def workers():
