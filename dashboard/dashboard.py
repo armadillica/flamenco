@@ -21,17 +21,17 @@ def http_request(ip_address, method, post_params = False):
 
 app = Flask(__name__)
 app.config.update(
-	DEBUG=True,
-	SERVER_NAME='brender-flask:8888'
+    DEBUG=True,
+    SERVER_NAME='brender-flask:8888'
 )
 
 
 @app.route('/')
 def index():
     if check_connection(BRENDER_SERVER) == 'online':
-    	return redirect(url_for('workers'))
+        return redirect(url_for('workers'))
     else:
-    	return "[error] Dashboard could not connect to server"
+        return "[error] Dashboard could not connect to server"
 
 @app.route('/workers/')
 def workers():
@@ -167,11 +167,11 @@ def jobs_index():
     return render_template('jobs.html', entries=entries, title='jobs')
 
 def check_connection(host_address):
-	try:
-		http_request(host_address, '/')
-		return "online"
-	except:
-		return "offline"
+    try:
+        http_request(host_address, '/')
+        return "online"
+    except:
+        return "offline"
 
 @app.route('/status/', methods=['GET'])
 def status():
@@ -202,7 +202,7 @@ def sandbox():
 
 @app.errorhandler(404)
 def page_not_found(error):
-	return render_template('404_error.html'),404
+    return render_template('404_error.html'),404
 
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
