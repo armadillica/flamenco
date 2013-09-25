@@ -1,29 +1,29 @@
 {% extends "layout.html" %}
 {% block footer_scripts %}
 <script type="text/javascript">
-	$(document).ready(function() {   
-		$(document).on("click", "#test_render", function() {
-				$.post('/workers/render_chunk', function() {
-					console.log('Worker is running test command');
-				});
-		});
-	});
-</script>		
+    $(document).ready(function() {
+        $(document).on("click", "#test_render", function() {
+                $.post('/workers/render_chunk', function() {
+                    console.log('Worker is running test command');
+                });
+        });
+    });
+</script>
 {% endblock %}
 
 {% block body %}
-	<div class="page-header">
-	    <h1>Sandbox</h1>
-	</div>
-	<div class="row">
-		<div class="span10">
-			This is the place where the future of brender lives.<br/>
-		</div>
-	</div>
-	<div class="row">
-		<div class="span10">
-			<p><div id="test_render" class="btn">Make a test render on client id=1</div></p>
-		</div>
-	</div>
+    <div class="page-header">
+        <h1>Sandbox</h1>
+    </div>
+    <div class="row">
+        <div class="span10">
+            This is the place where the future of brender lives.<br/>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span10">
+            <p><div id="test_render" class="btn">Make a test render on client id=1</div></p>
+        </div>
+    </div>
 
 {% endblock %}

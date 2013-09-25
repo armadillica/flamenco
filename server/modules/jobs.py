@@ -13,7 +13,7 @@ def create_job(shot_id, chunk_start, chunk_end):
         chunk_end = chunk_end,
         current_frame = chunk_start,
         status = 'ready',
-        priority = 50)   
+        priority = 50)
 
 
 def create_jobs(shot):
@@ -30,9 +30,9 @@ def create_jobs(shot):
 
         for chunk in range(total_chunks - 1):
             print 'making chunk for shot', shot.id
-            
+
             create_job(shot.id, chunk_start, chunk_end)
-            
+
             chunk_start = chunk_end + 1
             chunk_end = chunk_start + shot.chunk_size - 1
 
@@ -53,9 +53,9 @@ def create_jobs(shot):
 
         for chunk in range(total_chunks - 1):
             print 'making chunk for shot', shot.id
-            
+
             create_job(shot.id, chunk_start, chunk_end)
-            
+
             chunk_start = chunk_end + 1
             chunk_end = chunk_start + shot.chunk_size - 1
 

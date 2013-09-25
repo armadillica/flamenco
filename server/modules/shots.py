@@ -41,7 +41,7 @@ def shots():
 @shots_module.route('/shots/update', methods=['POST'])
 def shot_update():
     status = request.form['status']
-    # TODO parse 
+    # TODO parse
     shot_ids = request.form['id']
     shots_list = list_integers_string(shot_ids)
     for shot_id in shots_list:
@@ -101,5 +101,5 @@ def shots_delete():
         # first we delete the associated jobs (no foreign keys)
         delete_jobs(shot_id)
         # then we delete the shot
-        delete_shot(shot_id)        
+        delete_shot(shot_id)
     return 'done'
