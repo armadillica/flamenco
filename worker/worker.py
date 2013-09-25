@@ -31,7 +31,7 @@ app.config.update(
 # for registering the render node
 def register_worker():
     print 'We register the node in 1 second!'
-    time.sleep(1) 
+    time.sleep(1)
 
     values = {
         'mac_address': MAC_ADDRESS,
@@ -42,10 +42,10 @@ def register_worker():
 
     params = urllib.urlencode(values)
     try:
-    	f = urllib.urlopen(BRENDER_SERVER + '/connect', params)
-    	#print f.read()
+        f = urllib.urlopen(BRENDER_SERVER + '/connect', params)
+        #print f.read()
     except:
-		print "[Warning] Could not connect to server to register"
+        print "[Warning] Could not connect to server to register"
 
 # we use muliprocessing to register the client the worker to the server
 # while the worker app starts up
@@ -54,8 +54,8 @@ def start_worker():
         registration_process.start()
         app.run(host='0.0.0.0')
         registration_process.join()
-        
-        
+
+
 @app.route('/')
 def index():
     return redirect(url_for('info'))
@@ -82,13 +82,13 @@ def run_command():
     (output, err) = subp.communicate()
     print output
     with open('log.log','w') as f:
-    	f.write(str(output))
+        f.write(str(output))
     return jsonify(status = 'ok command run')
 
 @app.route('/run_job', methods=['POST'])
 def run_job():
     print "we are running the job"
-    # job is a stack of commands : pre-script, rendering, post-script 
+    # job is a stack of commands : pre-script, rendering, post-script
     return jsonify(status = 'ok')
 
 @app.route('/update', methods=['POST'])

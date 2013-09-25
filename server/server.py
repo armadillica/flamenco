@@ -9,14 +9,14 @@ from modules.shots import shots_module
 
 app = Flask(__name__)
 app.config.update(
-	DEBUG=True,
-	SERVER_NAME='brender-server:9999'
+    DEBUG=True,
+    SERVER_NAME='brender-server:9999'
 )
 
 @app.route('/')
 def index():
-	#add_random_workers(2)
-	return jsonify(status = 'ok')
+    #add_random_workers(2)
+    return jsonify(status = 'ok')
 
 
 @app.route('/connect', methods=['POST', 'GET'])
@@ -24,10 +24,10 @@ def connect():
     error = None
     if request.method == 'POST':
         #return str(request.json['foo'])
-        
+
         #ip_address = request.form['ip_address']
 
-        # We assemble the remote_addr value with the port value sent from the worker  
+        # We assemble the remote_addr value with the port value sent from the worker
         ip_address = request.remote_addr + ':' + str(request.form['port'])
         mac_address = request.form['mac_address']
         hostname = request.form['hostname']
@@ -49,29 +49,29 @@ def connect():
             # create new worker object with some defaults. Later on most of these
             # values will be passed as JSON object during the first connection
 
-            
+
             worker = Workers.create(
-                hostname = hostname, 
-                mac_address = mac_address, 
+                hostname = hostname,
+                mac_address = mac_address,
                 status = 'enabled',
-                connection = 'online', 
-                warning = False, 
+                connection = 'online',
+                warning = False,
                 config = '{}',
                 system = system,
                 ip_address = ip_address)
-            
+
             print('Worker has been added')
 
         #params = urllib.urlencode({'worker': 1, 'eggs': 2})
-        
+
         # we verify the identity of the worker (will check on database)
         try:
-        	f = urllib.urlopen('http://' + ip_address)
-        	print 'The following worker just connected:'
-        	print f.read()
-        	return 'You are now connected to the server'
-        except: 
-        	error = "server could not connect to worker with ip=" + ip_address
+            f = urllib.urlopen('http://' + ip_address)
+            print 'The following worker just connected:'
+            print f.read()
+            return 'You are now connected to the server'
+        except:
+            error = "server could not connect to worker with ip=" + ip_address
 
     # the code below is executed if the request method
     # was GET or the credentials were invalid
@@ -82,4 +82,4 @@ if __name__ == "__main__":
     app.register_blueprint(jobs_module)
     app.register_blueprint(shots_module)
     app.run(host='0.0.0.0')
-    
+
