@@ -76,7 +76,9 @@
               <li><a href="{{ url_for('status') }}">Server status</a></li>
               <li><a href="#">Render times</a></li>
               <li class="nav-header">Settings</li>
-              <li><a href="#">Server</a></li>
+              <li {% if title == 'settings': %} class="active"{% endif %}>
+                <a href="{{ url_for('settings') }}">Server</a>
+              </li>
               <li><a href="#">Projects</a></li>
               <li><a href="#">Render configs</a></li>
               <li><a href="{{ url_for('log') }}">Logs</a></li>

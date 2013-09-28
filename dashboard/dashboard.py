@@ -170,6 +170,21 @@ def check_connection(host_address):
 	except:
 		return "offline"		
 
+
+@app.route('/settings/', methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        params = request.form
+        http_request(BRENDER_SERVER, '/settings/update', params)
+        
+        settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+        return render_template('settings.html', title='settings', settings=settings)
+        
+    else:
+        settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+        return render_template('settings.html', title='settings', settings=settings)
+
+
 @app.route('/status/', methods=['GET'])
 def status():
     server_status = check_connection(BRENDER_SERVER)

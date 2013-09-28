@@ -71,6 +71,16 @@ class Jobs(BaseModel):
 	priority = IntegerField()
 
 
+class Settings(BaseModel):
+	"""General brender settings
+
+	At the momen the structure of this table is very generic. This could
+	even be turned into a config file later on.
+	"""
+	name = CharField()
+	value = CharField()
+
+
 def create_tables():
 	"""Create the required databases during installation.
 
@@ -80,6 +90,7 @@ def create_tables():
 	Workers.create_table()
 	Shots.create_table()
 	Jobs.create_table()
+	Settings.create_table()
 
 
 def add_random_workers(workers_amount):

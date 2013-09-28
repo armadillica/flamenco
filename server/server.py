@@ -6,6 +6,7 @@ from model import *
 from modules.jobs import jobs_module
 from modules.workers import workers_module
 from modules.shots import shots_module
+from modules.settings import settings_module
 
 app = Flask(__name__)
 app.config.update(
@@ -81,5 +82,6 @@ if __name__ == "__main__":
     app.register_blueprint(workers_module)
     app.register_blueprint(jobs_module)
     app.register_blueprint(shots_module)
+    app.register_blueprint(settings_module)
     app.run(host='0.0.0.0')
     
