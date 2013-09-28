@@ -31,7 +31,7 @@ app.config.update(
 # for registering the render node
 def register_worker():
     print 'We register the node in 1 second!'
-    time.sleep(1) 
+    time.sleep(1)
 
     values = {
         'mac_address': MAC_ADDRESS,
@@ -42,10 +42,10 @@ def register_worker():
 
     params = urllib.urlencode(values)
     try:
-    	f = urllib.urlopen(BRENDER_SERVER + '/connect', params)
-    	#print f.read()
+        f = urllib.urlopen(BRENDER_SERVER + '/connect', params)
+        #print f.read()
     except:
-		print "[Warning] Could not connect to server to register"
+        print "[Warning] Could not connect to server to register"
 
 # we use muliprocessing to register the client the worker to the server
 # while the worker app starts up
@@ -54,8 +54,8 @@ def start_worker():
         registration_process.start()
         app.run(host='0.0.0.0')
         registration_process.join()
-        
-        
+
+
 @app.route('/')
 def index():
     return redirect(url_for('info'))
@@ -67,28 +67,28 @@ def info():
         hostname = HOSTNAME,
         system = SYSTEM)
 
-@app.route('/run_command')
+@app.route('/render_chunk', methods=['POST'])
 def run_command():
-
+    file_path = request.form['file_path']
+    start = request.form['start']
+    end = request.form['end']
     blender_path = "/Applications/blender/Blender_2_68/blender.app/Contents/MacOS/blender"
-    file_path = "/Users/o/Dropbox/brender/test_blends/monkey.blend"
-    options = "-s 1 -e 2 -a"
+    options = "-s %s -e %s -a" % (start,end)
     render_command = '%s -b %s %s' % (blender_path, file_path, options);
-    
     print "i'm the worker and i run the following test command %s" % render_command
 
 
     subp = subprocess.Popen(render_command, stdout=subprocess.PIPE, shell=True)
     (output, err) = subp.communicate()
-    #print output
+    print output
     with open('log.log','w') as f:
-    	f.write(str(output))
+        f.write(str(output))
     return jsonify(status = 'ok command run')
 
 @app.route('/run_job', methods=['POST'])
 def run_job():
     print "we are running the job"
-    # job is a stack of commands : pre-script, rendering, post-script 
+    # job is a stack of commands : pre-script, rendering, post-script
     return jsonify(status = 'ok')
 
 @app.route('/update', methods=['POST'])

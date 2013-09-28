@@ -17,26 +17,26 @@ subp = subprocess.Popen(render_command, stdout=subprocess.PIPE, shell=True)
 (output, err) = subp.communicate()
 #print output
 with open('log.log','w') as f:
-	f.write(str(output))
+    f.write(str(output))
 
 while 1==3:
     out = subp.stdout.read(10)
     if out == '' and subp.poll() != None:
         break
     if out != '':
-	f = open('render.log','w')
-	print out
-	f.write(out)
+    f = open('render.log','w')
+    print out
+    f.write(out)
         #sys.stdout.write(out)
         #sys.stdout.flush()
 
 """
 for i in range(4):
-	running = subp.poll()
-	print "---------%s ---- %s" % (i,running)
-	if running == None:
-		print "RUNNING"
-	time.sleep(1)
+    running = subp.poll()
+    print "---------%s ---- %s" % (i,running)
+    if running == None:
+        print "RUNNING"
+    time.sleep(1)
 
 """
 #print render_command
