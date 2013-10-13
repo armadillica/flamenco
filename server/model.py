@@ -43,10 +43,10 @@ class Shots(BaseModel):
     current_frame = IntegerField()
     shot_name = CharField()
     filepath = CharField()
-    render_settings = CharField() # yolo settings (pre render / render / post)
-    status = CharField() # started and waiting / stopped / running / paused
+    render_settings = CharField()  # yolo settings (pre render / render / post)
+    status = CharField()  # started and waiting / stopped / running / paused
     priority = IntegerField()
-    owner = CharField() # will eventually become a foreign field
+    owner = CharField()  # will eventually become a foreign field
 
 
 class Jobs(BaseModel):

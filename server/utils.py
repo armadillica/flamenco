@@ -1,12 +1,12 @@
 import urllib
 
-def http_request(ip_address, method, post_params = False):
+def http_request(ip_address, command, post_params = None):
     # post_params must be a dictionay
     if post_params:
         params = urllib.urlencode(post_params)
-        f = urllib.urlopen('http://' + ip_address + method, params)
+        f = urllib.urlopen('http://' + ip_address + command, params)
     else:
-        f = urllib.urlopen('http://' + ip_address + method)
+        f = urllib.urlopen('http://' + ip_address + command)
 
     print 'message sent, reply follows:'
     print f.read()

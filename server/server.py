@@ -38,7 +38,7 @@ def connect():
             worker = Workers.get(Workers.mac_address == mac_address)
         except Exception, e:
             print e , '--> Worker not found'
-            worker = False
+            worker = None
 
         if worker:
             print('This worker connected before, updating IP address')

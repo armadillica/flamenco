@@ -44,16 +44,17 @@ def register_worker():
     try:
         f = urllib.urlopen(BRENDER_SERVER + '/connect', params)
         #print f.read()
+        # TODO(fsiddi): Use proper exception filtering
     except:
         print "[Warning] Could not connect to server to register"
 
 # we use muliprocessing to register the client the worker to the server
 # while the worker app starts up
 def start_worker():
-        registration_process = Process(target=register_worker)
-        registration_process.start()
-        app.run(host='0.0.0.0')
-        registration_process.join()
+    registration_process = Process(target=register_worker)
+    registration_process.start()
+    app.run(host='0.0.0.0')
+    registration_process.join()
 
 
 @app.route('/')
