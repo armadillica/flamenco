@@ -6,6 +6,7 @@ import subprocess
 import platform
 
 from multiprocessing import Process
+from threading import Thread
 from flask import Flask, render_template, jsonify, redirect, url_for, request
 from uuid import getnode as get_mac_address
 
@@ -27,26 +28,28 @@ app.config.update(
 )
 
 
+def send_command_to_server(command, values):
+    params = urllib.urlencode(values)
+    try:
+        f = urllib.urlopen(BRENDER_SERVER + '/' + command, params)
+        #print f.read()
+        # TODO(fsiddi): Use proper exception filtering
+    except:
+        print "[Warning] Could not connect to server to register"
+
+
 # this is going to be an HTTP request to the server with all the info
 # for registering the render node
 def register_worker():
     print 'We register the node in 1 second!'
     time.sleep(1)
-
     values = {
         'mac_address': MAC_ADDRESS,
         'port' : PORT,
         'hostname': HOSTNAME,
         'system' : SYSTEM,
         }
-
-    params = urllib.urlencode(values)
-    try:
-        f = urllib.urlopen(BRENDER_SERVER + '/connect', params)
-        #print f.read()
-        # TODO(fsiddi): Use proper exception filtering
-    except:
-        print "[Warning] Could not connect to server to register"
+    send_command_to_server('connect', values)
 
 # we use muliprocessing to register the client the worker to the server
 # while the worker app starts up
@@ -68,22 +71,29 @@ def info():
         hostname = HOSTNAME,
         system = SYSTEM)
 
-@app.route('/render_chunk', methods=['POST'])
-def run_command():
-    file_path = request.form['file_path']
-    start = request.form['start']
-    end = request.form['end']
-    blender_path = "/Applications/blender/Blender_2_68/blender.app/Contents/MacOS/blender"
-    options = "-s %s -e %s -a" % (start,end)
-    render_command = '%s -b %s %s' % (blender_path, file_path, options);
-    print "i'm the worker and i run the following test command %s" % render_command
-
-
+def run_blender_in_thread():
+    """
     subp = subprocess.Popen(render_command, stdout=subprocess.PIPE, shell=True)
     (output, err) = subp.communicate()
     print output
     with open('log.log','w') as f:
         f.write(str(output))
+    """
+    send_command_to_server('update', {})
+
+@app.route('/render_chunk', methods=['POST'])
+def run_command():
+    file_path = request.form['file_path']
+    blender_path = request.form['blender_path']
+    start = request.form['start']
+    end = request.form['end']
+    options = "-s %s -e %s -a" % (start, end)
+    render_command = '%s -b %s %s' % (blender_path, file_path, options);
+    print "I'm the worker and i run the following test command %s" % render_command
+
+    render_thread = Thread(target=run_blender_in_thread)
+    render_thread.start()
+
     return jsonify(status = 'ok command run')
 
 @app.route('/run_job', methods=['POST'])

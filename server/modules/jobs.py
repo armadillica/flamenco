@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, abort, jsonify, request
 
 from model import *
 from utils import *
+from workers import *
 
 jobs_module = Blueprint('jobs_module', __name__)
 
@@ -103,6 +104,45 @@ def delete_jobs(shot_id):
     delete_query = Jobs.delete().where(Jobs.shot_id == shot_id)
     delete_query.execute()
     print 'All jobs deleted for shot', shot_id
+
+
+def start_job(job_id):
+    """Render a single job
+
+    """
+    worker = Workers.get(Workers.status == 'available')
+
+    job = Jobs.get(Jobs.id == job_id)
+
+    shot = Shots.get(Shots.id == job.shot_id)
+
+    if 'Darwin' in worker.system:
+        blender_path = '/Applications/Blender/buildbot/blender-2.69-r60745-OSX-10.6-x86_64/blender.app/Contents/MacOS/blender'
+
+    worker_ip_address = worker.ip_address
+    
+    params = {
+        'file_path': shot.filepath,
+        'blender_path' : blender_path,
+        'start': job.chunk_start,
+        'end': job.chunk_end
+        }
+    
+    http_request(worker_ip_address, '/render_chunk', params)
+
+    job.status = 'running'
+    job.save()
+
+    return 'Job started'
+
+
+def start_jobs(shot_id):
+    """We start all the jobs for a specific shot
+
+    """
+    for job in Jobs.select().where(Jobs.shot_id == shot_id, Jobs.status == 'ready'):
+        print start_job(job.id)
+
 
 
 @jobs_module.route('/jobs/')

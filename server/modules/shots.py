@@ -57,13 +57,16 @@ def shot_start(shot_id):
         print e , '--> Shot not found'
         return 'Shot %d not found' % shot_id
 
-    if shot.status == 'started':
-        return 'Shot &d already started'  % shot_id
+    if shot.status == 'running':
+        return 'Shot %d already running'  % shot_id
     else:
-        shot.status = 'started'
-        shot.save()
+        start_jobs(shot.id)
+
+        #shot.status = 'running'
+        #shot.save()
+
         #http_request()
-        return 'Shot &d started'  % shot_id
+        return 'Shot %d running' % shot_id
 
 @shots_module.route('/shots/add', methods=['POST'])
 def shot_add():
@@ -88,7 +91,7 @@ def shot_add():
 
     print 'refresh list of available workers'
 
-    dispatch_jobs()
+    start_jobs(shot.id)
 
     return 'done'
 
