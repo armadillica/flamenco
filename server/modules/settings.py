@@ -19,7 +19,7 @@ def settings():
 def settings_update():
     if request.method == 'POST':
         for setting_name in request.form:
-            print setting_name, request.form[setting_name]
+            print(setting_name, request.form[setting_name])
             setting = Settings.get(Settings.name == setting_name)
             setting.value = request.form[setting_name]
             setting.save()
@@ -27,15 +27,16 @@ def settings_update():
     else:
         return 'This is a useless GET'
 
+
 @settings_module.route('/settings/<setting_name>')
 def get_setting(setting_name):
     try:
         setting = Settings.get(Settings.name == setting_name)
     except Exception, e:
-        print e , '--> Setting not found'
+        print(e, '--> Setting not found')
         return 'Setting %s not found' % setting_name
 
     # a = json.loads(setting['value'])
-    # print a
+    # print(a)
 
     return setting.value

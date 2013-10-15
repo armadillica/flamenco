@@ -1,14 +1,27 @@
-import urllib
-import time
+import glob
 import json
 import os
-import glob
+import time
+import urllib
 
-from flask import Flask, render_template, jsonify, redirect, url_for, request, flash
+from flask import (flash,
+                   Flask,
+                   jsonify,
+                   redirect,
+                   render_template,
+                   request,
+                   url_for)
 
 BRENDER_SERVER = 'brender-server:9999'
 
-def http_request(ip_address, method, post_params = False):
+app = Flask(__name__)
+app.config.update(
+    DEBUG=True,
+    SERVER_NAME='brender-flask:8888'
+)
+
+
+def http_request(ip_address, method, post_params=False):
     # post_params must be a dictionnary
     if post_params:
         params = urllib.urlencode(post_params)
@@ -16,14 +29,8 @@ def http_request(ip_address, method, post_params = False):
     else:
         f = urllib.urlopen('http://' + ip_address + method)
 
-    print 'message sent, reply follows:'
+    print('message sent, reply follows:')
     return f.read()
-
-app = Flask(__name__)
-app.config.update(
-    DEBUG=True,
-    SERVER_NAME='brender-flask:8888'
-)
 
 
 @app.route('/')
@@ -33,112 +40,119 @@ def index():
     else:
         return "[error] Dashboard could not connect to server"
 
+
 @app.route('/workers/')
 def workers():
     workers = http_request(BRENDER_SERVER, '/workers')
-    #print workers
+    #print(workers)
     workers = json.loads(workers)
     workers_list = []
 
     for key, val in workers.iteritems():
         val['checkbox'] = '<input type="checkbox" />'
         workers_list.append({
-            "DT_RowId" : "worker_" + str(val['id']),
-            "0" : val['checkbox'],
-            "1" : key,
-            "2" : val['system'],
-            "3" : val['ip_address'],
-            "4" : val['connection'],
-            "5" : val['status']
+            "DT_RowId": "worker_" + str(val['id']),
+            "0": val['checkbox'],
+            "1": key,
+            "2": val['system'],
+            "3": val['ip_address'],
+            "4": val['connection'],
+            "5": val['status']
         })
-        #print v
+        #print(v)
 
     entries = json.dumps(workers_list)
 
     return render_template('workers.html', entries=entries, title='workers')
+
 
 @app.route('/workers/edit', methods=['POST'])
 def workers_edit():
     worker_ids = request.form['id']
     worker_status = request.form['status']
 
-    worker_config = {'system' : 'linux', 'blender': 'local'}
-    params = urllib.urlencode({'id': worker_ids, 'status': worker_status, 'config' : worker_config})
-    f = urllib.urlopen("http://brender-server:9999/workers/edit", params)
+    worker_config = {'system': 'linux',
+                     'blender': 'local'}
+    params = urllib.urlencode({'id': worker_ids,
+                               'status': worker_status,
+                               'config': worker_config})
+    f = urllib.urlopen("http://" + BRENDER_SERVER + "/workers/edit", params)
 
-    return jsonify (status = 'ok')
+    return jsonify(status='ok')
+
 
 @app.route('/workers/render_chunk', methods=['POST'])
 def workers_render_chunk():
     #arguments = '-al'
     #command = 'ls'
-    ##params = urllib.urlencode({'command': 'command', 'arguments': 'arguments'})
-    f = urllib.urlopen("http://brender-server:9999/workers/render_chunk")
+    ##params = urllib.urlencode({'command': 'command',
+    #                            'arguments': 'arguments'})
+    f = urllib.urlopen("http://" + BRENDER_SERVER + "/workers/render_chunk")
 
-    return jsonify (status = 'ok')
-
+    return jsonify(status='ok')
 
 
 @app.route('/shots/')
 def shots_index():
     shots = http_request(BRENDER_SERVER, '/shots')
-    #print shots
+    #print(shots)
     shots = json.loads(shots)
     shots_list = []
 
     for key, val in shots.iteritems():
-        val['checkbox'] = '<input type="checkbox" value="' +  key + '" />'
+        val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         shots_list.append({
-            "DT_RowId" : "shot_" + str(key),
-            "0" : val['checkbox'],
-            "1" : key,
-            "2" : val['shot_name'],
-            "3" : val['percentage_done'],
-            "4" : val['render_settings'],
-            "5" : val['status']
-            })
-        #print v
+            "DT_RowId": "shot_" + str(key),
+            "0": val['checkbox'],
+            "1": key,
+            "2": val['shot_name'],
+            "3": val['percentage_done'],
+            "4": val['render_settings'],
+            "5": val['status']})
+        #print(v)
 
     entries = json.dumps(shots_list)
 
     return render_template('shots.html', entries=entries, title='shots')
 
-@app.route('/shots/delete' , methods=['POST'])
+
+@app.route('/shots/delete', methods=['POST'])
 def shots_delete():
     shot_ids = request.form['id']
-    print shot_ids
-    params = {'id': shot_ids }
+    print(shot_ids)
+    params = {'id': shot_ids}
     shots = http_request(BRENDER_SERVER, '/shots/delete', params)
     return 'done'
 
-@app.route('/shots/update' , methods=['POST'])
+
+@app.route('/shots/update', methods=['POST'])
 def shots_start():
     status = request.form['status'].lower()
     shot_ids = int(request.form['id'])
     if status in ['start', 'stop']:
-        shots = http_request(BRENDER_SERVER, '/shots/%s/%d' % (status, shot_ids))
+        shots = http_request(BRENDER_SERVER,
+                             '/shots/%s/%d' % (status, shot_ids))
         return 'done'
     else:
         return 'error'
 
 
-@app.route('/shots/add' , methods=['GET', 'POST'])
+@app.route('/shots/add', methods=['GET', 'POST'])
 def shots_add():
     if request.method == 'POST':
         shot_values = {
-            'production_shot_id' : 1,
-            'shot_name' : request.form['shot_name'],
-            'frame_start' : request.form['frame_start'],
-            'frame_end' : request.form['frame_end'],
-            'chunk_size' : request.form['chunk_size'],
-            'current_frame' : request.form['frame_start'],
-            'filepath' : request.form['filepath'],
-            'render_settings' : 'will refer to settings table',
-            'status' : 'running',
-            'priority' : 10,
-            'owner' : 'fsiddi'
+            'production_shot_id': 1,
+            'shot_name': request.form['shot_name'],
+            'frame_start': request.form['frame_start'],
+            'frame_end': request.form['frame_end'],
+            'chunk_size': request.form['chunk_size'],
+            'current_frame': request.form['frame_start'],
+            'filepath': request.form['filepath'],
+            'render_settings': 'will refer to settings table',
+            'status': 'running',
+            'priority': 10,
+            'owner': 'fsiddi'
         }
-
 
         return http_request(BRENDER_SERVER, '/shots/add', shot_values)
     else:
@@ -148,25 +162,26 @@ def shots_add():
 @app.route('/jobs/')
 def jobs_index():
     jobs = http_request(BRENDER_SERVER, '/jobs')
-    #print shots
+    #print(shots)
     jobs = json.loads(jobs)
     jobs_list = []
 
     for key, val in jobs.iteritems():
-        val['checkbox'] = '<input type="checkbox" value="' +  key + '" />'
+        val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
-            "DT_RowId" : "worker_" + str(key),
-            "0" : val['checkbox'],
-            "1" : key,
-            "2" : val['percentage_done'],
-            "3" : val['priority'],
-            "4" : val['status']
+            "DT_RowId": "worker_" + str(key),
+            "0": val['checkbox'],
+            "1": key,
+            "2": val['percentage_done'],
+            "3": val['priority'],
+            "4": val['status']
             })
-        #print v
+        #print(v)
 
     entries = json.dumps(jobs_list)
 
     return render_template('jobs.html', entries=entries, title='jobs')
+
 
 def check_connection(host_address):
     try:
@@ -181,22 +196,28 @@ def settings():
     if request.method == 'POST':
         params = request.form
         http_request(BRENDER_SERVER, '/settings/update', params)
-        
+
         settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
-        return render_template('settings.html', title='settings', settings=settings)
-        
+        return render_template('settings.html',
+                               title='settings',
+                               settings=settings)
+
     else:
         settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
-        return render_template('settings.html', title='settings', settings=settings)
+        return render_template('settings.html',
+                               title='settings',
+                               settings=settings)
 
 
 @app.route('/status/', methods=['GET'])
 def status():
     server_status = check_connection(BRENDER_SERVER)
-    return render_template('status.html', title='status', server_status=server_status)
+    return render_template('status.html',
+                           title='status',
+                           server_status=server_status)
 
 
-@app.route('/log/', methods=['GET','POST'])
+@app.route('/log/', methods=['GET', 'POST'])
 def log():
 
     if request.method == 'POST':
@@ -205,11 +226,16 @@ def log():
             try:
                 file = open(result)
                 lines = file.readlines()
-                return render_template('log.html', title='status', lines=lines, result=result)
+                return render_template('log.html',
+                                       title='status',
+                                       lines=lines,
+                                       result=result)
             except IOError:
-                flash('Couldn\'t open file. Please make sure the log file exists at ' + result)
+                flash('Couldn\'t open file. ' +
+                      'Please make sure the log file exists at ' + result)
         else:
-            flash('No log to read Please input a filepath ex: /User/koder/log.log')
+            flash('No log to read Please input a filepath ex: ' +
+                  '/User/koder/log.log')
     return render_template('log.html', title='status')
 
 
@@ -217,9 +243,10 @@ def log():
 def sandbox():
     return render_template('sandbox.html', title='sandbox')
 
+
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('404_error.html'),404
+    return render_template('404_error.html'), 404
 
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 

@@ -12,13 +12,13 @@ def update_worker(worker, worker_data):
         worker.save()
 
     http_request(worker.ip_address, '/update', worker_data)
-    
+
     for key, val in worker_data.iteritems():
-    	print key, val
-    	if val:
-    		setattr(worker, key, val)
+        print(key, val)
+        if val:
+            setattr(worker, key, val)
     worker.save()
-    print 'status ', worker.status
+    print('status ', worker.status)
 
 
 @workers_module.route('/workers/')
@@ -30,63 +30,61 @@ def workers():
             f = urllib.urlopen('http://' + worker.ip_address)
             worker.connection = 'online'
         except Exception, e:
-            print '[Warning] Worker', worker.hostname, 'is not online'
+            print('[Warning] Worker', worker.hostname, 'is not online')
             worker.connection = 'offline'
 
-        workers[worker.hostname] = {
-            "id": worker.id,
-            "hostname" : worker.hostname,
-            "status" : worker.status,
-            "connection" : worker.connection,
-            "system" : worker.system,
-            "ip_address" : worker.ip_address}
+        workers[worker.hostname] = {"id": worker.id,
+                                    "hostname": worker.hostname,
+                                    "status": worker.status,
+                                    "connection": worker.connection,
+                                    "system": worker.system,
+                                    "ip_address": worker.ip_address}
 
     """
-    This is a temporary solution for saving the workers connections: 
-    we read them from the workers dict we just created and build an 
+    This is a temporary solution for saving the workers connections:
+    we read them from the workers dict we just created and build an
     update query for each one of them. It seems not possible to save
     the objects on the fly in the Workers.select() loop above.
     """
-    
+
     for k, v in workers.iteritems():
-        update_query = Workers.update(connection=v['connection']).where(Workers.id == v['id'])
+        update_query = Workers.update(connection=v['connection']).\
+            where(Workers.id == v['id'])
         update_query.execute()
 
     return jsonify(workers)
 
+
 @workers_module.route('/workers/edit', methods=['POST'])
 def workers_edit():
     worker_ids = request.form['id']
-    worker_data = {
-        "status" : request.form['status'],
-        "config" : request.form['config']
-    }
+    worker_data = {"status": request.form['status'],
+                   "config": request.form['config']}
 
     if worker_ids:
         for worker_id in list_integers_string(worker_ids):
             worker = Workers.get(Workers.id == worker_id)
             update_worker(worker, worker_data)
 
-        return jsonify(result = 'success')
+        return jsonify(result='success')
     else:
-        print 'we edit all the workers'
+        print('we edit all the workers')
         for worker in Workers.select():
             update_worker(worker, worker_data)
 
-    return jsonify(result = 'success')
+    return jsonify(result='success')
+
 
 @workers_module.route('/workers/render_chunk')
 def worker_render_chunk():
-    print "server run command breakpoint"
+    print("server run command breakpoint")
     ip_address = '127.0.0.1:5000'
-    params = {
-    	'file_path': '/Users/fsiddi/Dropbox/brender/test_blends/cubes.blend',
-        'blender_path' : '/Applications/Blender/buildbot/blender-2.69-r60745-OSX-10.6-x86_64/blender.app/Contents/MacOS/blender',
-    	'start': 2,
-    	'end': 8
-    	}
+    params = {'file_path': '/Users/fsiddi/Dropbox/brender/test_blends/cubes.blend',
+              'blender_path': '/Applications/Blender/buildbot/blender-2.69-r60745-OSX-10.6-x86_64/blender.app/Contents/MacOS/blender',
+              'start': 2,
+              'end': 8}
     http_request(ip_address, '/render_chunk', params)
 
-    return jsonify(result = 'render chunk sent to client')
+    return jsonify(result='render chunk sent to client')
 
     #return jsonify(result = 'success')

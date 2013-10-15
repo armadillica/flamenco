@@ -14,10 +14,11 @@ app.config.update(
     SERVER_NAME='brender-server:9999'
 )
 
+
 @app.route('/')
 def index():
     #add_random_workers(2)
-    return jsonify(status = 'ok')
+    return jsonify(status='ok')
 
 
 @app.route('/connect', methods=['POST', 'GET'])
@@ -28,7 +29,8 @@ def connect():
 
         #ip_address = request.form['ip_address']
 
-        # We assemble the remote_addr value with the port value sent from the worker
+        # We assemble the remote_addr value with
+        # the port value sent from the worker
         ip_address = request.remote_addr + ':' + str(request.form['port'])
         mac_address = request.form['mac_address']
         hostname = request.form['hostname']
@@ -37,7 +39,7 @@ def connect():
         try:
             worker = Workers.get(Workers.mac_address == mac_address)
         except Exception, e:
-            print e , '--> Worker not found'
+            print(e, '--> Worker not found')
             worker = None
 
         if worker:
@@ -47,19 +49,18 @@ def connect():
 
         else:
             print('This worker never connected before')
-            # create new worker object with some defaults. Later on most of these
-            # values will be passed as JSON object during the first connection
+            # create new worker object with some defaults.
+            # Later on most of these values will be passed as JSON object
+            # during the first connection
 
-
-            worker = Workers.create(
-                hostname = hostname,
-                mac_address = mac_address,
-                status = 'enabled',
-                connection = 'online',
-                warning = False,
-                config = '{}',
-                system = system,
-                ip_address = ip_address)
+            worker = Workers.create(hostname=hostname,
+                                    mac_address=mac_address,
+                                    status='enabled',
+                                    connection='online',
+                                    warning=False,
+                                    config='{}',
+                                    system=system,
+                                    ip_address=ip_address)
 
             print('Worker has been added')
 
@@ -68,15 +69,15 @@ def connect():
         # we verify the identity of the worker (will check on database)
         try:
             f = urllib.urlopen('http://' + ip_address)
-            print 'The following worker just connected:'
-            print f.read()
+            print('The following worker just connected:')
+            print(f.read())
             return 'You are now connected to the server'
         except:
             error = "server could not connect to worker with ip=" + ip_address
 
     # the code below is executed if the request method
     # was GET or the credentials were invalid
-    return jsonify(error = error)
+    return jsonify(error=error)
 
 if __name__ == "__main__":
     app.register_blueprint(workers_module)
@@ -84,4 +85,3 @@ if __name__ == "__main__":
     app.register_blueprint(shots_module)
     app.register_blueprint(settings_module)
     app.run(host='0.0.0.0')
-
