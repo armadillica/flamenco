@@ -4,8 +4,10 @@ import time
 import sys
 import subprocess
 import platform
+import flask
+import os
+import select
 
-from multiprocessing import Process
 from threading import Thread
 from flask import Flask, render_template, jsonify, redirect, url_for, request
 from uuid import getnode as get_mac_address
@@ -41,24 +43,56 @@ def send_command_to_server(command, values):
 # this is going to be an HTTP request to the server with all the info
 # for registering the render node
 def register_worker():
-    print 'We register the node in 1 second!'
-    time.sleep(1)
-    values = {
+    import httplib
+    while True:
+        try:
+            connection = httplib.HTTPConnection('127.0.0.1', PORT)
+            connection.request("GET", "/info")
+            break
+        except socket.error:
+            pass
+        time.sleep(0.1)
+
+    send_command_to_server('connect', {
         'mac_address': MAC_ADDRESS,
         'port' : PORT,
         'hostname': HOSTNAME,
         'system' : SYSTEM,
-        }
-    send_command_to_server('connect', values)
+        })
 
 # we use muliprocessing to register the client the worker to the server
 # while the worker app starts up
 def start_worker():
-    registration_process = Process(target=register_worker)
-    registration_process.start()
-    app.run(host='0.0.0.0')
-    registration_process.join()
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        register_thread = Thread(target=register_worker)
+        register_thread.setDaemon(False)
+        register_thread.start()
 
+    app.run(host='0.0.0.0')
+
+def _checkProcessOutput(process):
+    ready = select.select([process.stdout.fileno(),
+                           process.stderr.fileno()],
+                          [], [])
+    full_buffer = ''
+    for fd in ready[0]:
+        while True:
+            buffer = os.read(fd, 1024)
+            if not buffer:
+                break
+            full_buffer += buffer
+    return full_buffer
+
+def _interactiveReadProcess(process):
+    full_buffer = ''
+    while True:
+        full_buffer += _checkProcessOutput(process)
+        if process.poll() is not None:
+            break
+    # It might be some data hanging around in the buffers after
+    # the process finished
+    full_buffer += _checkProcessOutput(process)
+    return (process.returncode, full_buffer)
 
 @app.route('/')
 def index():
@@ -71,40 +105,46 @@ def info():
         hostname = HOSTNAME,
         system = SYSTEM)
 
-def run_blender_in_thread():
-    """
-    subp = subprocess.Popen(render_command, stdout=subprocess.PIPE, shell=True)
-    (output, err) = subp.communicate()
-    print output
+def run_blender_in_thread(options):
+    blender_options = "-s %s -e %s -a" % (options['start_frame'], options['end_frame'])
+    render_command = '%s -b %s %s' % (options['blender_path'],
+                                      options['file_path'],
+                                      blender_options)
+    print "I'm the worker and i run the following test command %s" % render_command
+
+    process = subprocess.Popen(['blender', '-b', '-f', '1'],  # render_command,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    #flask.g.blender_process = process
+    (retcode, full_output) = _interactiveReadProcess(process)
+    #flask.g.blender_process = None
+    print(full_output)
     with open('log.log','w') as f:
-        f.write(str(output))
-    """
-    send_command_to_server('update', {})
+        f.write(full_output)
+
+    send_command_to_server('jobs/update', {'id': options['job_id'], 'status': 'finished'})
 
 @app.route('/render_chunk', methods=['POST'])
 def run_command():
-    file_path = request.form['file_path']
-    blender_path = request.form['blender_path']
-    start = request.form['start']
-    end = request.form['end']
-    options = "-s %s -e %s -a" % (start, end)
-    render_command = '%s -b %s %s' % (blender_path, file_path, options);
-    print "I'm the worker and i run the following test command %s" % render_command
+    options = {
+        'job_id': request.form['job_id'],
+        'file_path': request.form['file_path'],
+        'blender_path': request.form['blender_path'],
+        'start_frame': request.form['start'],
+        'end_frame': request.form['end']
+    }
 
-    render_thread = Thread(target=run_blender_in_thread)
+    render_thread = Thread(target=run_blender_in_thread, args=(options,))
     render_thread.start()
 
     return jsonify(status = 'ok command run')
 
-@app.route('/run_job', methods=['POST'])
-def run_job():
-    print "we are running the job"
-    # job is a stack of commands : pre-script, rendering, post-script
-    return jsonify(status = 'ok')
-
 @app.route('/update', methods=['POST'])
 def update():
     print 'updating'
+    blender_process = flask.g.get("blender_process")
+    if blender_process:
+        blender_process.kill()
     return 'done'
 
 if __name__ == "__main__":

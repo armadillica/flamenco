@@ -118,10 +118,13 @@ def start_job(job_id):
 
     if 'Darwin' in worker.system:
         blender_path = '/Applications/Blender/buildbot/blender-2.69-r60745-OSX-10.6-x86_64/blender.app/Contents/MacOS/blender'
+    else:
+        blender_path = "blender"
 
     worker_ip_address = worker.ip_address
     
     params = {
+        'job_id': job_id,
         'file_path': shot.filepath,
         'blender_path' : blender_path,
         'start': job.chunk_start,
@@ -143,6 +146,24 @@ def start_jobs(shot_id):
     for job in Jobs.select().where(Jobs.shot_id == shot_id, Jobs.status == 'ready'):
         print start_job(job.id)
 
+
+def stop_job(job_id):
+    """
+    Stop a single job
+    """
+    job = Jobs.get(Jobs.id == job_id)
+    job.status = 'ready'
+    job.save()
+
+    return 'Job stopped'
+
+
+def stop_jobs(shot_id):
+    """We stop all the jobs for a specific shot
+
+    """
+    for job in Jobs.select().where(Jobs.shot_id == shot_id, Jobs.status == 'running'):
+        print stop_job(job.id)
 
 
 @jobs_module.route('/jobs/')
@@ -166,3 +187,13 @@ def jobs():
             "percentage_done" : percentage_done,
             "priority" : job.priority}
     return jsonify(jobs)
+
+@jobs_module.route('/jobs/update', methods=['POST'])
+def jobs_update():
+    job_id = request.form['id']
+    status= request.form['status'].lower()
+    if status in ['finished']:
+        job = Jobs.get(Jobs.id == job_id)
+        job.status = 'finished'
+        job.save()
+    return "job updated"

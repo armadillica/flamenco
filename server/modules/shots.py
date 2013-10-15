@@ -62,11 +62,26 @@ def shot_start(shot_id):
     else:
         start_jobs(shot.id)
 
-        #shot.status = 'running'
-        #shot.save()
+        shot.status = 'running'
+        shot.save()
 
-        #http_request()
         return 'Shot %d running' % shot_id
+
+@shots_module.route('/shots/stop/<int:shot_id>')
+def shot_stop(shot_id):
+    try:
+        shot = Shots.get(Shots.id == shot_id)
+    except Exception, e:
+        print e , '--> Shot not found'
+        return 'Shot %d not found' % shot_id
+
+    if shot.status == 'ready':
+        return 'Shot %d already stopped'  % shot_id
+    else:
+        stop_jobs(shot.id)
+        shot.status = 'ready'
+        shot.save()
+        return 'Shot %d stopped' % shot_id
 
 @shots_module.route('/shots/add', methods=['POST'])
 def shot_add():

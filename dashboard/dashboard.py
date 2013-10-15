@@ -113,11 +113,13 @@ def shots_delete():
 
 @app.route('/shots/update' , methods=['POST'])
 def shots_start():
-    status = request.form['status']
-    shot_ids = request.form['id']
-    params = {'id': shot_ids, 'status' : status}
-    shots = http_request(BRENDER_SERVER, '/shots/update', params)
-    return 'done'
+    status = request.form['status'].lower()
+    shot_ids = int(request.form['id'])
+    if status in ['start', 'stop']:
+        shots = http_request(BRENDER_SERVER, '/shots/%s/%d' % (status, shot_ids))
+        return 'done'
+    else:
+        return 'error'
 
 
 @app.route('/shots/add' , methods=['GET', 'POST'])
