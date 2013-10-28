@@ -79,13 +79,12 @@ def start_job(worker, job):
 
     shot = Shots.get(Shots.id == job.shot_id)
 
-
     if 'Darwin' in worker.system:
-        blender_path = '/Applications/Blender/buildbot' + \
-                       '/blender-2.69-r60745-OSX-10.6-x86_64/blender.app' + \
-                       '/Contents/MacOS/blender'
+        setting = Settings.get(Settings.name == 'blender_path_osx')
+        blender_path = setting.value
     else:
-        blender_path = 'blender'
+        setting = Settings.get(Settings.name == 'blender_path_linux')
+        blender_path = setting.value
 
     worker_ip_address = worker.ip_address
 
@@ -124,35 +123,7 @@ def dispatch_jobs(shot_id = None):
 
         job.status = 'running'
         job.save()
-
-        # now we build the actual job to send to the worker
-        """
-        job_parameters = {'pre-run': 'svn up or other things',
-                          'command': 'blender_path -b ' +
-                                     '/filepath.blend -o /render_out -a',
-                          'post-frame': 'post frame',
-                          'post-run': 'clear variables, empty /tmp'}
         
-
-        if 'Darwin' in worker.system:
-            blender_path = '/Applications/Blender/buildbot' + \
-                           '/blender-2.69-r60745-OSX-10.6-x86_64/blender.app' + \
-                           '/Contents/MacOS/blender'
-        else:
-            blender_path = "blender"
-
-        params = {'job_id': job_id,
-              'file_path': shot.filepath,
-              'blender_path': blender_path,
-              'start': job.chunk_start,
-              'end': job.chunk_end}
-
-        # and we send the job to the worker
-        http_request(worker.ip_address, '/run_job', job_parameters)
-
-        print(job.status)
-        """
-
         start_job(worker, job)
 
 
