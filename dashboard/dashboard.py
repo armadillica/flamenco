@@ -154,7 +154,12 @@ def shots_add():
             'owner': 'fsiddi'
         }
 
-        return http_request(BRENDER_SERVER, '/shots/add', shot_values)
+        http_request(BRENDER_SERVER, '/shots/add', shot_values)
+
+        #  flashing does not work because we use redirect_url
+        #  flash('New shot added!')
+
+        return redirect(url_for('shots_index'))
     else:
         return render_template('add_shot.html', title='add_shot')
 
