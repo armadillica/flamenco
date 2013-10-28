@@ -70,8 +70,52 @@ def create_jobs(shot):
         create_job(shot.id, chunk_start, chunk_end)
 
 
-def dispatch_jobs():
-    for worker in Workers.select().where(Workers.status == 'available'):
+def start_job(worker, job):
+    """
+    Execute a single job
+    We pass worker and job as objects (and at the moment we use a bad
+    way to get the additional shot information - should be done with join)
+    """
+
+    shot = Shots.get(Shots.id == job.shot_id)
+
+
+    if 'Darwin' in worker.system:
+        blender_path = '/Applications/Blender/buildbot' + \
+                       '/blender-2.69-r60745-OSX-10.6-x86_64/blender.app' + \
+                       '/Contents/MacOS/blender'
+    else:
+        blender_path = 'blender'
+
+    worker_ip_address = worker.ip_address
+
+    """
+    Additiona params for future reference
+
+    job_parameters = {'pre-run': 'svn up or other things',
+                      'command': 'blender_path -b ' +
+                                 '/filepath.blend -o /render_out -a',
+                      'post-frame': 'post frame',
+                      'post-run': 'clear variables, empty /tmp'}
+    """
+
+    params = {'job_id': job.id,
+              'file_path': shot.filepath,
+              'blender_path': blender_path,
+              'start': job.chunk_start,
+              'end': job.chunk_end}
+
+    http_request(worker_ip_address, '/execute_job', params)
+
+    job.status = 'running'
+    job.save()
+
+    return 'Job started'
+
+
+def dispatch_jobs(shot_id = None):
+    for worker in Workers.select().where(
+        (Workers.status == 'enabled') & (Workers.connection == 'online')):
 
         # pick the job with the highest priority (it means the lowest number)
         job = Jobs.select().where(
@@ -82,16 +126,34 @@ def dispatch_jobs():
         job.save()
 
         # now we build the actual job to send to the worker
+        """
         job_parameters = {'pre-run': 'svn up or other things',
                           'command': 'blender_path -b ' +
                                      '/filepath.blend -o /render_out -a',
                           'post-frame': 'post frame',
                           'post-run': 'clear variables, empty /tmp'}
+        
+
+        if 'Darwin' in worker.system:
+            blender_path = '/Applications/Blender/buildbot' + \
+                           '/blender-2.69-r60745-OSX-10.6-x86_64/blender.app' + \
+                           '/Contents/MacOS/blender'
+        else:
+            blender_path = "blender"
+
+        params = {'job_id': job_id,
+              'file_path': shot.filepath,
+              'blender_path': blender_path,
+              'start': job.chunk_start,
+              'end': job.chunk_end}
 
         # and we send the job to the worker
         http_request(worker.ip_address, '/run_job', job_parameters)
 
         print(job.status)
+        """
+
+        start_job(worker, job)
 
 
 def delete_job(job_id):
@@ -111,42 +173,9 @@ def delete_jobs(shot_id):
     print('All jobs deleted for shot', shot_id)
 
 
-def start_job(job_id):
-    """
-    Render a single job
-    """
-    worker = Workers.get(Workers.status == 'available')
-
-    job = Jobs.get(Jobs.id == job_id)
-
-    shot = Shots.get(Shots.id == job.shot_id)
-
-    if 'Darwin' in worker.system:
-        blender_path = '/Applications/Blender/buildbot' + \
-                       '/blender-2.69-r60745-OSX-10.6-x86_64/blender.app' + \
-                       '/Contents/MacOS/blender'
-    else:
-        blender_path = "blender"
-
-    worker_ip_address = worker.ip_address
-
-    params = {'job_id': job_id,
-              'file_path': shot.filepath,
-              'blender_path': blender_path,
-              'start': job.chunk_start,
-              'end': job.chunk_end}
-
-    http_request(worker_ip_address, '/render_chunk', params)
-
-    job.status = 'running'
-    job.save()
-
-    return 'Job started'
-
-
 def start_jobs(shot_id):
     """
-    We start all the jobs for a specific shot
+    [DEPRECATED] We start all the jobs for a specific shot
     """
     for job in Jobs.select().where(Jobs.shot_id == shot_id,
                                    Jobs.status == 'ready'):

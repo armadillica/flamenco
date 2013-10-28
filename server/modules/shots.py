@@ -108,7 +108,7 @@ def shot_add():
 
     print('refresh list of available workers')
 
-    start_jobs(shot.id)
+    dispatch_jobs(shot.id)
 
     return 'done'
 

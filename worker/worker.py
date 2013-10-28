@@ -131,8 +131,8 @@ def run_blender_in_thread(options):
                                            'status': 'finished'})
 
 
-@app.route('/render_chunk', methods=['POST'])
-def run_command():
+@app.route('/execute_job', methods=['POST'])
+def execute_job():
     options = {
         'job_id': request.form['job_id'],
         'file_path': request.form['file_path'],
