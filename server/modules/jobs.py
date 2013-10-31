@@ -23,7 +23,7 @@ def create_job(shot_id, chunk_start, chunk_end):
 
 
 def create_jobs(shot):
-    shot_frames_count = shot.frame_end - shot.frame_start
+    shot_frames_count = shot.frame_end - shot.frame_start + 1
     shot_chunks_remainder = shot_frames_count % shot.chunk_size
     shot_chunks_division = shot_frames_count / shot.chunk_size
 
@@ -34,7 +34,7 @@ def create_jobs(shot):
         chunk_start = shot.frame_start
         chunk_end = shot.frame_start + shot.chunk_size - 1
 
-        for chunk in range(total_chunks - 1):
+        for chunk in range(total_chunks):
             print('making chunk for shot', shot.id)
 
             create_job(shot.id, chunk_start, chunk_end)
