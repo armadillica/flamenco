@@ -127,7 +127,7 @@ def dispatch_jobs(shot_id = None):
 
         job.status = 'running'
         job.save()
-        
+
         start_job(worker, job)
 
 
@@ -188,7 +188,6 @@ def jobs():
             frame_count = job.chunk_end - job.chunk_start + 1
             current_frame = job.current_frame - job.chunk_start + 1
             percentage_done = 100 / frame_count * current_frame
-
         jobs[job.id] = {"shot_id": job.shot_id,
                         "chunk_start": job.chunk_start,
                         "chunk_end": job.chunk_end,
@@ -207,6 +206,8 @@ def jobs_update():
         job = Jobs.get(Jobs.id == job_id)
         job.status = 'finished'
         job.save()
-
-    dispatch_jobs()
+    try:
+        dispatch_jobs()
+    except:
+        return "couldnt dispatch jobs / update jobs"
     return "job updated"
