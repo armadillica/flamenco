@@ -45,7 +45,7 @@ def create_jobs(shot):
     elif shot_chunks_remainder == shot.chunk_size:
         print('we have 1 chunk only')
 
-        create_job(shot.id, shot.frame_start, hot.frame_end)
+        create_job(shot.id, shot.frame_start, shot.frame_end)
 
     #elif shot_chunks_remainder > 0 and \
     #     shot_chunks_remainder < shot.chunk_size:
