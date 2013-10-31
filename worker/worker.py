@@ -29,7 +29,7 @@ app.config.update(DEBUG=True,
     )
 
 
-def send_command_to_server(command, values):
+def http_request(command, values):
     params = urllib.urlencode(values)
     try:
         f = urllib.urlopen(BRENDER_SERVER + '/' + command, params)
@@ -52,7 +52,7 @@ def register_worker():
             pass
         time.sleep(0.1)
 
-    send_command_to_server('connect', {'mac_address': MAC_ADDRESS,
+    http_request('connect', {'mac_address': MAC_ADDRESS,
                                        'port': PORT,
                                        'hostname': HOSTNAME,
                                        'system': SYSTEM})
@@ -109,15 +109,22 @@ def info():
 
 
 def run_blender_in_thread(options):
-    blender_options = "-s %s -e %s -a" % \
-        (options['start_frame'], options['end_frame'])
-    render_command = '%s -b %s %s' % (options['blender_path'],
-                                      options['file_path'],
-                                      blender_options)
-    print("I'm the worker and i run the following test command %s" %
-          render_command)
+    """We build the command to run blender in a thread
+    """
+    render_command = [
+        options['blender_path'],
+        '-b',
+        options['file_path'],
+        '-s' ,
+        options['start_frame'],
+        '-e',
+        options['end_frame'],
+        '-a'
+        ]
 
-    process = subprocess.Popen(['blender', '-b', '-f', '1'],  # render_command,
+    print("[Info] Running %s" % render_command)
+
+    process = subprocess.Popen(render_command,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     #flask.g.blender_process = process
@@ -127,7 +134,7 @@ def run_blender_in_thread(options):
     with open('log.log', 'w') as f:
         f.write(full_output)
 
-    send_command_to_server('jobs/update', {'id': options['job_id'],
+    http_request('jobs/update', {'id': options['job_id'],
                                            'status': 'finished'})
 
 

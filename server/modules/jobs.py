@@ -105,9 +105,13 @@ def start_job(worker, job):
               'end': job.chunk_end}
 
     http_request(worker_ip_address, '/execute_job', params)
+    #  get a reply from the worker (running, error, etc)
 
     job.status = 'running'
     job.save()
+
+    shot.current_frame = job.chunk_end
+    shot.save()
 
     return 'Job started'
 
@@ -203,4 +207,6 @@ def jobs_update():
         job = Jobs.get(Jobs.id == job_id)
         job.status = 'finished'
         job.save()
+
+    dispatch_jobs()
     return "job updated"
