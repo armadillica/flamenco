@@ -91,6 +91,16 @@ def workers_render_chunk():
 
     return jsonify(status='ok')
 
+@app.route('/worker/<worker_id>')
+def worker(worker_id):
+    data = []
+    #print(workers)
+    #worker = Workers.get()
+    data.append({"worker_id": worker_id})
+    data.append({"blabla": 'another blabla'})
+
+    return render_template('worker.html', data=data, title='worker')
+
 
 @app.route('/shots/')
 def shots_index():

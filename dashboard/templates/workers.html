@@ -29,6 +29,7 @@
                 } else if (aData[5] == "disabled"){
                     $('td:eq(5)', nRow).html('<span class="status-toggle btn btn-xs btn-warning ' + btn_status + '">disabled</span>');
                 }
+                $('td:eq(1)', nRow).html('<a href="/worker/' + aData[1] + '"> ' + aData[1] + ' </a>');
             }
 
         });
