@@ -83,10 +83,15 @@ def _checkProcessOutput(process):
     return full_buffer
 
 
-def _interactiveReadProcess(process):
+def _interactiveReadProcess(process, job_id):
     full_buffer = ''
+    tmp_buffer = ''
     while True:
-        full_buffer += _checkProcessOutput(process)
+        tmp_buffer += _checkProcessOutput(process)
+        if tmp_buffer:
+            # http_request("update_blender_output_from_i_dont_know", tmp_buffer)
+            pass
+        full_buffer += tmp_buffer
         if process.poll() is not None:
             break
     # It might be some data hanging around in the buffers after
@@ -128,7 +133,7 @@ def run_blender_in_thread(options):
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
     #flask.g.blender_process = process
-    (retcode, full_output) = _interactiveReadProcess(process)
+    (retcode, full_output) = _interactiveReadProcess(process, options["job_id"])
     #flask.g.blender_process = None
     print(full_output)
     with open('log.log', 'w') as f:
