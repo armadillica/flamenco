@@ -8,5 +8,5 @@
 /temp/*
 *bootstrap.js
 venv/
-worker/*.log
+*.log
 
