@@ -1,14 +1,42 @@
 {% extends "layout.html" %}
 {% block footer_scripts %}
-
+<script type="text/javascript">
+    $(document).on("click", "#worker_refresh", function() {
+        console.log('Button Refresh worker');
+        location.reload();
+    });
+</script>
 {% endblock %}
 {% block body %}
-    <div class="page-header">
-        <h1>{{data[0]['worker_id']}} </h1>
-    </div>
     <div class="row">
-        <div class="span10">
-            TODO : add lots of useful infos here 
+            <div class="span10">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            {{data[0]['worker_id']}}
+                            <a id="worker_refresh" href="" class="glyphicon glyphicon-refresh pull-right"></a>
+                        </h3>
+
+                    </div>
+                    <div class="panel-body">
+                            <p>hostname: {{worker['hostname'] | default('N/A')}}</p>
+                            <p>cores: {{ worker['update_frequent']['worker_num_cpus'] | default('N/A')}}</p>
+                            <p>architecture: {{worker['update_frequent']['worker_architecture'] | default('N/A')}}</p>
+                            <p>cpu percent: {{worker['update_frequent']['worker_cpu_percent'] | default('N/A')}} %</p>
+                            <p>mem percent: {{worker['update_frequent']['worker_mem_percent'] | default('N/A')}} %</p>
+                            <p>disk percent: {{worker['update_frequent']['worker_disk_percent'] | default('N/A')}} %</p>
+                            <p>blender mem usage: {{worker['update_frequent']['worker_blender_mem_usage'] | default('N/A')}}</p>
+                    </div>
+                    <div class="panel-footer">
+                        <p class="pull-right">
+                            <span>load-average
+                                {{worker['update_frequent']['load_average']['1min'] | default('N/A')}} {{worker['update_frequent']['load_average']['5min'] | default('N/A')}}
+                                {{worker['update_frequent']['load_average']['15min'] | default('N/A')}}
+                            </span>
+                        </p>
+                        <br class='clearfix'/>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
 {% endblock %}

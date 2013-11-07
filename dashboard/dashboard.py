@@ -91,15 +91,52 @@ def workers_render_chunk():
 
     return jsonify(status='ok')
 
+
 @app.route('/worker/<worker_id>')
 def worker(worker_id):
     data = []
     #print(workers)
-    #worker = Workers.get()
+    workers = http_request(BRENDER_SERVER, '/workers')
+    workers = json.loads(workers)
+    if worker_id in workers:
+        for key, val in workers.iteritems():
+            if worker_id in key:
+                print val['ip_address']
+                try:
+                    worker = http_request(val['ip_address'], '/run_info')
+                    worker = json.loads(worker)
+                    entry = ({"ip_address": val['ip_address']})
+                    worker.update(entry)
+                    print worker
+                except IOError:
+                   worker = {
+                   u'status': u'N/A',
+                   u'update_frequent': {
+                        u'load_average': {
+                            u'5min': 'N/A',
+                            u'1min': 'N/A',
+                            u'15min': 'N/A'
+                        },
+                        u'worker_num_cpus': 'N/A',
+                        u'worker_cpu_percent': 'N/A',
+                        u'worker_architecture': u'N/A',
+                        u'worker_mem_percent': 'N/A',
+                        u'worker_disk_percent': 'N/A'},
+                        u'hostname': u'N/A',
+                        u'system': u'N/A',
+                        u'mac_address': 'N/A'
+                    }
+
+    #             work.append({
+    #                 "worker_hostname": val['hostname'],
+    #                 "worker_ip": val['ip_address'],
+    #                 "worker_status": val['status']
+    #                 })
+
     data.append({"worker_id": worker_id})
     data.append({"blabla": 'another blabla'})
-
-    return render_template('worker.html', data=data, title='worker')
+    print data
+    return render_template('worker.html', data=data, worker=worker, title='worker')
 
 
 @app.route('/shots/')

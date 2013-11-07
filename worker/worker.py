@@ -7,7 +7,7 @@ import platform
 import flask
 import os
 import select
-
+import gocept.cache.method
 from threading import Thread
 from flask import Flask, render_template, jsonify, redirect, url_for, request
 from uuid import getnode as get_mac_address
@@ -166,6 +166,38 @@ def update():
     if blender_process:
         blender_process.kill()
     return('done')
+
+
+@gocept.cache.method.Memoize(10)
+def run_often():
+    import psutil
+    import platform
+
+    return ({
+        "load_average": ({
+                "1min": round(os.getloadavg()[0], 2),
+                "5min": round(os.getloadavg()[1], 2),
+                "15min": round(os.getloadavg()[2], 2)
+                }),
+        "worker_cpu_percent": psutil.cpu_percent(),
+        "worker_mem_percent": psutil.phymem_usage().percent,
+        "worker_disk_percent": psutil.disk_usage('/').percent,
+        "worker_num_cpus": psutil.NUM_CPUS,
+        "worker_architecture": platform.machine(),
+        "worker_blender_mem_usage": 'coming soon'
+        })
+
+
+@app.route('/run_info')
+def run_info():
+    print('[Info] run_info is working')
+
+    return jsonify(status='running',
+                   mac_address=MAC_ADDRESS,
+                   hostname=HOSTNAME,
+                   system=SYSTEM,
+                   update_frequent=run_often()
+                   )
 
 if __name__ == "__main__":
     start_worker()
