@@ -49,13 +49,15 @@
             //console.log(shots);
             workers_ids = workers.join();
 
-            //alert(workers_ids);
             status = $(this).html();
             params = { 'id' : workers_ids, 'status' : status}
 
             $.post("/workers/edit", params)
                 .done(function(data) {
-                console.log('Workers ' + workers_ids + ' updated : ' + status);
+                    console.log('Workers ' + workers_ids + ' updated : ' + status);
+                    // redrawing the table to display changes
+                    //workersTable.fnDraw();
+                    $("#workers").dataTable().fnDraw();
             });
         });
 

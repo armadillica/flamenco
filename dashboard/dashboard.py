@@ -69,7 +69,7 @@ def workers():
 @app.route('/workers/edit', methods=['POST'])
 def workers_edit():
     worker_ids = request.form['id']
-    worker_status = request.form['status']
+    worker_status = request.form['status'].lower()
 
     worker_config = {'system': 'linux',
                      'blender': 'local'}
