@@ -81,3 +81,18 @@ h2 {
 .offline {
     color:red;
 }
+
+#  --- client status -----
+
+.enabled {
+    color:green;
+}
+.disabled {
+    color:orangeRed;
+}
+.rendering {
+    color:dodgerBlue;
+}
+.waiting {
+    color:orange;
+}

@@ -16,19 +16,13 @@
              ],
 
             "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
-                var btn_status = "";
                 if (aData[4] == "offline"){
                     $('td:eq(4)', nRow).html('<span class="label label-danger">offline</span>');
-                    btn_status = "disabled";
                 } else if (aData[4] == "online"){
                     $('td:eq(4)', nRow).html('<span class="label label-success">online</span>');
                 }
 
-                if (aData[5] == "enabled"){
-                    $('td:eq(5)', nRow).html('<span class="status-toggle btn btn-xs btn-success ' + btn_status + '">enabled</span>');
-                } else if (aData[5] == "disabled"){
-                    $('td:eq(5)', nRow).html('<span class="status-toggle btn btn-xs btn-warning ' + btn_status + '">disabled</span>');
-                }
+                $('td:eq(5)', nRow).addClass(aData[5]);
                 $('td:eq(1)', nRow).html('<a href="/worker/' + aData[1] + '"> ' + aData[1] + ' </a>');
             }
 
@@ -36,25 +30,33 @@
 
         $("div.toolbar").html('Custom tool bar! Text/images etc.');
 
-        $(document).on("click", ".status-toggle", function() {
-            var status = $(this).html();
-            var tableRow = $(this).parents("tr");
-            var rowPosition = workersTable.fnGetPosition(tableRow[0]);
-            var workerId = tableRow.attr("id").split("_")[1];
+       
+        $(document).on("click", "#workers-enable, #workers-disable", function() {
+           
+            var workers = new Array();
 
-            if (status == 'enabled') {
-                data = {id : workerId, status: 'disabled'};
-                $.post('/workers/edit', data, function() {
-                    console.log('Worker is now disabled');
-                    workersTable.fnUpdate('disabled', rowPosition ,5);
-                });
-            } else if (status == 'disabled') {
-                data = {id : workerId, status: 'enabled'};
-                $.post('/workers/edit', data, function() {
-                    console.log('Worker is now enabled');
-                    workersTable.fnUpdate('enabled', rowPosition ,5);
-                });
-            }
+            var checkbox_list = $( "tbody input:checked" );
+            for (var i = checkbox_list.length - 1; i >= 0; i--) {
+                var checkbox = checkbox_list[i];
+                workers.push($(checkbox).val());
+            };
+
+            if (workers.length == 0) {
+                alert("please select one or more worker");
+                return false;
+            };
+
+            //console.log(shots);
+            workers_ids = workers.join();
+
+            //alert(workers_ids);
+            status = $(this).html();
+            params = { 'id' : workers_ids, 'status' : status}
+
+            $.post("/workers/edit", params)
+                .done(function(data) {
+                console.log('Workers ' + workers_ids + ' updated : ' + status);
+            });
         });
 
         $(document).on("click", ".check-all", function(){
@@ -76,10 +78,10 @@
                 Action <span class="caret"></span>
               </button>
               <ul class="dropdown-menu" role="menu">
-                <li><a href="#" id="workers-disable">Disable</a></li>
-                <li><a href="#" id="workers-enable">Enable</a></li>
+                <li><a href="#" id="workers-disable">Disabled</a></li>
+                <li><a href="#" id="workers-enable">Enabled</a></li>
                 <li class="divider"></li>
-                <li><a href="#">Restart</a></li>
+                <li><a href="#" id="workers-restart">Restart</a></li>
               </ul>
             </div>
         </div>

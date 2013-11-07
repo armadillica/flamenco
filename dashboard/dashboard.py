@@ -49,7 +49,7 @@ def workers():
     workers_list = []
 
     for key, val in workers.iteritems():
-        val['checkbox'] = '<input type="checkbox" />'
+        val['checkbox'] = '<input type="checkbox" value="' + str(val['id']) + '"/>'
         workers_list.append({
             "DT_RowId": "worker_" + str(val['id']),
             "0": val['checkbox'],

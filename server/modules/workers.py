@@ -54,6 +54,16 @@ def workers():
 
     return jsonify(workers)
 
+@workers_module.route('/workers/update', methods=['POST'])
+def workers_update():
+    status = request.form['status']
+    # TODO parse
+    workers_ids = request.form['id']
+    workers_list = list_integers_string(workers_ids)
+    for worker_id in workers_list:
+        print("updating worker %s = %s " % (worker_id, status))
+    return "TEMP done updating workers "
+
 
 @workers_module.route('/workers/edit', methods=['POST'])
 def workers_edit():
