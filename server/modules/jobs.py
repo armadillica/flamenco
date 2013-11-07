@@ -121,14 +121,27 @@ def dispatch_jobs(shot_id = None):
         (Workers.status == 'enabled') & (Workers.connection == 'online')):
 
         # pick the job with the highest priority (it means the lowest number)
-        job = Jobs.select().where(
-            Jobs.status == 'ready'
-        ).order_by(Jobs.priority.desc()).limit(1).get()
+        job = None # will figure out another way
+        try:
+            job = Jobs.select().where(
+                Jobs.status == 'ready'
+            ).order_by(Jobs.priority.desc()).limit(1).get()
 
-        job.status = 'running'
-        job.save()
-        
-        start_job(worker, job)
+            job.status = 'running'
+            job.save()
+        except Jobs.DoesNotExist:
+            print 'Jobs doesnt Exist'
+            """
+                JobsDoesNotExist: Instance matching query does not exist:
+                SQL: SELECT t1."id", t1."shot_id", t1."worker_id", t1."chunk_start", t1."chunk_end", t1."current_frame", t1."status", t1."priority" FROM "jobs" AS t1 WHERE (t1."status" = ?) ORDER BY t1."priority" DESC LIMIT 1
+                PARAMS: [u'ready']
+            """
+        if job:
+            start_job(worker, job)
+
+
+
+
 
 
 def delete_job(job_id):
@@ -188,7 +201,6 @@ def jobs():
             frame_count = job.chunk_end - job.chunk_start + 1
             current_frame = job.current_frame - job.chunk_start + 1
             percentage_done = 100 / frame_count * current_frame
-
         jobs[job.id] = {"shot_id": job.shot_id,
                         "chunk_start": job.chunk_start,
                         "chunk_end": job.chunk_end,
@@ -207,6 +219,6 @@ def jobs_update():
         job = Jobs.get(Jobs.id == job_id)
         job.status = 'finished'
         job.save()
-
     dispatch_jobs()
+
     return "job updated"
