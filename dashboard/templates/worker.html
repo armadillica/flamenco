@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block footer_scripts %}
 <script type="text/javascript">
-    $(document).on("click", "#worker_refresh", function() {
+    $("#worker_refresh").click(function() {
         console.log('Button Refresh worker');
         location.reload();
     });
@@ -14,7 +14,7 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">
                             {{data[0]['worker_id']}}
-                            <a id="worker_refresh" href="" class="glyphicon glyphicon-refresh pull-right"></a>
+                            <a id="worker_refresh" href="#" class="glyphicon glyphicon-refresh pull-right"></a>
                         </h3>
 
                     </div>

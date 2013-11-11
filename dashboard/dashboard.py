@@ -10,7 +10,8 @@ from flask import (flash,
                    redirect,
                    render_template,
                    request,
-                   url_for)
+                   url_for,
+                   make_response)
 
 BRENDER_SERVER = 'brender-server:9999'
 
@@ -66,6 +67,7 @@ def workers():
     return render_template('workers.html', entries=entries, title='workers')
 
 
+
 @app.route('/workers/edit', methods=['POST'])
 def workers_edit():
     worker_ids = request.form['id']
@@ -96,48 +98,44 @@ def workers_render_chunk():
 def worker(worker_id):
     data = []
     #print(workers)
-    workers = http_request(BRENDER_SERVER, '/workers')
-    workers = json.loads(workers)
-    if worker_id in workers:
-        for key, val in workers.iteritems():
-            if worker_id in key:
-                print val['ip_address']
-                try:
-                    worker = http_request(val['ip_address'], '/run_info')
-                    worker = json.loads(worker)
-                    entry = ({"ip_address": val['ip_address']})
-                    worker.update(entry)
-                    print worker
-                except IOError:
-                   worker = {
-                   u'status': u'N/A',
-                   u'update_frequent': {
-                        u'load_average': {
-                            u'5min': 'N/A',
-                            u'1min': 'N/A',
-                            u'15min': 'N/A'
-                        },
-                        u'worker_num_cpus': 'N/A',
-                        u'worker_cpu_percent': 'N/A',
-                        u'worker_architecture': u'N/A',
-                        u'worker_mem_percent': 'N/A',
-                        u'worker_disk_percent': 'N/A'},
-                        u'hostname': u'N/A',
-                        u'system': u'N/A',
-                        u'mac_address': 'N/A'
-                    }
+    try:
+        workers = http_request(BRENDER_SERVER, '/workers')
+        workers = json.loads(workers)
+        if worker_id in workers:
+            for key, val in workers.iteritems():
+                if worker_id in key:
+                    try:
+                        worker = http_request(val['ip_address'], '/run_info')
+                        worker = json.loads(worker)
+                        entry = ({"ip_address": val['ip_address']})
+                        worker.update(entry)
+                        print worker
+                    except IOError:
+                        worker = {
+                            'status': 'N/A',
+                            'update_frequent': {
+                                'load_average': {
+                                    '5min': 'N/A',
+                                    '1min': 'N/A',
+                                    '15min': 'N/A'
+                                },
+                                'worker_num_cpus': 'N/A',
+                                'worker_cpu_percent': 'N/A',
+                                'worker_architecture': 'N/A',
+                                'worker_mem_percent': 'N/A',
+                                'worker_disk_percent': 'N/A'
+                                },
+                                'hostname': 'N/A',
+                                'system': 'N/A',
+                                'mac_address': 'N/A',
+                                'worker_blender_cpu_usage': 'coming soon',
+                                'worker_blender_mem_usage': 'coming soon'
+                            }
+        data.append({"worker_id": worker_id})
 
-    #             work.append({
-    #                 "worker_hostname": val['hostname'],
-    #                 "worker_ip": val['ip_address'],
-    #                 "worker_status": val['status']
-    #                 })
-
-    data.append({"worker_id": worker_id})
-    data.append({"blabla": 'another blabla'})
-    print data
-    return render_template('worker.html', data=data, worker=worker, title='worker')
-
+        return render_template('worker.html', data=data, worker=worker, title='worker')
+    except:
+        return make_response('worker ' + worker_id + ' doesnt exist')
 
 @app.route('/shots/')
 def shots_index():

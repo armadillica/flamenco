@@ -9,7 +9,7 @@ import os
 import select
 import gocept.cache.method
 from threading import Thread
-from flask import Flask, render_template, jsonify, redirect, url_for, request
+from flask import Flask, jsonify, redirect, url_for, request
 from uuid import getnode as get_mac_address
 
 BRENDER_SERVER = 'http://brender-server:9999'
@@ -24,18 +24,18 @@ else:
 
 # we initialize the app
 app = Flask(__name__)
-app.config.update(DEBUG=True,
-                  #SERVER_NAME = 'brender-worker:' + str(PORT)
+app.config.update(
+    DEBUG=True
+    #SERVER_NAME = 'brender-worker:' + str(PORT)
     )
 
 
 def http_request(command, values):
     params = urllib.urlencode(values)
     try:
-        f = urllib.urlopen(BRENDER_SERVER + '/' + command, params)
+        urllib.urlopen(BRENDER_SERVER + '/' + command, params)
         #print(f.read())
-        # TODO(fsiddi): Use proper exception filtering
-    except:
+    except IOError:
         print("[Warning] Could not connect to server to register")
 
 
@@ -169,34 +169,35 @@ def update():
 
 
 @gocept.cache.method.Memoize(10)
-def run_often():
+def get_system_load():
     import psutil
     import platform
 
     return ({
         "load_average": ({
-                "1min": round(os.getloadavg()[0], 2),
-                "5min": round(os.getloadavg()[1], 2),
-                "15min": round(os.getloadavg()[2], 2)
-                }),
+            "1min": round(os.getloadavg()[0], 2),
+            "5min": round(os.getloadavg()[1], 2),
+            "15min": round(os.getloadavg()[2], 2)
+            }),
         "worker_cpu_percent": psutil.cpu_percent(),
         "worker_mem_percent": psutil.phymem_usage().percent,
         "worker_disk_percent": psutil.disk_usage('/').percent,
         "worker_num_cpus": psutil.NUM_CPUS,
         "worker_architecture": platform.machine(),
+        'worker_blender_cpu_usage': 'coming soon',
         "worker_blender_mem_usage": 'coming soon'
         })
 
 
 @app.route('/run_info')
 def run_info():
-    print('[Info] run_info is working')
+    print('[Debug] get_system_load for %s') % HOSTNAME
 
     return jsonify(status='running',
                    mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
                    system=SYSTEM,
-                   update_frequent=run_often()
+                   update_frequent=get_system_load()
                    )
 
 if __name__ == "__main__":

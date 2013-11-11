@@ -44,7 +44,7 @@
             <h4 class="modal-title" id="addShotModalLabel">Add Shot</h4>
           </div>
           <div class="modal-body">
-            
+
             <form id="addShot" role="form" action="{{ url_for('shots_add') }}" method=post>
               <div class="row">
                 <div class="col-md-6">
@@ -92,7 +92,7 @@
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
     {% endblock %}
-    
+
     <header class="navbar navbar-default navbar-static-top" role="navigation">
       <div class="container">
         <!-- Brand and toggle get grouped for better mobile display -->
@@ -143,7 +143,7 @@
               <!-- List group -->
               <div class="list-group">
                 <a href="{{ url_for('status') }}" class="list-group-item {% if title == 'server_status': %} active{% endif %}" >Server status</a>
-                
+
               </div>
             </div>
 
@@ -158,7 +158,7 @@
                 <a href="{{ url_for('sandbox') }}" class="list-group-item {% if title == 'sandbox': %} active{% endif %}">Sandbox</a>
               </div>
             </div>
-            
+
         </div>
         <div class="col-md-10">
           {% for message in get_flashed_messages() %}

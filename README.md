@@ -6,12 +6,12 @@ Development repo for brender 2.0 (the original version 1.0 is here https://githu
 ## Developer installation
 Basic requirement at the moment are:
 
-* Python 2.7
-* Flask
-* peewee (ORM library)
-* virtualenv (optional)
-* psutil (Process Utility)
-* gocept (Cache Library)
+* [Python 2.7](http://www.python.org/download/releases/2.7/)
+* [Flask 0.10](https://pypi.python.org/pypi/Flask/0.10.1)
+* [peewee (ORM library)](https://pypi.python.org/pypi/peewee/2.1.5)
+* [virtualenv (optional)]()
+* [psutil (Process Utility)](https://pypi.python.org/pypi/psutil/1.1.3)
+* [gocept (Cache Library)](https://pypi.python.org/pypi/gocept.cache/0.6.1)
 
 Following the Flask idea, we install the server, workers and dashboard unsing virtualenv. Text copied from the Flask guide.
 
@@ -41,6 +41,8 @@ $ . venv/bin/activate
 
 Now you can just enter the following command to get Flask activated in your virtualenv:
 
+## Core dependencies
+
 ```
 $ pip install Flask
 ```
@@ -51,12 +53,10 @@ At this point you should install peewee as well:
 $ easy_install peewee
 ```
 
-For some function to work correctly please install
-
 ```
 $ pip install psutil
 ```
-and
+then install
 ```
 $ pip install gocept.cache
 ```

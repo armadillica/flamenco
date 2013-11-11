@@ -19,10 +19,16 @@ def settings():
 def settings_update():
     if request.method == 'POST':
         for setting_name in request.form:
-            print(setting_name, request.form[setting_name])
-            setting = Settings.get(Settings.name == setting_name)
-            setting.value = request.form[setting_name]
-            setting.save()
+
+            try:
+                setting = Settings.get(Settings.name == setting_name)
+                setting.value = request.form[setting_name]
+                setting.save()
+                print('[Debug] Save Setting %s %s') % (setting_name, request.form[setting_name])
+            except:
+                setting = Settings.create(name=setting_name, value=request.form[setting_name])
+                setting.save()
+                print('[Debug] Save Setting %s %s') % (setting_name, request.form[setting_name])
         return 'done'
     else:
         return 'This is a useless GET'
@@ -30,8 +36,10 @@ def settings_update():
 
 @settings_module.route('/settings/<setting_name>')
 def get_setting(setting_name):
+    print shit
     try:
         setting = Settings.get(Settings.name == setting_name)
+        print('[Debug] Get Settings %s %s') % (setting.name, setting.value)
     except Exception, e:
         print(e, '--> Setting not found')
         return 'Setting %s not found' % setting_name
