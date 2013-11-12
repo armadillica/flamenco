@@ -107,8 +107,7 @@ def index():
 
 @app.route('/info')
 def info():
-    return jsonify(status='running',
-                   mac_address=MAC_ADDRESS,
+    return jsonify(mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
                    system=SYSTEM)
 
@@ -193,8 +192,7 @@ def get_system_load():
 def run_info():
     print('[Debug] get_system_load for %s') % HOSTNAME
 
-    return jsonify(status='running',
-                   mac_address=MAC_ADDRESS,
+    return jsonify(mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
                    system=SYSTEM,
                    update_frequent=get_system_load()

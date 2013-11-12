@@ -106,7 +106,7 @@ def worker(worker_id):
                     try:
                         worker = http_request(val['ip_address'], '/run_info')
                         worker = json.loads(worker)
-                        entry = ({"ip_address": val['ip_address'], "worker_id": worker_id})
+                        entry = ({"ip_address": val['ip_address'], "worker_id": worker_id, "status": val['status']})
                         worker.update(entry)
                     except IOError:
                         worker = {

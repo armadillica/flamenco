@@ -20,6 +20,7 @@
                     </div>
                     <div class="panel-body">
                             <p>hostname: {{worker['hostname'] | default('N/A')}}</p>
+                            <p>status: <b class="{{ worker['status']}}">{{ worker['status'] | default('N/A')}}</b></p>
                             <p>cores: {{ worker['update_frequent']['worker_num_cpus'] | default('N/A')}}</p>
                             <p>architecture: {{worker['update_frequent']['worker_architecture'] | default('N/A')}}</p>
                             <p>cpu percent: {{worker['update_frequent']['worker_cpu_percent'] | default('N/A')}} %</p>
