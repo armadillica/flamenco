@@ -6,12 +6,14 @@ Development repo for brender 2.0 (the original version 1.0 is here https://githu
 ## Developer installation
 Basic requirement at the moment are:
 
-* Python 2.7
-* Flask
-* peewee (ORM library)
-* virtualenv (optional)
+* [Python 2.7](http://www.python.org/download/releases/2.7/)
+* [Flask 0.10](https://pypi.python.org/pypi/Flask/0.10.1)
+* [peewee (ORM library)](https://pypi.python.org/pypi/peewee/2.1.5)
+* [virtualenv (optional)]()
+* [psutil (Process Utility)](https://pypi.python.org/pypi/psutil/1.1.3)
+* [gocept (Cache Library)](https://pypi.python.org/pypi/gocept.cache/0.6.1)
 
-Following the Flask idea, we install the server, workers and dashboard unsing virtualenv. Text copied from the Flask guide. 
+Following the Flask idea, we install the server, workers and dashboard unsing virtualenv. Text copied from the Flask guide.
 
 ```
 $ sudo easy_install virtualenv
@@ -39,6 +41,8 @@ $ . venv/bin/activate
 
 Now you can just enter the following command to get Flask activated in your virtualenv:
 
+## Core dependencies
+
 ```
 $ pip install Flask
 ```
@@ -49,11 +53,19 @@ At this point you should install peewee as well:
 $ easy_install peewee
 ```
 
+```
+$ pip install psutil
+```
+then install
+```
+$ pip install gocept.cache
+```
+
 Congratulations, brender and its dependencies should be correctly installed and ready to run. As a final step we should add a couple of hostnames into the `/ets/hosts` file:
 
 ```
-127.0.0.1	brender-server	
-127.0.0.1	brender-flask	
+127.0.0.1	brender-server
+127.0.0.1	brender-flask
 ```
 
 ## Running brender
@@ -74,7 +86,7 @@ At the moment the content of the `brender` folder is quite messy due to refactor
 * `worker` containing the worker files (render nodes)
 * `dashboard` containing the dashboard (web interface to talk to the server)
 
-This structure explains also the naming conventions adopted to distinguish the different parts of brender. 
+This structure explains also the naming conventions adopted to distinguish the different parts of brender.
 Each folder contains an individual Falsk application. Server and Worker exchange JSON formatted message between each other via HTTP, using GET or POST methods.
 Dashboard connect to the Server only and accepts connection from clients (Browsers).
 
@@ -82,7 +94,7 @@ At the moment we have the following addresses:
 
 * http://brender-server:9999
 * http://localhost:5000
-* http://brender-flask:8888 
+* http://brender-flask:8888
 
 
 ### About the web interface
@@ -90,6 +102,6 @@ Frameworks and tools used by the interface are:
 
 * jQuery
 * Bootstrap
-* DataTables 
+* DataTables
 
 
