@@ -130,12 +130,7 @@ def dispatch_jobs(shot_id = None):
             job.status = 'running'
             job.save()
         except Jobs.DoesNotExist:
-            print 'Jobs doesnt Exist'
-            """
-                JobsDoesNotExist: Instance matching query does not exist:
-                SQL: SELECT t1."id", t1."shot_id", t1."worker_id", t1."chunk_start", t1."chunk_end", t1."current_frame", t1."status", t1."priority" FROM "jobs" AS t1 WHERE (t1."status" = ?) ORDER BY t1."priority" DESC LIMIT 1
-                PARAMS: [u'ready']
-            """
+            print 'Job doesnt Exist'
         if job:
             start_job(worker, job)
 

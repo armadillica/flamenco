@@ -96,7 +96,6 @@ def workers_render_chunk():
 
 @app.route('/worker/<worker_id>')
 def worker(worker_id):
-    data = []
     #print(workers)
     try:
         workers = http_request(BRENDER_SERVER, '/workers')
@@ -107,11 +106,11 @@ def worker(worker_id):
                     try:
                         worker = http_request(val['ip_address'], '/run_info')
                         worker = json.loads(worker)
-                        entry = ({"ip_address": val['ip_address']})
+                        entry = ({"ip_address": val['ip_address'], "worker_id": worker_id})
                         worker.update(entry)
-                        print worker
                     except IOError:
                         worker = {
+                            'worker_id': worker_id,
                             'status': 'N/A',
                             'update_frequent': {
                                 'load_average': {
@@ -131,9 +130,8 @@ def worker(worker_id):
                                 'worker_blender_cpu_usage': 'coming soon',
                                 'worker_blender_mem_usage': 'coming soon'
                             }
-        data.append({"worker_id": worker_id})
 
-        return render_template('worker.html', data=data, worker=worker, title='worker')
+        return render_template('worker.html', worker=worker, title='worker')
     except:
         return make_response('worker ' + worker_id + ' doesnt exist')
 

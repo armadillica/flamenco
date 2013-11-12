@@ -19,16 +19,15 @@ def settings():
 def settings_update():
     if request.method == 'POST':
         for setting_name in request.form:
-
             try:
                 setting = Settings.get(Settings.name == setting_name)
                 setting.value = request.form[setting_name]
                 setting.save()
-                print('[Debug] Save Setting %s %s') % (setting_name, request.form[setting_name])
-            except:
+                print('[Debug] Settings Exist Lets Save Settings %s %s') % (setting_name, request.form[setting_name])
+            except Settings.DoesNotExist:
                 setting = Settings.create(name=setting_name, value=request.form[setting_name])
                 setting.save()
-                print('[Debug] Save Setting %s %s') % (setting_name, request.form[setting_name])
+                print('[Debug] Settings Created & Saved %s %s') % (setting_name, request.form[setting_name])
         return 'done'
     else:
         return 'This is a useless GET'
