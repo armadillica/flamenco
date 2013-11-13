@@ -187,15 +187,15 @@ def stop_jobs(shot_id):
 
 @jobs_module.route('/jobs/')
 def jobs():
+    from decimal import Decimal
     jobs = {}
+    percentage_done = 0
     for job in Jobs.select():
 
-        if job.chunk_start == job.current_frame:
-            percentage_done = 0
-        else:
-            frame_count = job.chunk_end - job.chunk_start + 1
-            current_frame = job.current_frame - job.chunk_start + 1
-            percentage_done = 100 / frame_count * current_frame
+        frame_count = job.chunk_end - job.chunk_start + 1
+        current_frame = job.current_frame - job.chunk_start + 1
+        percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
+        percentage_done = round(percentage_done, 1)
         jobs[job.id] = {"shot_id": job.shot_id,
                         "chunk_start": job.chunk_start,
                         "chunk_end": job.chunk_end,
