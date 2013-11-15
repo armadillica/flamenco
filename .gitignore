@@ -6,7 +6,6 @@
 .DS_Store
 *.sqlite
 /temp/*
-*bootstrap.js
 venv/
 *.log
 
