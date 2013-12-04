@@ -191,7 +191,7 @@ def shots_add():
             'chunk_size': request.form['chunk_size'],
             'current_frame': request.form['frame_start'],
             'filepath': request.form['filepath'],
-            'render_settings': 'will refer to settings table',
+            'render_settings': request.form['render_settings'],
             'status': 'running',
             'priority': 10,
             'owner': 'fsiddi'
@@ -204,7 +204,10 @@ def shots_add():
 
         return redirect(url_for('shots_index'))
     else:
-        return render_template('add_shot.html', title='add_shot')
+        render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
+        return render_template('add_shot_modal.html', 
+                            title='add_shot',
+                            render_settings=render_settings)
 
 
 @app.route('/jobs/')
@@ -255,6 +258,14 @@ def settings():
         return render_template('settings.html',
                                title='settings',
                                settings=settings)
+
+
+@app.route('/render-settings/', methods=['GET'])
+def render_settings():
+    render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
+    return render_template('render_settings.html',
+                           title='render_settings',
+                           render_settings=render_settings)
 
 
 @app.route('/status/', methods=['GET'])

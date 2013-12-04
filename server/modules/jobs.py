@@ -1,3 +1,5 @@
+import os
+
 from flask import (abort,
                    Blueprint,
                    jsonify,
@@ -80,11 +82,20 @@ def start_job(worker, job):
     shot = Shots.get(Shots.id == job.shot_id)
 
     if 'Darwin' in worker.system:
-        setting = Settings.get(Settings.name == 'blender_path_osx')
-        blender_path = setting.value
+        setting_blender_path = Settings.get(
+            Settings.name == 'blender_path_osx')
+        setting_render_settings = Settings.get(
+            Settings.name == 'render_settings_path_osx')
     else:
-        setting = Settings.get(Settings.name == 'blender_path_linux')
-        blender_path = setting.value
+        setting_blender_path = Settings.get(
+            Settings.name == 'blender_path_linux')
+        setting_render_settings = Settings.get(
+            Settings.name == 'render_settings_path_linux')
+
+    blender_path = setting_blender_path.value
+    render_settings = os.path.join(
+        setting_render_settings.value , 
+        shot.render_settings)
 
     worker_ip_address = worker.ip_address
 
@@ -101,6 +112,7 @@ def start_job(worker, job):
     params = {'job_id': job.id,
               'file_path': shot.filepath,
               'blender_path': blender_path,
+              'render_settings': render_settings,
               'start': job.chunk_start,
               'end': job.chunk_end}
 

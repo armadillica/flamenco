@@ -100,7 +100,7 @@ def shot_add():
         current_frame=int(request.form['frame_start']),
         filepath=request.form['filepath'],
         shot_name=request.form['shot_name'],
-        render_settings='will refer to settings table',
+        render_settings=request.form['render_settings'],
         status='running',
         priority=10,
         owner='fsiddi')

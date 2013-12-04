@@ -117,13 +117,16 @@ def run_blender_in_thread(options):
     """
     render_command = [
         options['blender_path'],
-        '-b',
+        '--background',
         options['file_path'],
-        '-s' ,
+        '--python',
+        options['render_settings'],
+        '--frame-start' ,
         options['start_frame'],
-        '-e',
+        '--frame-end',
         options['end_frame'],
-        '-a'
+        '--render-anim',
+        '--enable-autoexec'
         ]
 
     print("[Info] Running %s" % render_command)
@@ -149,7 +152,8 @@ def execute_job():
         'file_path': request.form['file_path'],
         'blender_path': request.form['blender_path'],
         'start_frame': request.form['start'],
-        'end_frame': request.form['end']
+        'end_frame': request.form['end'],
+        'render_settings': request.form['render_settings']
     }
 
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
