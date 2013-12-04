@@ -54,15 +54,27 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <nav class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="#" data-toggle="modal" modal="{{ url_for('shots_add') }}" data-target="#addShotModal">Add Shot</a></li>
+            <li {% if title == 'workers': %} class="active"{% endif %}>
+              <a href="{{ url_for('workers') }}">Workers</a>
+            </li>
+            <li {% if title == 'shots': %} class="active"{% endif %}>
+              <a href="{{ url_for('shots_index') }}">Shots</a>
+            </li>
+            <li {% if title == 'jobs': %} class="active"{% endif %}>
+              <a href="{{ url_for('jobs_index') }}">Jobs</a>
+            </li>
+            <li>
+              <a href="#" data-toggle="modal" modal="{{ url_for('shots_add') }}" data-target="#addShotModal">Add Shot</a>
+            </li>
             <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Server <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="#">Action</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
+                <li><a href="{{ url_for('status') }}">Status</a></li>
                 <li class="divider"></li>
-                <li><a href="#">Separated link</a></li>
+                <li><a href="{{ url_for('settings') }}">Settings</a></li>
+                <li><a href="#">Projects</a></li>
+                <li><a href="{{ url_for('log') }}">Logs</a></li>
+                <li><a href="{{ url_for('sandbox') }}">Sandbox</a></li>
               </ul>
             </li>
           </ul>
@@ -72,40 +84,7 @@
 
     <div class="container">
       <div class="row">
-        <div class="col-md-2">
-
-              <div class="list-group">
-                <a href="{{ url_for('index') }}" class="list-group-item {% if title == 'home': %} active{% endif %}">Overview</a>
-                <a href="{{ url_for('workers') }}" class="list-group-item {% if title == 'workers': %} active{% endif %}">Workers</a>
-                <a href="{{ url_for('shots_index') }}" class="list-group-item {% if title == 'shots': %} active{% endif %}">Shots</a>
-                <a href="{{ url_for('jobs_index') }}" class="list-group-item {% if title == 'jobs': %} active{% endif %}">Jobs</a>
-                <a href="{{ url_for('shots_add') }}" class="list-group-item {% if title == 'add_shot': %} active{% endif %}">Add Shot</a>
-              </div>
-
-
-            <div class="panel panel-default">
-              <div class="panel-heading">Stats</div>
-              <!-- List group -->
-              <div class="list-group">
-                <a href="{{ url_for('status') }}" class="list-group-item {% if title == 'server_status': %} active{% endif %}" >Server status</a>
-
-              </div>
-            </div>
-
-            <div class="panel panel-default">
-              <div class="panel-heading">Configuration</div>
-              <!-- List group -->
-              <div class="list-group">
-                <a href="{{ url_for('settings') }}" class="list-group-item {% if title == 'settings': %} active{% endif %}">Server</a>
-                <a href="#" class="list-group-item">Projects</a>
-                <a href="{{ url_for('render_settings') }}" class="list-group-item {% if title == 'render_settings': %} active{% endif %}">Render Settings</a>
-                <a href="{{ url_for('log') }}" class="list-group-item {% if title == 'logs': %} active{% endif %}">Logs</a>
-                <a href="{{ url_for('sandbox') }}" class="list-group-item {% if title == 'sandbox': %} active{% endif %}">Sandbox</a>
-              </div>
-            </div>
-
-        </div>
-        <div class="col-md-10">
+        <div class="col-md-12">
           {% for message in get_flashed_messages() %}
             <div class="alert">
               <button type="button" class="close" data-dismiss="alert">&times;</button>
