@@ -1,7 +1,6 @@
 from peewee import *
 from datetime import date
 import random
-
 DATABASE = 'brender.sqlite'
 
 db = SqliteDatabase(DATABASE)

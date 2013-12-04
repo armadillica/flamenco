@@ -161,15 +161,13 @@
 
         </div>
         <div class="col-md-10">
-          {% for message in get_flashed_messages() %}
-            <div class="alert">
-              <button type="button" class="close" data-dismiss="alert">&times;</button>
-              {{ message }}
+            {% for message in get_flashed_messages() %}
+            <div class="alert alert-warning">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{ message }}
             </div>
-          {% endfor %}
+            {% endfor %}
           {% block body %}{% endblock %}
-
-
         </div>
       </div>
       <hr>
