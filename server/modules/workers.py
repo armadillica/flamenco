@@ -84,17 +84,3 @@ def workers_edit():
 
     return jsonify(result='success')
 
-
-@workers_module.route('/workers/render_chunk')
-def worker_render_chunk():
-    print("server run command breakpoint")
-    ip_address = '127.0.0.1:5000'
-    params = {'file_path': '/Users/fsiddi/Dropbox/brender/test_blends/cubes.blend',
-              'blender_path': '/Applications/Blender/buildbot/blender-2.69-r60745-OSX-10.6-x86_64/blender.app/Contents/MacOS/blender',
-              'start': 2,
-              'end': 8}
-    http_request(ip_address, '/render_chunk', params)
-
-    return jsonify(result='render chunk sent to client')
-
-    #return jsonify(result = 'success')
