@@ -261,7 +261,7 @@ def settings():
 def status():
     server_status = check_connection(BRENDER_SERVER)
     return render_template('status.html',
-                           title='status',
+                           title='server_status',
                            server_status=server_status)
 
 

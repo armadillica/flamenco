@@ -1,7 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
-  <div class="page-header">
-      <h1>Status <strong class="{{server_status}}">{{ server_status }}</strong></h1>
-  </div>
-
+      <h1>Server status</h1>
+      <hr>
+      <p>The server is currently <strong class="{{server_status}}">{{ server_status }}</strong></p>
 {% endblock %}
