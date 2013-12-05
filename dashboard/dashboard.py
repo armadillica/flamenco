@@ -33,6 +33,13 @@ def http_request(ip_address, method, post_params=False):
     print('message sent, reply follows:')
     return f.read()
 
+def list_integers_string(string_list):
+    """Accepts comma separated string list of integers
+    """
+    integers_list = string_list.split(',')
+    integers_list = map(int, integers_list)
+    return integers_list
+
 
 @app.route('/')
 def index():
@@ -170,12 +177,12 @@ def shots_delete():
 
 @app.route('/shots/update', methods=['POST'])
 def shots_start():
-    status = request.form['status'].lower()
+    command = request.form['command'].lower()
     shot_ids = int(request.form['id'])
-    if status in ['start', 'stop']:
-        shots = http_request(BRENDER_SERVER,
-                             '/shots/%s/%d' % (status, shot_ids))
-        return 'done'
+    if command in ['start', 'stop', 'reset']:
+        shots = http_request(BRENDER_SERVER, 
+            '/shots/%s/%d' % (command, shot_ids))
+        return shots
     else:
         return 'error'
 

@@ -73,8 +73,7 @@ def create_jobs(shot):
 
 
 def start_job(worker, job):
-    """
-    Execute a single job
+    """Execute a single job
     We pass worker and job as objects (and at the moment we use a bad
     way to get the additional shot information - should be done with join)
     """
@@ -100,7 +99,7 @@ def start_job(worker, job):
     worker_ip_address = worker.ip_address
 
     """
-    Additiona params for future reference
+    Additional params for future reference
 
     job_parameters = {'pre-run': 'svn up or other things',
                       'command': 'blender_path -b ' +
@@ -142,13 +141,9 @@ def dispatch_jobs(shot_id = None):
             job.status = 'running'
             job.save()
         except Jobs.DoesNotExist:
-            print 'Job doesnt Exist'
+            print '[error] Job does not exist'
         if job:
             start_job(worker, job)
-
-
-
-
 
 
 def delete_job(job_id):

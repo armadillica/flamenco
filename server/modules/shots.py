@@ -10,11 +10,11 @@ shots_module = Blueprint('shots_module', __name__)
 def delete_shot(shot_id):
     try:
         shot = Shots.get(Shots.id == shot_id)
-    except Exception, e:
-        print(e)
+    except Shots.DoesNotExist:
+        print('[error] Shot not found')
         return 'error'
     shot.delete_instance()
-    print('Deleted shot', shot_id)
+    print('[info] Deleted shot', shot_id)
 
 
 @shots_module.route('/shots/')
@@ -56,36 +56,61 @@ def shot_update():
 def shot_start(shot_id):
     try:
         shot = Shots.get(Shots.id == shot_id)
-    except Exception, e:
-        print(e, '--> Shot not found')
+    except Shots.DoesNotExist:
+        print('[error] Shot not found')
         return 'Shot %d not found' % shot_id
 
-    if shot.status == 'running':
-        return 'Shot %d already running' % shot_id
-    else:
-        start_jobs(shot.id)
-
+    if shot.status != 'running':
         shot.status = 'running'
         shot.save()
+        dispatch_jobs(shot.id)
 
-        return 'Shot %d running' % shot_id
+    return jsonify(
+        shot_id=shot.id,
+        status='running')
 
 
 @shots_module.route('/shots/stop/<int:shot_id>')
 def shot_stop(shot_id):
     try:
         shot = Shots.get(Shots.id == shot_id)
-    except Exception, e:
-        print(e, '--> Shot not found')
+    except Shots.DoesNotExist:
+        print('[error] Shot not found')
         return 'Shot %d not found' % shot_id
 
-    if shot.status == 'ready':
-        return 'Shot %d already stopped' % shot_id
-    else:
+    if shot.status != 'ready':
         stop_jobs(shot.id)
         shot.status = 'ready'
         shot.save()
-        return 'Shot %d stopped' % shot_id
+
+    return jsonify(
+        shot_id=shot.id,
+        status='ready')
+
+
+@shots_module.route('/shots/reset/<int:shot_id>')
+def shot_reset(shot_id):
+    try:
+        shot = Shots.get(Shots.id == shot_id)
+    except Shots.DoesNotExist:
+        shot = None
+        print('[error] Shot not found')
+        
+        return 'Shot %d not found' % shot_id
+
+    if shot.status == 'running':
+        return 'Shot %d is running' % shot_id
+    else:
+        shot.current_frame = shot.frame_start
+        shot.save()
+
+        delete_jobs(shot.id)
+        create_jobs(shot)
+
+        return jsonify(
+            shot_id=shot.id,
+            status='ready')
+
 
 
 @shots_module.route('/shots/add', methods=['POST'])

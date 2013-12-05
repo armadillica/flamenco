@@ -159,7 +159,7 @@ def execute_job():
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
     render_thread.start()
 
-    return jsonify(status='ok command run')
+    return jsonify(status='worker is running the command')
 
 
 @app.route('/update', methods=['POST'])
