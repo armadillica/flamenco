@@ -31,7 +31,7 @@ def settings_update():
                 (setting_name, request.form[setting_name])
             except Settings.DoesNotExist:
                 setting = Settings.create(
-                    name=setting_name, 
+                    name=setting_name,
                     value=request.form[setting_name])
                 setting.save()
                 print('[Debug] Creating %s %s') % \
@@ -55,12 +55,14 @@ def get_setting(setting_name):
 
     return setting.value
 
+
 @settings_module.route('/render-settings/')
 def render_settings():
     render_settings_path = './render_settings/'
     onlyfiles = [ f for f in listdir(render_settings_path) if isfile(join(render_settings_path,f)) ]
+    onlyfiles = [f for f in listdir(render_settings_path) if isfile(join(render_settings_path, f))]
     #return str(onlyfiles)
     settings_files = dict(
-        settings_files = onlyfiles)
+        settings_files=onlyfiles)
 
     return jsonify(settings_files)
