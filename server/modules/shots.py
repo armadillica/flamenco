@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, abort, jsonify, request
 from model import *
 from jobs import *
 from utils import *
+from decimal import Decimal
 
 shots_module = Blueprint('shots_module', __name__)
 
@@ -19,14 +20,14 @@ def delete_shot(shot_id):
 
 @shots_module.route('/shots/')
 def shots():
+    from decimal import Decimal
     shots = {}
     for shot in Shots.select():
-        if shot.frame_start == shot.current_frame:
-            percentage_done = 0
-        else:
-            frame_count = shot.frame_end - shot.frame_start + 1
-            current_frame = shot.current_frame - shot.frame_start + 1
-            percentage_done = 100 / frame_count * current_frame
+        percentage_done = 0
+        frame_count = shot.frame_end - shot.frame_start + 1
+        current_frame = shot.current_frame - shot.frame_start + 1
+        percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
+        percentage_done = round(percentage_done, 1)
 
         if percentage_done == 100:
             shot.status = 'completed'

@@ -8,4 +8,4 @@
 /temp/*
 venv/
 *.log
-
+.ropeproject/*

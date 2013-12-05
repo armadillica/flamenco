@@ -104,43 +104,56 @@ def workers_render_chunk():
 @app.route('/worker/<worker_id>')
 def worker(worker_id):
     #print(workers)
+    worker = None
     try:
         workers = http_request(BRENDER_SERVER, '/workers')
         workers = json.loads(workers)
-        if worker_id in workers:
-            for key, val in workers.iteritems():
-                if worker_id in key:
-                    try:
-                        worker = http_request(val['ip_address'], '/run_info')
-                        worker = json.loads(worker)
-                        entry = ({"ip_address": val['ip_address'], "worker_id": worker_id, "status": val['status']})
-                        worker.update(entry)
-                    except IOError:
-                        worker = {
-                            'worker_id': worker_id,
-                            'status': 'N/A',
-                            'update_frequent': {
-                                'load_average': {
-                                    '5min': 'N/A',
-                                    '1min': 'N/A',
-                                    '15min': 'N/A'
-                                },
-                                'worker_num_cpus': 'N/A',
-                                'worker_cpu_percent': 'N/A',
-                                'worker_architecture': 'N/A',
-                                'worker_mem_percent': 'N/A',
-                                'worker_disk_percent': 'N/A'
-                                },
-                                'hostname': 'N/A',
-                                'system': 'N/A',
-                                'mac_address': 'N/A',
-                                'worker_blender_cpu_usage': 'coming soon',
-                                'worker_blender_mem_usage': 'coming soon'
-                            }
+    except KeyError:
+        '''
+            there are multiple exceptions that we can use here
 
+            1. KeyError
+            2. UnboundLocalError
+            3. NameError
+            '''
+        print 'worker doesnt exist'
+
+    if worker_id in workers:
+        for key, val in workers.iteritems():
+            if worker_id in key:
+                try:
+                    worker = http_request(val['ip_address'], '/run_info')
+                    worker = json.loads(worker)
+                    entry = ({"ip_address": val['ip_address'], "worker_id": worker_id, "status": val['status']})
+                    worker.update(entry)
+                except IOError:
+                    worker = {
+                        'worker_id': worker_id,
+                        'status': val['status'],
+                        'update_frequent': {
+                            'load_average': {
+                                '5min': 'N/A',
+                                '1min': 'N/A',
+                                '15min': 'N/A'
+                            },
+                            'worker_num_cpus': 'N/A',
+                            'worker_cpu_percent': 'N/A',
+                            'worker_architecture': 'N/A',
+                            'worker_mem_percent': 'N/A',
+                            'worker_disk_percent': 'N/A'
+                        },
+                        'hostname': 'N/A',
+                        'system': 'N/A',
+                        'mac_address': 'N/A',
+                        'worker_blender_cpu_usage': 'N/A',
+                        'worker_blender_mem_usage': 'N/A'
+                    }
+
+    if worker:
         return render_template('worker.html', worker=worker, title='worker')
-    except:
+    else:
         return make_response('worker ' + worker_id + ' doesnt exist')
+
 
 @app.route('/shots/')
 def shots_index():
@@ -285,8 +298,8 @@ def status():
 
 @app.route('/log/', methods=['GET', 'POST'])
 def log():
-
     if request.method == 'POST':
+
         result = request.form['result']
         if result:
             try:
@@ -301,7 +314,7 @@ def log():
                       'Please make sure the log file exists at ' + result)
         else:
             flash('No log to read Please input a filepath ex: ' +
-                  '/User/koder/log.log')
+                  'log.log')
     return render_template('log.html', title='status')
 
 

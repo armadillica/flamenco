@@ -1,47 +1,49 @@
 {% extends "layout.html" %}
 {% block footer_scripts %}
 <script type="text/javascript">
-$(function(){
-  $("#log > p:gt("+($("#log > p").length-35)+")").addClass("show special");
-  $('.' + "show").show();
-});
+    $(function(){
+        $("#log > p:gt("+($("#log > p").length-5)+")").addClass("show special");
+        $('.' + "show").show();
+    });
 
-$(".morelink").click(function(){
-    if($("#log > p").hasClass("hide")) {
-      $("#log > p").addClass("show");
-      $('.' + "show").show();
-      $("#log > p").removeClass("hide");
-      $('.' + "morelink").text('Show Less Log');
-    } else {
-      $("#log > p").addClass("hide");
-      $('.' + "hide").hide();
-      $("#log > p").removeClass("show");
-      $('.' + "special").show();
-      $('.' + "morelink").text('Show More Log');
-    }
-});
+    $(".morelink").click(function(){
+        if($("#log > p").hasClass("hide")) {
+            $("#log > p").addClass("show");
+            $('.' + "show").show();
+            $("#log > p").removeClass("hide");
+            $('.' + "morelink").text('Show Less Log');
+            } else {
+            $("#log > p").addClass("hide");
+            $('.' + "hide").hide();
+            $("#log > p").removeClass("show");
+            $('.' + "special").show();
+            $('.' + "morelink").text('Show More Log');
+        }
+    });
 </script>
 {% endblock %}
 {% block body %}
-  <div class="page-header">
     <h1>Log</h1>
-    <h3>{% if result %} {{ result }} {% endif %}</h3>
-    <br/>
-    <form action="/log/" method="POST">
-      <div class="input-append">
-        <input class="span2" id="appendedInputButton" type="text" placeholder="ex: /User/koder/log.log" name="result">
-        <button class="btn" type="submit">Go!</button>
-      </div>
-    </form>
-  </div>
-      <div id="log">
+    <hr>
+    <div class="row">
+        <form action="/log/" method="POST">
+            <div class="input-group span2">
+                <input class="form-control" id="appendedInputButton" type="text" placeholder="ex: log.log" value="{% if result %} {{ result }} {% endif %}" name="result">
+                <span class="input-group-btn">
+                <button class="btn btn-default" type="button">Go!</button>
+                </span>
+            </div>
+        </form>
+    </div>
+    <div id="log">
+        <hr>
         {% for line in lines %}
-          <p class="hide">{{ line }}</p>
+        <p class="hide">{{ line }}</p>
         {% endfor %}
         {% if lines %}
-          <a class="morelink">Show More Log</a>
+        <hr>
+        <a class="morelink">Show More Log</a>
         {% endif %}
-      </div>
-
+    </div>
 
 {% endblock %}

@@ -19,14 +19,14 @@
 
                     </div>
                     <div class="panel-body">
-                            <p>hostname: {{worker['hostname'] | default('N/A')}}</p>
                             <p>status: <b class="{{ worker['status']}}">{{ worker['status'] | default('N/A')}}</b></p>
                             <p>cores: {{ worker['update_frequent']['worker_num_cpus'] | default('N/A')}}</p>
                             <p>architecture: {{worker['update_frequent']['worker_architecture'] | default('N/A')}}</p>
                             <p>cpu percent: {{worker['update_frequent']['worker_cpu_percent'] | default('N/A')}} %</p>
                             <p>mem percent: {{worker['update_frequent']['worker_mem_percent'] | default('N/A')}} %</p>
                             <p>disk percent: {{worker['update_frequent']['worker_disk_percent'] | default('N/A')}} %</p>
-                            <p>blender mem usage: {{worker['update_frequent']['worker_blender_mem_usage'] | default('N/A')}}</p>
+                            <p>blender cpu usage: {{worker['update_frequent']['worker_blender_cpu_usage'] | default('N/A')}} %</p>
+                            <p>blender mem usage: {{worker['update_frequent']['worker_blender_mem_usage'] | default('N/A')}} %</p>
                     </div>
                     <div class="panel-footer">
                         <p class="pull-right">
