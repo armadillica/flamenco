@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+    <h1>{{title}}</h1>
+    <hr>
+
+    
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs">
+      {% for file in render_settings['settings_files'] %}
+        <li><a href="#{{file}}" data-toggle="tab">{{file}}</a></li>
+      {% endfor %}
+    </ul>
+
+    
+{% endblock %}

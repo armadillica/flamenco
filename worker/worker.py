@@ -7,13 +7,10 @@ import platform
 import flask
 import os
 import select
-
-
 import gocept.cache.method
 from threading import Thread
 from flask import Flask, jsonify, redirect, url_for, request
 from uuid import getnode as get_mac_address
-
 
 BRENDER_SERVER = 'http://brender-server:9999'
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
@@ -30,7 +27,7 @@ app = Flask(__name__)
 app.config.update(
     DEBUG=True
     #SERVER_NAME = 'brender-worker:' + str(PORT)
-)
+    )
 
 
 def http_request(command, values):
@@ -56,9 +53,9 @@ def register_worker():
         time.sleep(0.1)
 
     http_request('connect', {'mac_address': MAC_ADDRESS,
-                             'port': PORT,
-                             'hostname': HOSTNAME,
-                             'system': SYSTEM})
+                                       'port': PORT,
+                                       'hostname': HOSTNAME,
+                                       'system': SYSTEM})
 
 
 # we use muliprocessing to register the client the worker to the server
@@ -120,14 +117,17 @@ def run_blender_in_thread(options):
     """
     render_command = [
         options['blender_path'],
-        '-b',
+        '--background',
         options['file_path'],
-        '-s',
+        '--python',
+        options['render_settings'],
+        '--frame-start' ,
         options['start_frame'],
-        '-e',
+        '--frame-end',
         options['end_frame'],
-        '-a'
-    ]
+        '--render-anim',
+        '--enable-autoexec'
+        ]
 
     print("[Info] Running %s" % render_command)
 
@@ -142,7 +142,7 @@ def run_blender_in_thread(options):
         f.write(full_output)
 
     http_request('jobs/update', {'id': options['job_id'],
-                                 'status': 'finished'})
+                                           'status': 'finished'})
 
 
 @app.route('/execute_job', methods=['POST'])
@@ -152,13 +152,14 @@ def execute_job():
         'file_path': request.form['file_path'],
         'blender_path': request.form['blender_path'],
         'start_frame': request.form['start'],
-        'end_frame': request.form['end']
+        'end_frame': request.form['end'],
+        'render_settings': request.form['render_settings']
     }
 
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
     render_thread.start()
 
-    return jsonify(status='ok command run')
+    return jsonify(status='worker is running the command')
 
 
 @app.route('/update', methods=['POST'])
@@ -167,50 +168,28 @@ def update():
     blender_process = flask.g.get("blender_process")
     if blender_process:
         blender_process.kill()
-        return('done')
+    return('done')
 
 
-def blender_stats(blender_stat):
-    import psutil
-    if 'cpu' in [blender_stat]:
-        try:
-            a = [x for x in psutil.get_process_list() if x.name == 'blender']
-            cpu = []
-            for ab in a:
-                cpu.append(ab.get_cpu_percent())
-            print sum(cpu)
-            return round(sum(cpu), 2)
-        except psutil._error.NoSuchProcess:
-            return 'N/A'
-    elif 'mem' in [blender_stat]:
-        try:
-            a = [x for x in psutil.get_process_list() if x.name == 'blender']
-            mem = []
-            for ab in a:
-                mem.append(ab.get_memory_percent())
-            return round(sum(mem), 2)
-        except psutil._error.NoSuchProcess:
-            return 'N/A'
-
-
-@gocept.cache.method.Memoize(5)
+@gocept.cache.method.Memoize(10)
 def get_system_load():
     import psutil
     import platform
+
     return ({
         "load_average": ({
             "1min": round(os.getloadavg()[0], 2),
             "5min": round(os.getloadavg()[1], 2),
             "15min": round(os.getloadavg()[2], 2)
-        }),
+            }),
         "worker_cpu_percent": psutil.cpu_percent(),
         "worker_mem_percent": psutil.phymem_usage().percent,
         "worker_disk_percent": psutil.disk_usage('/').percent,
         "worker_num_cpus": psutil.NUM_CPUS,
         "worker_architecture": platform.machine(),
-        'worker_blender_cpu_usage': blender_stats('cpu'),
-        "worker_blender_mem_usage": blender_stats('mem')
-    })
+        'worker_blender_cpu_usage': 'coming soon',
+        "worker_blender_mem_usage": 'coming soon'
+        })
 
 
 @app.route('/run_info')
@@ -220,8 +199,8 @@ def run_info():
     return jsonify(mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
                    system=SYSTEM,
-                   update_frequent=get_system_load(),
-                  )
+                   update_frequent=get_system_load()
+                   )
 
 if __name__ == "__main__":
     start_worker()

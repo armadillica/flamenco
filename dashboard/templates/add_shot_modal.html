@@ -1,0 +1,66 @@
+<div class="modal-dialog">
+  <div class="modal-content">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      <h4 class="modal-title" id="addShotModalLabel">Add Shot</h4>
+    </div>
+    <div class="modal-body">
+
+      <form id="addShot" role="form" action="{{ url_for('shots_add') }}" method=post>
+        <div class="row">
+          <div class="col-md-6">
+              <div class="form-group">
+                <label for="shot_name">Shot name</label>
+                <input type="text" class="form-control" id="shot_name" name="shot_name" placeholder="a2s31" required="">
+              </div>
+          </div>
+          <div class="col-md-6">
+              <div class="form-group">
+                <label for="filepath">Filepath</label>
+                <input type="text" class="form-control" id="filepath" name="filepath" placeholder="/tmp/untitled.blend" required="">
+              </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+              <div class="form-group">
+                <label for="frame_start">Frame start</label>
+                <input type="text" class="form-control" id="frame_start" name="frame_start" value="1" required="">
+              </div>
+          </div>
+          <div class="col-md-4">
+              <div class="form-group">
+                <label for="frame_end">Frame end</label>
+                <input type="text" class="form-control" id="frame_end" name="frame_end" value="20" required="">
+              </div>
+          </div>
+          <div class="col-md-4">
+              <div class="form-group">
+                <label for="chunk_size">Chunk size</label>
+                <input type="text" class="form-control" id="chunk_size" name="chunk_size" value="5" required="">
+              </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+              <div class="form-group">
+                <label for="render_settings">Render settings</label>
+                <select name="render_settings" class="form-control">
+                  {% for file in render_settings['settings_files'] %}
+                    <option value="{{file}}">{{file}}</option>
+                  {% endfor %}
+                    <option value="">File Settings</option>
+                </select>
+              </div>
+          </div>
+        </div>
+      </form>
+
+
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      <button type="button" class="btn btn-primary" onclick="$('.modal-body > form').submit();" >Submit shot</button>
+    </div>
+  </div><!-- /.modal-content -->
+</div><!-- /.modal-dialog -->

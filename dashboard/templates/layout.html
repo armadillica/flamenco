@@ -35,62 +35,7 @@
 
   <body>
     {% block modal %}
-    <!-- Modal -->
-    <div class="modal fade" id="addShotModal" tabindex="-1" role="dialog" aria-labelledby="addShotModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <h4 class="modal-title" id="addShotModalLabel">Add Shot</h4>
-          </div>
-          <div class="modal-body">
-
-            <form id="addShot" role="form" action="{{ url_for('shots_add') }}" method=post>
-              <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                      <label for="shot_name">Shot name</label>
-                      <input type="text" class="form-control" id="shot_name" name="shot_name" placeholder="a2s31" required="">
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                      <label for="filepath">Filepath</label>
-                      <input type="text" class="form-control" id="filepath" name="filepath" placeholder="/tmp/untitled.blend" required="">
-                    </div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                      <label for="frame_start">Frame start</label>
-                      <input type="text" class="form-control" id="frame_start" name="frame_start" value="1" required="">
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                      <label for="frame_end">Frame end</label>
-                      <input type="text" class="form-control" id="frame_end" name="frame_end" value="20" required="">
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                      <label for="chunk_size">Chunk size</label>
-                      <input type="text" class="form-control" id="chunk_size" name="chunk_size" value="5" required="">
-                    </div>
-                </div>
-              </div>
-            </form>
-
-
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" onclick="$('.modal-body > form').submit();" >Save changes</button>
-          </div>
-        </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
+    
     {% endblock %}
 
     <header class="navbar navbar-default navbar-static-top" role="navigation">
@@ -109,15 +54,27 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <nav class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="#" data-toggle="modal" data-target="#addShotModal">Add Shot</a></li>
+            <li {% if title == 'workers': %} class="active"{% endif %}>
+              <a href="{{ url_for('workers') }}">Workers</a>
+            </li>
+            <li {% if title == 'shots': %} class="active"{% endif %}>
+              <a href="{{ url_for('shots_index') }}">Shots</a>
+            </li>
+            <li {% if title == 'jobs': %} class="active"{% endif %}>
+              <a href="{{ url_for('jobs_index') }}">Jobs</a>
+            </li>
+            <li>
+              <a href="#" data-toggle="modal" modal="{{ url_for('shots_add') }}" data-target="#addShotModal">Add Shot</a>
+            </li>
             <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Server <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="#">Action</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
+                <li><a href="{{ url_for('status') }}">Status</a></li>
                 <li class="divider"></li>
-                <li><a href="#">Separated link</a></li>
+                <li><a href="{{ url_for('settings') }}">Settings</a></li>
+                <li><a href="#">Projects</a></li>
+                <li><a href="{{ url_for('log') }}">Logs</a></li>
+                <li><a href="{{ url_for('sandbox') }}">Sandbox</a></li>
               </ul>
             </li>
           </ul>
@@ -127,47 +84,16 @@
 
     <div class="container">
       <div class="row">
-        <div class="col-md-2">
-
-              <div class="list-group">
-                <a href="{{ url_for('index') }}" class="list-group-item {% if title == 'home': %} active{% endif %}">Overview</a>
-                <a href="{{ url_for('workers') }}" class="list-group-item {% if title == 'workers': %} active{% endif %}">Workers</a>
-                <a href="{{ url_for('shots_index') }}" class="list-group-item {% if title == 'shots': %} active{% endif %}">Shots</a>
-                <a href="{{ url_for('jobs_index') }}" class="list-group-item {% if title == 'jobs': %} active{% endif %}">Jobs</a>
-                <a href="{{ url_for('shots_add') }}" class="list-group-item {% if title == 'add_shot': %} active{% endif %}">Add Shot</a>
-              </div>
-
-
-            <div class="panel panel-default">
-              <div class="panel-heading">Stats</div>
-              <!-- List group -->
-              <div class="list-group">
-                <a href="{{ url_for('status') }}" class="list-group-item {% if title == 'server_status': %} active{% endif %}" >Server status</a>
-
-              </div>
+        <div class="col-md-12">
+          {% for message in get_flashed_messages() %}
+            <div class="alert">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+              {{ message }}
             </div>
-
-            <div class="panel panel-default">
-              <div class="panel-heading">Configuration</div>
-              <!-- List group -->
-              <div class="list-group">
-                <a href="{{ url_for('settings') }}" class="list-group-item {% if title == 'settings': %} active{% endif %}">Server</a>
-                <a href="#" class="list-group-item">Projects</a>
-                <a href="#" class="list-group-item">Render Configs</a>
-                <a href="{{ url_for('log') }}" class="list-group-item {% if title == 'logs': %} active{% endif %}">Logs</a>
-                <a href="{{ url_for('sandbox') }}" class="list-group-item {% if title == 'sandbox': %} active{% endif %}">Sandbox</a>
-              </div>
-            </div>
-
-        </div>
-        <div class="col-md-10">
-            {% for message in get_flashed_messages() %}
-            <div class="alert alert-warning">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                {{ message }}
-            </div>
-            {% endfor %}
+          {% endfor %}
           {% block body %}{% endblock %}
+
+
         </div>
       </div>
       <hr>
@@ -178,6 +104,24 @@
     </div> <!-- /container -->
 
   {% block footer_scripts %}{% endblock %}
+
+  <script>
+  $(document).ready(function() {
+    // Support for AJAX loaded modal window.
+    // Focuses on first input textbox after it loads the window.
+    $('[data-toggle="modal"]').click(function(e) {
+      e.preventDefault();
+      var url = $(this).attr('modal');
+      if (url.indexOf('#') == 0) {
+        $(url).modal('open');
+      } else {
+        $.get(url, function(data) {
+          $('<div class="modal fade">' + data + '</div>').modal();
+        }).success(function() { $('input:text:visible:first').focus(); });
+      }
+    });
+  });
+  </script>
 
   </body>
 </html>

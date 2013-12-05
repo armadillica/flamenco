@@ -1,4 +1,8 @@
 import json
+
+from os import listdir
+from os.path import isfile, join
+
 from flask import Blueprint, render_template, abort, jsonify, request
 
 from model import *
@@ -23,11 +27,15 @@ def settings_update():
                 setting = Settings.get(Settings.name == setting_name)
                 setting.value = request.form[setting_name]
                 setting.save()
-                print('[Debug] Settings Exist Lets Save Settings %s %s') % (setting_name, request.form[setting_name])
+                print('[Debug] Updating %s %s') % \
+                (setting_name, request.form[setting_name])
             except Settings.DoesNotExist:
-                setting = Settings.create(name=setting_name, value=request.form[setting_name])
+                setting = Settings.create(
+                    name=setting_name, 
+                    value=request.form[setting_name])
                 setting.save()
-                print('[Debug] Settings Created & Saved %s %s') % (setting_name, request.form[setting_name])
+                print('[Debug] Creating %s %s') % \
+                (setting_name, request.form[setting_name])
         return 'done'
     else:
         return 'This is a useless GET'
@@ -35,7 +43,6 @@ def settings_update():
 
 @settings_module.route('/settings/<setting_name>')
 def get_setting(setting_name):
-    print shit
     try:
         setting = Settings.get(Settings.name == setting_name)
         print('[Debug] Get Settings %s %s') % (setting.name, setting.value)
@@ -47,3 +54,13 @@ def get_setting(setting_name):
     # print(a)
 
     return setting.value
+
+@settings_module.route('/render-settings/')
+def render_settings():
+    render_settings_path = './render_settings/'
+    onlyfiles = [ f for f in listdir(render_settings_path) if isfile(join(render_settings_path,f)) ]
+    #return str(onlyfiles)
+    settings_files = dict(
+        settings_files = onlyfiles)
+
+    return jsonify(settings_files)
