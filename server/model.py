@@ -38,7 +38,7 @@ class Shots(BaseModel):
     * within brender (using a shot creation form)
     * via a query from an external software (e.g. Attract)
     """
-    production_shot_id = IntegerField()
+    attract_shot_id = IntegerField()
     frame_start = IntegerField()
     frame_end = IntegerField()
     chunk_size = IntegerField()
