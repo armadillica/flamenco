@@ -10,14 +10,38 @@
         <div class="row">
           <div class="col-md-6">
               <div class="form-group">
-                <label for="shot_name">Shot name</label>
-                <input type="text" class="form-control" id="shot_name" name="shot_name" placeholder="a2s31" required="">
+                <label for="project">Project</label>
+                <select name="project" class="form-control">
+                  {% for file in render_settings['settings_files'] %}
+                    <option value="{{file}}">{{file}}</option>
+                  {% endfor %}
+                    <option value="">File Settings</option>
+                </select>
               </div>
           </div>
           <div class="col-md-6">
               <div class="form-group">
                 <label for="filepath">Filepath</label>
                 <input type="text" class="form-control" id="filepath" name="filepath" placeholder="/tmp/untitled.blend" required="">
+              </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+              <div class="form-group">
+                <label for="shot_name">Shot name</label>
+                <input type="text" class="form-control" id="shot_name" name="shot_name" placeholder="a2s31" required="">
+              </div>
+          </div>
+          <div class="col-md-6">
+              <div class="form-group">
+                <label for="render_settings">Render settings</label>
+                <select name="render_settings" class="form-control">
+                  {% for file in render_settings['settings_files'] %}
+                    <option value="{{file}}">{{file}}</option>
+                  {% endfor %}
+                    <option value="">File Settings</option>
+                </select>
               </div>
           </div>
         </div>
@@ -41,19 +65,7 @@
               </div>
           </div>
         </div>
-        <div class="row">
-          <div class="col-md-6">
-              <div class="form-group">
-                <label for="render_settings">Render settings</label>
-                <select name="render_settings" class="form-control">
-                  {% for file in render_settings['settings_files'] %}
-                    <option value="{{file}}">{{file}}</option>
-                  {% endfor %}
-                    <option value="">File Settings</option>
-                </select>
-              </div>
-          </div>
-        </div>
+        
       </form>
 
 
