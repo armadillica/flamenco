@@ -1,7 +1,8 @@
 import json
 
+import os
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, abspath, dirname
 from flask import Blueprint, render_template, abort, jsonify, request
 
 from model import *
@@ -57,7 +58,6 @@ def get_setting(setting_name):
 
 @settings_module.route('/render-settings/')
 def render_settings():
-    import os
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     render_settings_path = os.path.join(path, 'render_settings/')
     onlyfiles = [f for f in listdir(render_settings_path) if isfile(join(render_settings_path, f))]
