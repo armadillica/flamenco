@@ -64,7 +64,8 @@ def shot_start(shot_id):
     if shot.status != 'running':
         shot.status = 'running'
         shot.save()
-        dispatch_jobs(shot.id)
+        print ('[debug] Dispatching jobs')
+        dispatch_jobs()
 
     return jsonify(
         shot_id=shot.id,
@@ -79,14 +80,14 @@ def shot_stop(shot_id):
         print('[error] Shot not found')
         return 'Shot %d not found' % shot_id
 
-    if shot.status != 'ready':
+    if shot.status != 'stopped':
         stop_jobs(shot.id)
-        shot.status = 'ready'
+        shot.status = 'stopped'
         shot.save()
 
     return jsonify(
         shot_id=shot.id,
-        status='ready')
+        status='stopped')
 
 
 @shots_module.route('/shots/reset/<int:shot_id>')
