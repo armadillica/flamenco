@@ -51,64 +51,76 @@ def shot_update():
     return "TEMP done updating shots "
 
 
-@shots_module.route('/shots/start/<int:shot_id>')
-def shot_start(shot_id):
-    try:
-        shot = Shots.get(Shots.id == shot_id)
-    except Shots.DoesNotExist:
-        print('[error] Shot not found')
-        return 'Shot %d not found' % shot_id
+@shots_module.route('/shots/start', methods=['POST'])
+def shots_start():
+    shot_ids = request.form['id']
+    shots_list = list_integers_string(shot_ids)
+    for shot_id in shots_list:
+        try:
+            shot = Shots.get(Shots.id == shot_id)
+        except Shots.DoesNotExist:
+            print('[error] Shot not found')
+            return 'Shot %d not found' % shot_id
 
-    if shot.status != 'running':
-        shot.status = 'running'
-        shot.save()
-        print ('[debug] Dispatching jobs')
-        dispatch_jobs()
+        if shot.status != 'running':
+            shot.status = 'running'
+            shot.save()
+            print ('[debug] Dispatching jobs')
+            dispatch_jobs()
 
     return jsonify(
-        shot_id=shot.id,
+        shot_ids=shot_ids,
         status='running')
 
 
-@shots_module.route('/shots/stop/<int:shot_id>')
-def shot_stop(shot_id):
-    try:
-        shot = Shots.get(Shots.id == shot_id)
-    except Shots.DoesNotExist:
-        print('[error] Shot not found')
-        return 'Shot %d not found' % shot_id
+@shots_module.route('/shots/stop', methods=['POST'])
+def shots_stop():
+    shot_ids = request.form['id']
+    shots_list = list_integers_string(shot_ids)
+    for shot_id in shots_list:
+        print '[info] Working on shot', shot_id
+        # first we delete the associated jobs (no foreign keys)
+        try:
+            shot = Shots.get(Shots.id == shot_id)
+        except Shots.DoesNotExist:
+            print('[error] Shot not found')
+            return 'Shot %d not found' % shot_id
 
-    if shot.status != 'stopped':
-        stop_jobs(shot.id)
-        shot.status = 'stopped'
-        shot.save()
+        if shot.status != 'stopped':
+            stop_jobs(shot.id)
+            shot.status = 'stopped'
+            shot.save()   
 
     return jsonify(
-        shot_id=shot.id,
+        shot_ids=shot_ids,
         status='stopped')
 
 
-@shots_module.route('/shots/reset/<int:shot_id>')
-def shot_reset(shot_id):
-    try:
-        shot = Shots.get(Shots.id == shot_id)
-    except Shots.DoesNotExist:
-        shot = None
-        print('[error] Shot not found')
-        return 'Shot %d not found' % shot_id
+@shots_module.route('/shots/reset', methods=['POST'])
+def shots_reset():
+    shot_ids = request.form['id']
+    shots_list = list_integers_string(shot_ids)
+    for shot_id in shots_list:
+        try:
+            shot = Shots.get(Shots.id == shot_id)
+        except Shots.DoesNotExist:
+            shot = None
+            print('[error] Shot not found')
+            return 'Shot %d not found' % shot_id
 
-    if shot.status == 'running':
-        return 'Shot %d is running' % shot_id
-    else:
-        shot.current_frame = shot.frame_start
-        shot.save()
+        if shot.status == 'running':
+            return 'Shot %d is running' % shot_id
+        else:
+            shot.current_frame = shot.frame_start
+            shot.status = 'ready'
+            shot.save()
 
-        delete_jobs(shot.id)
-        create_jobs(shot)
+            delete_jobs(shot.id)
+            create_jobs(shot)
 
-        return jsonify(
-            shot_id=shot.id,
-            status='ready')
+    return jsonify(
+        shot_ids=shots_list,
+        status='ready')
 
 
 @shots_module.route('/shots/add', methods=['POST'])

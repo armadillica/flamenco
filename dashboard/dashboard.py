@@ -93,17 +93,6 @@ def workers_edit():
     return jsonify(status='ok')
 
 
-@app.route('/workers/render_chunk', methods=['POST'])
-def workers_render_chunk():
-    #arguments = '-al'
-    #command = 'ls'
-    ##params = urllib.urlencode({'command': 'command',
-    #                            'arguments': 'arguments'})
-    f = urllib.urlopen("http://" + BRENDER_SERVER + "/workers/render_chunk")
-
-    return jsonify(status='ok')
-
-
 @app.route('/worker/<worker_id>')
 def worker(worker_id):
     #print(workers)
@@ -119,7 +108,7 @@ def worker(worker_id):
             2. UnboundLocalError
             3. NameError
             '''
-        print 'worker doesnt exist'
+        print 'worker does not exist'
 
     if worker_id in workers:
         for key, val in workers.iteritems():
@@ -194,10 +183,11 @@ def shots_delete():
 @app.route('/shots/update', methods=['POST'])
 def shots_start():
     command = request.form['command'].lower()
-    shot_ids = int(request.form['id'])
+    shot_ids = request.form['id']
+    params = {'id': shot_ids}
     if command in ['start', 'stop', 'reset']:
         shots = http_request(BRENDER_SERVER,
-            '/shots/%s/%d' % (command, shot_ids))
+            '/shots/%s' % (command), params)
         return shots
     else:
         return 'error'
