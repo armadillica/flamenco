@@ -1,36 +1,17 @@
 {% extends "layout.html" %}
-{% block footer_scripts %}
-<script type="text/javascript">
-    $(function(){
-        $("#log > p:gt("+($("#log > p").length-5)+")").addClass("show special");
-        $('.' + "show").show();
-    });
-
-    $(".morelink").click(function(){
-        if($("#log > p").hasClass("hide")) {
-            $("#log > p").addClass("show");
-            $('.' + "show").show();
-            $("#log > p").removeClass("hide");
-            $('.' + "morelink").text('Show Less Log');
-            } else {
-            $("#log > p").addClass("hide");
-            $('.' + "hide").hide();
-            $("#log > p").removeClass("show");
-            $('.' + "special").show();
-            $('.' + "morelink").text('Show More Log');
-        }
-    });
-</script>
-{% endblock %}
 {% block body %}
     <h1>Log</h1>
     <hr>
     <div class="row">
         <form action="/log/" method="POST">
             <div class="input-group span2">
-                <input class="form-control" id="appendedInputButton" type="text" placeholder="ex: log.log" value="{% if result %} {{ result }} {% endif %}" name="result">
+                <select name="log_files" class="form-control">
+                    {% for file in log_files  %}
+                        <option value="{{file}}" {% if file in request.form['log_files'] %}selected="selected"{% endif %}  >{{file}}</option>
+                    {% endfor %}
+                </select>
                 <span class="input-group-btn">
-                <button class="btn btn-default" type="button">Go!</button>
+                <button type="submit" class="btn btn-default">View Log</button>
                 </span>
             </div>
         </form>
@@ -38,11 +19,10 @@
     <div id="log">
         <hr>
         {% for line in lines %}
-        <p class="hide">{{ line }}</p>
+            <p>{{ line }}</p>
         {% endfor %}
         {% if lines %}
         <hr>
-        <a class="morelink">Show More Log</a>
         {% endif %}
     </div>
 
