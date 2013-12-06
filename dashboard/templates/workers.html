@@ -49,7 +49,7 @@
             //console.log(shots);
             workers_ids = workers.join();
 
-            status = $(this).html();
+            status = $(this).attr('status');
             params = { 'id' : workers_ids, 'status' : status}
 
             $.post("/workers/edit", params)
@@ -80,8 +80,8 @@
                 Action <span class="caret"></span>
               </button>
               <ul class="dropdown-menu" role="menu">
-                <li><a href="#" id="workers-disable">Disable</a></li>
-                <li><a href="#" id="workers-enable">Enable</a></li>
+                <li><a href="#" id="workers-disable" status="disabled">Disable</a></li>
+                <li><a href="#" id="workers-enable" status="enabled">Enable</a></li>
                 <li class="divider"></li>
                 <li><a href="#" id="workers-restart">Restart</a></li>
               </ul>

@@ -130,7 +130,6 @@ def start_job(worker, job):
 def dispatch_jobs(shot_id = None):
     for worker in Workers.select().where(
         (Workers.status == 'enabled') & (Workers.connection == 'online')):
-
         # pick the job with the highest priority (it means the lowest number)
         job = None # will figure out another way
         try:
@@ -219,8 +218,18 @@ def jobs_update():
     status = request.form['status'].lower()
     if status in ['finished']:
         job = Jobs.get(Jobs.id == job_id)
+        shot = Shots.get(Shots.id == job.shot_id)
         job.status = 'finished'
         job.save()
+
+        if job.chunk_end == shot.frame_end:
+            shot.status = 'completed'
+            # this can be added when we update the shot for every
+            # frame rendered
+            # if job.current_frame == shot.frame_end:
+            #     shot.status = 'finished'
+            shot.save()
+
     dispatch_jobs()
 
     return "job updated"

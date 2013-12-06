@@ -52,6 +52,7 @@ At this point you should install peewee as well:
 ```
 $ easy_install peewee
 ```
+Psutil is needed for gathering system usage/performance stats on the worker. Ideally psutil is needed only on the workers.
 
 ```
 $ pip install psutil
