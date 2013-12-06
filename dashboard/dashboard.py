@@ -3,6 +3,9 @@ import json
 import os
 import time
 import urllib
+from os import listdir
+from os.path import isfile, join, abspath
+from glob import iglob
 
 from flask import (flash,
                    Flask,
@@ -193,7 +196,7 @@ def shots_start():
     command = request.form['command'].lower()
     shot_ids = int(request.form['id'])
     if command in ['start', 'stop', 'reset']:
-        shots = http_request(BRENDER_SERVER, 
+        shots = http_request(BRENDER_SERVER,
             '/shots/%s/%d' % (command, shot_ids))
         return shots
     else:
@@ -225,7 +228,7 @@ def shots_add():
         return redirect(url_for('shots_index'))
     else:
         render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
-        return render_template('add_shot_modal.html', 
+        return render_template('add_shot_modal.html',
                             title='add_shot',
                             render_settings=render_settings)
 
@@ -298,24 +301,31 @@ def status():
 
 @app.route('/log/', methods=['GET', 'POST'])
 def log():
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
+    log_files = []
+    for i in glob.iglob('*.log'):
+        log_files.append(i)
+    print('[Debug] %s') % log_files
     if request.method == 'POST':
 
-        result = request.form['result']
+        result = request.form['log_files']
         if result:
             try:
-                file = open(result)
-                lines = file.readlines()
+                with open(result) as log:
+                        lines = log.readlines()
                 return render_template('log.html',
                                        title='status',
                                        lines=lines,
-                                       result=result)
+                                       result=result,
+                                       log_files=log_files)
             except IOError:
                 flash('Couldn\'t open file. ' +
                       'Please make sure the log file exists at ' + result)
         else:
             flash('No log to read Please input a filepath ex: ' +
                   'log.log')
-    return render_template('log.html', title='status')
+    return render_template('log.html', title='status', log_files=log_files)
 
 
 @app.route('/sandbox/')

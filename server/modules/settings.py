@@ -1,8 +1,8 @@
 import json
 
+import os
 from os import listdir
-from os.path import isfile, join
-
+from os.path import isfile, join, abspath, dirname
 from flask import Blueprint, render_template, abort, jsonify, request
 
 from model import *
@@ -31,7 +31,7 @@ def settings_update():
                 (setting_name, request.form[setting_name])
             except Settings.DoesNotExist:
                 setting = Settings.create(
-                    name=setting_name, 
+                    name=setting_name,
                     value=request.form[setting_name])
                 setting.save()
                 print('[Debug] Creating %s %s') % \
@@ -55,12 +55,14 @@ def get_setting(setting_name):
 
     return setting.value
 
+
 @settings_module.route('/render-settings/')
 def render_settings():
-    render_settings_path = './render_settings/'
-    onlyfiles = [ f for f in listdir(render_settings_path) if isfile(join(render_settings_path,f)) ]
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    render_settings_path = os.path.join(path, 'render_settings/')
+    onlyfiles = [f for f in listdir(render_settings_path) if isfile(join(render_settings_path, f))]
     #return str(onlyfiles)
     settings_files = dict(
-        settings_files = onlyfiles)
+        settings_files=onlyfiles)
 
     return jsonify(settings_files)
