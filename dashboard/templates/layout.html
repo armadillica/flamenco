@@ -35,6 +35,25 @@
 
   <body>
     {% block modal %}
+
+    <div class="modal fade" id="brenderModal" tabindex="-1" role="dialog" aria-labelledby="brenderModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="brenderModalLabel">Modal title</h4>
+          </div>
+          <div class="modal-body">
+
+          </div>
+          <div class="modal-footer">
+            <input type="hidden" id="modal_variable" name="modal_variable" value="">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="$('.modal-body > form').submit();" >Submit shot</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
     
     {% endblock %}
 
@@ -72,7 +91,7 @@
                 <li><a href="{{ url_for('status') }}">Status</a></li>
                 <li class="divider"></li>
                 <li><a href="{{ url_for('settings') }}">Settings</a></li>
-                <li><a href="#">Projects</a></li>
+                <li><a href="{{ url_for('shows_index') }}">Shows</a></li>
                 <li><a href="{{ url_for('log') }}">Logs</a></li>
                 <li><a href="{{ url_for('sandbox') }}">Sandbox</a></li>
               </ul>
@@ -112,15 +131,27 @@
     $('[data-toggle="modal"]').click(function(e) {
       e.preventDefault();
       var url = $(this).attr('modal');
+      /*
       if (url.indexOf('#') == 0) {
         $(url).modal('open');
       } else {
         $.get(url, function(data) {
           $('<div class="modal fade">' + data + '</div>').modal();
-        }).success(function() { $('input:text:visible:first').focus(); });
-      }
+        }).success(function() { 
+            $('input:text:visible:first').focus(); 
+        });
+      }*/
+
+      $.get(url, function(data) {
+        $('.modal-body').html(data); 
+      });
+
+      $('.modal-footer').children('.btn-primary').text('Add Shot');
+      $('#brenderModal').modal('show');
     });
+    
   });
+
   </script>
 
   </body>

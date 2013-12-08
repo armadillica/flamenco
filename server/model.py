@@ -30,6 +30,19 @@ class Workers(BaseModel):
     connection = CharField()
 
 
+class Shows(BaseModel):
+    """Production project folders
+
+    This is a temporary table to get quickly up and running with projects
+    suport in brender. In the future, project definitions could come from
+    attract or it could be defined in another way.
+    """
+    name = CharField()
+    path_server = TextField()
+    path_linux = TextField()
+    path_osx = TextField()
+
+
 class Shots(BaseModel):
     """
     A Shot one of the basic units of brender
@@ -93,6 +106,7 @@ def create_tables():
     the install_brender function.
     """
     Workers.create_table()
+    Shows.create_table()
     Shots.create_table()
     Jobs.create_table()
     Settings.create_table()

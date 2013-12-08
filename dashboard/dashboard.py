@@ -147,6 +147,29 @@ def worker(worker_id):
         return make_response('worker ' + worker_id + ' doesnt exist')
 
 
+@app.route('/shows/')
+def shows_index():
+    shows = http_request(BRENDER_SERVER, '/shows')
+    shows= json.loads(shows)
+    return render_template('shows.html', shows=shows, title='shows')
+
+
+@app.route('/shows/update', methods=['POST'])
+def shows_update():
+
+    params = dict(
+        show_id=request.form['show_id'],
+        path_server=request.form['path_server'],
+        path_linux=request.form['path_linux'],
+        path_osx=request.form['path_osx'])
+
+    print http_request(BRENDER_SERVER, '/shows/update', params)
+
+    shows = http_request(BRENDER_SERVER, '/shows/')
+    shows= json.loads(shows)
+    return render_template('shows.html', shows=shows, title='shows')
+
+
 @app.route('/shots/')
 def shots_index():
     shots = http_request(BRENDER_SERVER, '/shots')
@@ -169,6 +192,17 @@ def shots_index():
     entries = json.dumps(shots_list)
 
     return render_template('shots.html', entries=entries, title='shots')
+
+@app.route('/shots/browse/', defaults={'path': ''})
+@app.route('/shots/browse/<path:path>',)
+def shots_browse(path):
+    path = os.path.join('/shots/browse/', path)
+    print path
+    path_data = json.loads(http_request(BRENDER_SERVER, path))
+    return render_template('browse_modal.html', 
+        # items=path_data['items'],
+        items_list=path_data['items_list'],
+        parent_folder=path + '/..')
 
 
 @app.route('/shots/delete', methods=['POST'])
@@ -218,9 +252,13 @@ def shots_add():
         return redirect(url_for('shots_index'))
     else:
         render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
+        shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
+        settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
         return render_template('add_shot_modal.html',
                             title='add_shot',
-                            render_settings=render_settings)
+                            render_settings=render_settings,
+                            settings=settings,
+                            shows=shows)
 
 
 @app.route('/jobs/')
@@ -261,16 +299,12 @@ def settings():
         params = request.form
         http_request(BRENDER_SERVER, '/settings/update', params)
 
-        settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
-        return render_template('settings.html',
-                               title='settings',
-                               settings=settings)
-
-    else:
-        settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
-        return render_template('settings.html',
-                               title='settings',
-                               settings=settings)
+    shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
+    settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+    return render_template('settings.html',
+                           title='settings',
+                           settings=settings,
+                           shows=shows)
 
 
 @app.route('/render-settings/', methods=['GET'])

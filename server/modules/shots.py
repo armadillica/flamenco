@@ -1,5 +1,9 @@
 from flask import Blueprint, render_template, abort, jsonify, request
 
+import os
+from os import listdir
+from os.path import isfile, isdir, join, abspath, dirname
+
 from model import *
 from jobs import *
 from utils import *
@@ -38,6 +42,53 @@ def shots():
                           "percentage_done": percentage_done,
                           "render_settings": shot.render_settings}
     return jsonify(shots)
+
+
+@shots_module.route('/shots/browse/', defaults={'path': ''})
+@shots_module.route('/shots/browse/<path:path>',)
+def shots_browse(path):
+    """We browse the production folder on the server.
+    The path value gets appended to the active_show path value. The result is returned
+    in JSON format.
+    """
+    active_show = Settings.get(Settings.name == 'active_show')
+    active_show = Shows.get(Shows.id == active_show.value)
+
+    # path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    # render_settings_path = os.path.join(path, 'render_settings/')
+
+    absolute_path_root = active_show.path_server
+    parent_path = ''
+
+    if path != '':
+        absolute_path_root = os.path.join(absolute_path_root, path)
+        parent_path = os.pardir
+
+    # print(active_show.path_server)
+    # print(listdir(active_show.path_server))
+
+    # items = {}
+    items_list = []
+
+    for f in listdir(absolute_path_root):
+        relative_path = os.path.join(path, f)
+        absolute_path = os.path.join(absolute_path_root, f)
+
+        # we are going to pick up only blend files and folders
+        if absolute_path.endswith('blend'):
+            # items[f] = relative_path
+            items_list.append((f, relative_path, 'blendfile'))
+        elif os.path.isdir(absolute_path):
+            items_list.append((f, relative_path, 'folder'))  
+
+    #return str(onlyfiles)
+    project_files = dict(
+        project_path_server=active_show.path_server,
+        parent_path=parent_path,
+        # items=items,
+        items_list=items_list)
+
+    return jsonify(project_files)
 
 
 @shots_module.route('/shots/update', methods=['POST'])
@@ -128,7 +179,7 @@ def shot_add():
     print('adding shot')
 
     shot = Shots.create(
-        production_shot_id=1,
+        attract_shot_id=1,
         frame_start=int(request.form['frame_start']),
         frame_end=int(request.form['frame_end']),
         chunk_size=int(request.form['chunk_size']),
