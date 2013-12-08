@@ -16,29 +16,28 @@ def settings():
     settings = {}
     for setting in Settings.select():
         settings[setting.name] = setting.value
+   
     return jsonify(settings)
 
 
-@settings_module.route('/settings/update', methods=['POST', 'GET'])
+@settings_module.route('/settings/update', methods=['POST'])
 def settings_update():
-    if request.method == 'POST':
-        for setting_name in request.form:
-            try:
-                setting = Settings.get(Settings.name == setting_name)
-                setting.value = request.form[setting_name]
-                setting.save()
-                print('[Debug] Updating %s %s') % \
-                (setting_name, request.form[setting_name])
-            except Settings.DoesNotExist:
-                setting = Settings.create(
-                    name=setting_name,
-                    value=request.form[setting_name])
-                setting.save()
-                print('[Debug] Creating %s %s') % \
-                (setting_name, request.form[setting_name])
-        return 'done'
-    else:
-        return 'This is a useless GET'
+    for setting_name in request.form:
+        try:
+            setting = Settings.get(Settings.name == setting_name)
+            setting.value = request.form[setting_name]
+            setting.save()
+            print('[Debug] Updating %s %s') % \
+            (setting_name, request.form[setting_name])
+        except Settings.DoesNotExist:
+            setting = Settings.create(
+                name=setting_name,
+                value=request.form[setting_name])
+            setting.save()
+            print('[Debug] Creating %s %s') % \
+            (setting_name, request.form[setting_name])
+    return 'done'
+
 
 
 @settings_module.route('/settings/<setting_name>')

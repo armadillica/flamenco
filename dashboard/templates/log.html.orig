@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block body %}
+    <h1>Log</h1>
+    <hr>
+    <div class="row">
+<<<<<<< HEAD
+        <form action="/log/" method="POST">
+            <div class="input-group span2">
+                <select name="log_files" class="form-control">
+                    {% if log_files|length == 0 %}
+                    <option value="No Log">No Log Files</option>
+                    {% endif %}
+                    {% for file in log_files  %}
+                        <option value="{{file}}" {% if file in request.form['log_files'] %}selected="selected"{% endif %}  >{{file}}</option>
+                    {% endfor %}
+                </select>
+                <span class="input-group-btn">
+                    <button type="submit" class="btn btn-default {% if log_files|length == 0 %} disabled {% endif %}">View Log</button>
+                </span>
+            </div>
+        </form>
+=======
+        <div class="col-md-12">
+            <form action="/log/" method="POST">
+                <div class="input-group span2">
+                    <select name="log_files" class="form-control">
+                        {% for file in log_files  %}
+                            <option value="{{file}}" {% if file in request.form['log_files'] %}selected="selected"{% endif %}  >{{file}}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="input-group-btn">
+                    <button type="submit" class="btn btn-default">View Log</button>
+                    </span>
+                </div>
+            </form>
+        </div>
+>>>>>>> cefba4b265fb0b8be90800f3ebde66029e0dfc76
+    </div>
+    <div class="row" id="log">
+        <div class="col-md-12">
+            <hr>
+            {% for line in lines %}
+                <p>{{ line }}</p>
+            {% endfor %}
+            {% if lines %}
+            <hr>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

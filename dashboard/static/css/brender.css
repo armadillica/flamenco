@@ -49,6 +49,11 @@ h2 {
 	
 }
 
+
+.blendfile.active {
+  background: #CCC;
+}
+
 .video-container {
     position: relative;
     padding-bottom: 56.25%;
