@@ -175,20 +175,20 @@ def update():
 def online_stats(blender_stat):
     if 'cpu' in [blender_stat]:
         try:
-            a = [x for x in psutil.get_process_list() if x.name == 'blender']
+            find_blender_process = [x for x in psutil.get_process_list() if x.name == 'blender']
             cpu = []
-            for ab in a:
-                cpu.append(ab.get_cpu_percent())
+            for process in find_blender_process:
+                cpu.append(process.get_cpu_percent())
                 print sum(cpu)
                 return round(sum(cpu), 2)
         except psutil._error.NoSuchProcess:
             return int(0)
     elif 'mem' in [blender_stat]:
         try:
-            a = [x for x in psutil.get_process_list() if x.name == 'blender']
+            find_blender_process = [x for x in psutil.get_process_list() if x.name == 'blender']
             mem = []
-            for ab in a:
-                mem.append(ab.get_memory_percent())
+            for process in find_blender_process:
+                mem.append(process.get_memory_percent())
                 return round(sum(mem), 2)
         except psutil._error.NoSuchProcess:
             return int(0)
