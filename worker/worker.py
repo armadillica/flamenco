@@ -4,6 +4,7 @@ import time
 import sys
 import subprocess
 import platform
+import psutil
 import flask
 import os
 import select
@@ -171,24 +172,60 @@ def update():
     return('done')
 
 
+def online_stats(blender_stat):
+    if 'cpu' in [blender_stat]:
+        try:
+            a = [x for x in psutil.get_process_list() if x.name == 'blender']
+            cpu = []
+            for ab in a:
+                cpu.append(ab.get_cpu_percent())
+                print sum(cpu)
+                return round(sum(cpu), 2)
+        except psutil._error.NoSuchProcess:
+            return int(0)
+    elif 'mem' in [blender_stat]:
+        try:
+            a = [x for x in psutil.get_process_list() if x.name == 'blender']
+            mem = []
+            for ab in a:
+                mem.append(ab.get_memory_percent())
+                return round(sum(mem), 2)
+        except psutil._error.NoSuchProcess:
+            return int(0)
+
+
+@gocept.cache.method.Memoize(320)
+def offline_stats(offline_stat):
+    if 'number_cpu' in [offline_stat]:
+        return psutil.NUM_CPUS
+
+    if 'arch' in [offline_stat]:
+        return platform.machine()
+
+    '''
+        TODO
+        1. Add save to database for offline stats
+        2. find more cpu savy way with or without psutil
+    '''
+
+
 @gocept.cache.method.Memoize(10)
 def get_system_load():
-    import psutil
-    import platform
-
+    load = os.getloadavg()
+    ps = psutil
     return ({
         "load_average": ({
-            "1min": round(os.getloadavg()[0], 2),
-            "5min": round(os.getloadavg()[1], 2),
-            "15min": round(os.getloadavg()[2], 2)
+            "1min": round(load[0], 2),
+            "5min": round(load[1], 2),
+            "15min": round(load[2], 2)
             }),
-        "worker_cpu_percent": psutil.cpu_percent(),
-        "worker_mem_percent": psutil.phymem_usage().percent,
-        "worker_disk_percent": psutil.disk_usage('/').percent,
-        "worker_num_cpus": psutil.NUM_CPUS,
-        "worker_architecture": platform.machine(),
-        'worker_blender_cpu_usage': 'coming soon',
-        "worker_blender_mem_usage": 'coming soon'
+        "worker_cpu_percent": ps.cpu_percent(),
+        "worker_mem_percent": ps.phymem_usage().percent,
+        "worker_disk_percent": ps.disk_usage('/').percent,
+        "worker_num_cpus": offline_stats('number_cpu'),
+        "worker_architecture": offline_stats('arch'),
+        'worker_blender_cpu_usage': online_stats('cpu'),
+        "worker_blender_mem_usage": online_stats('mem')
         })
 
 
@@ -199,7 +236,8 @@ def run_info():
     return jsonify(mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
                    system=SYSTEM,
-                   update_frequent=get_system_load()
+                   update_frequent=get_system_load(),
+                   update_less_frequent='less'
                    )
 
 if __name__ == "__main__":
