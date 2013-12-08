@@ -52,6 +52,7 @@ class Shots(BaseModel):
     * via a query from an external software (e.g. Attract)
     """
     attract_shot_id = IntegerField()
+    show_id = IntegerField()
     frame_start = IntegerField()
     frame_end = IntegerField()
     chunk_size = IntegerField()

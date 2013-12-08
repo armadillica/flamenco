@@ -231,7 +231,8 @@ def shots_start():
 def shots_add():
     if request.method == 'POST':
         shot_values = {
-            'production_shot_id': 1,
+            'attract_shot_id': 1,
+            'show_id': request.form['show_id'],
             'shot_name': request.form['shot_name'],
             'frame_start': request.form['frame_start'],
             'frame_end': request.form['frame_end'],

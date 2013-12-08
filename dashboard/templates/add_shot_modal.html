@@ -1,4 +1,5 @@
 <form id="addShot" role="form" action="{{ url_for('shots_add') }}" method=post>
+  <input type="hidden" name="show_id" value="{{settings['active_show']}}">
   <!-- <div class="row">
     <div class="col-md-6">
       <div class="form-group">

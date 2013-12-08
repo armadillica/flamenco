@@ -180,6 +180,7 @@ def shot_add():
 
     shot = Shots.create(
         attract_shot_id=1,
+        show_id=int(request.form['show_id']),
         frame_start=int(request.form['frame_start']),
         frame_end=int(request.form['frame_end']),
         chunk_size=int(request.form['chunk_size']),

@@ -79,17 +79,22 @@ def start_job(worker, job):
     """
 
     shot = Shots.get(Shots.id == job.shot_id)
+    show = Shows.get(Shows.id == shot.show_id)
+
+    filepath = shot.filepath
 
     if 'Darwin' in worker.system:
         setting_blender_path = Settings.get(
             Settings.name == 'blender_path_osx')
         setting_render_settings = Settings.get(
             Settings.name == 'render_settings_path_osx')
+        filepath = os.path.join(show.path_osx, shot.filepath)
     else:
         setting_blender_path = Settings.get(
             Settings.name == 'blender_path_linux')
         setting_render_settings = Settings.get(
             Settings.name == 'render_settings_path_linux')
+        filepath = os.path.join(show.path_linux, shot.filepath)
 
     blender_path = setting_blender_path.value
     render_settings = os.path.join(
@@ -109,7 +114,7 @@ def start_job(worker, job):
     """
 
     params = {'job_id': job.id,
-              'file_path': shot.filepath,
+              'file_path': filepath,
               'blender_path': blender_path,
               'render_settings': render_settings,
               'start': job.chunk_start,
