@@ -79,7 +79,7 @@ def shots_browse(path):
             # items[f] = relative_path
             items_list.append((f, relative_path, 'blendfile'))
         elif os.path.isdir(absolute_path):
-            items_list.append((f, relative_path, 'folder'))  
+            items_list.append((f, relative_path, 'folder'))
 
     #return str(onlyfiles)
     project_files = dict(
@@ -140,7 +140,7 @@ def shots_stop():
         if shot.status != 'stopped':
             stop_jobs(shot.id)
             shot.status = 'stopped'
-            shot.save()   
+            shot.save()
 
     return jsonify(
         shot_ids=shot_ids,

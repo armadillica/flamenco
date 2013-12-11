@@ -166,7 +166,7 @@ def shows_update():
     print http_request(BRENDER_SERVER, '/shows/update', params)
 
     shows = http_request(BRENDER_SERVER, '/shows/')
-    shows= json.loads(shows)
+    shows = json.loads(shows)
     return render_template('shows.html', shows=shows, title='shows')
 
 
@@ -193,13 +193,14 @@ def shots_index():
 
     return render_template('shots.html', entries=entries, title='shots')
 
+
 @app.route('/shots/browse/', defaults={'path': ''})
 @app.route('/shots/browse/<path:path>',)
 def shots_browse(path):
     path = os.path.join('/shots/browse/', path)
     print path
     path_data = json.loads(http_request(BRENDER_SERVER, path))
-    return render_template('browse_modal.html', 
+    return render_template('browse_modal.html',
         # items=path_data['items'],
         items_list=path_data['items_list'],
         parent_folder=path + '/..')
