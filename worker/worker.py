@@ -10,7 +10,7 @@ import os
 import select
 import gocept.cache.method
 from threading import Thread
-from flask import Flask, jsonify, redirect, url_for, request
+from flask import Flask, redirect, url_for, request, jsonify
 from uuid import getnode as get_mac_address
 
 BRENDER_SERVER = 'http://brender-server:9999'
@@ -172,29 +172,44 @@ def update():
     return('done')
 
 
-def online_stats(blender_stat):
-    if 'cpu' in [blender_stat]:
+def online_stats(system_stat):
+    if 'blender_cpu' in [system_stat]:
         try:
-            find_blender_process = [x for x in psutil.get_process_list() if x.name == 'blender']
+            find_blender_process = [x for x in psutil.process_iter() if x.name == 'blender']
             cpu = []
-            for process in find_blender_process:
-                cpu.append(process.get_cpu_percent())
-                print sum(cpu)
-                return round(sum(cpu), 2)
+            if find_blender_process:
+                for process in find_blender_process:
+                    cpu.append(process.get_cpu_percent())
+                    print sum(cpu)
+                    return round(sum(cpu), 2)
+            else:
+                return int(0)
         except psutil._error.NoSuchProcess:
             return int(0)
-    elif 'mem' in [blender_stat]:
+    if 'blender_mem' in [system_stat]:
         try:
             find_blender_process = [x for x in psutil.get_process_list() if x.name == 'blender']
             mem = []
-            for process in find_blender_process:
-                mem.append(process.get_memory_percent())
-                return round(sum(mem), 2)
+            if find_blender_process:
+                for process in find_blender_process:
+                    mem.append(process.get_memory_percent())
+                    return round(sum(mem), 2)
+            else:
+                return int(0)
         except psutil._error.NoSuchProcess:
             return int(0)
+    if 'system_cpu' in [system_stat]:
+        cputimes_idle = psutil.cpu_times_percent(interval=0.5).idle
+        cputimes = round(100 - cputimes_idle, 2)
+        return cputimes
+    if 'system_mem' in [system_stat]:
+        mem_percent = psutil.phymem_usage().percent
+        return mem_percent
+    if 'system_disk' in [system_stat]:
+        disk_percent = psutil.disk_usage('/').percent
+        return disk_percent
 
 
-@gocept.cache.method.Memoize(320)
 def offline_stats(offline_stat):
     if 'number_cpu' in [offline_stat]:
         return psutil.NUM_CPUS
@@ -204,28 +219,36 @@ def offline_stats(offline_stat):
 
     '''
         TODO
-        1. Add save to database for offline stats
-        2. find more cpu savy way with or without psutil
+        1. [Coming Soon] Add save to database for offline stats
+        2. [Fixed] find more cpu savy way with or without psutil
+        3. [Fixed] seems like psutil uses a little cpu when its checks cpu_percent
+        it goes to 50+ percent even though the system shows 5 percent
     '''
 
 
-@gocept.cache.method.Memoize(10)
-def get_system_load():
+def get_system_load_frequent():
     load = os.getloadavg()
-    ps = psutil
+    time.sleep(0.5)
     return ({
         "load_average": ({
             "1min": round(load[0], 2),
             "5min": round(load[1], 2),
             "15min": round(load[2], 2)
             }),
-        "worker_cpu_percent": ps.cpu_percent(),
-        "worker_mem_percent": ps.phymem_usage().percent,
-        "worker_disk_percent": ps.disk_usage('/').percent,
+        "worker_cpu_percent": online_stats('system_cpu'),
+        'worker_blender_cpu_usage': online_stats('blender_cpu')
+        })
+
+
+@gocept.cache.method.Memoize(120)
+def get_system_load_less_frequent():
+    time.sleep(0.5)
+    return ({
         "worker_num_cpus": offline_stats('number_cpu'),
         "worker_architecture": offline_stats('arch'),
-        'worker_blender_cpu_usage': online_stats('cpu'),
-        "worker_blender_mem_usage": online_stats('mem')
+        "worker_mem_percent": online_stats('system_mem'),
+        "worker_disk_percent": online_stats('system_disk'),
+        "worker_blender_mem_usage": online_stats('blender_mem')
         })
 
 
@@ -236,8 +259,8 @@ def run_info():
     return jsonify(mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
                    system=SYSTEM,
-                   update_frequent=get_system_load(),
-                   update_less_frequent='less'
+                   update_frequent=get_system_load_frequent(),
+                   update_less_frequent=get_system_load_less_frequent()
                    )
 
 if __name__ == "__main__":
