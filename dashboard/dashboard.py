@@ -319,8 +319,10 @@ def render_settings():
 @app.route('/status/', methods=['GET'])
 def status():
     server_status = check_connection(BRENDER_SERVER)
+    server_stats = json.loads(http_request(BRENDER_SERVER, '/stats'))
     return render_template('status.html',
                            title='Server status',
+                           server_stats=server_stats,
                            server_status=server_status)
 
 
