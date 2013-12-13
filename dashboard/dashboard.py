@@ -74,7 +74,7 @@ def workers():
 
     entries = json.dumps(workers_list)
 
-    return render_template('workers.html', entries=entries, title='workers')
+    return render_template('workers.html', entries=entries, title='Workers')
 
 
 
@@ -142,7 +142,7 @@ def worker(worker_id):
                     }
 
     if worker:
-        return render_template('worker.html', worker=worker, title='worker')
+        return render_template('worker.html', worker=worker)
     else:
         return make_response('worker ' + worker_id + ' doesnt exist')
 
@@ -151,7 +151,7 @@ def worker(worker_id):
 def shows_index():
     shows = http_request(BRENDER_SERVER, '/shows')
     shows= json.loads(shows)
-    return render_template('shows.html', shows=shows, title='shows')
+    return render_template('shows.html', shows=shows, title='Shows')
 
 
 @app.route('/shows/update', methods=['POST'])
@@ -167,7 +167,7 @@ def shows_update():
 
     shows = http_request(BRENDER_SERVER, '/shows/')
     shows = json.loads(shows)
-    return render_template('shows.html', shows=shows, title='shows')
+    return render_template('shows.html', shows=shows, title='Shows')
 
 
 @app.route('/shots/')
@@ -191,7 +191,7 @@ def shots_index():
 
     entries = json.dumps(shots_list)
 
-    return render_template('shots.html', entries=entries, title='shots')
+    return render_template('shots.html', entries=entries, title='Shots')
 
 
 @app.route('/shots/browse/', defaults={'path': ''})
@@ -257,7 +257,6 @@ def shots_add():
         shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
         settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
         return render_template('add_shot_modal.html',
-                            title='add_shot',
                             render_settings=render_settings,
                             settings=settings,
                             shows=shows)
@@ -284,7 +283,7 @@ def jobs_index():
 
     entries = json.dumps(jobs_list)
 
-    return render_template('jobs.html', entries=entries, title='jobs')
+    return render_template('jobs.html', entries=entries, title='Jobs')
 
 
 def check_connection(host_address):
@@ -304,7 +303,7 @@ def settings():
     shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
     settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
     return render_template('settings.html',
-                           title='settings',
+                           title='Settings',
                            settings=settings,
                            shows=shows)
 
@@ -321,7 +320,7 @@ def render_settings():
 def status():
     server_status = check_connection(BRENDER_SERVER)
     return render_template('status.html',
-                           title='server_status',
+                           title='Server status',
                            server_status=server_status)
 
 
@@ -341,7 +340,7 @@ def log():
                 with open(result) as log:
                         lines = log.readlines()
                 return render_template('log.html',
-                                       title='status',
+                                       title='Logs',
                                        lines=lines,
                                        result=result,
                                        log_files=log_files)
@@ -351,12 +350,12 @@ def log():
         else:
             flash('No log to read Please input a filepath ex: ' +
                   'log.log')
-    return render_template('log.html', title='status', log_files=log_files)
+    return render_template('log.html', title='Logs', log_files=log_files)
 
 
 @app.route('/sandbox/')
 def sandbox():
-    return render_template('sandbox.html', title='sandbox')
+    return render_template('sandbox.html', title='Sandbox')
 
 
 @app.errorhandler(404)
