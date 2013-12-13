@@ -105,14 +105,12 @@
       <div class="row">
         <div class="col-md-12">
           {% for message in get_flashed_messages() %}
-            <div class="alert">
+          <div class="alert alert-warning">
               <button type="button" class="close" data-dismiss="alert">&times;</button>
               {{ message }}
             </div>
           {% endfor %}
           {% block body %}{% endblock %}
-
-
         </div>
       </div>
       <hr>
