@@ -318,8 +318,12 @@ def render_settings():
 
 @app.route('/status/', methods=['GET'])
 def status():
-    server_status = check_connection(BRENDER_SERVER)
-    server_stats = json.loads(http_request(BRENDER_SERVER, '/stats'))
+    try:
+        server_status = check_connection(BRENDER_SERVER)
+        server_stats = json.loads(http_request(BRENDER_SERVER, '/stats'))
+    except :
+        server_status = 'offline'
+        server_stats = ''
     return render_template('status.html',
                            title='Server status',
                            server_stats=server_stats,
