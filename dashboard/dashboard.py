@@ -128,6 +128,8 @@ def worker(worker_id):
                                 '1min': 'N/A',
                                 '15min': 'N/A'
                             },
+                        },
+                        'update_less_frequent': {
                             'worker_num_cpus': 'N/A',
                             'worker_cpu_percent': 'N/A',
                             'worker_architecture': 'N/A',
