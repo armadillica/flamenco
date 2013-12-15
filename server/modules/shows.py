@@ -43,28 +43,31 @@ def get_show(show_id):
 
 
 @shows_module.route('/shows/add', methods=['POST'])
-def show_add():
-    paths = request.form['paths']
-    show = Shows.create(
-        name=request.form['name'],
-        paths='paths')
-
-    return 'done'
-
-
-@shows_module.route('/shows/update', methods=['POST'])
-def shows_update():
-
+def shows_add():
     try:
         show = Shows.get(Shows.id == request.form['show_id'])
+    except:
+        show = Shows.create(name=request.form['name'], path_server=request.form['path_server'], path_linux=request.form['path_linux'], path_osx=request.form['path_osx'])
+        show.save()
+    return 'done'
+
+    
+@shows_module.route('/shows/update', methods=['POST'])
+def shows_update():
+    try:
+        show = Shows.get(Shows.id == request.form['show_id'])
+        show.path_server=request.form['path_server']
+        show.path_linux=request.form['path_linux']
+        show.path_osx=request.form['path_osx']
+        show.save()
     except Shows.DoesNotExist:
         print '[Error] Show not found'
         return 'Show %d not found' % show_id
 
-    show.path_server=request.form['path_server']
-    show.path_linux=request.form['path_linux']
-    show.path_osx=request.form['path_osx']
-    show.save()
+        show.path_server=request.form['path_server']
+        show.path_linux=request.form['path_linux']
+        show.path_osx=request.form['path_osx']
+        show.save()
 
     return 'done'
 
