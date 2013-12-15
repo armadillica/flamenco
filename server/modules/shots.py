@@ -177,7 +177,10 @@ def shots_reset():
 @shots_module.route('/shots/add', methods=['POST'])
 def shot_add():
     print('adding shot')
-
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    render_settings_path = os.path.join(path, 'render_settings/')
+    render_settings_file = render_settings_path + request.form['render_settings']
+    
     shot = Shots.create(
         attract_shot_id=1,
         show_id=int(request.form['show_id']),
@@ -187,7 +190,7 @@ def shot_add():
         current_frame=int(request.form['frame_start']),
         filepath=request.form['filepath'],
         shot_name=request.form['shot_name'],
-        render_settings=request.form['render_settings'],
+        render_settings=render_settings_file,
         status='running',
         priority=10,
         owner='fsiddi')
