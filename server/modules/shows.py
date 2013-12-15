@@ -46,8 +46,11 @@ def get_show(show_id):
 def shows_add():
     try:
         show = Shows.get(Shows.id == request.form['show_id'])
-    except:
-        show = Shows.create(name=request.form['name'], path_server=request.form['path_server'], path_linux=request.form['path_linux'], path_osx=request.form['path_osx'])
+    except Shows.DoesNotExsist:
+        show = Shows.create(name=request.form['name'], 
+                            path_server=request.form['path_server'], 
+                            path_linux=request.form['path_linux'], 
+                            path_osx=request.form['path_osx'])
         show.save()
     return 'done'
 
