@@ -175,14 +175,13 @@ def shows_update():
 
 @app.route('/shows/add', methods=['GET', 'POST'])
 def shows_add():
-    print 'inside shows_add dashbpard'
     if request.method == 'POST':
         params = dict(
             name=request.form['name'],
             path_server=request.form['path_server'],
             path_linux=request.form['path_linux'],
             path_osx=request.form['path_osx'])
-        print params
+            
         http_request(BRENDER_SERVER, '/shows/add', params)
         return redirect(url_for('shows_index'))
     else:
