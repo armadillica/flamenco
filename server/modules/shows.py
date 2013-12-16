@@ -10,6 +10,14 @@ from utils import *
 
 shows_module = Blueprint('shows_module', __name__)
 
+def delete_show(show_id):
+    try:
+        show = Shows.get(Shows.id == show_id)
+    except Shows.DoesNotExist:
+        print('[error] Show not found')
+        return 'error'
+    show.delete_instance()
+    print('[info] Deleted show', show_id)
 
 @shows_module.route('/shows/')
 def shows():
@@ -64,6 +72,12 @@ def shows_add():
     path_linux=request.form['path_linux'], 
     path_osx=request.form['path_osx'])
     show.save()
+    return 'done'
+    
+
+@shows_module.route('/shows/delete/<int:show_id>', methods=['GET','POST'])
+def shows_delete(show_id):
+    delete_show(show_id)
     return 'done'
 
     

@@ -173,6 +173,14 @@ def shows_update():
     return render_template('shows.html', shows=shows, title='Shows')
 
 
+@app.route('/shows/delete/<show_id>', methods=['GET', 'POST'])
+def shows_delete(show_id):
+    print(show_id)
+    show = http_request(BRENDER_SERVER, '/shows/delete/' + show_id)
+    print show
+    return redirect(url_for('shows_index'))
+    
+
 @app.route('/shows/add', methods=['GET', 'POST'])
 def shows_add():
     if request.method == 'POST':
