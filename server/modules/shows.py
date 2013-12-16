@@ -59,10 +59,10 @@ def shows_add():
             show.save()
     '''
 
-    show = Shows.create(name='', 
-    path_server='', 
-    path_linux='', 
-    path_osx='')
+    show = Shows.create(name=request.form['name'], 
+    path_server=request.form['path_server'], 
+    path_linux=request.form['path_linux'], 
+    path_osx=request.form['path_osx'])
     show.save()
     return 'done'
 
