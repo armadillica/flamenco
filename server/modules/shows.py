@@ -45,19 +45,19 @@ def get_show(show_id):
 @shows_module.route('/shows/add', methods=['POST'])
 def shows_add():
 
-'''
-commented this out for now the reason being is that it will fail on request,form['show_id']
-because it can be found and if it returns 0 
-so for now we will just create the show for now
-    try:
-        show = Shows.get(Shows.id == request.form['show_id'])
-    except Shows.DoesNotExist:
-        show = Shows.create(name='', 
-        path_server='', 
-        path_linux='', 
-        path_osx='')
-        show.save()
-'''
+    '''
+    commented this out for now the reason being is that it will fail on request,form['show_id']
+    because it can be found and if it returns 0 
+    so for now we will just create the show for now
+        try:
+            show = Shows.get(Shows.id == request.form['show_id'])
+        except Shows.DoesNotExist:
+            show = Shows.create(name='', 
+            path_server='', 
+            path_linux='', 
+            path_osx='')
+            show.save()
+    '''
 
     show = Shows.create(name='', 
     path_server='', 
