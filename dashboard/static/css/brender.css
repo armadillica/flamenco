@@ -101,3 +101,7 @@ h2 {
 .waiting {
     color:orange;
 }
+
+.popover-content, .pop-close {
+	text-align: center;
+}
