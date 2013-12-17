@@ -163,12 +163,43 @@ def shows_update():
         path_linux=request.form['path_linux'],
         path_osx=request.form['path_osx'])
 
-    print http_request(BRENDER_SERVER, '/shows/update', params)
+    http_request(BRENDER_SERVER, '/shows/update', params)
 
     shows = http_request(BRENDER_SERVER, '/shows/')
     shows = json.loads(shows)
     return render_template('shows.html', shows=shows, title='Shows')
 
+
+@app.route('/shows/delete/<show_id>', methods=['GET', 'POST'])
+def shows_delete(show_id):
+    print(show_id)
+    show = http_request(BRENDER_SERVER, '/shows/delete/' + show_id)
+    print show
+    return redirect(url_for('shows_index'))
+
+
+@app.route('/shows/add', methods=['GET', 'POST'])
+def shows_add():
+    print 'inside shows_add dashbpard'
+    if request.method == 'POST':
+        params = dict(
+            name=request.form['name'],
+            path_server=request.form['path_server'],
+            path_linux=request.form['path_linux'],
+            path_osx=request.form['path_osx'])
+        print params
+        http_request(BRENDER_SERVER, '/shows/add', params)
+        return redirect(url_for('shows_index'))
+    else:
+    
+        render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
+        shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
+        settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+        return render_template('add_show_modal.html',
+                        render_settings=render_settings,
+                        settings=settings,
+                        shows=shows)
+                                                    
 
 @app.route('/shots/')
 def shots_index():
