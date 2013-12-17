@@ -1,13 +1,18 @@
 {% extends "layout.html" %}
 {% block body %}
-      <h1>{{title}}</h1>
-      <hr>
-      <p>The server is currently <strong class="{{server_status}}">{{ server_status }}</strong></p>  
-      {%if server_stats %}
-      <p>There are <strong >{{ server_stats['server_stats']['total_jobs'] }}</strong> jobs for 
-      		<strong >{{ server_stats['server_stats']['total_shots'] }}</strong> shots in 
-      		<strong >{{ server_stats['server_stats']['total_shows'] }}</strong> shows
-      </p>
-      {% endif %}
+    <h1>{{title}}</h1>
+    <hr>
+    <p>The server is currently <strong class="{{server_status}}">{{ server_status }}</strong></p>
+    {%if server_stats %}
+        <p>There are <strong >{{ server_stats['server_stats']['total_jobs'] }}</strong> jobs for
+            <strong >{{ server_stats['server_stats']['total_shots'] }}</strong> shots in
+            <strong >{{ server_stats['server_stats']['total_shows'] }}</strong> shows
+        </p>
+        <p>
+            There is currently <strong>{{ server_stats['server_stats']['total_workers'] }}</strong> registerd worker(s) on the server
+            and <strong>{{ server_stats['server_stats']['currently_connected_workers'] }}</strong> currently connected worker(s)
+            and <strong>{{ server_stats['server_stats']['currently_disconnected_workers'] }}</strong> currently disconnected worker(s)
+        </p>
+    {% endif %}
 
 {% endblock %}

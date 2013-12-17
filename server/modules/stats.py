@@ -12,10 +12,13 @@ stats_module = Blueprint('stats_module', __name__)
 def stats():
     # Here we will aget some basic statistics and infos from the server.
     stats = {
-            "total_jobs":Jobs.select().count(),
-            "total_shots":Shots.select().count(),
-            "total_shows":Shows.select().count(),
-            }
+        "total_jobs":Jobs.select().naive().count(),
+        "total_shots":Shots.select().naive().count(),
+        "total_shows":Shows.select().naive().count(),
+        "total_workers":Workers.select().naive().count(),
+        "currently_connected_workers":Workers.select().where(Workers.connection == 'online').naive().count(),
+        "currently_disconnected_workers":Workers.select().where(Workers.connection == 'offline').naive().count()
+    }
 
     #b = Jobs.select().count()
 

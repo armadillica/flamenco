@@ -177,7 +177,7 @@ def shots_reset():
 @shots_module.route('/shots/add', methods=['POST'])
 def shot_add():
     print('adding shot')
-
+    
     shot = Shots.create(
         attract_shot_id=1,
         show_id=int(request.form['show_id']),

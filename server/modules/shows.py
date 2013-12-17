@@ -10,6 +10,14 @@ from utils import *
 
 shows_module = Blueprint('shows_module', __name__)
 
+def delete_show(show_id):
+    try:
+        show = Shows.get(Shows.id == show_id)
+    except Shows.DoesNotExist:
+        print('[error] Show not found')
+        return 'error'
+    show.delete_instance()
+    print('[info] Deleted show', show_id)
 
 @shows_module.route('/shows/')
 def shows():
@@ -43,28 +51,52 @@ def get_show(show_id):
 
 
 @shows_module.route('/shows/add', methods=['POST'])
-def show_add():
-    paths = request.form['paths']
-    show = Shows.create(
-        name=request.form['name'],
-        paths='paths')
+def shows_add():
 
+    '''
+    commented this out for now the reason being is that it will fail on request,form['show_id']
+    because it can be found and if it returns 0 
+    so for now we will just create the show for now
+        try:
+            show = Shows.get(Shows.id == request.form['show_id'])
+        except Shows.DoesNotExist:
+            show = Shows.create(name='', 
+            path_server='', 
+            path_linux='', 
+            path_osx='')
+            show.save()
+    '''
+
+    show = Shows.create(name=request.form['name'], 
+    path_server=request.form['path_server'], 
+    path_linux=request.form['path_linux'], 
+    path_osx=request.form['path_osx'])
+    show.save()
+    return 'done'
+    
+
+@shows_module.route('/shows/delete/<int:show_id>', methods=['GET','POST'])
+def shows_delete(show_id):
+    delete_show(show_id)
     return 'done'
 
-
+    
 @shows_module.route('/shows/update', methods=['POST'])
 def shows_update():
-
     try:
         show = Shows.get(Shows.id == request.form['show_id'])
+        show.path_server=request.form['path_server']
+        show.path_linux=request.form['path_linux']
+        show.path_osx=request.form['path_osx']
+        show.save()
     except Shows.DoesNotExist:
         print '[Error] Show not found'
         return 'Show %d not found' % show_id
 
-    show.path_server=request.form['path_server']
-    show.path_linux=request.form['path_linux']
-    show.path_osx=request.form['path_osx']
-    show.save()
+        show.path_server=request.form['path_server']
+        show.path_linux=request.form['path_linux']
+        show.path_osx=request.form['path_osx']
+        show.save()
 
     return 'done'
 
