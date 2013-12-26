@@ -23,21 +23,35 @@
                 <input type="text" class="form-control" id="path_linux" name="path_linux" placeholder="/Users/<username>" required="">
             </div>
         </div>
-    </div> <!-- end path linux row-->
-        <div class="row">
+    </div> <!-- end path linux row -->
+    <div class="row">
         <div class="col-md-12">
             <div class="form-group">
                 <label for="path_osx">Path OSX</label>
                 <input type="text" class="form-control" id="path_osx" name="path_osx" placeholder="/Users/<username>" required="">
             </div>
         </div>
-    </div> <!-- end path osx row-->          
+    </div> <!-- end path osx row -->
+    <div class="row col-md-12">
+        <div class="form-group">
+            <label for="set_show_option"> Set <i id="new_show_name"></i> as active show?</label>
+                <select class="form-control" name="set_show_option">
+                    <option>True</option>
+                    {% if shows %}
+                    <option selected>False</option>
+                    {% endif %}
+                </select>
+        </div>
+    </div> <!-- end set active row -->        
+    <i class="clearfix"></i>
 </form>
 
 <script>
 $(document).ready(function() {
-
     $('#brenderModalLabel').text('Add Show');
     $('.modal-footer').children('.btn-primary').text('Add Show');
+    $('#name').keyup(function(){
+     $('#new_show_name').text($(this).val());
+  });
 });
 </script>

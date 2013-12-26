@@ -6,7 +6,6 @@ import urllib
 from os import listdir
 from os.path import isfile, join, abspath
 from glob import iglob
-
 from flask import (flash,
                    Flask,
                    jsonify,
@@ -150,8 +149,10 @@ def worker(worker_id):
 @app.route('/shows/')
 def shows_index():
     shows = http_request(BRENDER_SERVER, '/shows')
-    shows= json.loads(shows)
-    return render_template('shows.html', shows=shows, title='Shows')
+    shows = json.loads(shows)
+    settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+    
+    return render_template('shows.html', shows=shows, settings=settings, title='Shows')
 
 
 @app.route('/shows/update', methods=['POST'])
@@ -167,14 +168,14 @@ def shows_update():
 
     shows = http_request(BRENDER_SERVER, '/shows/')
     shows = json.loads(shows)
-    return render_template('shows.html', shows=shows, title='Shows')
+    settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+    
+    return render_template('shows.html', shows=shows, settings=settings, title='Shows')
 
 
 @app.route('/shows/delete/<show_id>', methods=['GET', 'POST'])
 def shows_delete(show_id):
-    print(show_id)
     show = http_request(BRENDER_SERVER, '/shows/delete/' + show_id)
-    print show
     return redirect(url_for('shows_index'))
 
 
@@ -186,12 +187,12 @@ def shows_add():
             name=request.form['name'],
             path_server=request.form['path_server'],
             path_linux=request.form['path_linux'],
-            path_osx=request.form['path_osx'])
+            path_osx=request.form['path_osx'],
+            set_show_option=request.form['set_show_option'])
         print params
         http_request(BRENDER_SERVER, '/shows/add', params)
         return redirect(url_for('shows_index'))
     else:
-    
         render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
         shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
         settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))

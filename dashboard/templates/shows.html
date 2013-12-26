@@ -21,7 +21,7 @@ $('[data-toggle="popover"]').popover({
       <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">
-                {{shows[show]['name']}}
+                {% if show == settings['active_show'] %}<span class="glyphicon glyphicon-bookmark"></span>{% endif %} {{shows[show]['name']}}
                 <a id="pop-{{show}}" 
                     href="#" 
                     class="glyphicon glyphicon-remove pull-right" 

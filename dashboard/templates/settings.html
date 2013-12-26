@@ -38,6 +38,9 @@
         <label for="active_show" class="col-sm-3 control-label">Active show</label>
         <div class="col-sm-9">
           <select name="active_show" class="form-control">
+            {% if not shows %}
+                <option value="None">No Shows</option>
+            {% endif %}
             {% for show in shows %}
               <option value="{{show}}"{% if show == settings['active_show'] %}selected{% endif %}>{{shows[show]['name']}}</option>
             {% endfor %}
