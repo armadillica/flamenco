@@ -226,6 +226,33 @@ def shots_index():
     return render_template('shots.html', entries=entries, title='Shots')
 
 
+@app.route('/shot/<shot_id>')
+def shot(shot_id):
+    print '[Debug] shot_id is %s' % shot_id
+    shot = None
+    try:
+        shots = http_request(BRENDER_SERVER, '/shots')
+        shots = json.loads(shots)
+    except KeyError:
+        print 'shot doesnt exist'
+    if shot_id in shots:
+        for key, val in shots.iteritems():
+            if shot_id in key:
+                shot = shots[shot_id]
+            
+    if shot:
+        shot = shots[shot_id]
+        return render_template('shot.html', shot=shot)
+    else:
+        return make_response('shot ' + shot_id + ' doesnt exist')
+    
+    
+@app.route('/shot/delete/<shot_id>', methods=['GET', 'POST'])
+def shot_delete(shot_id):
+    shot = http_request(BRENDER_SERVER, '/shot/delete/' + shot_id)
+    return redirect(url_for('shots_index'))
+    
+    
 @app.route('/shots/browse/', defaults={'path': ''})
 @app.route('/shots/browse/<path:path>',)
 def shots_browse(path):

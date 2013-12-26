@@ -34,7 +34,9 @@ def shots():
         if percentage_done == 100:
             shot.status = 'completed'
 
-        shots[shot.id] = {"frame_start": shot.frame_start,
+        shots[shot.id] = {
+                          "id": shot.id,
+                          "frame_start": shot.frame_start,
                           "frame_end": shot.frame_end,
                           "current_frame": shot.current_frame,
                           "status": shot.status,
@@ -89,6 +91,15 @@ def shots_browse(path):
         items_list=items_list)
 
     return jsonify(project_files)
+
+
+@shots_module.route('/shot/delete/<int:shot_id>', methods=['GET','POST'])
+def shot_delete(shot_id):
+    shot = Shots.get(Shots.id == shot_id)
+    print shot
+    print '[Debug] Deleting shot %s (%s)' % (shot_id, shot.shot_name)
+    shot.delete_instance()
+    return 'done'
 
 
 @shots_module.route('/shots/update', methods=['POST'])
