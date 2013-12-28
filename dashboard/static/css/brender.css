@@ -22,6 +22,9 @@ hr {
   border-bottom: 1px solid #ffffff;
 }
 
+.page-title {
+  text-transform:capitalize;
+}
 
 .title-icon {
     float: left;
