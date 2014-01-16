@@ -35,6 +35,7 @@ def http_request(ip_address, method, post_params=False):
     print('message sent, reply follows:')
     return f.read()
 
+
 def list_integers_string(string_list):
     """Accepts comma separated string list of integers
     """
@@ -76,7 +77,6 @@ def workers():
     return render_template('workers.html', entries=entries, title='workers')
 
 
-
 @app.route('/workers/edit', methods=['POST'])
 def workers_edit():
     worker_ids = request.form['id']
@@ -87,7 +87,7 @@ def workers_edit():
     params = urllib.urlencode({'id': worker_ids,
                                'status': worker_status,
                                'config': worker_config})
-    f = urllib.urlopen("http://" + BRENDER_SERVER + "/workers/edit", params)
+    urllib.urlopen("http://" + BRENDER_SERVER + "/workers/edit", params)
 
     return jsonify(status='ok')
 
@@ -152,7 +152,7 @@ def shows_index():
 
     shows = json.loads(shows)
     settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
-    
+
     return render_template('shows.html', shows=shows, settings=settings, title='shows')
 
 
@@ -167,16 +167,12 @@ def shows_update():
 
     http_request(BRENDER_SERVER, '/shows/update', params)
 
-    shows = http_request(BRENDER_SERVER, '/shows/')
-    shows = json.loads(shows)
-    settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
-    
-    return render_template('shows.html', shows=shows, settings=settings, title='shows')
+    return redirect(url_for('shows_index'))
 
 
 @app.route('/shows/delete/<show_id>', methods=['GET', 'POST'])
 def shows_delete(show_id):
-    show = http_request(BRENDER_SERVER, '/shows/delete/' + show_id)
+    http_request(BRENDER_SERVER, '/shows/delete/' + show_id)
     return redirect(url_for('shows_index'))
 
 
@@ -201,7 +197,7 @@ def shows_add():
                         render_settings=render_settings,
                         settings=settings,
                         shows=shows)
-                                                    
+
 
 @app.route('/shots/')
 def shots_index():
@@ -240,20 +236,14 @@ def shot(shot_id):
         for key, val in shots.iteritems():
             if shot_id in key:
                 shot = shots[shot_id]
-            
+
     if shot:
         shot = shots[shot_id]
         return render_template('shot.html', shot=shot)
     else:
         return make_response('shot ' + shot_id + ' doesnt exist')
-    
-    
-@app.route('/shot/delete/<shot_id>', methods=['GET', 'POST'])
-def shot_delete(shot_id):
-    shot = http_request(BRENDER_SERVER, '/shot/delete/' + shot_id)
-    return redirect(url_for('shots_index'))
-    
-    
+
+
 @app.route('/shots/browse/', defaults={'path': ''})
 @app.route('/shots/browse/<path:path>',)
 def shots_browse(path):

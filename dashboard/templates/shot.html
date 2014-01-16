@@ -1,1 +1,60 @@
-{% extends "layout.html" %}{% block footer_scripts %}<script>    $('[data-toggle="popover"]').popover({        html: true,        trigger: 'click',        'placement': 'bottom',        container: 'body',        animation: true    });</script>{% endblock %}{% block body %}<div class="row">    <div class="col-md-12">      <div class="panel panel-primary">        <div class="panel-heading">            <h3 class="panel-title">                {{ shot['shot_name'] }}                <a id="pop-{{ shot['id'] }}"                     href="#"                     class="glyphicon glyphicon-remove pull-right"                     data-toggle="popover",                    title="<p class='text-danger'>Delete {{shot['shot_name']}}?</p>"                data-content="                    <a onclick=&quot;$('#pop-{{ shot['id'] }}').popover('hide');&quot; class='btn btn-default'>Close</a>                    &nbsp;                    <a href='/shot/delete/{{ shot['id'] }}' class='btn btn-danger'>Delete</a>"                ></a>				<div class="clearfix"></div>            </h3>        </div> <!-- end panel-heading -->        <div class="panel-body">            <div class="progress">                <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: {{ shot['percentage_done'] }}%;">                    <span class="sr-only">{{ shot['percentage_done'] }} Complete</span>                </div>            </div>            <br/>            <a href="#" class="thumbnail pull-right">                <img src="http://placehold.it/150x150">            </a>            <p>Status: {{ shot['status'] }}</p>            <p>Frame Start: {{ shot['frame_start'] }}</p>            <p>Frame End: {{ shot['frame_end'] }}</p>            <p>Current Frame: {{ shot['current_frame'] }}</p>        </div> <!-- end panel-body -->      </div> <!-- end panel -->    </div> <!-- end col-md-12 -->  </div> <!-- end row -->{% endblock %}
+{% extends "layout.html" %}
+{% block footer_scripts %}
+<script>
+    $('[data-toggle="popover"]').popover({
+        html: true,
+        trigger: 'click',
+        'placement': 'bottom',
+        container: 'body',
+        animation: true
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        $(document).on("click", "#shot-delete", function() {
+            shot_id = {{ shot['id'] }}
+            $.post('/shots/delete', { 'id': shot_id});
+            location = '/shots'
+        });
+    });
+</script>
+{% endblock %}
+{% block body %}
+<div class="row">
+    <div class="col-md-12">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {{ shot['shot_name'] }}
+                <a id="pop-{{ shot['id'] }}"
+                    href="#"
+                    class="glyphicon glyphicon-remove pull-right"
+                    data-toggle="popover",
+                    title="<p class='text-danger'>Delete {{shot['shot_name']}}?</p>"
+                data-content="
+                    <a onclick=&quot;$('#pop-{{ shot['id'] }}').popover('hide');&quot; class='btn btn-default'>Close</a>
+                    &nbsp;
+                    <a href='#' id='shot-delete' class='btn btn-danger'>Delete</a>"
+                ></a>
+                <div class="clearfix"></div>
+            </h3>
+        </div> <!-- end panel-heading -->
+        <div class="panel-body">
+            <div class="progress">
+                <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: {{ shot['percentage_done'] }}%;">
+                    <span class="sr-only">{{ shot['percentage_done'] }} Complete</span>
+                </div>
+            </div>
+            <br/>
+            <a href="#" class="thumbnail pull-right">
+                <img src="http://placehold.it/150x150">
+            </a>
+            <p>Status: {{ shot['status'] }}</p>
+            <p>Frame Start: {{ shot['frame_start'] }}</p>
+            <p>Frame End: {{ shot['frame_end'] }}</p>
+            <p>Current Frame: {{ shot['current_frame'] }}</p>
+        </div> <!-- end panel-body -->
+      </div> <!-- end panel -->
+    </div> <!-- end col-md-12 -->
+  </div> <!-- end row -->
+{% endblock %}

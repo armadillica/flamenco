@@ -93,15 +93,6 @@ def shots_browse(path):
     return jsonify(project_files)
 
 
-@shots_module.route('/shot/delete/<int:shot_id>', methods=['GET','POST'])
-def shot_delete(shot_id):
-    shot = Shots.get(Shots.id == shot_id)
-    print shot
-    print '[Debug] Deleting shot %s (%s)' % (shot_id, shot.shot_name)
-    shot.delete_instance()
-    return 'done'
-
-
 @shots_module.route('/shots/update', methods=['POST'])
 def shot_update():
     status = request.form['status']

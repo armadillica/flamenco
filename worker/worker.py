@@ -180,7 +180,6 @@ def online_stats(system_stat):
             if find_blender_process:
                 for process in find_blender_process:
                     cpu.append(process.get_cpu_percent())
-                    print sum(cpu)
                     return round(sum(cpu), 2)
             else:
                 return int(0)
@@ -199,9 +198,11 @@ def online_stats(system_stat):
         except psutil._error.NoSuchProcess:
             return int(0)
     if 'system_cpu' in [system_stat]:
-        cputimes_idle = psutil.cpu_times_percent(interval=0.5).idle
-        cputimes = round(100 - cputimes_idle, 2)
-        return cputimes
+        try:
+            cputimes = psutil.cpu_percent(interval=1)
+            return cputimes
+        except:
+            return int(0)
     if 'system_mem' in [system_stat]:
         mem_percent = psutil.phymem_usage().percent
         return mem_percent
@@ -217,18 +218,10 @@ def offline_stats(offline_stat):
     if 'arch' in [offline_stat]:
         return platform.machine()
 
-    '''
-        TODO
-        1. [Coming Soon] Add save to database for offline stats
-        2. [Fixed] find more cpu savy way with or without psutil
-        3. [Fixed] seems like psutil uses a little cpu when its checks cpu_percent
-        it goes to 50+ percent even though the system shows 5 percent
-    '''
 
-
+@gocept.cache.method.Memoize(5)
 def get_system_load_frequent():
     load = os.getloadavg()
-    time.sleep(0.5)
     return ({
         "load_average": ({
             "1min": round(load[0], 2),
@@ -242,7 +235,6 @@ def get_system_load_frequent():
 
 @gocept.cache.method.Memoize(120)
 def get_system_load_less_frequent():
-    time.sleep(0.5)
     return ({
         "worker_num_cpus": offline_stats('number_cpu'),
         "worker_architecture": offline_stats('arch'),
@@ -255,7 +247,6 @@ def get_system_load_less_frequent():
 @app.route('/run_info')
 def run_info():
     print('[Debug] get_system_load for %s') % HOSTNAME
-
     return jsonify(mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
                    system=SYSTEM,

@@ -23,16 +23,19 @@ def delete_show(show_id):
 '''
 Checks to see if a show is set as active_show
 if yes then True
-if no then False    
+if no then False
 '''
+
+
 def is_active_show():
     active = Settings.get(Settings.name == 'active_show')
     if active.value == 'None':
         print '[Debug] Active show is not set'
         return False
     else:
-        print '[Debug] Active show is currently %s' % Shows.get(Shows.id == active.value).name 
+        print '[Debug] Active show is currently %s' % Shows.get(Shows.id == active.value).name
         return True
+
 
 @shows_module.route('/shows/')
 def shows():
@@ -65,36 +68,21 @@ def get_show(show_id):
         path_osx=show.path_osx)
 
 
-@shows_module.route('/shows/add', methods=['GET','POST'])
+@shows_module.route('/shows/add', methods=['GET', 'POST'])
 def shows_add():
-    '''
-    commented this out for now the reason being is that it will fail on request,form['show_id']
-    because it can be found and if it returns 0
-    so for now we will just create the show for now
-
-
-        try:
-            show = Shows.get(Shows.id == request.form['show_id'])
-        except Shows.DoesNotExist:
-            show = Shows.create(name='',
-            path_server='',
-            path_linux='',
-            path_osx='')
-            show.save()
-    '''
-
-    show = Shows.create(name=request.form['name'],
-                path_server=request.form['path_server'],
-                path_linux=request.form['path_linux'],
-                path_osx=request.form['path_osx'])
+    show = Shows.create(
+        name=request.form['name'],
+        path_server=request.form['path_server'],
+        path_linux=request.form['path_linux'],
+        path_osx=request.form['path_osx'])
     show.save()
-    
-    is_active = is_active_show() # Return True or False
+
+    is_active = is_active_show()  # Return True or False
     if is_active == 'False':
         set_option = 'True'
     else:
         set_option = request.form['set_show_option']
-        
+
     if not is_active and set_option == 'False':
         s_active = Settings.get(Settings.name == 'active_show')
         s_active.value = show.id
@@ -106,7 +94,7 @@ def shows_add():
     return 'done'
 
 
-@shows_module.route('/shows/delete/<int:show_id>', methods=['GET','POST'])
+@shows_module.route('/shows/delete/<int:show_id>', methods=['GET', 'POST'])
 def shows_delete(show_id):
     show_setting = Settings.get(Settings.name == 'active_show')
     shots_show = Shots.select().where(Shots.show_id == show_id)
@@ -123,7 +111,7 @@ def shows_delete(show_id):
         next = 'None'
     else:
         next = max(compare_show_ids)
-        
+
     if int(show_id) is int(show_setting.value):
         show_setting.value = next
         print '[Debug] Show was active removing show from being active_show'
@@ -135,25 +123,15 @@ def shows_delete(show_id):
 @shows_module.route('/shows/update', methods=['POST'])
 def shows_update():
     '''
-        not quite sure if we need a try statement here
-        because if we are updating a show it should exist right? lol?
+    not quite sure if we need a try statement here
+    because if we are updating a show it should exist right? lol?
     '''
-    try:
-        show = Shows.get(Shows.id == request.form['show_id'])
-        show.path_server=request.form['path_server']
-        show.path_linux=request.form['path_linux']
-        show.path_osx=request.form['path_osx']
-        show.save()
-    except Shows.DoesNotExist:
-        print '[Error] Show not found'
-        show = Shows.create(
-        path_server=request.form['path_server'],
-        path_linux=request.form['path_linux'],
-        path_osx=request.form['path_osx'])
-        show.save()
-
+    show = Shows.get(Shows.id == request.form['show_id'])
+    show.path_server = request.form['path_server']
+    show.path_linux = request.form['path_linux']
+    show.path_osx = request.form['path_osx']
+    show.save()
     return 'done'
-
 
 
 @shows_module.route('/render-shows/')
