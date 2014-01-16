@@ -34,7 +34,9 @@ def shots():
         if percentage_done == 100:
             shot.status = 'completed'
 
-        shots[shot.id] = {"frame_start": shot.frame_start,
+        shots[shot.id] = {
+                          "id": shot.id,
+                          "frame_start": shot.frame_start,
                           "frame_end": shot.frame_end,
                           "current_frame": shot.current_frame,
                           "status": shot.status,

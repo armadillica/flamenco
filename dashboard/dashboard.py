@@ -6,7 +6,6 @@ import urllib
 from os import listdir
 from os.path import isfile, join, abspath
 from glob import iglob
-
 from flask import (flash,
                    Flask,
                    jsonify,
@@ -35,6 +34,7 @@ def http_request(ip_address, method, post_params=False):
 
     print('message sent, reply follows:')
     return f.read()
+
 
 def list_integers_string(string_list):
     """Accepts comma separated string list of integers
@@ -77,7 +77,6 @@ def workers():
     return render_template('workers.html', entries=entries, title='workers')
 
 
-
 @app.route('/workers/edit', methods=['POST'])
 def workers_edit():
     worker_ids = request.form['id']
@@ -88,7 +87,7 @@ def workers_edit():
     params = urllib.urlencode({'id': worker_ids,
                                'status': worker_status,
                                'config': worker_config})
-    f = urllib.urlopen("http://" + BRENDER_SERVER + "/workers/edit", params)
+    urllib.urlopen("http://" + BRENDER_SERVER + "/workers/edit", params)
 
     return jsonify(status='ok')
 
@@ -150,8 +149,11 @@ def worker(worker_id):
 @app.route('/shows/')
 def shows_index():
     shows = http_request(BRENDER_SERVER, '/shows')
-    shows= json.loads(shows)
-    return render_template('shows.html', shows=shows, title='shows')
+
+    shows = json.loads(shows)
+    settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+
+    return render_template('shows.html', shows=shows, settings=settings, title='shows')
 
 
 @app.route('/shows/update', methods=['POST'])
@@ -163,11 +165,38 @@ def shows_update():
         path_linux=request.form['path_linux'],
         path_osx=request.form['path_osx'])
 
-    print http_request(BRENDER_SERVER, '/shows/update', params)
+    http_request(BRENDER_SERVER, '/shows/update', params)
 
-    shows = http_request(BRENDER_SERVER, '/shows/')
-    shows = json.loads(shows)
-    return render_template('shows.html', shows=shows, title='shows')
+    return redirect(url_for('shows_index'))
+
+
+@app.route('/shows/delete/<show_id>', methods=['GET', 'POST'])
+def shows_delete(show_id):
+    http_request(BRENDER_SERVER, '/shows/delete/' + show_id)
+    return redirect(url_for('shows_index'))
+
+
+@app.route('/shows/add', methods=['GET', 'POST'])
+def shows_add():
+    print 'inside shows_add dashbpard'
+    if request.method == 'POST':
+        params = dict(
+            name=request.form['name'],
+            path_server=request.form['path_server'],
+            path_linux=request.form['path_linux'],
+            path_osx=request.form['path_osx'],
+            set_show_option=request.form['set_show_option'])
+        print params
+        http_request(BRENDER_SERVER, '/shows/add', params)
+        return redirect(url_for('shows_index'))
+    else:
+        render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
+        shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
+        settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+        return render_template('add_show_modal.html',
+                        render_settings=render_settings,
+                        settings=settings,
+                        shows=shows)
 
 
 @app.route('/shots/')
@@ -192,6 +221,27 @@ def shots_index():
     entries = json.dumps(shots_list)
 
     return render_template('shots.html', entries=entries, title='shots')
+
+
+@app.route('/shot/<shot_id>')
+def shot(shot_id):
+    print '[Debug] shot_id is %s' % shot_id
+    shot = None
+    try:
+        shots = http_request(BRENDER_SERVER, '/shots')
+        shots = json.loads(shots)
+    except KeyError:
+        print 'shot doesnt exist'
+    if shot_id in shots:
+        for key, val in shots.iteritems():
+            if shot_id in key:
+                shot = shots[shot_id]
+
+    if shot:
+        shot = shots[shot_id]
+        return render_template('shot.html', shot=shot)
+    else:
+        return make_response('shot ' + shot_id + ' doesnt exist')
 
 
 @app.route('/shots/browse/', defaults={'path': ''})

@@ -1,0 +1,57 @@
+<form id="addShot" role="form" action="{{ url_for('shows_add') }}" method=post>
+<input name="show_id" type="hidden" value="{{show}}">
+    <div class="row">
+        <div class="col-md-5">
+            <div class="form-group">
+                <label for="name">Show Name</label>
+                <input type="text" class="form-control" id="name" name="name" placeholder="Show name" required="">
+            </div>
+        </div>
+    </div> <!-- end show name row -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="path_server">Path Server</label>
+                <input type="text" class="form-control" id="path_server" name="path_server" placeholder="/Users/<username>" required="">
+            </div>
+        </div>
+    </div> <!-- end path server row -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="path_linux">Path Linux</label>
+                <input type="text" class="form-control" id="path_linux" name="path_linux" placeholder="/Users/<username>" required="">
+            </div>
+        </div>
+    </div> <!-- end path linux row -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="path_osx">Path OSX</label>
+                <input type="text" class="form-control" id="path_osx" name="path_osx" placeholder="/Users/<username>" required="">
+            </div>
+        </div>
+    </div> <!-- end path osx row -->
+    <div class="row col-md-12">
+        <div class="form-group">
+            <label for="set_show_option"> Set <i id="new_show_name"></i> as active show?</label>
+                <select class="form-control" name="set_show_option">
+                    <option>True</option>
+                    {% if shows %}
+                    <option selected>False</option>
+                    {% endif %}
+                </select>
+        </div>
+    </div> <!-- end set active row -->        
+    <i class="clearfix"></i>
+</form>
+
+<script>
+$(document).ready(function() {
+    $('#brenderModalLabel').text('Add Show');
+    $('.modal-footer').children('.btn-primary').text('Add Show');
+    $('#name').keyup(function(){
+     $('#new_show_name').text($(this).val());
+  });
+});
+</script>
