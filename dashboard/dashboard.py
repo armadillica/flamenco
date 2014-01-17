@@ -127,11 +127,13 @@ def worker(worker_id):
                                 '1min': 'N/A',
                                 '15min': 'N/A'
                             },
-                            'worker_num_cpus': 'N/A',
-                            'worker_cpu_percent': 'N/A',
+                        },
+                        'update_less_frequent': {
                             'worker_architecture': 'N/A',
                             'worker_mem_percent': 'N/A',
-                            'worker_disk_percent': 'N/A'
+                            'worker_disk_percent': 'N/A',
+                            'worker_cpu_percent': 'N/A',
+                            'worker_num_cpus': 'N/A',
                         },
                         'hostname': 'N/A',
                         'system': 'N/A',
