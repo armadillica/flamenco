@@ -2,8 +2,8 @@ import json
 
 from flask import Blueprint, render_template, abort, jsonify, request
 
-from model import *
-from utils import *
+from server.model import *
+from server.utils import *
 
 stats_module = Blueprint('stats_module', __name__)
 

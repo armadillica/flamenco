@@ -5,8 +5,8 @@ from os import listdir
 from os.path import isfile, join, abspath, dirname
 from flask import Blueprint, render_template, abort, jsonify, request
 
-from model import *
-from utils import *
+from server.model import *
+from server.utils import *
 
 settings_module = Blueprint('settings_module', __name__)
 

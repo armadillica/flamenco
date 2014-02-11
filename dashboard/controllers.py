@@ -1,3 +1,4 @@
+from dashboard import app
 import glob
 import json
 import os
@@ -16,13 +17,6 @@ from flask import (flash,
                    make_response)
 
 BRENDER_SERVER = 'brender-server:9999'
-
-app = Flask(__name__)
-app.config.update(
-    DEBUG=True,
-    SERVER_NAME='brender-flask:8888'
-)
-
 
 def http_request(ip_address, method, post_params=False):
     # post_params must be a dictionnary
@@ -420,7 +414,3 @@ def sandbox():
 def page_not_found(error):
     return render_template('404_error.html'), 404
 
-app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0')

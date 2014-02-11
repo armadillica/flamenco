@@ -4,9 +4,9 @@ import os
 from os import listdir
 from os.path import isfile, isdir, join, abspath, dirname
 
-from model import *
+from server.model import *
+from server.utils import *
 from jobs import *
-from utils import *
 
 shots_module = Blueprint('shots_module', __name__)
 

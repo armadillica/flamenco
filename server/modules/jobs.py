@@ -7,8 +7,8 @@ from flask import (abort,
                    request)
 
 # TODO(sergey): Generally not a good idea to import *
-from model import *
-from utils import *
+from server.model import *
+from server.utils import *
 from workers import *
 
 jobs_module = Blueprint('jobs_module', __name__)

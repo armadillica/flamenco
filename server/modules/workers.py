@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, abort, jsonify, request
 
-from model import *
-from utils import *
+from server.model import *
+from server.utils import *
 
 workers_module = Blueprint('workers_module', __name__)
 
