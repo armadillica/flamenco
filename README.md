@@ -58,6 +58,7 @@ Psutil is needed for gathering system usage/performance stats on the worker. Ide
 $ pip install psutil
 ```
 then install
+
 ```
 $ pip install gocept.cache
 ```
@@ -70,12 +71,12 @@ Congratulations, brender and its dependencies should be correctly installed and 
 ```
 
 ## Running brender
-It's pretty simple. Move into each one of the three folders and run - in three different terminals:
+It's pretty simple. Move into the brender folder and run - in three different terminals:
 
 ```
-$ python server.py  		# will start the server
-$ python worker.py			# will start the worker
-$ python dashboard.py		# will start the dashboard
+$ python brender.py server  		# will start the server
+$ python brender.py worker			# will start the worker
+$ python brender.py dashboard		# will start the dashboard
 ```
 
 If you now visit `http://brender-flask:8888` with your web browser you should see the dashboard!
@@ -104,5 +105,16 @@ Frameworks and tools used by the interface are:
 * jQuery
 * Bootstrap
 * DataTables
+
+### User and Developer documentation
+Most of this document will be migrated into the `docs` folder, alongside with the user documentation.
+
+The documentation is made with Sphinx and usees the readthedocs.org theme, so make sure you have it installed. Instructions are available here:
+
+`https://github.com/snide/sphinx_rtd_theme`
+
+The `_build` contains the locally compiled documentation, which does not need to be committed to the branch.
+
+
 
 
