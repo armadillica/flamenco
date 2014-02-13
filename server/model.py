@@ -1,7 +1,7 @@
 from peewee import *
 from datetime import date
 import random
-DATABASE = 'server/brender.sqlite'
+DATABASE = None
 
 db = SqliteDatabase(DATABASE)
 
@@ -150,5 +150,4 @@ def create_database():
         create_tables()
         print('[Info] Database created')
 
-
-create_database()
+    db.init(DATABASE)
