@@ -32,9 +32,8 @@
                     data-toggle="popover",
                     title="<p class='text-danger'>Delete {{shot['shot_name']}}?</p>"
                 data-content="
-                    <a onclick=&quot;$('#pop-{{ shot['id'] }}').popover('hide');&quot; class='btn btn-default'>Close</a>
-                    &nbsp;
-                    <a href='#' id='shot-delete' class='btn btn-danger'>Delete</a>"
+                    <a href='#' id='shot-delete' class='btn btn-danger'>Ok</a>
+                    <a onclick=&quot;$('#pop-{{ shot['id'] }}').popover('hide');&quot; class='btn btn-default'>Cancel</a>"
                 ></a>
                 <div class="clearfix"></div>
             </h3>

@@ -28,9 +28,8 @@ $('[data-toggle="popover"]').popover({
                     data-toggle="popover",
                     title="<p class='text-danger'>Delete {{shows[show]['name']}}?</p>"
                 data-content="
-                    <a onclick=&quot;$('#pop-{{show}}').popover('hide');&quot; class='btn btn-default'>Close</a>
-                    &nbsp;
-                    <a href='/shows/delete/{{ show }}' class='btn btn-danger'>Delete</a>"
+                    <a href='/shows/delete/{{ show }}' class='btn btn-danger'>Ok</a>
+                    <a onclick=&quot;$('#pop-{{show}}').popover('hide');&quot; class='btn btn-default'>Cancel</a>"
                 ></a>
 				<div class="clearfix"></div>
             </h3>

@@ -40,6 +40,10 @@
         .done(function(data) {
           // we reuse the checkbox list to delete the table rows we just
           // removed in the database table
+          if (checkbox_list.length == 0) {
+            alert("Please select one or more shots");
+            return false;
+          };
           for (var i = checkbox_list.length - 1; i >= 0; i--) {
           var checkbox = checkbox_list[i];
           var tableRow = $(checkbox).parents("tr");
