@@ -143,11 +143,12 @@ def create_database():
     """
     try:
         with open(DATABASE):
-            pass
+            # connect to database found in DATABASE
+            db.init(DATABASE)
     except IOError:
         print('[Info] Creating brender.sqlite database')
         open(DATABASE, 'a').close()
+        # before creating tables we should connect to it
+        db.init(DATABASE)
         create_tables()
         print('[Info] Database created')
-
-    db.init(DATABASE)
