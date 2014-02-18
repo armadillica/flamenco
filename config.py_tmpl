@@ -1,0 +1,23 @@
+import os
+class Config(object):                                                           
+    DATABASE=os.path.join(os.path.dirname(__file__), 'brender.sqlite')
+    DEBUG=False
+
+    BRENDER_SERVER='localhost:9999'                                                   
+                                                                                
+class Server(Config):                                                           
+    DEBUG=True
+    PORT=9999
+    HOST='localhost'                                                    
+                                                                                
+class Dashboard(Config):                                                        
+    DEBUG=True
+    PORT=8888
+    HOST='localhost'                                                     
+                                                                                
+class Worker(Config):                                                           
+    DEBUG=True
+    PORT=5000
+    # worker will accept request based on IP (because of his registration process to server)
+    # use HOST='0.0.0.0' to enable worker to serve on all IP when use it in a cluster
+    HOST='127.0.0.1'

@@ -13,13 +13,39 @@ from threading import Thread
 from flask import Flask, redirect, url_for, request, jsonify
 from uuid import getnode as get_mac_address
 
-from worker import app
-
-BRENDER_SERVER = 'http://brender-server:9999'
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
 SYSTEM = platform.system() + ' ' + platform.release()
 
+app = Flask(__name__)
+
+BRENDER_SERVER=''
+
+def http_request(command, values):
+    params = urllib.urlencode(values)
+    try:
+        urllib.urlopen('http://' + BRENDER_SERVER + '/' + command, params)
+        #print(f.read())
+    except IOError:
+        print("[Warning] Could not connect to server to register")
+
+# this is going to be an HTTP request to the server with all the info
+# for registering the render node
+def register_worker():
+    import httplib
+    while True:
+        try:
+            connection = httplib.HTTPConnection('127.0.0.1', app.config['PORT'])
+            connection.request("GET", "/info")
+            break
+        except socket.error:
+            pass
+        time.sleep(0.1)
+
+    http_request('connect', {'mac_address': MAC_ADDRESS,
+                                       'port': app.config['PORT'],
+                                       'hostname': HOSTNAME,
+                                       'system': SYSTEM})
 
 def _checkProcessOutput(process):
     ready = select.select([process.stdout.fileno(),
