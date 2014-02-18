@@ -4,7 +4,8 @@ controllers.app.config.update(
     SECRET_KEY='A0Zr98j/3yX R~XHH!jmN]LWX/,?RT',
     DEBUG=False,
     HOST='localhost',
-    PORT=8888
+    PORT=8888,
+    BRENDER_SERVER='localhost:9999'
 )
 
 def serve(user_config=None):
