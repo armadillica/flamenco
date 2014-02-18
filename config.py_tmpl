@@ -1,18 +1,23 @@
+import os
 class Config(object):                                                           
-    DATABASE=''                                                                 
-    DEBUG=False                                                                 
-                                                                                
-    BRENDER_SERVER='localhost'                                                  
-    BRENDER_SERVER_PORT=9999                                                    
+    DATABASE=os.path.join(os.path.dirname(__file__), 'brender.sqlite')
+    DEBUG=False
+
+    BRENDER_SERVER='localhost:9999'                                                   
                                                                                 
 class Server(Config):                                                           
-    PORT=9999                                                                   
-    SERVER_NAME='localhost'                                                     
+    DEBUG=True
+    PORT=9999
+    HOST='localhost'                                                    
                                                                                 
 class Dashboard(Config):                                                        
-    PORT=8888                                                                   
-    SERVER_NAME='localhost'                                                     
+    DEBUG=True
+    PORT=8888
+    HOST='localhost'                                                     
                                                                                 
 class Worker(Config):                                                           
-    PORT=5000                                                                   
-    SERVER_NAME='127.0.0.1'
+    DEBUG=True
+    PORT=5000
+    # worker will accept request based on IP (because of his registration process to server)
+    # use HOST='0.0.0.0' to enable worker to serve on all IP when use it in a cluster
+    HOST='127.0.0.1'
