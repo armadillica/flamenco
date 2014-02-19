@@ -9,7 +9,7 @@ controllers.app.config.update(
     BRENDER_SERVER='localhost:9999'
 )
 
-# we use muliprocessing to register the client the worker to the server
+# Use muliprocessing to register the client the worker to the server
 # while the worker app starts up
 def serve(user_config=None):
     config = controllers.app.config

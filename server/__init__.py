@@ -2,13 +2,14 @@ from server import controllers
 import model
 import os
 
-# here is default configuration. Just in case if user will not provide one.
-# application is configured to run on local-host and port 9999
+# This is the default server configuration, in case the user will not provide one.
+# The Application is configured to run on local-host and port 9999
+# The brender.sqlite database will be created inside of the server folder
 controllers.app.config.update(
     DEBUG=False,
     HOST='localhost',
     PORT=9999,
-    DATABASE=os.path.join(os.path.dirname(controllers.__file__), '..', 'brender.sqlite')
+    DATABASE=os.path.join(os.path.dirname(controllers.__file__), 'brender.sqlite')
 )
 
 def serve(user_config=None):
@@ -20,13 +21,15 @@ def serve(user_config=None):
     model.DATABASE = config['DATABASE']
     model.create_database()
 
-    # set SEVER_NAME value according to application configuration
+    # Set SEVER_NAME value according to application configuration
     config.update(
         SERVER_NAME="%s:%d" % (config['HOST'], config['PORT'])
     )
 
-    # run application
+    #controllers.app.run(host='0.0.0.0')
+    
+    # Run application
     controllers.app.run(
         controllers.app.config['HOST'],
-        controllers.app.config['PORT']
+        controllers.app.config['PORT'],
     )

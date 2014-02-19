@@ -8,13 +8,13 @@ import subprocess
 
 try:
     import config
+    print('[Info] Loading configuration from config.py')
     Server = config.Server
     Dashboard = config.Dashboard
     Worker = config.Worker
-except:
-    print('Warning: no configuration file were found!')
-    print('Warning: will use dafault config settings.')
-    print('Warning: for more info see config.py_tmpl file o README file.')
+except ImportError:
+    print('[Warning] No configuration file were found! Unsing default config settings.')
+    print('[Warning] For more info see config.py.example file o README file.')
     Server = None
     Dashboard = None
     Worker = None
