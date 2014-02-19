@@ -89,8 +89,8 @@ At the moment the content of the `brender` folder is quite messy due to refactor
 * `dashboard` containing the dashboard (web interface to talk to the server)
 
 This structure explains also the naming conventions adopted to distinguish the different parts of brender.
-Each folder contains an individual Falsk application. Server and Worker exchange JSON formatted message between each other via HTTP, using GET or POST methods.
-Dashboard connect to the Server only and accepts connection from clients (Browsers).
+Each folder contains an individual Flask application. Server and Worker exchange JSON formatted messages between each other via HTTP, using GET or POST methods.
+Dashboard connects to the Server only and accepts connections from clients (Browsers).
 
 At the moment we have the following addresses:
 
@@ -109,7 +109,7 @@ Frameworks and tools used by the interface are:
 ### User and Developer documentation
 Most of this document will be migrated into the `docs` folder, alongside with the user documentation.
 
-The documentation is made with Sphinx and usees the readthedocs.org theme, so make sure you have it installed. Instructions are available here:
+The documentation is made with Sphinx and uses the readthedocs.org theme, so make sure you have it installed. Instructions are available here:
 
 `https://github.com/snide/sphinx_rtd_theme`
 

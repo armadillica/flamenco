@@ -18,6 +18,6 @@ class Dashboard(Config):
 class Worker(Config):                                                           
     DEBUG=True
     PORT=5000
-    # worker will accept request based on IP (because of his registration process to server)
+    # worker will accept requests based on IP (because of his registration process to server)
     # use HOST='0.0.0.0' to enable worker to serve on all IP when use it in a cluster
     HOST='127.0.0.1'

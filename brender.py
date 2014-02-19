@@ -13,8 +13,8 @@ try:
     Dashboard = config.Dashboard
     Worker = config.Worker
 except ImportError:
-    print('[Warning] No configuration file were found! Unsing default config settings.')
-    print('[Warning] For more info see config.py.example file o README file.')
+    print('[Warning] No configuration file were found! Using default config settings.')
+    print('[Warning] For more info see config.py. example file or README file.')
     Server = None
     Dashboard = None
     Worker = None
