@@ -1,6 +1,6 @@
 import os
 class Config(object):                                                           
-    DATABASE=os.path.join(os.path.dirname(__file__), 'brender.sqlite')
+    DATABASE=os.path.join(os.path.dirname(__file__), 'server', 'brender.sqlite')
     DEBUG=False
 
     BRENDER_SERVER='localhost:9999'                                                   
