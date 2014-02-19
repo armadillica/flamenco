@@ -9,3 +9,5 @@
 venv/
 *.log
 .ropeproject/*
+config.py
+!*/config.py

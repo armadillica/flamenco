@@ -1,63 +1,30 @@
-import socket
-import urllib
-import time
-import sys
-import subprocess
-import platform
-import flask
 import os
-import select
 from threading import Thread
-from flask import Flask, redirect, url_for, request, jsonify
-from uuid import getnode as get_mac_address
+from worker import controllers
 
-BRENDER_SERVER = 'http://brender-server:9999'
-MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
-HOSTNAME = socket.gethostname()  # the hostname of the worker
-SYSTEM = platform.system() + ' ' + platform.release()
-PORT = 5000
-
-app = Flask(__name__)
-app.config.update(
-    DEBUG=True,
+controllers.app.config.update(
+    DEBUG=False,
+    HOST='127.0.0.1',
+    PORT=5000,
+    BRENDER_SERVER='localhost:9999'
 )
 
-def http_request(command, values):
-    params = urllib.urlencode(values)
-    try:
-        urllib.urlopen(BRENDER_SERVER + '/' + command, params)
-        #print(f.read())
-    except IOError:
-        print("[Warning] Could not connect to server to register")
-
-
-# this is going to be an HTTP request to the server with all the info
-# for registering the render node
-def register_worker():
-    import httplib
-    while True:
-        try:
-            connection = httplib.HTTPConnection('127.0.0.1', PORT)
-            connection.request("GET", "/info")
-            break
-        except socket.error:
-            pass
-        time.sleep(0.1)
-
-    http_request('connect', {'mac_address': MAC_ADDRESS,
-                                       'port': PORT,
-                                       'hostname': HOSTNAME,
-                                       'system': SYSTEM})
-
-
-# we use muliprocessing to register the client the worker to the server
+# Use muliprocessing to register the client the worker to the server
 # while the worker app starts up
-def start_worker():
+def serve(user_config=None):
+    config = controllers.app.config
+
+    if user_config:
+        config.from_object(user_config)
+
+	config.update(
+		SERVER_NAME="%s:%s" % (config['HOST'], config['PORT'])
+    )
+    controllers.BRENDER_SERVER = config['BRENDER_SERVER']
+
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-        register_thread = Thread(target=register_worker)
+        register_thread = Thread(target=controllers.register_worker)
         register_thread.setDaemon(False)
         register_thread.start()
 
-    from worker import controllers
-    
-    app.run(host='0.0.0.0')
+    controllers.app.run(config['HOST'], config['PORT'])

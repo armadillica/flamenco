@@ -1,4 +1,3 @@
-from dashboard import app
 import glob
 import json
 import os
@@ -16,7 +15,10 @@ from flask import (flash,
                    url_for,
                    make_response)
 
-BRENDER_SERVER = 'brender-server:9999'
+app = Flask(__name__)
+
+# TODO: find a better way to fill/use this variable
+BRENDER_SERVER = ''
 
 def http_request(ip_address, method, post_params=False):
     # post_params must be a dictionnary

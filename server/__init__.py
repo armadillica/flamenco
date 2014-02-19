@@ -1,26 +1,35 @@
-import urllib
-import time
+from server import controllers
+import model
+import os
 
-from flask import Flask, render_template, jsonify, redirect, url_for, request
-from model import *
-from modules.jobs import jobs_module
-from modules.workers import workers_module
-from modules.shots import shots_module
-from modules.shows import shows_module
-from modules.settings import settings_module
-from modules.stats import stats_module
-
-app = Flask(__name__)
-app.config.update(
-    DEBUG=True,
-    SERVER_NAME='brender-server:9999'
+# This is the default server configuration, in case the user will not provide one.
+# The Application is configured to run on local-host and port 9999
+# The brender.sqlite database will be created inside of the server folder
+controllers.app.config.update(
+    DEBUG=False,
+    HOST='localhost',
+    PORT=9999,
+    DATABASE=os.path.join(os.path.dirname(controllers.__file__), 'brender.sqlite')
 )
 
-from server import controllers
+def serve(user_config=None):
+    config = controllers.app.config
 
-app.register_blueprint(workers_module)
-app.register_blueprint(jobs_module)
-app.register_blueprint(shots_module)
-app.register_blueprint(shows_module)
-app.register_blueprint(settings_module)
-app.register_blueprint(stats_module)
+    if user_config:
+        config.from_object(user_config)
+
+    model.DATABASE = config['DATABASE']
+    model.create_database()
+
+    # Set SEVER_NAME value according to application configuration
+    config.update(
+        SERVER_NAME="%s:%d" % (config['HOST'], config['PORT'])
+    )
+
+    #controllers.app.run(host='0.0.0.0')
+    
+    # Run application
+    controllers.app.run(
+        controllers.app.config['HOST'],
+        controllers.app.config['PORT'],
+    )
