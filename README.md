@@ -53,10 +53,18 @@ At this point you should install peewee as well:
 $ easy_install peewee
 ```
 Psutil is needed for gathering system usage/performance stats on the worker. Ideally psutil is needed only on the workers.
+For Linux :
 
 ```
 $ pip install psutil
 ```
+
+For OS X :
+
+```
+$ ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future pip install psutil
+```
+
 then install
 
 ```
