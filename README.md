@@ -4,20 +4,13 @@
 Development repo for brender 2.0 (the original version 1.0 is here https://github.com/oenvoyage/brender). This is the Flask-based version, a new direction taken after getting some feedback from Sergey and Keir.
 
 ## Developer installation
-Basic requirement at the moment are:
 
-* [Python 2.7](http://www.python.org/download/releases/2.7/)
-* [Flask 0.10](https://pypi.python.org/pypi/Flask/0.10.1)
-* [peewee (ORM library)](https://pypi.python.org/pypi/peewee/2.1.5)
-* [virtualenv (optional)]()
-* [psutil (Process Utility)](https://pypi.python.org/pypi/psutil/1.1.3)
-* [gocept (Cache Library)](https://pypi.python.org/pypi/gocept.cache/0.6.1)
-
-Following the Flask idea, we install the server, workers and dashboard unsing virtualenv. Text copied from the Flask guide.
+In order to install brender, we recommend to set up a Python virtual environment.
 
 ```
 $ sudo easy_install virtualenv
 ```
+
 On Linux this might work better:
 
 ```
@@ -43,40 +36,25 @@ Now you can just enter the following command to get Flask activated in your virt
 
 ## Core dependencies
 
-```
-$ pip install Flask
-```
-
-At this point you should install peewee as well:
+On OSX, in order to prevent some warnings, you should first run:
 
 ```
-$ easy_install peewee
+$ ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future
 ```
+
+Then we just install all the packages required (run this on all systems)
+
+```
+$ pip install -r requirements.txt
+```
+
 Psutil is needed for gathering system usage/performance stats on the worker. Ideally psutil is needed only on the workers.
 
-For Linux :
-
-```
-$ pip install psutil
-```
-
-For OS X :
-
-```
-$ ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future pip install psutil
-```
-
-then install
-
-```
-$ pip install gocept.cache
-```
-
-Congratulations, brender and its dependencies should be correctly installed and ready to run. As a final step we should add a couple of hostnames into the `/ets/hosts` file:
+Congratulations, brender and its dependencies should be correctly installed and ready to run. As a final step we should add a couple of hostnames into the `/etc/hosts` file:
 
 ```
 127.0.0.1	brender-server
-127.0.0.1	brender-flask
+127.0.0.1	brender-dashboard
 ```
 
 ## Running brender
@@ -88,7 +66,7 @@ $ python brender.py worker			# will start the worker
 $ python brender.py dashboard		# will start the dashboard
 ```
 
-If you now visit `http://brender-flask:8888` with your web browser you should see the dashboard!
+If you now visit `http://brender-dashboard:8888` with your web browser you should see the dashboard!
 
 ## Architecture
 At the moment the content of the `brender` folder is quite messy due to refactoring. The important subfolders are:
@@ -105,7 +83,7 @@ At the moment we have the following addresses:
 
 * http://brender-server:9999
 * http://localhost:5000
-* http://brender-flask:8888
+* http://brender-dashboard:8888
 
 
 ### About the web interface
