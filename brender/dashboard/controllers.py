@@ -188,7 +188,7 @@ def shows_add():
         http_request(BRENDER_SERVER, '/shows/add', params)
         return redirect(url_for('shows_index'))
     else:
-        render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
+        render_settings = json.loads(http_request(BRENDER_SERVER, '/settings/render'))
         shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
         settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
         return render_template('add_show_modal.html',
@@ -301,7 +301,7 @@ def shots_add():
 
         return redirect(url_for('shots_index'))
     else:
-        render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
+        render_settings = json.loads(http_request(BRENDER_SERVER, '/settings/render'))
         shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
         settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
         return render_template('add_shot_modal.html',
@@ -358,7 +358,7 @@ def settings():
 
 @app.route('/render-settings/', methods=['GET'])
 def render_settings():
-    render_settings = json.loads(http_request(BRENDER_SERVER, '/render-settings/'))
+    render_settings = json.loads(http_request(BRENDER_SERVER, '/settings/render'))
     return render_template('render_settings.html',
                            title='render settings',
                            render_settings=render_settings)

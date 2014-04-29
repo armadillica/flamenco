@@ -37,7 +37,7 @@ def is_active_show():
         return True
 
 
-@shows.route('/shows/')
+@shows.route('/')
 def index():
     # Here we will add a check to see if we shoud get shows from the
     # local database or if we should query attract for them
@@ -52,7 +52,7 @@ def index():
     return jsonify(shows)
 
 
-@shows.route('/shows/<int:show_id>')
+@shows.route('/<int:show_id>')
 def get_show(show_id):
     try:
         show = Shows.get(Shows.id == show_id)
@@ -68,7 +68,7 @@ def get_show(show_id):
         path_osx=show.path_osx)
 
 
-@shows.route('/shows/add', methods=['GET', 'POST'])
+@shows.route('/add', methods=['GET', 'POST'])
 def shows_add():
     show = Shows.create(
         name=request.form['name'],
@@ -94,7 +94,7 @@ def shows_add():
     return 'done'
 
 
-@shows.route('/shows/delete/<int:show_id>', methods=['GET', 'POST'])
+@shows.route('/delete/<int:show_id>', methods=['GET', 'POST'])
 def shows_delete(show_id):
     show_setting = Settings.get(Settings.name == 'active_show')
     shots_show = Shots.select().where(Shots.show_id == show_id)
@@ -120,7 +120,7 @@ def shows_delete(show_id):
     return 'done'
 
 
-@shows.route('/shows/update', methods=['POST'])
+@shows.route('/update', methods=['POST'])
 def shows_update():
     '''
     not quite sure if we need a try statement here
