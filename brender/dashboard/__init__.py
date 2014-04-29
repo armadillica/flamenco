@@ -8,7 +8,7 @@ controllers.app.config.update(
     BRENDER_SERVER='localhost:9999'
 )
 
-def serve(user_config=None):
+def run(user_config=None):
     config = controllers.app.config
 
     if user_config:

@@ -8,7 +8,7 @@ from flask import Blueprint, render_template, abort, jsonify, request
 from server.model import *
 from server.utils import *
 
-shows_module = Blueprint('shows_module', __name__)
+shows = Blueprint('shows', __name__)
 
 
 def delete_show(show_id):
@@ -37,8 +37,8 @@ def is_active_show():
         return True
 
 
-@shows_module.route('/shows/')
-def shows():
+@shows.route('/shows/')
+def index():
     # Here we will add a check to see if we shoud get shows from the
     # local database or if we should query attract for them
     shows = {}
@@ -52,7 +52,7 @@ def shows():
     return jsonify(shows)
 
 
-@shows_module.route('/shows/<int:show_id>')
+@shows.route('/shows/<int:show_id>')
 def get_show(show_id):
     try:
         show = Shows.get(Shows.id == show_id)
@@ -68,7 +68,7 @@ def get_show(show_id):
         path_osx=show.path_osx)
 
 
-@shows_module.route('/shows/add', methods=['GET', 'POST'])
+@shows.route('/shows/add', methods=['GET', 'POST'])
 def shows_add():
     show = Shows.create(
         name=request.form['name'],
@@ -94,7 +94,7 @@ def shows_add():
     return 'done'
 
 
-@shows_module.route('/shows/delete/<int:show_id>', methods=['GET', 'POST'])
+@shows.route('/shows/delete/<int:show_id>', methods=['GET', 'POST'])
 def shows_delete(show_id):
     show_setting = Settings.get(Settings.name == 'active_show')
     shots_show = Shots.select().where(Shots.show_id == show_id)
@@ -120,7 +120,7 @@ def shows_delete(show_id):
     return 'done'
 
 
-@shows_module.route('/shows/update', methods=['POST'])
+@shows.route('/shows/update', methods=['POST'])
 def shows_update():
     '''
     not quite sure if we need a try statement here
@@ -134,7 +134,7 @@ def shows_update():
     return 'done'
 
 
-@shows_module.route('/render-shows/')
+@shows.route('/render-shows/')
 def render_shows():
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     render_shows_path = os.path.join(path, 'render_shows/')

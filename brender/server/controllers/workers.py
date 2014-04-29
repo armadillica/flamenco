@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, abort, jsonify, request
 from server.model import *
 from server.utils import *
 
-workers_module = Blueprint('workers_module', __name__)
+workers = Blueprint('workers', __name__)
 
 
 def update_worker(worker, worker_data):
@@ -21,8 +21,8 @@ def update_worker(worker, worker_data):
     print('status ', worker.status)
 
 
-@workers_module.route('/workers/')
-def workers():
+@workers.route('/')
+def index():
     workers = {}
 
     for worker in Workers.select():
@@ -54,7 +54,7 @@ def workers():
 
     return jsonify(workers)
 
-@workers_module.route('/workers/update', methods=['POST'])
+@workers.route('/update', methods=['POST'])
 def workers_update():
     status = request.form['status']
     # TODO parse
@@ -65,7 +65,7 @@ def workers_update():
     return "TEMP done updating workers "
 
 
-@workers_module.route('/workers/edit', methods=['POST'])
+@workers.route('/edit', methods=['POST'])
 def workers_edit():
     worker_ids = request.form['id']
     worker_data = {"status": request.form['status'],

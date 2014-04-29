@@ -1,22 +1,21 @@
-from model import *
+from server.model import *
+from flask import (Flask, 
+    Blueprint, 
+    render_template, 
+    jsonify, 
+    redirect, 
+    url_for, 
+    request)
 
-from modules.jobs import jobs_module
-from modules.workers import workers_module
-from modules.shots import shots_module
-from modules.shows import shows_module
-from modules.settings import settings_module
-from modules.stats import stats_module
-from flask import Flask, render_template, jsonify, redirect, url_for, request
+home = Blueprint('home', __name__)
 
-app = Flask(__name__)
-
-@app.route('/')
+@home.route('/')
 def index():
     #add_random_workers(2)
     return jsonify(status='ok')
 
 
-@app.route('/connect', methods=['POST', 'GET'])
+@home.route('/connect', methods=['POST', 'GET'])
 def connect():
     error = None
     if request.method == 'POST':
@@ -74,9 +73,3 @@ def connect():
     # was GET or the credentials were invalid
     return jsonify(error=error)
 
-app.register_blueprint(workers_module)
-app.register_blueprint(jobs_module)
-app.register_blueprint(shots_module)
-app.register_blueprint(shows_module)
-app.register_blueprint(settings_module)
-app.register_blueprint(stats_module)

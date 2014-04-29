@@ -8,11 +8,11 @@ from flask import Blueprint, render_template, abort, jsonify, request
 from server.model import *
 from server.utils import *
 
-settings_module = Blueprint('settings_module', __name__)
+settings = Blueprint('settings', __name__)
 
 
-@settings_module.route('/settings/')
-def settings():
+@settings.route('/')
+def index():
     settings = {}
     for setting in Settings.select():
         settings[setting.name] = setting.value
@@ -20,7 +20,7 @@ def settings():
     return jsonify(settings)
 
 
-@settings_module.route('/settings/update', methods=['POST'])
+@settings.route('/update', methods=['POST'])
 def settings_update():
     for setting_name in request.form:
         try:
@@ -40,7 +40,7 @@ def settings_update():
 
 
 
-@settings_module.route('/settings/<setting_name>')
+@settings.route('/<setting_name>')
 def get_setting(setting_name):
     try:
         setting = Settings.get(Settings.name == setting_name)
@@ -55,7 +55,7 @@ def get_setting(setting_name):
     return setting.value
 
 
-@settings_module.route('/render-settings/')
+@settings.route('/render')
 def render_settings():
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     render_settings_path = os.path.join(path, 'render_settings/')

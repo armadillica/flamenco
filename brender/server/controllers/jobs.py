@@ -11,7 +11,7 @@ from server.model import *
 from server.utils import *
 from workers import *
 
-jobs_module = Blueprint('jobs_module', __name__)
+jobs = Blueprint('jobs', __name__)
 
 
 def create_job(shot_id, chunk_start, chunk_end):
@@ -196,8 +196,8 @@ def stop_jobs(shot_id):
         print(stop_job(job.id))
 
 
-@jobs_module.route('/jobs/')
-def jobs():
+@jobs.route('/')
+def index():
     from decimal import Decimal
     jobs = {}
     percentage_done = 0
@@ -217,7 +217,7 @@ def jobs():
     return jsonify(jobs)
 
 
-@jobs_module.route('/jobs/update', methods=['POST'])
+@jobs.route('/update', methods=['POST'])
 def jobs_update():
     job_id = request.form['id']
     status = request.form['status'].lower()

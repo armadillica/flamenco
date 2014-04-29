@@ -11,7 +11,7 @@ controllers.app.config.update(
 
 # Use muliprocessing to register the client the worker to the server
 # while the worker app starts up
-def serve(user_config=None):
+def run(user_config=None):
     config = controllers.app.config
 
     if user_config:

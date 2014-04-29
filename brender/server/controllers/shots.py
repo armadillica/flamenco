@@ -8,7 +8,7 @@ from server.model import *
 from server.utils import *
 from jobs import *
 
-shots_module = Blueprint('shots_module', __name__)
+shots = Blueprint('shots', __name__)
 
 
 def delete_shot(shot_id):
@@ -21,8 +21,8 @@ def delete_shot(shot_id):
     print('[info] Deleted shot', shot_id)
 
 
-@shots_module.route('/shots/')
-def shots():
+@shots.route('/')
+def index():
     shots = {}
     for shot in Shots.select():
         percentage_done = 0
@@ -46,8 +46,8 @@ def shots():
     return jsonify(shots)
 
 
-@shots_module.route('/shots/browse/', defaults={'path': ''})
-@shots_module.route('/shots/browse/<path:path>',)
+@shots.route('/browse/', defaults={'path': ''})
+@shots.route('/browse/<path:path>',)
 def shots_browse(path):
     """We browse the production folder on the server.
     The path value gets appended to the active_show path value. The result is returned
@@ -93,7 +93,7 @@ def shots_browse(path):
     return jsonify(project_files)
 
 
-@shots_module.route('/shots/update', methods=['POST'])
+@shots.route('/update', methods=['POST'])
 def shot_update():
     status = request.form['status']
     # TODO parse
@@ -104,7 +104,7 @@ def shot_update():
     return "TEMP done updating shots "
 
 
-@shots_module.route('/shots/start', methods=['POST'])
+@shots.route('/start', methods=['POST'])
 def shots_start():
     shot_ids = request.form['id']
     shots_list = list_integers_string(shot_ids)
@@ -126,7 +126,7 @@ def shots_start():
         status='running')
 
 
-@shots_module.route('/shots/stop', methods=['POST'])
+@shots.route('/stop', methods=['POST'])
 def shots_stop():
     shot_ids = request.form['id']
     shots_list = list_integers_string(shot_ids)
@@ -149,7 +149,7 @@ def shots_stop():
         status='stopped')
 
 
-@shots_module.route('/shots/reset', methods=['POST'])
+@shots.route('/reset', methods=['POST'])
 def shots_reset():
     shot_ids = request.form['id']
     shots_list = list_integers_string(shot_ids)
@@ -176,7 +176,7 @@ def shots_reset():
         status='ready')
 
 
-@shots_module.route('/shots/add', methods=['POST'])
+@shots.route('/add', methods=['POST'])
 def shot_add():
     print('adding shot')
 
@@ -205,7 +205,7 @@ def shot_add():
     return 'done'
 
 
-@shots_module.route('/shots/delete', methods=['POST'])
+@shots.route('/delete', methods=['POST'])
 def shots_delete():
     shot_ids = request.form['id']
     shots_list = list_integers_string(shot_ids)

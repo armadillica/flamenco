@@ -24,14 +24,14 @@ if len(sys.argv) < 2:
 elif (sys.argv[1] == 'worker'):
     print 'running worker'
     import worker
-    worker.serve(Worker)
+    worker.run(Worker)
 elif (sys.argv[1] == 'dashboard'):
     print 'running dashboard'
     import dashboard
-    dashboard.serve(Dashboard)
+    dashboard.run(Dashboard)
 elif (sys.argv[1] == 'server'):
     print 'running server'
     import server
-    server.serve(Server)
+    server.run(Server)
 else:
     sys.exit('Usage: %s component-name (i.e. server, dashboard or worker)' % sys.argv[0])

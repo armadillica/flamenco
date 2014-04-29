@@ -5,11 +5,11 @@ from flask import Blueprint, render_template, abort, jsonify, request
 from server.model import *
 from server.utils import *
 
-stats_module = Blueprint('stats_module', __name__)
+stats = Blueprint('stats', __name__)
 
 
-@stats_module.route('/stats/')
-def stats():
+@stats.route('/')
+def index():
     # Here we will aget some basic statistics and infos from the server.
     stats = {
             "total_jobs":Jobs.select().count(),
