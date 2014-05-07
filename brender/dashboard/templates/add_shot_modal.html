@@ -69,8 +69,13 @@
 
 <script>
   $(document).ready(function() {
-
+  {% if shows %}
     $('#brenderModalLabel').text('Add shot for {{shows[settings['active_show']]['name']}}');
+  {% else %}
+    $('#brenderModalLabel').text('Error');
+    $('#addShot').html('Currently no project has been created. Go to the settings section and add one.');
+    $('.modal-footer').children('.btn-primary').hide();
+  {% endif %}
 
     $('#filepath').val($('#modal_variable').val());
 
