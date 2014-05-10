@@ -9,7 +9,7 @@ controllers.app.config.update(
     BRENDER_SERVER='localhost:9999'
 )
 
-# Use muliprocessing to register the client the worker to the server
+# Use multiprocessing to register the client the worker to the server
 # while the worker app starts up
 def run(user_config=None):
     config = controllers.app.config
@@ -17,9 +17,6 @@ def run(user_config=None):
     if user_config:
         config.from_object(user_config)
 
-	config.update(
-		SERVER_NAME="%s:%s" % (config['HOST'], config['PORT'])
-    )
     controllers.BRENDER_SERVER = config['BRENDER_SERVER']
 
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':

@@ -77,13 +77,13 @@
               <a href="{{ url_for('workers') }}">Workers</a>
             </li>
             <li {% if title == 'shots': %} class="active"{% endif %}>
-              <a href="{{ url_for('shots_index') }}">Shots</a>
+              <a href="{{ url_for('shots.index') }}">Shots</a>
             </li>
             <li {% if title == 'jobs': %} class="active"{% endif %}>
               <a href="{{ url_for('jobs_index') }}">Jobs</a>
             </li>
             <li>
-              <a href="#" data-toggle="modal" modal="{{ url_for('shots_add') }}" data-target="#addShotModal">Add Shot</a>
+              <a href="#" data-toggle="modal" modal="{{ url_for('shots.add') }}" data-target="#addShotModal">Add Shot</a>
             </li>
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Server <b class="caret"></b></a>
