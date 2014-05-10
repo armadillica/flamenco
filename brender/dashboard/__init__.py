@@ -19,6 +19,7 @@ def check_connection(host_address):
     except:
         return "offline"
 
+
 def http_request(ip_address, method, post_params=False):
     """Utils function used to communicate with the serve
     """

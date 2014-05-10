@@ -19,7 +19,7 @@ SYSTEM = platform.system() + ' ' + platform.release()
 
 app = Flask(__name__)
 
-BRENDER_SERVER=''
+BRENDER_SERVER = ''
 
 def http_request(command, values):
     params = urllib.urlencode(values)
@@ -116,7 +116,10 @@ def run_blender_in_thread(options):
     (retcode, full_output) = _interactiveReadProcess(process, options["job_id"])
     #flask.g.blender_process = None
     print(full_output)
-    with open('log.log', 'w') as f:
+    script_dir = os.path.dirname(__file__)
+    rel_path = 'render_log_' + HOSTNAME + '.log'
+    abs_file_path = os.path.join(script_dir, rel_path)
+    with open(abs_file_path, 'w') as f:
         f.write(full_output)
 
     http_request('jobs/update', {'id': options['job_id'],
