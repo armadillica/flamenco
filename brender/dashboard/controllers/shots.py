@@ -17,28 +17,10 @@ from flask import (flash,
                    Blueprint)
 
 from dashboard import app
+from dashboard import http_request, list_integers_string
 
 # TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
-
-def http_request(ip_address, method, post_params=False):
-    # post_params must be a dictionnary
-    if post_params:
-        params = urllib.urlencode(post_params)
-        f = urllib.urlopen('http://' + ip_address + method, params)
-    else:
-        f = urllib.urlopen('http://' + ip_address + method)
-
-    print('message sent, reply follows:')
-    return f.read()
-
-
-def list_integers_string(string_list):
-    """Accepts comma separated string list of integers
-    """
-    integers_list = string_list.split(',')
-    integers_list = map(int, integers_list)
-    return integers_list
 
 
 # Name of the Blueprint

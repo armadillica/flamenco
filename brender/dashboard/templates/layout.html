@@ -67,20 +67,20 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{ url_for('index') }}">b<strong>render</strong></a>
+          <a class="navbar-brand" href="{{ url_for('main.index') }}">b<strong>render</strong></a>
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <nav class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="nav navbar-nav navbar-right">
             <li {% if title == 'workers': %} class="active"{% endif %}>
-              <a href="{{ url_for('workers') }}">Workers</a>
+              <a href="{{ url_for('workers.index') }}">Workers</a>
             </li>
             <li {% if title == 'shots': %} class="active"{% endif %}>
               <a href="{{ url_for('shots.index') }}">Shots</a>
             </li>
             <li {% if title == 'jobs': %} class="active"{% endif %}>
-              <a href="{{ url_for('jobs_index') }}">Jobs</a>
+              <a href="{{ url_for('main.jobs_index') }}">Jobs</a>
             </li>
             <li>
               <a href="#" data-toggle="modal" modal="{{ url_for('shots.add') }}" data-target="#addShotModal">Add Shot</a>
@@ -88,13 +88,13 @@
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Server <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ url_for('status') }}">Status</a></li>
+                <li><a href="{{ url_for('settings.status') }}">Status</a></li>
                 <li class="divider"></li>
-                <li><a href="{{ url_for('settings') }}">Settings</a></li>
-                <li><a href="{{ url_for('render_settings') }}">Render Settings</a></li>
-                <li><a href="{{ url_for('shows_index') }}">Shows</a></li>
-                <li><a href="{{ url_for('log') }}">Logs</a></li>
-                <li><a href="{{ url_for('sandbox') }}">Sandbox</a></li>
+                <li><a href="{{ url_for('settings.index') }}">Settings</a></li>
+                <li><a href="{{ url_for('settings.render') }}">Render Settings</a></li>
+                <li><a href="{{ url_for('shows.index') }}">Shows</a></li>
+                <li><a href="{{ url_for('main.log') }}">Logs</a></li>
+                <li><a href="{{ url_for('main.sandbox') }}">Sandbox</a></li>
               </ul>
             </li>
           </ul>

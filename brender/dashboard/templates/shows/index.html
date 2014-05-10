@@ -12,7 +12,7 @@ $('[data-toggle="popover"]').popover({
 {% endblock %}
 {% block body %}
   <h1 class="pull-left page-title">{{title}}</h1>
-  <a href="#" class="btn btn-success pull-right" data-toggle="modal" modal="{{ url_for('shows_add') }}" data-target="#addShowModal">Add Show</a>
+  <a href="#" class="btn btn-success pull-right" data-toggle="modal" modal="{{ url_for('shows.add') }}" data-target="#addShowModal">Add Show</a>
   <div class="clearfix"></div>
   <hr>
   {% for show in shows %}
@@ -35,7 +35,7 @@ $('[data-toggle="popover"]').popover({
             </h3>
         </div>
         <div class="panel-body">
-          <form class="form-horizontal" role="form" method="post" action="{{ url_for('shows_update') }}">
+          <form class="form-horizontal" role="form" method="post" action="{{ url_for('shows.update') }}">
             <input name="show_id" type="hidden" value="{{show}}">
             <div class="form-group">
               <label for="path_server" class="col-sm-2 control-label">Path Server</label>
