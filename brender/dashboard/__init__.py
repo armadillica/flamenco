@@ -1,5 +1,5 @@
 import requests
-from flask import Flask
+from flask import (Flask, response, jsonify)
 
 app = Flask(__name__)
 
@@ -21,19 +21,12 @@ def check_connection(host_address):
 
 
 def http_request(ip_address, method, post_params=False):
-    """Utils function used to communicate with the serve
+    """Utils function used to communicate with the server
     """
-    # post_params must be a dictionnary
     if post_params:
-        #params = urllib.urlencode(post_params)
-        #f = urllib.urlopen('http://' + ip_address + method, params)
         r = requests.post('http://' + ip_address + method, data=post_params)
     else:
-        #f = urllib.urlopen('http://' + ip_address + method)
         r = requests.get('http://' + ip_address + method)
-
-    #print('message sent, reply follows:')
-    #return f.read()
     return r.json()
 
 
@@ -57,9 +50,10 @@ app.register_blueprint(shows, url_prefix='/shows')
 
 
 @app.errorhandler(404)
-def page_not_found(error):
-    return render_template('404_error.html'), 404
-
+def not_found(error):
+    response = jsonify({'code': 404,'message': 'No interface defined for URL'})
+    response.status_code = 404
+    return response
 
 def run(user_config=None):
     config = app.config
