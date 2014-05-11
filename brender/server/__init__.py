@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import (Flask, jsonify)
 from flask.ext.sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -31,6 +31,13 @@ app.register_blueprint(shots, url_prefix='/shots')
 app.register_blueprint(shows, url_prefix='/shows')
 app.register_blueprint(settings, url_prefix='/settings')
 app.register_blueprint(stats, url_prefix='/stats')
+
+
+@app.errorhandler(404)
+def not_found(error):
+    response = jsonify({'code': 404,'message': 'No interface defined for URL'})
+    response.status_code = 404
+    return response
 
 
 def run(user_config=None):

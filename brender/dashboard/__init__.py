@@ -1,5 +1,5 @@
 import requests
-from flask import (Flask, response, jsonify)
+from flask import Flask
 
 app = Flask(__name__)
 
@@ -50,10 +50,9 @@ app.register_blueprint(shows, url_prefix='/shows')
 
 
 @app.errorhandler(404)
-def not_found(error):
-    response = jsonify({'code': 404,'message': 'No interface defined for URL'})
-    response.status_code = 404
-    return response
+def page_not_found(error):
+    return render_template('404_error.html'), 404
+
 
 def run(user_config=None):
     config = app.config
