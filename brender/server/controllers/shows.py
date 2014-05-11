@@ -13,13 +13,11 @@ shows = Blueprint('shows', __name__)
 
 
 def delete_show(show_id):
-    show = Show.query.get(show_id)
-    if show:
-        show.delete_instance()
-        print('[info] Deleted show', show_id)
-    else:
-        print('[error] Show not found')
-        return 'error'
+    show = Show.query.get_or_404(show_id)
+    db.session.delete(show)
+    db.session.commit()
+    print('[info] Deleted show', show_id)
+    return True
 
 
 def is_active_show():
@@ -49,13 +47,8 @@ def index():
 
 @shows.route('/<int:show_id>')
 def get_show(show_id):
-    show = Show.query.get(show_id)
-    if show:
-        print('[Debug] Get show %d') % (show.id)
-    else:
-        print '[Error] Show not found'
-        return 'Show %d not found' % show_id
-
+    show = Show.query.get_or_404(show_id)
+    print('[Debug] Get show %d') % (show.id)
     return jsonify(
         name=show.name,
         path_server=show.path_server,
@@ -87,7 +80,7 @@ def shows_add():
         s_active.value = show.id
     db.session.add(s_active)
     db.session.commit()
-    return 'done'
+    return jsonify(status='done')
 
 
 @shows.route('/delete/<int:show_id>', methods=['GET', 'POST'])
@@ -115,7 +108,7 @@ def shows_delete(show_id):
         db.session.add(show_setting)
         db.session.commit()
 
-    return 'done'
+    return jsonify(status='done')
 
 
 @shows.route('/update', methods=['POST'])
@@ -126,7 +119,7 @@ def shows_update():
     show.path_osx = request.form['path_osx']
     db.session.add(show)
     db.session.commit()
-    return 'done'
+    return jsonify(status='done')
 
 
 @shows.route('/render-shows/')

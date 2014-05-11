@@ -103,7 +103,7 @@ def shot_update():
     shots_list = list_integers_string(shot_ids)
     for shot_id in shots_list:
         print("updating shot %s = %s " % (shot_id, status))
-    return "TEMP done updating shots "
+    return jsonify(status='Shots updated')
 
 
 @shots.route('/start', methods=['POST'])
@@ -120,7 +120,8 @@ def shots_start():
                 print ('[debug] Dispatching jobs')       
         else:
             print('[error] Shot not found')
-            return 'Shot %d not found' % shot_id
+            response = 'Shot %d not found' % shot_id
+            return jsonify(response=response)
     dispatch_jobs()        
     return jsonify(
         shot_ids=shot_ids,
@@ -143,7 +144,8 @@ def shots_stop():
                 db.session.commit()
         else:
             print('[error] Shot not found')
-            return 'Shot %d not found' % shot_id
+            response = 'Shot %d not found' % shot_id
+            return jsonify(response=response)
 
     return jsonify(
         shot_ids=shot_ids,
@@ -158,7 +160,8 @@ def shots_reset():
         shot = Shot.query.get(shot_id)
         if shot:
             if shot.status == 'running':
-                return 'Shot %d is running' % shot_id
+                response = 'Shot %d is running' % shot_id
+                return jsonify(response=response)
             else:
                 shot.current_frame = shot.frame_start
                 shot.status = 'ready'
@@ -169,7 +172,8 @@ def shots_reset():
                 create_jobs(shot)
         else:
             print('[error] Shot not found')
-            return 'Shot %d not found' % shot_id
+            response = 'Shot %d not found' % shot_id
+            return jsonify(response=response)
 
     return jsonify(
         shot_ids=shots_list,
@@ -203,7 +207,7 @@ def shot_add():
 
     dispatch_jobs(shot.id)
 
-    return 'done'
+    return jsonify(status='done')
 
 
 @shots.route('/delete', methods=['POST'])
@@ -216,4 +220,4 @@ def shots_delete():
         delete_jobs(shot_id)
         # then we delete the shot
         delete_shot(shot_id)
-    return 'done'
+    return jsonify(status='done')

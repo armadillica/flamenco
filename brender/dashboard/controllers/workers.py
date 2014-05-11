@@ -21,8 +21,6 @@ workers = Blueprint('workers', __name__)
 @workers.route('/')
 def index():
     workers = http_request(BRENDER_SERVER, '/workers')
-    #print(workers)
-    workers = json.loads(workers)
     workers_list = []
 
     for key, val in workers.iteritems():
@@ -36,7 +34,6 @@ def index():
             "4": val['connection'],
             "5": val['status']
         })
-        #print(v)
 
     entries = json.dumps(workers_list)
 
@@ -50,10 +47,10 @@ def edit():
 
     worker_config = {'system': 'linux',
                      'blender': 'local'}
-    params = urllib.urlencode({'id': worker_ids,
-                               'status': worker_status,
-                               'config': worker_config})
-    urllib.urlopen("http://" + BRENDER_SERVER + "/workers/edit", params)
+    params = {'id': worker_ids,
+                'status': worker_status,
+                'config': worker_config}
+    http_request(BRENDER_SERVER, '/workers/edit', params)
 
     return jsonify(status='ok')
 
@@ -64,7 +61,6 @@ def view(worker_id):
     worker = None
     try:
         workers = http_request(BRENDER_SERVER, '/workers')
-        workers = json.loads(workers)
     except KeyError:
         '''
             there are multiple exceptions that we can use here
@@ -80,8 +76,6 @@ def view(worker_id):
             if worker_id in key:
                 try:
                     worker = http_request(val['ip_address'], '/run_info')
-                    print worker
-                    worker = json.loads(worker)
                     entry = ({"ip_address": val['ip_address'], "worker_id": worker_id, "status": val['status']})
                     worker.update(entry)
                 except IOError:

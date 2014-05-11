@@ -21,8 +21,8 @@ def index():
         params = request.form
         http_request(BRENDER_SERVER, '/settings/update', params)
 
-    shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
-    settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+    shows = http_request(BRENDER_SERVER, '/shows/')
+    settings = http_request(BRENDER_SERVER, '/settings/')
     return render_template('settings/index.html',
                            title='settings',
                            settings=settings,
@@ -31,7 +31,7 @@ def index():
 
 @settings.route('/render/', methods=['GET'])
 def render():
-    render_settings = json.loads(http_request(BRENDER_SERVER, '/settings/render'))
+    render_settings = http_request(BRENDER_SERVER, '/settings/render')
     return render_template('settings/render.html',
                            title='render settings',
                            render_settings=render_settings)
@@ -41,7 +41,7 @@ def render():
 def status():
     try:
         server_status = check_connection(BRENDER_SERVER)
-        server_stats = json.loads(http_request(BRENDER_SERVER, '/stats'))
+        server_stats = http_request(BRENDER_SERVER, '/stats')
     except :
         server_status = 'offline'
         server_stats = ''

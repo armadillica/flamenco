@@ -67,7 +67,7 @@ def workers_update():
     workers_list = list_integers_string(workers_ids)
     for worker_id in workers_list:
         print("updating worker %s = %s " % (worker_id, status))
-    return "TEMP done updating workers "
+    return jsonify(status='done')
 
 
 @workers.route('/edit', methods=['POST'])

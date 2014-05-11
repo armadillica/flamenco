@@ -20,9 +20,7 @@ shows = Blueprint('shows', __name__)
 @shows.route('/')
 def index():
     shows = http_request(BRENDER_SERVER, '/shows')
-
-    shows = json.loads(shows)
-    settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+    settings = http_request(BRENDER_SERVER, '/settings/')
 
     return render_template('shows/index.html', shows=shows, settings=settings, title='shows')
 
@@ -61,9 +59,9 @@ def add():
         http_request(BRENDER_SERVER, '/shows/add', params)
         return redirect(url_for('shows.index'))
     else:
-        render_settings = json.loads(http_request(BRENDER_SERVER, '/settings/render'))
-        shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
-        settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+        render_settings = http_request(BRENDER_SERVER, '/settings/render')
+        shows = http_request(BRENDER_SERVER, '/shows/')
+        settings = http_request(BRENDER_SERVER, '/settings/')
         return render_template('shows/add_modal.html',
                         render_settings=render_settings,
                         settings=settings,

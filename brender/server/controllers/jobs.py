@@ -258,4 +258,4 @@ def jobs_update():
 
     dispatch_jobs()
 
-    return "job updated"
+    return jsonify(reponse='Job Updated')

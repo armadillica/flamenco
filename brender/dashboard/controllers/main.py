@@ -2,7 +2,6 @@ import glob
 import json
 import os
 import time
-import urllib
 from os import listdir
 from os.path import isfile, join, abspath
 from glob import iglob
@@ -38,8 +37,6 @@ def index():
 @main.route('/jobs/')
 def jobs_index():
     jobs = http_request(BRENDER_SERVER, '/jobs')
-    #print(shots)
-    jobs = json.loads(jobs)
     jobs_list = []
 
     for key, val in jobs.iteritems():

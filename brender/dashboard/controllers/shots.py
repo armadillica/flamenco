@@ -29,8 +29,6 @@ shots = Blueprint('shots', __name__)
 @shots.route('/')
 def index():
     shots = http_request(BRENDER_SERVER, '/shots')
-    #print(shots)
-    shots = json.loads(shots)
     shots_list = []
 
     for key, val in shots.iteritems():
@@ -56,7 +54,6 @@ def shot(shot_id):
     shot = None
     try:
         shots = http_request(BRENDER_SERVER, '/shots')
-        shots = json.loads(shots)
     except KeyError:
         print 'shot doesnt exist'
     if shot_id in shots:
@@ -76,7 +73,7 @@ def shot(shot_id):
 def shots_browse(path):
     path = os.path.join('/shots/browse/', path)
     print path
-    path_data = json.loads(http_request(BRENDER_SERVER, path))
+    path_data = http_request(BRENDER_SERVER, path)
     return render_template('browse_modal.html',
         # items=path_data['items'],
         items_list=path_data['items_list'],
@@ -130,9 +127,9 @@ def add():
 
         return redirect(url_for('shots.index'))
     else:
-        render_settings = json.loads(http_request(BRENDER_SERVER, '/settings/render'))
-        shows = json.loads(http_request(BRENDER_SERVER, '/shows/'))
-        settings = json.loads(http_request(BRENDER_SERVER, '/settings/'))
+        render_settings = http_request(BRENDER_SERVER, '/settings/render')
+        shows = http_request(BRENDER_SERVER, '/shows/')
+        settings = http_request(BRENDER_SERVER, '/settings/')
         return render_template('shots/add_modal.html',
                             render_settings=render_settings,
                             settings=settings,

@@ -1,4 +1,4 @@
-import urllib
+import requests
 from flask import Flask
 
 app = Flask(__name__)
@@ -25,13 +25,16 @@ def http_request(ip_address, method, post_params=False):
     """
     # post_params must be a dictionnary
     if post_params:
-        params = urllib.urlencode(post_params)
-        f = urllib.urlopen('http://' + ip_address + method, params)
+        #params = urllib.urlencode(post_params)
+        #f = urllib.urlopen('http://' + ip_address + method, params)
+        r = requests.post('http://' + ip_address + method, data=post_params)
     else:
-        f = urllib.urlopen('http://' + ip_address + method)
+        #f = urllib.urlopen('http://' + ip_address + method)
+        r = requests.get('http://' + ip_address + method)
 
-    print('message sent, reply follows:')
-    return f.read()
+    #print('message sent, reply follows:')
+    #return f.read()
+    return r.json()
 
 
 def list_integers_string(string_list):

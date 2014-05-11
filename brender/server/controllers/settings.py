@@ -38,7 +38,7 @@ def settings_update():
             (setting_name, request.form[setting_name])
         db.session.add(setting)
         db.session.commit()
-    return 'done'
+    return jsonify(reponse='updated')
 
 
 
@@ -47,9 +47,10 @@ def get_setting(setting_name):
     setting = Setting.query.filter_by(name = setting_name)
     if setting:
         print('[Debug] Get Settings %s %s') % (setting.name, setting.value)
-        return setting.value
+        return setting
     else:
-        return 'Setting %s not found' % setting_name 
+        reponse = 'Setting %s not found' % setting_name 
+        return jsonify(response = response)
 
 
 @settings.route('/render')
