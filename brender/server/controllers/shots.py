@@ -7,24 +7,26 @@ from os.path import isfile, isdir, join, abspath, dirname
 from server.model import *
 from server.utils import *
 from jobs import *
+from server import db
 
 shots = Blueprint('shots', __name__)
 
 
 def delete_shot(shot_id):
-    try:
-        shot = Shots.get(Shots.id == shot_id)
-    except Shots.DoesNotExist:
+    shot = Shot.query.get(shot_id)
+    if shot:
+        db.session.delete(shot)
+        db.session.commit()
+        print('[info] Deleted shot', shot_id)
+    else:
         print('[error] Shot not found')
         return 'error'
-    shot.delete_instance()
-    print('[info] Deleted shot', shot_id)
 
 
 @shots.route('/')
 def index():
     shots = {}
-    for shot in Shots.select():
+    for shot in Shot.query.all():
         percentage_done = 0
         frame_count = shot.frame_end - shot.frame_start + 1
         current_frame = shot.current_frame - shot.frame_start + 1
@@ -40,7 +42,7 @@ def index():
                           "frame_end": shot.frame_end,
                           "current_frame": shot.current_frame,
                           "status": shot.status,
-                          "shot_name": shot.shot_name,
+                          "shot_name": shot.name,
                           "percentage_done": percentage_done,
                           "render_settings": shot.render_settings}
     return jsonify(shots)
@@ -53,8 +55,8 @@ def shots_browse(path):
     The path value gets appended to the active_show path value. The result is returned
     in JSON format.
     """
-    active_show = Settings.get(Settings.name == 'active_show')
-    active_show = Shows.get(Shows.id == active_show.value)
+    active_show = Setting.query.filter_by(name = 'active_show').first()
+    active_show = Show.query.get(active_show.value)
 
     # path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     # render_settings_path = os.path.join(path, 'render_settings/')
@@ -109,18 +111,17 @@ def shots_start():
     shot_ids = request.form['id']
     shots_list = list_integers_string(shot_ids)
     for shot_id in shots_list:
-        try:
-            shot = Shots.get(Shots.id == shot_id)
-        except Shots.DoesNotExist:
+        shot = Shot.query.get(shot_id)
+        if shot:
+            if shot.status != 'running':
+                shot.status = 'running'
+                db.session.add(shot)
+                db.session.commit()
+                print ('[debug] Dispatching jobs')       
+        else:
             print('[error] Shot not found')
             return 'Shot %d not found' % shot_id
-
-        if shot.status != 'running':
-            shot.status = 'running'
-            shot.save()
-            print ('[debug] Dispatching jobs')
-            dispatch_jobs()
-
+    dispatch_jobs()        
     return jsonify(
         shot_ids=shot_ids,
         status='running')
@@ -133,16 +134,16 @@ def shots_stop():
     for shot_id in shots_list:
         print '[info] Working on shot', shot_id
         # first we delete the associated jobs (no foreign keys)
-        try:
-            shot = Shots.get(Shots.id == shot_id)
-        except Shots.DoesNotExist:
+        shot = Shot.query.get(shot_id)
+        if shot:
+            if shot.status != 'stopped':
+                stop_jobs(shot.id)
+                shot.status = 'stopped'
+                db.session.add(shot)
+                db.session.commit()
+        else:
             print('[error] Shot not found')
             return 'Shot %d not found' % shot_id
-
-        if shot.status != 'stopped':
-            stop_jobs(shot.id)
-            shot.status = 'stopped'
-            shot.save()
 
     return jsonify(
         shot_ids=shot_ids,
@@ -154,22 +155,21 @@ def shots_reset():
     shot_ids = request.form['id']
     shots_list = list_integers_string(shot_ids)
     for shot_id in shots_list:
-        try:
-            shot = Shots.get(Shots.id == shot_id)
-        except Shots.DoesNotExist:
-            shot = None
+        shot = Shot.query.get(shot_id)
+        if shot:
+            if shot.status == 'running':
+                return 'Shot %d is running' % shot_id
+            else:
+                shot.current_frame = shot.frame_start
+                shot.status = 'ready'
+                db.session.add(shot)
+                db.session.commit()
+
+                delete_jobs(shot.id)
+                create_jobs(shot)
+        else:
             print('[error] Shot not found')
             return 'Shot %d not found' % shot_id
-
-        if shot.status == 'running':
-            return 'Shot %d is running' % shot_id
-        else:
-            shot.current_frame = shot.frame_start
-            shot.status = 'ready'
-            shot.save()
-
-            delete_jobs(shot.id)
-            create_jobs(shot)
 
     return jsonify(
         shot_ids=shots_list,
@@ -180,19 +180,20 @@ def shots_reset():
 def shot_add():
     print('adding shot')
 
-    shot = Shots.create(
-        attract_shot_id=1,
+    shot = Shot(
         show_id=int(request.form['show_id']),
         frame_start=int(request.form['frame_start']),
         frame_end=int(request.form['frame_end']),
         chunk_size=int(request.form['chunk_size']),
         current_frame=int(request.form['frame_start']),
         filepath=request.form['filepath'],
-        shot_name=request.form['shot_name'],
+        name=request.form['shot_name'],
         render_settings=request.form['render_settings'],
         status='running',
-        priority=10,
-        owner='fsiddi')
+        priority=10)
+
+    db.session.add(shot)
+    db.session.commit()
 
     print('parsing shot to create jobs')
 

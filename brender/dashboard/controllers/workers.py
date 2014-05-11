@@ -12,9 +12,7 @@ from flask import (flash,
 from dashboard import app
 from dashboard import http_request, list_integers_string
 
-# TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
-
 
 # Name of the Blueprint
 workers = Blueprint('workers', __name__)

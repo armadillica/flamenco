@@ -8,13 +8,15 @@ from flask import Blueprint, render_template, abort, jsonify, request
 from server.model import *
 from server.utils import *
 
+from server import db
+
 settings = Blueprint('settings', __name__)
 
 
 @settings.route('/')
 def index():
     settings = {}
-    for setting in Settings.select():
+    for setting in Setting.query.all():
         settings[setting.name] = setting.value
    
     return jsonify(settings)
@@ -23,36 +25,31 @@ def index():
 @settings.route('/update', methods=['POST'])
 def settings_update():
     for setting_name in request.form:
-        try:
-            setting = Settings.get(Settings.name == setting_name)
+        setting = Setting.query.filter_by(name = setting_name).first()
+        if setting:
             setting.value = request.form[setting_name]
-            setting.save()
             print('[Debug] Updating %s %s') % \
             (setting_name, request.form[setting_name])
-        except Settings.DoesNotExist:
-            setting = Settings.create(
+        else:
+            setting = Setting(
                 name=setting_name,
                 value=request.form[setting_name])
-            setting.save()
             print('[Debug] Creating %s %s') % \
             (setting_name, request.form[setting_name])
+        db.session.add(setting)
+        db.session.commit()
     return 'done'
 
 
 
 @settings.route('/<setting_name>')
 def get_setting(setting_name):
-    try:
-        setting = Settings.get(Settings.name == setting_name)
+    setting = Setting.query.filter_by(name = setting_name)
+    if setting:
         print('[Debug] Get Settings %s %s') % (setting.name, setting.value)
-    except Exception, e:
-        print(e, '--> Setting not found')
-        return 'Setting %s not found' % setting_name
-
-    # a = json.loads(setting['value'])
-    # print(a)
-
-    return setting.value
+        return setting.value
+    else:
+        return 'Setting %s not found' % setting_name 
 
 
 @settings.route('/render')

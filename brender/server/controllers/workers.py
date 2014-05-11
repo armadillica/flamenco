@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, abort, jsonify, request
 
-from server.model import *
+from server.model import Worker
 from server.utils import *
+
+from server import db
 
 workers = Blueprint('workers', __name__)
 
@@ -9,7 +11,8 @@ workers = Blueprint('workers', __name__)
 def update_worker(worker, worker_data):
     if worker.connection != 'offline':
         worker.connection = 'online'
-        worker.save()
+        db.session.add(worker)
+        db.session.commit()
 
     http_request(worker.ip_address, '/update', worker_data)
 
@@ -17,7 +20,8 @@ def update_worker(worker, worker_data):
         print(key, val)
         if val:
             setattr(worker, key, val)
-    worker.save()
+    db.session.add(worker)
+    db.session.commit()
     print('status ', worker.status)
 
 
@@ -25,7 +29,7 @@ def update_worker(worker, worker_data):
 def index():
     workers = {}
 
-    for worker in Workers.select():
+    for worker in Worker.query.all():
         try:
             f = urllib.urlopen('http://' + worker.ip_address)
             worker.connection = 'online'
@@ -48,9 +52,10 @@ def index():
     """
 
     for k, v in workers.iteritems():
-        update_query = Workers.update(connection=v['connection']).\
-            where(Workers.id == v['id'])
-        update_query.execute()
+        worker = Worker.query.get(v['id'])
+        worker.connection = v['connection']
+        db.session.add(worker)
+        db.session.commit()
 
     return jsonify(workers)
 
@@ -73,7 +78,7 @@ def workers_edit():
 
     if worker_ids:
         for worker_id in list_integers_string(worker_ids):
-            worker = Workers.get(Workers.id == worker_id)
+            worker = Worker.query.get(worker_id)
             update_worker(worker, worker_data)
 
         return jsonify(result='success')

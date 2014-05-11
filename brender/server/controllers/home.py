@@ -1,4 +1,6 @@
-from server.model import *
+import urllib
+from server.model import Worker
+from server import db
 from flask import (Flask, 
     Blueprint, 
     render_template, 
@@ -15,61 +17,50 @@ def index():
     return jsonify(status='ok')
 
 
-@home.route('/connect', methods=['POST', 'GET'])
+@home.route('/connect', methods=['POST'])
 def connect():
-    error = None
-    if request.method == 'POST':
-        #return str(request.json['foo'])
+    # We assemble the remote_addr value with
+    # the port value sent from the worker
+    ip_address = request.remote_addr + ':' + str(request.form['port'])
+    mac_address = request.form['mac_address']
+    hostname = request.form['hostname']
+    system = request.form['system']
 
-        #ip_address = request.form['ip_address']
+    worker = Worker.query.filter_by(mac_address=mac_address).first()
 
-        # We assemble the remote_addr value with
-        # the port value sent from the worker
-        ip_address = request.remote_addr + ':' + str(request.form['port'])
-        mac_address = request.form['mac_address']
-        hostname = request.form['hostname']
-        system = request.form['system']
+    if worker:
+        print('This worker connected before, updating IP address')
+        worker.ip_address = ip_address
+        db.session.add(worker)
+        db.session.commit()
 
-        try:
-            worker = Workers.get(Workers.mac_address == mac_address)
-        except Exception, e:
-            print(e, '--> Worker not found')
-            worker = None
+    else:
+        print('This worker never connected before')
+        # create new worker object with some defaults.
+        # Later on most of these values will be passed as JSON object
+        # during the first connection
 
-        if worker:
-            print('This worker connected before, updating IP address')
-            worker.ip_address = ip_address
-            worker.save()
+        worker = Worker(hostname=hostname,
+                        mac_address=mac_address,
+                        status='enabled',
+                        connection='online',
+                        warning=False,
+                        config='{}',
+                        system=system,
+                        ip_address=ip_address)
 
-        else:
-            print('This worker never connected before')
-            # create new worker object with some defaults.
-            # Later on most of these values will be passed as JSON object
-            # during the first connection
+        db.session.add(worker)
+        db.session.commit()
 
-            worker = Workers.create(hostname=hostname,
-                                    mac_address=mac_address,
-                                    status='enabled',
-                                    connection='online',
-                                    warning=False,
-                                    config='{}',
-                                    system=system,
-                                    ip_address=ip_address)
+        print('Worker has been added')
 
-            print('Worker has been added')
+    #params = urllib.urlencode({'worker': 1, 'eggs': 2})
 
-        #params = urllib.urlencode({'worker': 1, 'eggs': 2})
-
-        # we verify the identity of the worker (will check on database)
-        try:
-            f = urllib.urlopen('http://' + ip_address)
-            print('The following worker just connected:')
-            print(f.read())
-            return 'You are now connected to the server'
-        except:
-            error = "server could not connect to worker with ip=" + ip_address
-
-    # the code below is executed if the request method
-    # was GET or the credentials were invalid
-    return jsonify(error=error)
-
+    # we verify the identity of the worker (will check on database)
+    try:
+        f = urllib.urlopen('http://' + ip_address)
+        print('The following worker just connected:')
+        print(f.read())
+        return 'You are now connected to the server'
+    except:
+        error = "server could not connect to worker with ip=" + ip_address

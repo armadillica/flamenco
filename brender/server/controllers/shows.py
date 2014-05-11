@@ -7,33 +7,28 @@ from flask import Blueprint, render_template, abort, jsonify, request
 
 from server.model import *
 from server.utils import *
+from server import db
 
 shows = Blueprint('shows', __name__)
 
 
 def delete_show(show_id):
-    try:
-        show = Shows.get(Shows.id == show_id)
-    except Shows.DoesNotExist:
+    show = Show.query.get(show_id)
+    if show:
+        show.delete_instance()
+        print('[info] Deleted show', show_id)
+    else:
         print('[error] Show not found')
         return 'error'
-    show.delete_instance()
-    print('[info] Deleted show', show_id)
-
-'''
-Checks to see if a show is set as active_show
-if yes then True
-if no then False
-'''
 
 
 def is_active_show():
-    active = Settings.get(Settings.name == 'active_show')
-    if active.value == 'None':
+    active = Setting.query.filter_by(name = 'active_show').first()
+    if active:
         print '[Debug] Active show is not set'
         return False
     else:
-        print '[Debug] Active show is currently %s' % Shows.get(Shows.id == active.value).name
+        print '[Debug] Active show is currently %s' % Show.query.get(active.value).name
         return True
 
 
@@ -42,7 +37,7 @@ def index():
     # Here we will add a check to see if we shoud get shows from the
     # local database or if we should query attract for them
     shows = {}
-    for show in Shows.select():
+    for show in Show.query.all():
         shows[show.id] = dict(
             name=show.name,
             path_server=show.path_server,
@@ -54,10 +49,10 @@ def index():
 
 @shows.route('/<int:show_id>')
 def get_show(show_id):
-    try:
-        show = Shows.get(Shows.id == show_id)
+    show = Show.query.get(show_id)
+    if show:
         print('[Debug] Get show %d') % (show.id)
-    except Shows.DoesNotExist:
+    else:
         print '[Error] Show not found'
         return 'Show %d not found' % show_id
 
@@ -70,12 +65,13 @@ def get_show(show_id):
 
 @shows.route('/add', methods=['GET', 'POST'])
 def shows_add():
-    show = Shows.create(
+    show = Show(
         name=request.form['name'],
         path_server=request.form['path_server'],
         path_linux=request.form['path_linux'],
         path_osx=request.form['path_osx'])
-    show.save()
+    db.session.add(show)
+    db.session.commit()
 
     is_active = is_active_show()  # Return True or False
     if is_active == 'False':
@@ -84,25 +80,26 @@ def shows_add():
         set_option = request.form['set_show_option']
 
     if not is_active and set_option == 'False':
-        s_active = Settings.get(Settings.name == 'active_show')
+        s_active = Setting.query.filter_by(name = 'active_show').first()
         s_active.value = show.id
-        s_active.save()
     elif set_option == 'True':
-        s_active = Settings.get(Settings.name == 'active_show')
+        s_active = Setting.query.filter_by(name = 'active_show').first()
         s_active.value = show.id
-        s_active.save()
+    db.session.add(s_active)
+    db.session.commit()
     return 'done'
 
 
 @shows.route('/delete/<int:show_id>', methods=['GET', 'POST'])
 def shows_delete(show_id):
-    show_setting = Settings.get(Settings.name == 'active_show')
-    shots_show = Shots.select().where(Shots.show_id == show_id)
+    show_setting = Setting.query.filter_by(name = 'active_show').first()
+    shots_show = Shot.query.filter_by(show_id = show_id).all()
     for shot_show in shots_show:
         print '[Debug] Deleting shot (%s) for show %s ' % (shot_show.shot_name, shot_show.show_id)
-        shot_show.delete_instance()
+        db.session.delete(shot_show)
+        db.session.commit()
     delete_show(show_id)
-    shows = Shows.select()
+    shows = Show.query.all()
     compare_show_ids = []
     next = ''
     for a in shows:
@@ -115,22 +112,20 @@ def shows_delete(show_id):
     if int(show_id) is int(show_setting.value):
         show_setting.value = next
         print '[Debug] Show was active removing show from being active_show'
-        show_setting.save()
+        db.session.add(show_setting)
+        db.session.commit()
 
     return 'done'
 
 
 @shows.route('/update', methods=['POST'])
 def shows_update():
-    '''
-    not quite sure if we need a try statement here
-    because if we are updating a show it should exist right? lol?
-    '''
-    show = Shows.get(Shows.id == request.form['show_id'])
+    show = Show.query.get(request.form['show_id'])
     show.path_server = request.form['path_server']
     show.path_linux = request.form['path_linux']
     show.path_osx = request.form['path_osx']
-    show.save()
+    db.session.add(show)
+    db.session.commit()
     return 'done'
 
 

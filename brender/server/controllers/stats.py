@@ -1,23 +1,18 @@
-import json
+from flask import Blueprint, jsonify
+from server.model import Job, Shot, Show
 
-from flask import Blueprint, render_template, abort, jsonify, request
-
-from server.model import *
-from server.utils import *
+from server import db
 
 stats = Blueprint('stats', __name__)
 
 
 @stats.route('/')
 def index():
-    # Here we will aget some basic statistics and infos from the server.
+    # Here we will get some basic statistics and infos from the server.
     stats = {
-            "total_jobs":Jobs.select().count(),
-            "total_shots":Shots.select().count(),
-            "total_shows":Shows.select().count(),
+            "total_jobs":Job.query.count(),
+            "total_shots":Shot.query.count(),
+            "total_shows":Show.query.count(),
             }
-
-    #b = Jobs.select().count()
-
 
     return jsonify(server_stats=stats)

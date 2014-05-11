@@ -10,18 +10,21 @@ from flask import (abort,
 from server.model import *
 from server.utils import *
 from workers import *
+from server import db
 
 jobs = Blueprint('jobs', __name__)
 
 
 def create_job(shot_id, chunk_start, chunk_end):
-    Jobs.create(shot_id=shot_id,
-                worker_id=12,
-                chunk_start=chunk_start,
-                chunk_end=chunk_end,
-                current_frame=chunk_start,
-                status='ready',
-                priority=50)
+    job = Job(shot_id=shot_id,
+        worker_id=12,
+        chunk_start=chunk_start,
+        chunk_end=chunk_end,
+        current_frame=chunk_start,
+        status='ready',
+        priority=50)
+    db.session.add(job)
+    db.session.commit()
 
 
 def create_jobs(shot):
@@ -78,22 +81,18 @@ def start_job(worker, job):
     way to get the additional shot information - should be done with join)
     """
 
-    shot = Shots.get(Shots.id == job.shot_id)
-    show = Shows.get(Shows.id == shot.show_id)
+    shot = Shot.query.filter_by(id = job.shot_id).first()
+    show = Show.query.filter_by(id = shot.show_id).first()
 
     filepath = shot.filepath
 
     if 'Darwin' in worker.system:
-        setting_blender_path = Settings.get(
-            Settings.name == 'blender_path_osx')
-        setting_render_settings = Settings.get(
-            Settings.name == 'render_settings_path_osx')
+        setting_blender_path = Setting.query.filter_by(name='blender_path_osx').first()
+        setting_render_settings = Setting.query.filter_by(name='render_settings_path_osx').first()
         filepath = os.path.join(show.path_osx, shot.filepath)
     else:
-        setting_blender_path = Settings.get(
-            Settings.name == 'blender_path_linux')
-        setting_render_settings = Settings.get(
-            Settings.name == 'render_settings_path_linux')
+        setting_blender_path = Setting.query.filter_by(name='blender_path_linux').first()
+        setting_render_settings = Setting.query.filter_by(name='render_settings_path_linux').first()
         filepath = os.path.join(show.path_linux, shot.filepath)
 
     blender_path = setting_blender_path.value
@@ -124,18 +123,37 @@ def start_job(worker, job):
     #  get a reply from the worker (running, error, etc)
 
     job.status = 'running'
-    job.save()
+    db.session.add(job)
 
     shot.current_frame = job.chunk_end
-    shot.save()
+    db.session.add(shot)
+    db.session.commit()
 
     return 'Job started'
 
 
 def dispatch_jobs(shot_id = None):
-    for worker in Workers.select().where(
-        (Workers.status == 'enabled') & (Workers.connection == 'online')):
+    workers = Worker.query.\
+        filter_by(status='enabled').\
+        filter_by(connection='online').\
+        all()
+    for worker in workers:
         # pick the job with the highest priority (it means the lowest number)
+
+        job = Job.query.\
+            filter_by(status='ready').\
+            order_by(Job.priority.desc()).\
+            first()
+
+        if job:
+            job.status = 'running'
+            db.session.add(job)
+            db.session.commit()
+            start_job(worker, job)
+        else:
+            print '[error] Job does not exist'
+
+        """Legacy code
         job = None # will figure out another way
         try:
             job = Jobs.select().where(
@@ -148,12 +166,13 @@ def dispatch_jobs(shot_id = None):
             print '[error] Job does not exist'
         if job:
             start_job(worker, job)
+        """
 
 
 def delete_job(job_id):
     # At the moment this function is not used anywhere
     try:
-        job = Jobs.get(Jobs.id == job_id)
+        job = Jobs.query.get(job_id)
     except Exception, e:
         print(e)
         return 'error'
@@ -162,14 +181,12 @@ def delete_job(job_id):
 
 
 def delete_jobs(shot_id):
-    delete_query = Jobs.delete().where(Jobs.shot_id == shot_id)
-    delete_query.execute()
+    jobs = Job.query.filter_by(shot_id=shot_id).delete()
     print('All jobs deleted for shot', shot_id)
 
 
 def start_jobs(shot_id):
-    """
-    [DEPRECATED] We start all the jobs for a specific shot
+    """[DEPRECATED] We start all the jobs for a specific shot
     """
     for job in Jobs.select().where(Jobs.shot_id == shot_id,
                                    Jobs.status == 'ready'):
@@ -177,22 +194,25 @@ def start_jobs(shot_id):
 
 
 def stop_job(job_id):
+    """Stop a single job
     """
-    Stop a single job
-    """
-    job = Jobs.get(Jobs.id == job_id)
+    job = Job.query.get(job_id)
     job.status = 'ready'
-    job.save()
+    db.session.add(job)
+    db.session.commit()
 
     return 'Job stopped'
 
 
 def stop_jobs(shot_id):
+    """We stop all the jobs for a specific shot
     """
-    We stop all the jobs for a specific shot
-    """
-    for job in Jobs.select().where(Jobs.shot_id == shot_id,
-                                   Jobs.status == 'running'):
+    jobs = Job.query.\
+        filter_by(shot_id = shot_id).\
+        filter_by(status = 'running').\
+        all()
+
+    for job in jobs:
         print(stop_job(job.id))
 
 
@@ -201,7 +221,7 @@ def index():
     from decimal import Decimal
     jobs = {}
     percentage_done = 0
-    for job in Jobs.select():
+    for job in Job.query.all():
 
         frame_count = job.chunk_end - job.chunk_start + 1
         current_frame = job.current_frame - job.chunk_start + 1
@@ -222,10 +242,10 @@ def jobs_update():
     job_id = request.form['id']
     status = request.form['status'].lower()
     if status in ['finished']:
-        job = Jobs.get(Jobs.id == job_id)
-        shot = Shots.get(Shots.id == job.shot_id)
+        job = Job.query.get(job_id)
+        shot = Shot.query.get(job.shot_id)
         job.status = 'finished'
-        job.save()
+        db.session.add(shot)
 
         if job.chunk_end == shot.frame_end:
             shot.status = 'completed'
@@ -233,7 +253,8 @@ def jobs_update():
             # frame rendered
             # if job.current_frame == shot.frame_end:
             #     shot.status = 'finished'
-            shot.save()
+            db.session.add(shot)
+        db.session.commit()
 
     dispatch_jobs()
 

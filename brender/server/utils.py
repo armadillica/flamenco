@@ -30,3 +30,59 @@ def frame_percentage(item):
         current_frame = item.current_frame - item.frame_start + 1
         percentage_done = 100 / frame_count * current_frame
         return percentage_done
+
+
+# def create_tables():
+#     """
+#     Create the required databases during installation.
+
+#     Based on the classes specified above. This function is embedded in
+#     the install_brender function.
+#     """
+#     Workers.create_table()
+#     Shows.create_table()
+#     Shots.create_table()
+#     Jobs.create_table()
+#     Settings.create_table()
+
+
+# def add_random_workers(workers_amount):
+#     """
+#     Create the specified amount of workers.
+
+#     Assigns some random values as hostname and mac_address. Used only
+#     for testing purposes.
+#     TODO: make sure that all the properties of a worker are added here
+#     """
+#     for i in range(workers_amount):
+#         Workers.create(mac_address=123 + i,
+#                        hostname='worker_' + str(i),
+#                        status='enabled',
+#                        ip_address='192.168.1.' + str(i),
+#                        connection='offline',
+#                        warning=False,
+#                        config='JSON string')
+#     print("Database filled with " + str(workers_amount) + " workers.")
+
+
+# def create_database():
+#     """
+#     Checks if the database exists
+
+#     We check for the existence of the file on disc. If the file is not
+#     found we create one and we populate it with the brender schema from
+#     this file.
+
+#     """
+#     try:
+#         with open(DATABASE):
+#             # connect to database found in DATABASE
+#             db.init(DATABASE)
+#     except IOError:
+#         print('[Info] Creating brender.sqlite database')
+#         open(DATABASE, 'a').close()
+#         # before creating tables we should connect to it
+#         db.init(DATABASE)
+#         create_tables()
+#         print('[Info] Database created')
+
