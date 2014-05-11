@@ -50,9 +50,9 @@ def run(user_config=None):
     db.create_all()
 
     # Set SEVER_NAME value according to application configuration
-    config.update(
-        SERVER_NAME="%s:%d" % (config['HOST'], config['PORT'])
-    )
+    # config.update(
+    #     SERVER_NAME="%s:%d" % (config['HOST'], config['PORT'])
+    # )
 
     # Run application
     app.run(
