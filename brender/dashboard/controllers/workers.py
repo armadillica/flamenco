@@ -99,12 +99,11 @@ def view(worker_id):
                         'hostname': 'N/A',
                         'system': 'N/A',
                         'mac_address': 'N/A',
-                        'worker_blender_cpu_usage': 'N/A',
-                        'worker_blender_mem_usage': 'N/A'
+                        # 'worker_blender_cpu_usage': 'N/A',
+                        # 'worker_blender_mem_usage': 'N/A'
                     }
 
     if worker:
         return render_template('workers/view.html', worker=worker)
     else:
         return make_response('worker ' + worker_id + ' doesnt exist')
-

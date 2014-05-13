@@ -153,6 +153,7 @@ def update():
 
 
 def online_stats(system_stat):
+    '''
     if 'blender_cpu' in [system_stat]:
         try:
             find_blender_process = [x for x in psutil.process_iter() if x.name == 'blender']
@@ -177,6 +178,7 @@ def online_stats(system_stat):
                 return int(0)
         except psutil._error.NoSuchProcess:
             return int(0)
+    '''
     if 'system_cpu' in [system_stat]:
         try:
             cputimes = psutil.cpu_percent(interval=1)
@@ -209,7 +211,7 @@ def get_system_load_frequent():
             "15min": round(load[2], 2)
             }),
         "worker_cpu_percent": online_stats('system_cpu'),
-        'worker_blender_cpu_usage': online_stats('blender_cpu')
+        #'worker_blender_cpu_usage': online_stats('blender_cpu')
         })
 
 
@@ -220,7 +222,7 @@ def get_system_load_less_frequent():
         "worker_architecture": offline_stats('arch'),
         "worker_mem_percent": online_stats('system_mem'),
         "worker_disk_percent": online_stats('system_disk'),
-        "worker_blender_mem_usage": online_stats('blender_mem')
+        # "worker_blender_mem_usage": online_stats('blender_mem')
         })
 
 
@@ -233,4 +235,3 @@ def run_info():
                    update_frequent=get_system_load_frequent(),
                    update_less_frequent=get_system_load_less_frequent()
                    )
-
