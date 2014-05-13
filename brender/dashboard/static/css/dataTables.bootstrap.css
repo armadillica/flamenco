@@ -27,7 +27,8 @@ div.dataTables_paginate {
 }
 
 div.dataTables_paginate ul.pagination {
-	margin: 2px;
+	margin: 2px 0;
+	white-space: nowrap;
 }
 
 table.dataTable,
@@ -54,12 +55,17 @@ table.dataTable thead .sorting_desc_disabled {
 	cursor: pointer;
 }
 
-table.dataTable thead .sorting { background: url('../img/datatables/sort_both.png') no-repeat center right; }
-table.dataTable thead .sorting_asc { background: url('../img/datatables/sort_asc.png') no-repeat center right; }
-table.dataTable thead .sorting_desc { background: url('../img/datatables/sort_desc.png') no-repeat center right; }
+table.dataTable thead .sorting { background: url('../images/sort_both.png') no-repeat center right; }
+table.dataTable thead .sorting_asc { background: url('../images/sort_asc.png') no-repeat center right; }
+table.dataTable thead .sorting_desc { background: url('../images/sort_desc.png') no-repeat center right; }
 
-table.dataTable thead .sorting_asc_disabled { background: url('../img/datatables/sort_asc_disabled.png') no-repeat center right; }
-table.dataTable thead .sorting_desc_disabled { background: url('../img/datatables/sort_desc_disabled.png') no-repeat center right; }
+table.dataTable thead .sorting_asc_disabled { background: url('../images/sort_asc_disabled.png') no-repeat center right; }
+table.dataTable thead .sorting_desc_disabled { background: url('../images/sort_desc_disabled.png') no-repeat center right; }
+
+table.dataTable thead > tr > th {
+	/*padding-left: 18px;*/
+	padding-right: 18px;
+}
 
 table.dataTable th:active {
 	outline: none;
@@ -80,6 +86,7 @@ div.dataTables_scrollHead table thead tr:last-child td:first-child {
 
 div.dataTables_scrollBody table {
 	border-top: none;
+	margin-top: 0 !important;
 	margin-bottom: 0 !important;
 }
 
@@ -89,6 +96,7 @@ div.dataTables_scrollBody tbody tr:first-child td {
 }
 
 div.dataTables_scrollFoot table {
+	margin-top: 0 !important;
 	border-top: none;
 }
 
@@ -107,6 +115,10 @@ div.dataTables_scrollFoot table {
 .table tbody tr.active:hover td,
 .table tbody tr.active:hover th {
 	background-color: #0075b0 !important;
+}
+
+.table tbody tr.active a {
+	color: white;
 }
 
 .table-striped tbody tr.active:nth-child(odd) td,
@@ -178,6 +190,7 @@ div.DTFC_RightHeadWrapper table,
 div.DTFC_RightFootWrapper table,
 table.DTFC_Cloned tr.even {
     background-color: white;
+    margin-bottom: 0;
 }
 
 div.DTFC_RightHeadWrapper table ,
