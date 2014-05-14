@@ -4,16 +4,12 @@ MarkupSafe==0.18
 WTForms==1.0.4
 Werkzeug==0.9.3
 decorator==3.4.0
-flask-peewee==0.6.5
 gocept.cache==0.6.1
 itsdangerous==0.23
 netifaces==0.8
-peewee==2.1.4
 psutil==1.2.1
-requests==1.2.3
 transaction==1.4.1
 wsgiref==0.1.2
-wtf-peewee==0.2.2
 zope.exceptions==4.0.6
 zope.interface==4.0.5
 zope.testing==4.1.2
