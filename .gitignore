@@ -10,4 +10,4 @@ venv/
 *.log
 .ropeproject/*
 config.py
-!*/config.py
+/brender/config.py
