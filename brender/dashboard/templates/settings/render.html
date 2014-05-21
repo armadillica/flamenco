@@ -1,6 +1,14 @@
 {% extends "layout.html" %}
 
 {% block body %}
+    <style type="text/css" media="screen">
+        #editor {
+            height: 25em;
+            width: 100%;
+            /*left: -39px;*/
+            overflow: auto;
+          }
+    </style>
 
     <h1 class="page-title">{{title}}</h1>
     <hr>
@@ -8,8 +16,65 @@
     <!-- Nav tabs -->
     <ul class="nav nav-tabs">
       {% for file in render_settings['settings_files'] %}
-        <li><a href="#{{file}}" data-toggle="tab">{{file}}</a></li>
+        <li><a href="#{{file}}" data-toggle="tab" onclick="load_render_setting('{{file}}')">{{file}}</a></li>
       {% endfor %}
+      <li><a href="#" data-toggle="modal" modal="{{ url_for('settings.render_settings_add') }}" data-target="#addRenderModal" class="text-success"><i class="fa fa-plus fa-md"></i> New File</a></li>
+      <li class="pull-right"><a href="#" onclick="alert('New Render Editor Settings Feature Comming Soon!')"><i class="fa fa-gear fa-md"></i></a></li>
     </ul>
+
+    <div id='editor'>Please Select a render setting file.</div>
+    <hr/>
+    <div class="btn-group pull-right">
+        <button class="btn btn-success" id="save_render" onclick="save_render_setting()" type="button">Save</button>
+        <button class="btn btn-warning" id="reset_render" onclick="reset_render_setting('{{file}}')" type="button">Reset Text</button>
+    </div>
+
+  <script>
+    // Define ace editor instance
+    var editor = ace.edit("editor");
+    // Set ace editor theme
+    editor.setTheme("ace/theme/github");
+    // Set ace editor mode for python files
+    editor.getSession().setMode("ace/mode/python");
+    // Set ace editor to use soft tab (spaces instead of tabs)
+    editor.getSession().setUseSoftTabs(true);
+    // Set ace editor to highlight the active line
+    editor.setHighlightActiveLine(true);
+    // Set ace editor tabsize to 4
+    editor.getSession().setTabSize(4);
+
+    // Set current render file to None
+    var current_render_setting_file = '';
+    // Load Render setting file from JSON
+    function load_render_setting(file_name) {
+        current_render_setting_file = file_name;
+        $.get("/settings/render/" + file_name, function(data) {
+            editor.setValue(data);
+            editor.gotoLine(editor.session.getLength());
+            document.getElementById("save_render").innerHTML = 'Save ' + file_name;
+        });
+    };
+
+    function save_render_setting() {
+        var content = editor.getValue();
+        a = {'text': content.toString()};
+        $.ajax({
+            type: "POST",
+            contentType: "application/json",
+            dataType: "json",
+            url: "/settings/render/" + current_render_setting_file,
+            data: JSON.stringify(a),
+            success: alert(current_render_setting_file + ' Has Been Saved.')
+        });
+    };
+
+    function reset_render_setting(current_render_setting_file) {
+    $.get("/settings/render/" + window.current_render_setting_file, function(data) {
+        editor.setValue(data);
+        alert('Editor Reset Back to Original File.')
+    });
+    };
+
+  </script>
 
 {% endblock %}

@@ -2,8 +2,11 @@ import json
 from flask import (flash,
                    render_template,
                    request,
-                   Blueprint)
-
+                   Blueprint,
+                   jsonify,
+                   url_for,
+                   redirect)
+import os
 from dashboard import app
 from dashboard import http_request, list_integers_string, check_connection
 
@@ -36,6 +39,28 @@ def render():
                            title='render settings',
                            render_settings=render_settings)
 
+@settings.route('/render/<sname>', methods=['GET', 'POST'])
+def render_settings_edit(sname):
+  if request.method == 'GET':
+    result = http_request(BRENDER_SERVER, '/settings/render/' + sname)
+    return result['text']
+  elif request.method == 'POST':
+    content = request.json
+    params = dict(
+      text=str(content['text'])
+    )
+    http_request(BRENDER_SERVER, '/settings/render/' + sname, params)
+    return 'done'
+
+@settings.route('/render/add', methods=['GET', 'POST'])
+def render_settings_add():
+  if request.method == 'GET':
+    return render_template('settings/add_render_modal.html')
+  elif request.method == 'POST':
+    filename = request.form['render_setting_file_name'] + '.py'
+    params = {'filename': filename}
+    http_request(BRENDER_SERVER, '/settings/render/add/', params)
+    return redirect(url_for('settings.render'))
 
 @settings.route('/status/', methods=['GET'])
 def status():
