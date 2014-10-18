@@ -17,7 +17,7 @@ Main features
 
 * Runs on Linux and OSX (Windows currently not supported due to paths)
 * Automatic detection of clients
-* Multiple Shows
+* Multiple Project
 * Stats on shot completions
 * Priority system
 

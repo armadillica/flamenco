@@ -1,18 +1,6 @@
 <form id="addShot" role="form" action="{{ url_for('shots.add') }}" method=post>
-  <input type="hidden" name="show_id" value="{{settings['active_show']}}">
-  <!-- <div class="row">
-    <div class="col-md-6">
-      <div class="form-group">
-        <label for="project">Show</label>
-        <select name="active_show" class="form-control">
-          {% for show in shows %}
-            <option value="{{show}}"{% if show == settings['active_show'] %}selected{% endif %}>{{shows[show]['name']}}</option>
-          {% endfor %}
-          <option value="">Single blendfile</option>
-        </select>
-      </div>
-    </div>
-  </div> -->
+  <input type="hidden" name="project_id" value="{{settings['active_project']}}">
+
   <div class="row">
     <div class="col-md-12">
       <div class="form-group">
@@ -69,8 +57,8 @@
 
 <script>
   $(document).ready(function() {
-  {% if shows %}
-    $('#brenderModalLabel').text('Add shot for {{shows[settings['active_show']]['name']}}');
+  {% if projects %}
+    $('#brenderModalLabel').text('Add shot for {{projects[settings['active_project']]['name']}}');
   {% else %}
     $('#brenderModalLabel').text('Error');
     $('#addShot').html('Currently no project has been created. Go to the settings section and add one.');

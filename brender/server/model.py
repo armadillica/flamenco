@@ -22,7 +22,7 @@ class Worker(db.Model):
         return '<Worker %r>' % self.hostname
 
 
-class Show(db.Model):
+class Project(db.Model):
     """Production project folders
 
     This is a temporary table to get quickly up and running with projects
@@ -36,7 +36,7 @@ class Show(db.Model):
     path_osx = db.Column(db.Text())
 
     def __repr__(self):
-        return '<Show %r>' % self.name
+        return '<Project %r>' % self.name
 
 
 class Shot(db.Model):
@@ -47,8 +47,8 @@ class Shot(db.Model):
     * via a query from an external software (e.g. Attract)
     """
     id = db.Column(db.Integer, primary_key=True)
-    show_id = db.Column(db.Integer, db.ForeignKey('show.id'))
-    show = db.relationship('Show',
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
+    project = db.relationship('Project',
         backref=db.backref('shots', lazy='dynamic'))
     frame_start = db.Column(db.Integer())
     frame_end = db.Column(db.Integer())

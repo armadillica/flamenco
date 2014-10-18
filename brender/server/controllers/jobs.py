@@ -82,18 +82,18 @@ def start_job(worker, job):
     """
 
     shot = Shot.query.filter_by(id = job.shot_id).first()
-    show = Show.query.filter_by(id = shot.show_id).first()
+    project = Project.query.filter_by(id = shot.project_id).first()
 
     filepath = shot.filepath
 
     if 'Darwin' in worker.system:
         setting_blender_path = Setting.query.filter_by(name='blender_path_osx').first()
         setting_render_settings = Setting.query.filter_by(name='render_settings_path_osx').first()
-        filepath = os.path.join(show.path_osx, shot.filepath)
+        filepath = os.path.join(project.path_osx, shot.filepath)
     else:
         setting_blender_path = Setting.query.filter_by(name='blender_path_linux').first()
         setting_render_settings = Setting.query.filter_by(name='render_settings_path_linux').first()
-        filepath = os.path.join(show.path_linux, shot.filepath)
+        filepath = os.path.join(project.path_linux, shot.filepath)
 
     blender_path = setting_blender_path.value
     render_settings = os.path.join(

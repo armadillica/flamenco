@@ -35,14 +35,14 @@
       </div>
 
       <div class="form-group">
-        <label for="active_show" class="col-sm-3 control-label">Active show</label>
+        <label for="active_project" class="col-sm-3 control-label">Active project</label>
         <div class="col-sm-9">
-          <select name="active_show" class="form-control">
-            {% if not shows %}
-                <option value="None">No Shows</option>
+          <select name="active_project" class="form-control">
+            {% if not projects %}
+                <option value="None">No projects</option>
             {% endif %}
-            {% for show in shows %}
-              <option value="{{show}}"{% if show == settings['active_show'] %}selected{% endif %}>{{shows[show]['name']}}</option>
+            {% for project in projects %}
+              <option value="{{project}}"{% if project == settings['active_project'] %}selected{% endif %}>{{projects[project]['name']}}</option>
             {% endfor %}
           </select>
         </div>

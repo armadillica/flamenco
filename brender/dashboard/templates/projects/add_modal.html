@@ -1,13 +1,13 @@
-<form id="addShot" role="form" action="{{ url_for('shows.add') }}" method=post>
-<input name="show_id" type="hidden" value="{{show}}">
+<form id="addProject" role="form" action="{{ url_for('projects.add') }}" method=post>
+<input name="project_id" type="hidden" value="{{project}}">
     <div class="row">
         <div class="col-md-5">
             <div class="form-group">
-                <label for="name">Show Name</label>
-                <input type="text" class="form-control" id="name" name="name" placeholder="Show name" required="">
+                <label for="name">project Name</label>
+                <input type="text" class="form-control" id="name" name="name" placeholder="project name" required="">
             </div>
         </div>
-    </div> <!-- end show name row -->
+    </div> <!-- end project name row -->
     <div class="row">
         <div class="col-md-12">
             <div class="form-group">
@@ -34,10 +34,10 @@
     </div> <!-- end path osx row -->
     <div class="row col-md-12">
         <div class="form-group">
-            <label for="set_show_option"> Set <i id="new_show_name"></i> as active show?</label>
-                <select class="form-control" name="set_show_option">
+            <label for="set_project_option"> Set <i id="new_project_name"></i> as active project?</label>
+                <select class="form-control" name="set_project_option">
                     <option>True</option>
-                    {% if shows %}
+                    {% if projects %}
                     <option selected>False</option>
                     {% endif %}
                 </select>
@@ -48,10 +48,10 @@
 
 <script>
 $(document).ready(function() {
-    $('#brenderModalLabel').text('Add Show');
-    $('.modal-footer').children('.btn-primary').text('Add Show');
+    $('#brenderModalLabel').text('Add project');
+    $('.modal-footer').children('.btn-primary').text('Add project');
     $('#name').keyup(function(){
-     $('#new_show_name').text($(this).val());
+     $('#new_project_name').text($(this).val());
   });
 });
 </script>

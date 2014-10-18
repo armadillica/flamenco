@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 import sys
-import os
-from threading import Thread
-import socket
-import time
-import subprocess
 
 try:
     import config

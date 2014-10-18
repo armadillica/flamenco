@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from server.model import Job, Shot, Show
+from server.model import Job, Shot, Project
 
 from server import db
 
@@ -12,7 +12,7 @@ def index():
     stats = {
             "total_jobs":Job.query.count(),
             "total_shots":Shot.query.count(),
-            "total_shows":Show.query.count(),
+            "total_projects":Project.query.count(),
             }
 
     return jsonify(server_stats=stats)

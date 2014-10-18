@@ -107,7 +107,7 @@ def add():
     if request.method == 'POST':
         shot_values = {
             'attract_shot_id': 1,
-            'show_id': request.form['show_id'],
+            'project_id': request.form['project_id'],
             'shot_name': request.form['shot_name'],
             'frame_start': request.form['frame_start'],
             'frame_end': request.form['frame_end'],
@@ -128,10 +128,10 @@ def add():
         return redirect(url_for('shots.index'))
     else:
         render_settings = http_request(BRENDER_SERVER, '/settings/render')
-        shows = http_request(BRENDER_SERVER, '/shows/')
+        projects = http_request(BRENDER_SERVER, '/projects/')
         settings = http_request(BRENDER_SERVER, '/settings/')
         return render_template('shots/add_modal.html',
                             render_settings=render_settings,
                             settings=settings,
-                            shows=shows)
+                            projects=projects)
 

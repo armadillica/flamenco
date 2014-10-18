@@ -21,12 +21,12 @@ def index():
         params = request.form
         http_request(BRENDER_SERVER, '/settings/update', params)
 
-    shows = http_request(BRENDER_SERVER, '/shows/')
+    projects = http_request(BRENDER_SERVER, '/projects/')
     settings = http_request(BRENDER_SERVER, '/settings/')
     return render_template('settings/index.html',
                            title='settings',
                            settings=settings,
-                           shows=shows)
+                           projects=projects)
 
 
 @settings.route('/render/', methods=['GET'])
@@ -46,6 +46,6 @@ def status():
         server_status = 'offline'
         server_stats = ''
     return render_template('settings/status.html',
-                           title='server status',
-                           server_stats=server_stats,
-                           server_status=server_status)
+        title='server status',
+        server_stats=server_stats,
+        server_status=server_status)

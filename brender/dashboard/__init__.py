@@ -41,12 +41,12 @@ from dashboard.controllers.main import main
 from dashboard.controllers.shots import shots
 from dashboard.controllers.workers import workers
 from dashboard.controllers.settings import settings
-from dashboard.controllers.shows import shows
+from dashboard.controllers.projects import projects
 app.register_blueprint(main)
 app.register_blueprint(shots, url_prefix='/shots')
 app.register_blueprint(workers, url_prefix='/workers')
 app.register_blueprint(settings, url_prefix='/settings')
-app.register_blueprint(shows, url_prefix='/shows')
+app.register_blueprint(projects, url_prefix='/projects')
 
 
 @app.errorhandler(404)

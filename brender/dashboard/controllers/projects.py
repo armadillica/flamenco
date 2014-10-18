@@ -14,55 +14,58 @@ BRENDER_SERVER = app.config['BRENDER_SERVER']
 
 
 # Name of the Blueprint
-shows = Blueprint('shows', __name__)
+projects = Blueprint('projects', __name__)
 
 
-@shows.route('/')
+@projects.route('/')
 def index():
-    shows = http_request(BRENDER_SERVER, '/shows')
+    projects = http_request(BRENDER_SERVER, '/projects')
     settings = http_request(BRENDER_SERVER, '/settings/')
 
-    return render_template('shows/index.html', shows=shows, settings=settings, title='shows')
+    return render_template('projects/index.html', 
+        projects=projects, 
+        settings=settings, 
+        title='projects')
 
 
-@shows.route('/update', methods=['POST'])
+@projects.route('/update', methods=['POST'])
 def update():
 
     params = dict(
-        show_id=request.form['show_id'],
+        project_id=request.form['project_id'],
         path_server=request.form['path_server'],
         path_linux=request.form['path_linux'],
         path_osx=request.form['path_osx'])
 
-    http_request(BRENDER_SERVER, '/shows/update', params)
+    http_request(BRENDER_SERVER, '/projects/update', params)
 
-    return redirect(url_for('shows.index'))
-
-
-@shows.route('/delete/<show_id>', methods=['GET', 'POST'])
-def delete(show_id):
-    http_request(BRENDER_SERVER, '/shows/delete/' + show_id)
-    return redirect(url_for('shows.index'))
+    return redirect(url_for('projects.index'))
 
 
-@shows.route('/add', methods=['GET', 'POST'])
+@projects.route('/delete/<project_id>', methods=['GET', 'POST'])
+def delete(project_id):
+    http_request(BRENDER_SERVER, '/projects/delete/' + project_id)
+    return redirect(url_for('projects.index'))
+
+
+@projects.route('/add', methods=['GET', 'POST'])
 def add():
-    print 'inside shows_add dashboard'
+    print 'inside projects_add dashboard'
     if request.method == 'POST':
         params = dict(
             name=request.form['name'],
             path_server=request.form['path_server'],
             path_linux=request.form['path_linux'],
             path_osx=request.form['path_osx'],
-            set_show_option=request.form['set_show_option'])
+            set_project_option=request.form['set_project_option'])
         print params
-        http_request(BRENDER_SERVER, '/shows/add', params)
-        return redirect(url_for('shows.index'))
+        http_request(BRENDER_SERVER, '/projects/add', params)
+        return redirect(url_for('projects.index'))
     else:
         render_settings = http_request(BRENDER_SERVER, '/settings/render')
-        shows = http_request(BRENDER_SERVER, '/shows/')
+        projects = http_request(BRENDER_SERVER, '/projects/')
         settings = http_request(BRENDER_SERVER, '/settings/')
-        return render_template('shows/add_modal.html',
+        return render_template('projects/add_modal.html',
                         render_settings=render_settings,
                         settings=settings,
-                        shows=shows)
+                        projects=projects)

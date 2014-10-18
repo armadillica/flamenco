@@ -52,24 +52,24 @@ def index():
 @shots.route('/browse/<path:path>',)
 def shots_browse(path):
     """We browse the production folder on the server.
-    The path value gets appended to the active_show path value. The result is returned
+    The path value gets appended to the active_project path value. The result is returned
     in JSON format.
     """
-    active_show = Setting.query.filter_by(name = 'active_show').first()
-    active_show = Show.query.get(active_show.value)
+    active_project = Setting.query.filter_by(name = 'active_project').first()
+    active_project = Project.query.get(active_project.value)
 
     # path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     # render_settings_path = os.path.join(path, 'render_settings/')
 
-    absolute_path_root = active_show.path_server
+    absolute_path_root = active_project.path_server
     parent_path = ''
 
     if path != '':
         absolute_path_root = os.path.join(absolute_path_root, path)
         parent_path = os.pardir
 
-    # print(active_show.path_server)
-    # print(listdir(active_show.path_server))
+    # print(active_project.path_server)
+    # print(listdir(active_project.path_server))
 
     # items = {}
     items_list = []
@@ -87,7 +87,7 @@ def shots_browse(path):
 
     #return str(onlyfiles)
     project_files = dict(
-        project_path_server=active_show.path_server,
+        project_path_server=active_project.path_server,
         parent_path=parent_path,
         # items=items,
         items_list=items_list)
@@ -185,7 +185,7 @@ def shot_add():
     print('adding shot')
 
     shot = Shot(
-        show_id=int(request.form['show_id']),
+        project_id=int(request.form['project_id']),
         frame_start=int(request.form['frame_start']),
         frame_end=int(request.form['frame_end']),
         chunk_size=int(request.form['chunk_size']),

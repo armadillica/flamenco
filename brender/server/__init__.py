@@ -20,7 +20,7 @@ from controllers.home import home
 from controllers.jobs import jobs
 from controllers.workers import workers
 from controllers.shots import shots
-from controllers.shows import shows
+from controllers.projects import projects
 from controllers.settings import settings
 from controllers.stats import stats
 
@@ -28,7 +28,7 @@ app.register_blueprint(home)
 app.register_blueprint(workers, url_prefix='/workers')
 app.register_blueprint(jobs, url_prefix='/jobs')
 app.register_blueprint(shots, url_prefix='/shots')
-app.register_blueprint(shows, url_prefix='/shows')
+app.register_blueprint(projects, url_prefix='/projects')
 app.register_blueprint(settings, url_prefix='/settings')
 app.register_blueprint(stats, url_prefix='/stats')
 
