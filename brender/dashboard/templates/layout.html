@@ -7,18 +7,38 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
+    <!-- Jquery Files -->
     <script src="{{ url_for('static', filename='js/jquery-1.7.2.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/jquery.brender.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/dataTables.bootstrap.js') }}"></script>
+
     <script src="{{ url_for('static', filename='js/jquery.readmore-readless.js') }}" type="text/javascript"></script>
+
+    <!-- dataTable Bootstrap  Files -->
+    <link href="{{ url_for('static', filename='css/dataTables.bootstrap.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/dataTables.bootstrap.js') }}"></script>
+
+    <!-- Ace Editor Files -->
+    <script src="{{ url_for('static', filename='js/ace.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-ambiance.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-solarized_light.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-ambiance.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-github.js') }}"></script>
+
+    <!-- Bootstrap Files -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <!-- <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'> -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}" rel="stylesheet">
-<!--     <link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css"> -->
+    <!--     <link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css"> -->
+
+    <!-- Font Awesome Font Files -->
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <!-- Custom Files -->
     <link href="{{ url_for('static', filename='css/brender.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/dataTables.bootstrap.css') }}" rel="stylesheet">
+
 
     <!-- IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -54,7 +74,7 @@
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
-    
+
     {% endblock %}
 
     <header class="navbar navbar-default navbar-static-top" role="navigation">
@@ -136,23 +156,22 @@
       } else {
         $.get(url, function(data) {
           $('<div class="modal fade">' + data + '</div>').modal();
-        }).success(function() { 
-            $('input:text:visible:first').focus(); 
+        }).success(function() {
+            $('input:text:visible:first').focus();
         });
       }*/
 
       $.get(url, function(data) {
-        $('.modal-body').html(data); 
+        $('.modal-body').html(data);
       });
 
       $('.modal-footer').children('.btn-primary').text('Add Shot');
       $('#brenderModal').modal('show');
     });
-    
+
   });
 
   </script>
 
   </body>
 </html>
-

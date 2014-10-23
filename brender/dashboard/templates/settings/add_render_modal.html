@@ -1,0 +1,22 @@
+<form id="addRenderModal" role="form" action="{{ url_for('settings.render_settings_add') }}" method=post>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="form-group">
+        <label for="render_setting_file_name">Filename</label>
+        <div class="input-group">
+          <input id="render_setting_file_name" name="render_setting_file_name" type="text" class="form-control">
+          <span class="input-group-addon">.py</span>
+        </div><!-- /input-group -->
+      </div><!-- /form-group -->
+    </div>
+  </div>
+</form>
+
+<script>
+  $(document).ready(function() {
+    $('#brenderModalLabel').text('Add New Render Setting File');
+
+    $('.modal-footer').children('.btn-primary').text('Create Render Setting File');
+  });
+
+</script>
