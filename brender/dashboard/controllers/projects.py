@@ -35,6 +35,7 @@ def update():
         project_id=request.form['project_id'],
         path_server=request.form['path_server'],
         path_linux=request.form['path_linux'],
+        path_win=request.form['path_win'],
         path_osx=request.form['path_osx'])
 
     http_request(BRENDER_SERVER, '/projects/update', params)
@@ -56,6 +57,7 @@ def add():
             name=request.form['name'],
             path_server=request.form['path_server'],
             path_linux=request.form['path_linux'],
+            path_win=request.form['path_win'],
             path_osx=request.form['path_osx'],
             set_project_option=request.form['set_project_option'])
         print params
