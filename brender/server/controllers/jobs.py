@@ -90,14 +90,25 @@ def start_job(worker, job):
         setting_blender_path = Setting.query.filter_by(name='blender_path_osx').first()
         setting_render_settings = Setting.query.filter_by(name='render_settings_path_osx').first()
         filepath = os.path.join(project.path_osx, shot.filepath)
+    elif 'Windows' in worker.system:
+        setting_blender_path = Setting.query.filter_by(name='blender_path_win').first()
+        setting_render_settings = Setting.query.filter_by(name='render_settings_path_win').first()
+        filepath = os.path.join(project.path_win, shot.filepath)
     else:
         setting_blender_path = Setting.query.filter_by(name='blender_path_linux').first()
         setting_render_settings = Setting.query.filter_by(name='render_settings_path_linux').first()
         filepath = os.path.join(project.path_linux, shot.filepath)
 
+    if setting_blender_path is None:
+        print '[Debug] blender path is not set'
+
     blender_path = setting_blender_path.value
+
+    if setting_render_settings is None:
+        print '[Debug] render settings is not set'
+
     render_settings = os.path.join(
-        setting_render_settings.value , 
+        setting_render_settings.value ,
         shot.render_settings)
 
     worker_ip_address = worker.ip_address
@@ -167,7 +178,6 @@ def dispatch_jobs(shot_id = None):
         if job:
             start_job(worker, job)
         """
-
 
 def delete_job(job_id):
     # At the moment this function is not used anywhere
