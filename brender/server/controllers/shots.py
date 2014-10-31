@@ -33,8 +33,8 @@ def index():
         percentage_done = float(current_frame) / float(frame_count) * float(100)
         percentage_done = round(percentage_done, 1)
 
-        if percentage_done == 100:
-            shot.status = 'completed'
+        #if percentage_done == 100:
+        #   shot.status = 'completed'
 
         shots[shot.id] = {
                           "id": shot.id,
