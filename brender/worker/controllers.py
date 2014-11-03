@@ -18,6 +18,9 @@ MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
 SYSTEM = platform.system() + ' ' + platform.release()
 
+if platform.system() is not 'Windows':
+    from fcntl import fcntl, F_GETFL, F_SETFL
+
 app = Flask(__name__)
 
 BRENDER_SERVER = ''
@@ -55,8 +58,11 @@ def _checkProcessOutput(process):
     full_buffer = ''
     for fd in ready[0]:
         while True:
-            buffer = os.read(fd, 1024)
-            if not buffer:
+            try:
+                buffer = os.read(fd, 1024)
+                if not buffer:
+                    break
+            except OSError:
                 break
             full_buffer += buffer
     return full_buffer
@@ -158,6 +164,14 @@ def run_blender_in_thread(options):
     process = subprocess.Popen(render_command,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
+
+    # Make I/O non blocking for unix
+    if platform.system() is not 'Windows':
+        flags = fcntl(process.stdout, F_GETFL)
+        fcntl(process.stdout, F_SETFL, flags | os.O_NONBLOCK)
+        flags = fcntl(process.stderr, F_GETFL)
+        fcntl(process.stderr, F_SETFL, flags | os.O_NONBLOCK)
+
     #flask.g.blender_process = process
     (retcode, full_output) =  _interactiveReadProcess(process, options["job_id"]) \
         if (platform.system() is not "Windows") \
