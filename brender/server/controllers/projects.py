@@ -22,7 +22,7 @@ def delete_project(project_id):
 
 def is_active_project():
     active = Setting.query.filter_by(name = 'active_project').first()
-    if not active:
+    if not active or active.value == 'None':
         print '[Debug] Active project is not set'
         return False
     else:
@@ -64,7 +64,7 @@ def projects_add():
         name=request.form['name'],
         path_server=request.form['path_server'],
         path_linux=request.form['path_linux'],
-		path_win=request.form['path_win'],
+        path_win=request.form['path_win'],
         path_osx=request.form['path_osx'])
     db.session.add(project)
     db.session.commit()
@@ -117,6 +117,11 @@ def projects_delete(project_id):
             print '[Debug] Project was active removing project from being active_project'
             db.session.add(project_setting)
             db.session.commit()
+    else:
+        project_setting.value = 'None'
+        print '[Debug] There is no active project now'
+        db.session.add(project_setting)
+        db.session.commit()
 
     return jsonify(status='done')
 
