@@ -161,8 +161,8 @@ def dispatch_jobs(shot_id = None):
             db.session.add(job)
             db.session.commit()
             start_job(worker, job)
-        else:
-            print '[error] Job does not exist'
+        #else:
+        #    print '[error] Job does not exist'
 
         """Legacy code
         job = None # will figure out another way
