@@ -90,14 +90,14 @@ def shots_delete():
 
 
 @shots.route('/update', methods=['POST'])
-def shots_start():
+def shots_update():
     command = request.form['command'].lower()
     shot_ids = request.form['id']
     params = {'id': shot_ids}
     if command in ['start', 'stop', 'reset']:
         shots = http_request(BRENDER_SERVER,
             '/shots/%s' % (command), params)
-        return shots
+        return 'done'
     else:
         return 'error'
 
