@@ -13,8 +13,8 @@ def update_worker(worker, worker_data):
         worker.connection = 'online'
         db.session.add(worker)
         db.session.commit()
+        http_request(worker.ip_address, '/update', worker_data)
 
-    http_request(worker.ip_address, '/update', worker_data)
 
     for key, val in worker_data.iteritems():
         print(key, val)

@@ -33,6 +33,7 @@ class Project(db.Model):
     name = db.Column(db.String(120))
     path_server = db.Column(db.Text())
     path_linux = db.Column(db.Text())
+    path_win = db.Column(db.Text())
     path_osx = db.Column(db.Text())
 
     def __repr__(self):

@@ -10,12 +10,16 @@ import os
 import select
 import gocept.cache.method
 from threading import Thread
+import Queue # for windows
 from flask import Flask, redirect, url_for, request, jsonify
 from uuid import getnode as get_mac_address
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
 SYSTEM = platform.system() + ' ' + platform.release()
+
+if platform.system() is not 'Windows':
+    from fcntl import fcntl, F_GETFL, F_SETFL
 
 app = Flask(__name__)
 
@@ -54,18 +58,66 @@ def _checkProcessOutput(process):
     full_buffer = ''
     for fd in ready[0]:
         while True:
-            buffer = os.read(fd, 1024)
-            if not buffer:
+            try:
+                buffer = os.read(fd, 1024)
+                if not buffer:
+                    break
+            except OSError:
                 break
             full_buffer += buffer
     return full_buffer
 
+def _checkOutputThreadWin(fd, q):
+    while True:
+        buffer = os.read(fd, 1024)
+        if not buffer:
+            break
+        else:
+            print buffer
+            q.put(buffer)
+
+
+def _checkProcessOutputWin(process, q):
+    full_buffer = ''
+    while True:
+        try:
+            buffer = q.get_nowait()
+            if not buffer:
+                break
+        except:
+            break
+        full_buffer += buffer
+    return full_buffer
+
+def _interactiveReadProcessWin(process, job_id):
+    full_buffer = ''
+    tmp_buffer = ''
+    q = Queue.Queue()
+    t_out = Thread(target=_checkOutputThreadWin, args=(process.stdout.fileno(), q,))
+    t_err = Thread(target=_checkOutputThreadWin, args=(process.stderr.fileno(), q,))
+
+    t_out.start()
+    t_err.start()
+
+    while True:
+        tmp_buffer += _checkProcessOutputWin(process, q)
+        if tmp_buffer:
+            pass
+        full_buffer += tmp_buffer
+        if process.poll() is not None:
+            break
+
+    t_out.join()
+    t_err.join()
+    full_buffer += _checkProcessOutputWin(process, q)
+    return (process.returncode, full_buffer)
 
 def _interactiveReadProcess(process, job_id):
     full_buffer = ''
     tmp_buffer = ''
     while True:
         tmp_buffer += _checkProcessOutput(process)
+
         if tmp_buffer:
             # http_request("update_blender_output_from_i_dont_know", tmp_buffer)
             pass
@@ -112,8 +164,19 @@ def run_blender_in_thread(options):
     process = subprocess.Popen(render_command,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
+
+    # Make I/O non blocking for unix
+    if platform.system() is not 'Windows':
+        flags = fcntl(process.stdout, F_GETFL)
+        fcntl(process.stdout, F_SETFL, flags | os.O_NONBLOCK)
+        flags = fcntl(process.stderr, F_GETFL)
+        fcntl(process.stderr, F_SETFL, flags | os.O_NONBLOCK)
+
     #flask.g.blender_process = process
-    (retcode, full_output) = _interactiveReadProcess(process, options["job_id"])
+    (retcode, full_output) =  _interactiveReadProcess(process, options["job_id"]) \
+        if (platform.system() is not "Windows") \
+        else _interactiveReadProcessWin(process, options["job_id"])
+
     #flask.g.blender_process = None
     print(full_output)
     script_dir = os.path.dirname(__file__)
@@ -179,6 +242,7 @@ def online_stats(system_stat):
         except psutil._error.NoSuchProcess:
             return int(0)
     '''
+
     if 'system_cpu' in [system_stat]:
         try:
             cputimes = psutil.cpu_percent(interval=1)
@@ -203,17 +267,27 @@ def offline_stats(offline_stat):
 
 @gocept.cache.method.Memoize(5)
 def get_system_load_frequent():
-    load = os.getloadavg()
-    return ({
-        "load_average": ({
-            "1min": round(load[0], 2),
-            "5min": round(load[1], 2),
-            "15min": round(load[2], 2)
+    if platform.system() is not "Windows":
+        load = os.getloadavg()
+        return ({
+            "load_average": ({
+                "1min": round(load[0], 2),
+                "5min": round(load[1], 2),
+                "15min": round(load[2], 2)
+                }),
+            "worker_cpu_percent": online_stats('system_cpu'),
+            #'worker_blender_cpu_usage': online_stats('blender_cpu')
+            })
+    else:
+        # os.getloadavg does not exists on Windows
+        return ({
+            "load_average":({
+                "1min": '?',
+                "5min": '?',
+                "15min": '?'
             }),
-        "worker_cpu_percent": online_stats('system_cpu'),
-        #'worker_blender_cpu_usage': online_stats('blender_cpu')
+           "worker_cpu_percent": online_stats('system_cpu')
         })
-
 
 @gocept.cache.method.Memoize(120)
 def get_system_load_less_frequent():
