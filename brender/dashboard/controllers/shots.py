@@ -29,12 +29,12 @@ BRENDER_SERVER = app.config['BRENDER_SERVER']
 shots = Blueprint('shots', __name__)
 
 def last_thumbnail(shot_id):
-    render_dir = utils.system_path("render/" + str(shot_id))
+    render_dir = "render/" + str(shot_id)
     if not exists(render_dir):
         return ""
 
-    files = sorted([utils.system_path("/" + render_dir + "/" + f) for f in listdir(render_dir) if  f.endswith(".thumb")])
-    return utils.system_path(files.pop()) if files else ""
+    files = sorted(["/" + render_dir + "/" + f for f in listdir(render_dir) if  f.endswith(".thumb")])
+    return files.pop() if files else ""
 
 
 @shots.route('/')
@@ -75,8 +75,8 @@ def shot(shot_id):
     if shot:
         shot = shots[shot_id]
         shot['thumb'] = last_thumbnail(shot['id'])
-        render_dir = utils.system_path("render/" + str(shot['id']) +  '/')
-        shot['render'] = map(lambda s : utils.system_path(join("/" + render_dir, s)), \
+        render_dir = "render/" + str(shot['id']) +  '/'
+        shot['render'] = map(lambda s : join("/" + render_dir, s), \
                              filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
         return render_template('shots/view.html', shot=shot)
     else:

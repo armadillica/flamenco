@@ -130,7 +130,8 @@ def start_job(worker, job):
               'blender_path': blender_path,
               'render_settings': render_settings,
               'start': job.chunk_start,
-              'end': job.chunk_end}
+              'end': job.chunk_end,
+              'output': "//render/##"}
 
     http_request(worker_ip_address, '/execute_job', params)
     #  get a reply from the worker (running, error, etc)

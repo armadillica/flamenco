@@ -150,6 +150,8 @@ def run_blender_in_thread(options):
         options['blender_path'],
         '--background',
         options['file_path'],
+        '--render-output',
+        options['output'],
         '--python',
         options['render_settings'],
         '--frame-start' ,
@@ -198,7 +200,8 @@ def execute_job():
         'blender_path': request.form['blender_path'],
         'start_frame': request.form['start'],
         'end_frame': request.form['end'],
-        'render_settings': request.form['render_settings']
+        'render_settings': request.form['render_settings'],
+        'output': request.form['output']
     }
 
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
