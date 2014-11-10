@@ -260,7 +260,9 @@ def generate_thumbnails(shot, begin, end):
         # TODO make generic extension
         img_name = ("0" if i < 10 else "") + str(i) + get_file_ext(shot.extension)
         file_path = thumb_dir + "/" + str(i) + '.thumb'
-        if not os.path.exists(file_path) and shot.extension != "MULTILAYER":
+        if shot.extension != "MULTILAYER":
+            if os.path.exists(file_path):
+                os.remove(file_path)
             img_path = os.path.abspath(project.path_server + "/" + RENDER_PATH + "/" + img_name)
             img = Image.open(img_path)
             img.thumbnail((150, 150), Image.ANTIALIAS)
