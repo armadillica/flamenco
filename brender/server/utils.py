@@ -12,6 +12,11 @@ def http_request(ip_address, command, post_params=None):
     print('message sent, reply follows:')
     print(f.read())
 
+from platform import system
+def system_path(path):
+    if system() is "Windows":
+        return path.replace('/', '\\')
+    return path
 
 def list_integers_string(string_list):
     """

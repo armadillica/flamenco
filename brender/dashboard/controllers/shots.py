@@ -4,7 +4,7 @@ import os
 import time
 import urllib
 from os import listdir
-from os.path import isfile, join, abspath
+from os.path import isfile, join, abspath, exists
 from glob import iglob
 from flask import (flash,
                    Flask,
@@ -13,11 +13,13 @@ from flask import (flash,
                    render_template,
                    request,
                    url_for,
+                   send_file,
                    make_response,
                    Blueprint)
 
 from dashboard import app
 from dashboard import http_request, list_integers_string
+from server import utils
 
 # TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
@@ -25,6 +27,15 @@ BRENDER_SERVER = app.config['BRENDER_SERVER']
 
 # Name of the Blueprint
 shots = Blueprint('shots', __name__)
+
+def last_thumbnail(shot_id):
+    render_dir = utils.system_path("render/" + str(shot_id))
+    if not exists(render_dir):
+        return ""
+
+    files = sorted([utils.system_path("/" + render_dir + "/" + f) for f in listdir(render_dir) if  f.endswith(".thumb")])
+    return utils.system_path(files.pop()) if files else ""
+
 
 @shots.route('/')
 def index():
@@ -40,13 +51,13 @@ def index():
             "2": val['shot_name'],
             "3": val['percentage_done'],
             "4": val['render_settings'],
-            "5": val['status']})
+            "5": val['status'],
+            "6" : last_thumbnail(key)})
         #print(v)
 
     entries = json.dumps(shots_list)
 
     return render_template('shots/index.html', entries=entries, title='shots')
-
 
 @shots.route('/<shot_id>')
 def shot(shot_id):
@@ -63,6 +74,10 @@ def shot(shot_id):
 
     if shot:
         shot = shots[shot_id]
+        shot['thumb'] = last_thumbnail(shot['id'])
+        render_dir = utils.system_path("render/" + str(shot['id']) +  '/')
+        shot['render'] = map(lambda s : utils.system_path(join("/" + render_dir, s)), \
+                             filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
         return render_template('shots/view.html', shot=shot)
     else:
         return make_response('shot ' + shot_id + ' doesnt exist')

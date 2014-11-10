@@ -11,6 +11,8 @@ from server.model import *
 from server.utils import *
 from workers import *
 from server import db
+from PIL import Image
+from platform import system
 
 jobs = Blueprint('jobs', __name__)
 
@@ -246,6 +248,23 @@ def index():
                         "priority": job.priority}
     return jsonify(jobs)
 
+def generate_thumbnails(shot, begin, end):
+    thumb_dir = system_path("render/" + str(shot.id))
+    project = Project.query.get(shot.project_id)
+    if not os.path.exists(thumb_dir):
+        print '[Debug] ' + os.path.abspath(thumb_dir) + " does not exist"
+        os.makedirs(thumb_dir)
+    for i in range(begin, end + 1):
+        # TODO make generic extension
+        img_name = ("0" if i < 10 else "") + str(i) + '.png'
+        file_path = system_path(thumb_dir + "/" + str(i) + '.thumb')
+        if not os.path.exists(file_path):
+            img_path = os.path.abspath(system_path(project.path_server + "/render/" + img_name))
+            img = Image.open(img_path)
+            img.thumbnail((150, 150), Image.ANTIALIAS)
+            thumb_path = system_path(thumb_dir + "/" + str(i) + '.thumb')
+            img.save(thumb_path, "PNG")
+
 
 @jobs.route('/update', methods=['POST'])
 def jobs_update():
@@ -256,6 +275,8 @@ def jobs_update():
         shot = Shot.query.get(job.shot_id)
         job.status = 'finished'
         db.session.add(shot)
+
+        generate_thumbnails(shot, job.chunk_start, job.chunk_end)
 
         if job.chunk_end == shot.frame_end:
             shot.status = 'completed'

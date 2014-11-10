@@ -46,12 +46,21 @@
             </div>
             <br/>
             <a href="#" class="thumbnail pull-right">
-                <img src="http://placehold.it/150x150">
+              <img src="{{ shot['thumb'] }}" />
             </a>
             <p>Status: {{ shot['status'] }}</p>
             <p>Frame Start: {{ shot['frame_start'] }}</p>
             <p>Frame End: {{ shot['frame_end'] }}</p>
             <p>Current Frame: {{ shot['current_frame'] }}</p>
+            <p>Thumbnails: </p><br />
+            <table>
+              <!-- TODO find a way to display several images on the same line -->
+              {% for path in shot['render'] %}
+                <tr>
+                  <td><img src="{{ path }}" /><br /><br /></td>
+                </tr>
+              {% endfor %}
+            </table>
         </div> <!-- end panel-body -->
       </div> <!-- end panel -->
     </div> <!-- end col-md-12 -->
