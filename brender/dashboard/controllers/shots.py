@@ -19,7 +19,7 @@ from flask import (flash,
 
 from dashboard import app
 from dashboard import http_request, list_integers_string
-from server import utils
+from server import RENDER_PATH
 
 # TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
@@ -29,7 +29,7 @@ BRENDER_SERVER = app.config['BRENDER_SERVER']
 shots = Blueprint('shots', __name__)
 
 def last_thumbnail(shot_id):
-    render_dir = "render/" + str(shot_id)
+    render_dir = RENDER_PATH + "/" + str(shot_id)
     if not exists(render_dir):
         return ""
 
@@ -75,7 +75,7 @@ def shot(shot_id):
     if shot:
         shot = shots[shot_id]
         shot['thumb'] = last_thumbnail(shot['id'])
-        render_dir = "render/" + str(shot['id']) +  '/'
+        render_dir = RENDER_PATH + "/" + str(shot['id']) +  '/'
         shot['render'] = map(lambda s : join("/" + render_dir, s), \
                              filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
         return render_template('shots/view.html', shot=shot)

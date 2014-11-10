@@ -10,7 +10,7 @@ from flask import (abort,
 from server.model import *
 from server.utils import *
 from workers import *
-from server import db
+from server import db, RENDER_PATH
 from PIL import Image
 from platform import system
 
@@ -131,7 +131,7 @@ def start_job(worker, job):
               'render_settings': render_settings,
               'start': job.chunk_start,
               'end': job.chunk_end,
-              'output': "//render/##"}
+              'output': "//" + RENDER_PATH + "/##"}
 
     http_request(worker_ip_address, '/execute_job', params)
     #  get a reply from the worker (running, error, etc)
@@ -250,7 +250,7 @@ def index():
     return jsonify(jobs)
 
 def generate_thumbnails(shot, begin, end):
-    thumb_dir = system_path("render/" + str(shot.id))
+    thumb_dir = RENDER_PATH + "/" + str(shot.id)
     project = Project.query.get(shot.project_id)
     if not os.path.exists(thumb_dir):
         print '[Debug] ' + os.path.abspath(thumb_dir) + " does not exist"
@@ -258,12 +258,12 @@ def generate_thumbnails(shot, begin, end):
     for i in range(begin, end + 1):
         # TODO make generic extension
         img_name = ("0" if i < 10 else "") + str(i) + '.png'
-        file_path = system_path(thumb_dir + "/" + str(i) + '.thumb')
+        file_path = thumb_dir + "/" + str(i) + '.thumb'
         if not os.path.exists(file_path):
-            img_path = os.path.abspath(system_path(project.path_server + "/render/" + img_name))
+            img_path = os.path.abspath(project.path_server + "/" + RENDER_PATH + "/" + img_name)
             img = Image.open(img_path)
             img.thumbnail((150, 150), Image.ANTIALIAS)
-            thumb_path = system_path(thumb_dir + "/" + str(i) + '.thumb')
+            thumb_path = thumb_dir + "/" + str(i) + '.thumb'
             img.save(thumb_path, "PNG")
 
 

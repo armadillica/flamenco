@@ -4,6 +4,7 @@ import os
 from os import listdir
 from os.path import isfile, isdir, join, abspath, dirname
 
+from server import RENDER_PATH
 from server.model import *
 from server.utils import *
 from jobs import *
@@ -17,7 +18,7 @@ shots = Blueprint('shots', __name__)
 def delete_shot(shot_id):
     shot = Shot.query.get(shot_id)
     if shot:
-        path = "render/" + str(shot_id)
+        path = RENDER_PATH + "/" + str(shot_id)
         if os.path.exists(path):
             rmtree(path)
 
@@ -177,7 +178,7 @@ def shots_reset():
                 delete_jobs(shot.id)
                 create_jobs(shot)
 
-                path = "render/" + str(shot.id)
+                path = RENDER_PATH + "/" + str(shot.id)
                 if os.path.exists(path):
                     rmtree(path)
         else:
