@@ -62,6 +62,7 @@ def _checkProcessOutput(process):
                 buffer = os.read(fd, 1024)
                 if not buffer:
                     break
+                print buffer
             except OSError:
                 break
             full_buffer += buffer
@@ -178,7 +179,7 @@ def run_blender_in_thread(options):
         else _interactiveReadProcessWin(process, options["job_id"])
 
     #flask.g.blender_process = None
-    print(full_output)
+    #print(full_output)
     script_dir = os.path.dirname(__file__)
     rel_path = 'render_log_' + HOSTNAME + '.log'
     abs_file_path = os.path.join(script_dir, rel_path)
