@@ -28,6 +28,13 @@ def list_integers_string(string_list):
     integers_list = map(int, integers_list)
     return integers_list
 
+def get_file_ext(string):
+    if string == "MULTILAYER":
+        return ".exr"
+    if string == 'JPEG':
+        return ".jpg"
+    return "." + string.lower()
+
 
 def frame_percentage(item):
     if item.frame_start == item.current_frame:

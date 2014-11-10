@@ -130,6 +130,7 @@ def add():
             'current_frame': request.form['frame_start'],
             'filepath': request.form['filepath'],
             'render_settings': request.form['render_settings'],
+            'extension' : request.form['extension'],
             'status': 'running',
             'priority': 10,
             'owner': 'fsiddi'
