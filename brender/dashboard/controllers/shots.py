@@ -92,7 +92,7 @@ def shots_browse(path):
     return render_template('browse_modal.html',
         # items=path_data['items'],
         items_list=path_data['items_list'],
-        parent_folder=path + '/..')
+        parent_folder=path_data['parent_path'])
 
 
 @shots.route('/delete', methods=['POST'])
