@@ -74,7 +74,7 @@ def shots_browse(path):
 
     if path != '':
         absolute_path_root = os.path.join(absolute_path_root, path)
-        parent_path = os.path.join(path, os.pardir)
+        parent_path = path + "/" + os.pardir
 
     # print(active_project.path_server)
     # print(listdir(active_project.path_server))
