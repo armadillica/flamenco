@@ -52,7 +52,20 @@
           <input type="text" class="form-control" id="chunk_size" name="chunk_size" value="5" required="">
         </div>
     </div>
-  </div>       
+
+    <div class="col-md-4">
+      <div class="form-group">
+        <label for="extension">Render Format</label>
+        <select class="form-control" name="extension" id="extension" value="PNG">
+          <option value="PNG">PNG</option>
+          <option value="JPEG">JPEG</option>
+          <option value="TGA">TGA</option>
+          <option value="MULTILAYER">EXR multilayer</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
 </form>
 
 <script>
@@ -70,9 +83,9 @@
     $('#browse_filepath').click(function(e) {
       e.preventDefault();
       $.get('/shots/browse/', function(data) {
-        $('.modal-body').html(data); 
+        $('.modal-body').html(data);
       });
-      
+
       $('.modal-footer').children('.btn-primary').text('Select');
       $('.modal-footer').children('.btn-primary').addClass('select-file');
     });

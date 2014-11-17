@@ -1,5 +1,7 @@
 <ul class="files">
+  {% if parent_folder %}
   <li><a class="folder" href="{{parent_folder}}">..</a></li>
+  {% endif %}
   {% for item in items_list %}
   <li><a class="{{item[2]}}" href="{{item[1]}}">{{item[0]}}</a></li>
   {% endfor %}
@@ -17,7 +19,7 @@
       e.preventDefault();
       var url = '/shots/browse/' + $(this).attr('href');
       $.get(url, function(data) {
-        $('.modal-body').html(data); 
+        $('.modal-body').html(data);
       });
     });
 
@@ -34,7 +36,7 @@
       e.preventDefault();
       var url = '/shots/add';
       $.get(url, function(data) {
-        $('.modal-body').html(data); 
+        $('.modal-body').html(data);
       });
       $('.modal-footer').children('.btn-primary').text('Add Shot');
     });

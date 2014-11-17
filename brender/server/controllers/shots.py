@@ -51,7 +51,8 @@ def index():
                           "status": shot.status,
                           "shot_name": shot.name,
                           "percentage_done": percentage_done,
-                          "render_settings": shot.render_settings}
+                          "render_settings": shot.render_settings,
+                          "extension": shot.extension}
     return jsonify(shots)
 
 
@@ -73,7 +74,7 @@ def shots_browse(path):
 
     if path != '':
         absolute_path_root = os.path.join(absolute_path_root, path)
-        parent_path = os.pardir
+        parent_path = path + "/" + os.pardir
 
     # print(active_project.path_server)
     # print(listdir(active_project.path_server))
@@ -204,6 +205,7 @@ def shot_add():
         filepath=request.form['filepath'],
         name=request.form['shot_name'],
         render_settings=request.form['render_settings'],
+        extension=request.form['extension'],
         status='running',
         priority=10)
 

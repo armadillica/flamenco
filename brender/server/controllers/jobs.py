@@ -131,7 +131,8 @@ def start_job(worker, job):
               'render_settings': render_settings,
               'start': job.chunk_start,
               'end': job.chunk_end,
-              'output': "//" + RENDER_PATH + "/##"}
+              'output': "//" + RENDER_PATH + "/##",
+              'format': shot.extension}
 
     http_request(worker_ip_address, '/execute_job', params)
     #  get a reply from the worker (running, error, etc)
@@ -257,14 +258,16 @@ def generate_thumbnails(shot, begin, end):
         os.makedirs(thumb_dir)
     for i in range(begin, end + 1):
         # TODO make generic extension
-        img_name = ("0" if i < 10 else "") + str(i) + '.png'
+        img_name = ("0" if i < 10 else "") + str(i) + get_file_ext(shot.extension)
         file_path = thumb_dir + "/" + str(i) + '.thumb'
-        if not os.path.exists(file_path):
+        if shot.extension != "MULTILAYER":
+            if os.path.exists(file_path):
+                os.remove(file_path)
             img_path = os.path.abspath(project.path_server + "/" + RENDER_PATH + "/" + img_name)
             img = Image.open(img_path)
             img.thumbnail((150, 150), Image.ANTIALIAS)
             thumb_path = thumb_dir + "/" + str(i) + '.thumb'
-            img.save(thumb_path, "PNG")
+            img.save(thumb_path, shot.extension)
 
 
 @jobs.route('/update', methods=['POST'])

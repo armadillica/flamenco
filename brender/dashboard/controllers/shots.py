@@ -92,7 +92,7 @@ def shots_browse(path):
     return render_template('browse_modal.html',
         # items=path_data['items'],
         items_list=path_data['items_list'],
-        parent_folder=path + '/..')
+        parent_folder=path_data['parent_path'])
 
 
 @shots.route('/delete', methods=['POST'])
@@ -130,6 +130,7 @@ def add():
             'current_frame': request.form['frame_start'],
             'filepath': request.form['filepath'],
             'render_settings': request.form['render_settings'],
+            'extension' : request.form['extension'],
             'status': 'running',
             'priority': 10,
             'owner': 'fsiddi'

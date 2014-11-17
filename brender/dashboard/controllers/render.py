@@ -18,6 +18,6 @@ def get_render(path):
 
     #print os.path.abspath(".")
     # TODO Find something less disgusting to get the path
-    return send_file(pardir + "/" + img, mimetype="image/png")
+    return send_file(pardir + "/" + img)
 
 

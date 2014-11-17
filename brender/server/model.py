@@ -58,6 +58,7 @@ class Shot(db.Model):
     name = db.Column(db.String(120))
     filepath = db.Column(db.String(256))
     render_settings = db.Column(db.String(120))
+    extension = db.Column(db.String(10))
     # yolo settings (pre render / render / post)
     status = db.Column(db.String(64))
     # started and waiting / stopped / running / paused

@@ -158,6 +158,8 @@ def run_blender_in_thread(options):
         options['start_frame'],
         '--frame-end',
         options['end_frame'],
+        '--render-format',
+        options['format'],
         '--render-anim',
         '--enable-autoexec'
         ]
@@ -201,7 +203,8 @@ def execute_job():
         'start_frame': request.form['start'],
         'end_frame': request.form['end'],
         'render_settings': request.form['render_settings'],
-        'output': request.form['output']
+        'output': request.form['output'],
+        'format': request.form['format']
     }
 
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
