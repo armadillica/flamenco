@@ -15,3 +15,4 @@ zope.interface==4.0.5
 zope.testing==4.1.2
 Flask-SQLAlchemy==1.0
 requests==2.2.1
+Pillow=2.6.1

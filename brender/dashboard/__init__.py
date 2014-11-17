@@ -42,12 +42,13 @@ from dashboard.controllers.shots import shots
 from dashboard.controllers.workers import workers
 from dashboard.controllers.settings import settings
 from dashboard.controllers.projects import projects
+from dashboard.controllers.render import render
 app.register_blueprint(main)
 app.register_blueprint(shots, url_prefix='/shots')
 app.register_blueprint(workers, url_prefix='/workers')
 app.register_blueprint(settings, url_prefix='/settings')
 app.register_blueprint(projects, url_prefix='/projects')
-
+app.register_blueprint(render, url_prefix='/render')
 
 @app.errorhandler(404)
 def page_not_found(error):

@@ -4,10 +4,13 @@ import os
 from os import listdir
 from os.path import isfile, isdir, join, abspath, dirname
 
+from server import RENDER_PATH
 from server.model import *
 from server.utils import *
 from jobs import *
 from server import db
+from platform import system
+from shutil import rmtree
 
 shots = Blueprint('shots', __name__)
 
@@ -15,6 +18,10 @@ shots = Blueprint('shots', __name__)
 def delete_shot(shot_id):
     shot = Shot.query.get(shot_id)
     if shot:
+        path = RENDER_PATH + "/" + str(shot_id)
+        if os.path.exists(path):
+            rmtree(path)
+
         db.session.delete(shot)
         db.session.commit()
         print('[info] Deleted shot', shot_id)
@@ -117,12 +124,12 @@ def shots_start():
                 shot.status = 'running'
                 db.session.add(shot)
                 db.session.commit()
-                print ('[debug] Dispatching jobs')       
+                print ('[debug] Dispatching jobs')
         else:
             print('[error] Shot not found')
             response = 'Shot %d not found' % shot_id
             return jsonify(response=response)
-    dispatch_jobs()        
+    dispatch_jobs()
     return jsonify(
         shot_ids=shot_ids,
         status='running')
@@ -170,6 +177,10 @@ def shots_reset():
 
                 delete_jobs(shot.id)
                 create_jobs(shot)
+
+                path = RENDER_PATH + "/" + str(shot.id)
+                if os.path.exists(path):
+                    rmtree(path)
         else:
             print('[error] Shot not found')
             response = 'Shot %d not found' % shot_id

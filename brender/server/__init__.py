@@ -5,6 +5,8 @@ from flask.ext.sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 db = SQLAlchemy(app)
 
+RENDER_PATH = "render"
+
 import model
 # This is the default server configuration, in case the user will not provide one.
 # The Application is configured to run on localhost and port 9999

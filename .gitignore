@@ -11,3 +11,4 @@ venv/
 .ropeproject/*
 config.py
 /brender/config.py
+/brender/render

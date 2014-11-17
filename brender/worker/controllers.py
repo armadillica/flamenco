@@ -62,6 +62,7 @@ def _checkProcessOutput(process):
                 buffer = os.read(fd, 1024)
                 if not buffer:
                     break
+                print buffer
             except OSError:
                 break
             full_buffer += buffer
@@ -149,6 +150,8 @@ def run_blender_in_thread(options):
         options['blender_path'],
         '--background',
         options['file_path'],
+        '--render-output',
+        options['output'],
         '--python',
         options['render_settings'],
         '--frame-start' ,
@@ -178,7 +181,7 @@ def run_blender_in_thread(options):
         else _interactiveReadProcessWin(process, options["job_id"])
 
     #flask.g.blender_process = None
-    print(full_output)
+    #print(full_output)
     script_dir = os.path.dirname(__file__)
     rel_path = 'render_log_' + HOSTNAME + '.log'
     abs_file_path = os.path.join(script_dir, rel_path)
@@ -197,7 +200,8 @@ def execute_job():
         'blender_path': request.form['blender_path'],
         'start_frame': request.form['start'],
         'end_frame': request.form['end'],
-        'render_settings': request.form['render_settings']
+        'render_settings': request.form['render_settings'],
+        'output': request.form['output']
     }
 
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
