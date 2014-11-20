@@ -131,7 +131,7 @@ def start_job(worker, job):
               'render_settings': render_settings,
               'start': job.chunk_start,
               'end': job.chunk_end,
-              'output': "//" + RENDER_PATH + "/##",
+              'output': "//" + RENDER_PATH + "/" + str(job.shot_id)  + "/##",
               'format': shot.extension}
 
     http_request(worker_ip_address, '/execute_job', params)
@@ -260,10 +260,12 @@ def generate_thumbnails(shot, begin, end):
         # TODO make generic extension
         img_name = ("0" if i < 10 else "") + str(i) + get_file_ext(shot.extension)
         file_path = thumb_dir + "/" + str(i) + '.thumb'
+        # We can't generate thumbnail from multilayer with pillow
         if shot.extension != "MULTILAYER":
             if os.path.exists(file_path):
                 os.remove(file_path)
-            img_path = os.path.abspath(project.path_server + "/" + RENDER_PATH + "/" + img_name)
+            img_path = os.path.abspath(project.path_server + "/" + RENDER_PATH \
+                    + "/" + str(shot.id) + "/" + img_name)
             img = Image.open(img_path)
             img.thumbnail((150, 150), Image.ANTIALIAS)
             thumb_path = thumb_dir + "/" + str(i) + '.thumb'
