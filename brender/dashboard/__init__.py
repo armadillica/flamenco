@@ -1,4 +1,5 @@
 import requests
+from HTMLParser import HTMLParser
 from flask import (Flask, render_template)
 
 app = Flask(__name__)
@@ -19,6 +20,16 @@ def check_connection(host_address):
     except:
         return "offline"
 
+class ServerError(Exception):
+    status_code = 500
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        self.payload = payload
+
+    def to_html(self):
+        return HTMLParser().unescape(self.message)
 
 def http_request(ip_address, method, post_params=False):
     """Utils function used to communicate with the server
@@ -27,6 +38,12 @@ def http_request(ip_address, method, post_params=False):
         r = requests.post('http://' + ip_address + method, data=post_params)
     else:
         r = requests.get('http://' + ip_address + method)
+
+    if r.status_code == 500:
+        s =""
+        for chunk in r.iter_content(50):
+            s += chunk
+        raise ServerError(s)
     return r.json()
 
 
@@ -54,6 +71,9 @@ app.register_blueprint(render, url_prefix='/render')
 def page_not_found(error):
     return render_template('404_error.html'), 404
 
+@app.errorhandler(ServerError)
+def server_error(error):
+    return render_template('500_error.html', error=error.to_html()), 500
 
 def run(user_config=None):
     config = app.config
