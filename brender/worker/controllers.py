@@ -182,6 +182,8 @@ def run_blender_in_thread(options):
         if (platform.system() is not "Windows") \
         else _interactiveReadProcessWin(process, options["job_id"])
 
+    print ('[DEBUG] return code: %d') % retcode
+
     #flask.g.blender_process = None
     #print(full_output)
     script_dir = os.path.dirname(__file__)
@@ -190,7 +192,11 @@ def run_blender_in_thread(options):
     with open(abs_file_path, 'w') as f:
         f.write(full_output)
 
-    http_request('jobs/update', {'id': options['job_id'],
+    if retcode != 0:
+        http_request('jobs/update', {'id': options['job_id'],
+                                            'status': 'failed'})
+    else:
+        http_request('jobs/update', {'id': options['job_id'],
                                            'status': 'finished'})
 
 

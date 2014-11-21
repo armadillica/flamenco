@@ -25,6 +25,8 @@
         $('td:eq(5)', nRow).html(aData[4]);
         if (aData[5] === 'completed') {
           shot_status_label = '<span class="label label-success">' + aData[5] + '</label>';
+        } else if (aData[5] === 'failed') {
+          shot_status_label = '<span class="label label-danger">' + aData[5] + '</label>';
         } else {
           shot_status_label = '<span class="label label-default">' + aData[5] + '</label>';
         }

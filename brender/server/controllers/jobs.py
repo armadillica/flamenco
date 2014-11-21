@@ -276,16 +276,24 @@ def generate_thumbnails(shot, begin, end):
 def jobs_update():
     job_id = request.form['id']
     status = request.form['status'].lower()
-    if status in ['finished']:
+    if status in ['finished', 'failed']:
         job = Job.query.get(job_id)
         shot = Shot.query.get(job.shot_id)
-        job.status = 'finished'
-        db.session.add(shot)
+        job.status = status
+        db.session.add(job)
 
-        generate_thumbnails(shot, job.chunk_start, job.chunk_end)
+        if status == 'finished':
+            generate_thumbnails(shot, job.chunk_start, job.chunk_end)
+        else:
+            print ('[Info] Job %s failed') % job_id
 
         if job.chunk_end == shot.frame_end:
-            shot.status = 'completed'
+            failed_jobs = Job.query.filter_by(shot_id=shot.id, status='failed').count()
+            print ('[Debug] %d jobs failed before') % failed_jobs
+            if failed_jobs > 0 or status == 'failed':
+                shot.status = 'failed'
+            else:
+                shot.status = 'completed'
             # this can be added when we update the shot for every
             # frame rendered
             # if job.current_frame == shot.frame_end:
