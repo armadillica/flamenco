@@ -29,7 +29,7 @@ class ServerError(Exception):
         self.payload = payload
 
     def to_html(self):
-        return HTMLParser().unescape(self.message)
+        return HTMLParser().unescape(self.message).decode('utf8', 'ignore')
 
 def http_request(ip_address, method, post_params=False):
     """Utils function used to communicate with the server
