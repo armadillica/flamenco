@@ -76,8 +76,12 @@ def shot(shot_id):
         shot = shots[shot_id]
         shot['thumb'] = last_thumbnail(shot['id'])
         render_dir = RENDER_PATH + "/" + str(shot['id']) +  '/'
-        shot['render'] = map(lambda s : join("/" + render_dir, s), \
-                             filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
+        if exists(render_dir):
+            shot['render'] = map(lambda s : join("/" + render_dir, s), \
+                            filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
+        else:
+            shot['render'] = '#'
+
         return render_template('shots/view.html', shot=shot)
     else:
         return make_response('shot ' + shot_id + ' doesnt exist')

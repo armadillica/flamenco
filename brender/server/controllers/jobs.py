@@ -131,7 +131,7 @@ def start_job(worker, job):
               'render_settings': render_settings,
               'start': job.chunk_start,
               'end': job.chunk_end,
-              'output': "//" + RENDER_PATH + "/##",
+              'output': "//" + RENDER_PATH + "/" + str(job.shot_id)  + "/##",
               'format': shot.extension}
 
     http_request(worker_ip_address, '/execute_job', params)
@@ -260,10 +260,12 @@ def generate_thumbnails(shot, begin, end):
         # TODO make generic extension
         img_name = ("0" if i < 10 else "") + str(i) + get_file_ext(shot.extension)
         file_path = thumb_dir + "/" + str(i) + '.thumb'
+        # We can't generate thumbnail from multilayer with pillow
         if shot.extension != "MULTILAYER":
             if os.path.exists(file_path):
                 os.remove(file_path)
-            img_path = os.path.abspath(project.path_server + "/" + RENDER_PATH + "/" + img_name)
+            img_path = os.path.abspath(project.path_server + "/" + RENDER_PATH \
+                    + "/" + str(shot.id) + "/" + img_name)
             img = Image.open(img_path)
             img.thumbnail((150, 150), Image.ANTIALIAS)
             thumb_path = thumb_dir + "/" + str(i) + '.thumb'
@@ -274,16 +276,24 @@ def generate_thumbnails(shot, begin, end):
 def jobs_update():
     job_id = request.form['id']
     status = request.form['status'].lower()
-    if status in ['finished']:
+    if status in ['finished', 'failed']:
         job = Job.query.get(job_id)
         shot = Shot.query.get(job.shot_id)
-        job.status = 'finished'
-        db.session.add(shot)
+        job.status = status
+        db.session.add(job)
 
-        generate_thumbnails(shot, job.chunk_start, job.chunk_end)
+        if status == 'finished':
+            generate_thumbnails(shot, job.chunk_start, job.chunk_end)
+        else:
+            print ('[Info] Job %s failed') % job_id
 
         if job.chunk_end == shot.frame_end:
-            shot.status = 'completed'
+            failed_jobs = Job.query.filter_by(shot_id=shot.id, status='failed').count()
+            print ('[Debug] %d jobs failed before') % failed_jobs
+            if failed_jobs > 0 or status == 'failed':
+                shot.status = 'failed'
+            else:
+                shot.status = 'completed'
             # this can be added when we update the shot for every
             # frame rendered
             # if job.current_frame == shot.frame_end:
