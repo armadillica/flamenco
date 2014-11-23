@@ -2,7 +2,7 @@ from flask import send_file, Blueprint
 from os.path import exists
 from os import pardir
 
-from server import RENDER_PATH
+#from server import RENDER_PATH
 
 render = Blueprint('render', __name__)
 
@@ -12,7 +12,7 @@ def index():
 
 @render.route('/<path:path>')
 def get_render(path):
-    img = RENDER_PATH + "/" + path
+    #img = RENDER_PATH + "/" + path
     if not exists(img):
         return "Not Found", 404
 

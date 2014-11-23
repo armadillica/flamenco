@@ -46,6 +46,20 @@ def http_request(ip_address, method, post_params=False):
         raise ServerError(s)
     return r.json()
 
+def http_server_request(method, path, params=None):
+    """New version of the http_request function"""
+
+    if method == 'get':
+        r = requests.get('http://' + app.config['BRENDER_SERVER'] + path)
+    elif method == 'delete':
+        r = requests.delete('http://' + app.config['BRENDER_SERVER'] + path)
+        return '', 204
+    if method == 'post':
+        r = requests.post('http://' + app.config['BRENDER_SERVER'] + path, params)
+    if method == 'put':
+        r = requests.put('http://' + app.config['BRENDER_SERVER'] + path, params)
+    return r.json()
+
 
 def list_integers_string(string_list):
     """Accepts comma separated string list of integers

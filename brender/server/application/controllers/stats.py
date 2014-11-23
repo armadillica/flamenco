@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify
-from server.model import Job, Shot, Project
+from application.model import Job
+from application.model import Shot
+from application.modules.projects.model import Project
 
-from server import db
+from application import db
 
 stats = Blueprint('stats', __name__)
 

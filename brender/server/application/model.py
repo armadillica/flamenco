@@ -1,5 +1,5 @@
 from datetime import date
-from server import db
+from application import db
 
 class Worker(db.Model):
     """Workers are the render nodes of the farm
@@ -20,24 +20,6 @@ class Worker(db.Model):
 
     def __repr__(self):
         return '<Worker %r>' % self.hostname
-
-
-class Project(db.Model):
-    """Production project folders
-
-    This is a temporary table to get quickly up and running with projects
-    suport in brender. In the future, project definitions could come from
-    attract or it could be defined in another way.
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120))
-    path_server = db.Column(db.Text())
-    path_linux = db.Column(db.Text())
-    path_win = db.Column(db.Text())
-    path_osx = db.Column(db.Text())
-
-    def __repr__(self):
-        return '<Project %r>' % self.name
 
 
 class Shot(db.Model):

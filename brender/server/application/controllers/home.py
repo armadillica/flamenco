@@ -1,6 +1,6 @@
 import urllib
-from server.model import Worker
-from server import db
+from application.model import Worker
+from application import db
 from flask import (Flask, 
     Blueprint, 
     render_template, 

@@ -5,9 +5,9 @@ from os import listdir
 from os.path import isfile, join, abspath, dirname
 from flask import Blueprint, render_template, abort, jsonify, request
 
-from server.model import *
-from server.utils import *
-from server import db
+from application.model import *
+from application.utils import *
+from application import db
 
 projects = Blueprint('projects', __name__)
 

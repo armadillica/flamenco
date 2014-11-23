@@ -5,10 +5,10 @@ from os import listdir
 from os.path import isfile, join, abspath, dirname
 from flask import Blueprint, render_template, abort, jsonify, request
 
-from server.model import *
-from server.utils import *
+from application.model import *
+from application.utils import *
 
-from server import db
+from application import db
 
 settings = Blueprint('settings', __name__)
 

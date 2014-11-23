@@ -7,10 +7,10 @@ from flask import (abort,
                    request)
 
 # TODO(sergey): Generally not a good idea to import *
-from server.model import *
-from server.utils import *
+from application.model import *
+from application.utils import *
 from workers import *
-from server import db, RENDER_PATH
+from application import db, RENDER_PATH
 from PIL import Image
 from platform import system
 

@@ -4,11 +4,12 @@ import os
 from os import listdir
 from os.path import isfile, isdir, join, abspath, dirname
 
-from server import RENDER_PATH
-from server.model import *
-from server.utils import *
+from application import RENDER_PATH
+from application.model import *
+from application.utils import *
+from application.modules.projects.model import Project
 from jobs import *
-from server import db
+from application import db
 from platform import system
 from shutil import rmtree
 

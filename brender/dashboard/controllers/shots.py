@@ -19,7 +19,8 @@ from flask import (flash,
 
 from dashboard import app
 from dashboard import http_request, list_integers_string
-from server import RENDER_PATH
+from dashboard import http_server_request
+#from server import RENDER_PATH
 
 # TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
@@ -28,13 +29,13 @@ BRENDER_SERVER = app.config['BRENDER_SERVER']
 # Name of the Blueprint
 shots = Blueprint('shots', __name__)
 
-def last_thumbnail(shot_id):
-    render_dir = RENDER_PATH + "/" + str(shot_id)
-    if not exists(render_dir):
-        return ""
+# def last_thumbnail(shot_id):
+#     render_dir = RENDER_PATH + "/" + str(shot_id)
+#     if not exists(render_dir):
+#         return ""
 
-    files = sorted(["/" + render_dir + "/" + f for f in listdir(render_dir) if  f.endswith(".thumb")])
-    return files.pop() if files else ""
+#     files = sorted(["/" + render_dir + "/" + f for f in listdir(render_dir) if  f.endswith(".thumb")])
+#     return files.pop() if files else ""
 
 
 @shots.route('/')
@@ -74,13 +75,13 @@ def shot(shot_id):
 
     if shot:
         shot = shots[shot_id]
-        shot['thumb'] = last_thumbnail(shot['id'])
-        render_dir = RENDER_PATH + "/" + str(shot['id']) +  '/'
-        if exists(render_dir):
-            shot['render'] = map(lambda s : join("/" + render_dir, s), \
-                            filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
-        else:
-            shot['render'] = '#'
+        #shot['thumb'] = last_thumbnail(shot['id'])
+        # render_dir = RENDER_PATH + "/" + str(shot['id']) +  '/'
+        # if exists(render_dir):
+        #     shot['render'] = map(lambda s : join("/" + render_dir, s), \
+        #                     filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
+        # else:
+        #     shot['render'] = '#'
 
         return render_template('shots/view.html', shot=shot)
     else:
@@ -148,7 +149,7 @@ def add():
         return redirect(url_for('shots.index'))
     else:
         render_settings = http_request(BRENDER_SERVER, '/settings/render')
-        projects = http_request(BRENDER_SERVER, '/projects/')
+        projects = http_server_request('get', '/projects')
         settings = http_request(BRENDER_SERVER, '/settings/')
         return render_template('shots/add_modal.html',
                             render_settings=render_settings,

@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, abort, jsonify, request
 
-from server.model import Worker
-from server.utils import *
+from application.model import Worker
+from application.utils import *
 
-from server import db
+from application import db
 
 workers = Blueprint('workers', __name__)
 
