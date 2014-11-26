@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, abort, jsonify, request
 
-from application.model import Worker
+#from application.model import Worker
+from application.modules.workers.model import Worker
 from application.utils import *
 
 from application import db
