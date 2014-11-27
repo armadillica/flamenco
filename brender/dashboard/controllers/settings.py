@@ -19,10 +19,10 @@ settings = Blueprint('settings', __name__)
 def index():
     if request.method == 'POST':
         params = request.form
-        http_request(BRENDER_SERVER, '/settings/update', params)
+        http_request(BRENDER_SERVER, '/settings', params)
 
     projects = http_request(BRENDER_SERVER, '/projects/')
-    settings = http_request(BRENDER_SERVER, '/settings/')
+    settings = http_request(BRENDER_SERVER, '/settings')
     return render_template('settings/index.html',
                            title='settings',
                            settings=settings,

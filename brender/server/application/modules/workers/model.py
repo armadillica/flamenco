@@ -1,4 +1,5 @@
 from application import db
+from urllib import urlopen
 
 class Worker(db.Model):
     """Workers are the render nodes of the farm
@@ -20,7 +21,7 @@ class Worker(db.Model):
     @property
     def is_connected(self):
         try:
-            urllib.urlopen("http://" + self.ip_address)
+            urlopen("http://" + self.ip_address)
             return True
         except:
             print "[Warning] Worker %s is not online" % self.hostname
