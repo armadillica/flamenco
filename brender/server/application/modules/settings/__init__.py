@@ -21,11 +21,6 @@ parser.add_argument('render_settings_path_win', type=str)
 parser.add_argument('render_settings_path_osx', type=str)
 parser.add_argument('active_project', type=str)
 
-setting_fields = {
-    'name' : fields.String,
-    'value' : fields.String
-}
-
 class SettingsListApi(Resource):
     def get(self):
         settings = {}
@@ -34,7 +29,6 @@ class SettingsListApi(Resource):
 
         return jsonify(settings)
 
-    @marshal_with(setting_fields)
     def post(self):
         args = parser.parse_args()
         for k, v in args.iteritems():
@@ -47,7 +41,7 @@ class SettingsListApi(Resource):
                 print '[Debug] Creating %s %s' % (k, v)
             db.session.add(setting)
         db.session.commit()
-        return args, 201
+        return "", 204
 
 class RenderSettingsApi(Resource):
     def get(self):
