@@ -10,7 +10,9 @@ from flask import (flash,
                    Blueprint)
 
 from dashboard import app
-from dashboard import http_request, list_integers_string
+from dashboard import http_request
+from dashboard import list_integers_string
+from dashboard import http_server_request
 
 BRENDER_SERVER = app.config['BRENDER_SERVER']
 
@@ -45,14 +47,13 @@ def edit():
     worker_ids = request.form['id']
     worker_status = request.form['status'].lower()
 
-    worker_config = {'system': 'linux',
-                     'blender': 'local'}
-    params = {'id': worker_ids,
-                'status': worker_status,
-                'config': worker_config}
-    http_request(BRENDER_SERVER, '/workers/edit', params)
+    #worker_config = {'system': 'linux',
+    #                'blender': 'local'}
+    params = dict(id=worker_ids, status=worker_status)
+                #'config': worker_config}
+    http_server_request('post', '/workers', params)
 
-    return jsonify(status='ok')
+    return redirect(url_for('workers.index'))
 
 
 @workers.route('/view/<worker_id>')

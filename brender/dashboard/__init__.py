@@ -31,6 +31,13 @@ class ServerError(Exception):
     def to_html(self):
         return HTMLParser().unescape(self.message).decode('utf8', 'ignore')
 
+def server_check_error(response):
+    if response.status_code == 500:
+        s =""
+        for chunk in response.iter_content(50):
+            s += chunk
+        raise ServerError(s)
+
 def http_request(ip_address, method, post_params=False):
     """Utils function used to communicate with the server
     """
@@ -39,11 +46,7 @@ def http_request(ip_address, method, post_params=False):
     else:
         r = requests.get('http://' + ip_address + method)
 
-    if r.status_code == 500:
-        s =""
-        for chunk in r.iter_content(50):
-            s += chunk
-        raise ServerError(s)
+    server_check_error(r)
     return r.json()
 
 def http_server_request(method, path, params=None):
@@ -53,11 +56,15 @@ def http_server_request(method, path, params=None):
         r = requests.get('http://' + app.config['BRENDER_SERVER'] + path)
     elif method == 'delete':
         r = requests.delete('http://' + app.config['BRENDER_SERVER'] + path)
-        return '', 204
     if method == 'post':
         r = requests.post('http://' + app.config['BRENDER_SERVER'] + path, params)
     if method == 'put':
         r = requests.put('http://' + app.config['BRENDER_SERVER'] + path, params)
+
+    if r.status_code == 204:
+        return '', 204
+
+    server_check_error(r)
     return r.json()
 
 

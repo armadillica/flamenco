@@ -3,9 +3,11 @@ from flask import Flask
 from flask import jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import Api
+from flask.ext.migrate import Migrate
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 RENDER_PATH = "render"
 
@@ -27,20 +29,29 @@ from modules.projects import ProjectApi
 api.add_resource(ProjectListApi, '/projects')
 api.add_resource(ProjectApi, '/projects/<int:project_id>')
 
+from modules.workers import WorkersListApi
+api.add_resource(WorkersListApi, '/workers')
+
+from modules.settings import SettingsListApi
+from modules.settings import RenderSettingsApi
+api.add_resource(SettingsListApi, '/settings')
+api.add_resource(RenderSettingsApi, '/settings/render')
+
+
 from controllers.home import home
 from controllers.jobs import jobs
-from controllers.workers import workers
+#from controllers.workers import workers
 from controllers.shots import shots
-from controllers.projects import projects
-from controllers.settings import settings
+#from controllers.projects import projects
+#from controllers.settings import settings
 from controllers.stats import stats
 
 app.register_blueprint(home)
-app.register_blueprint(workers, url_prefix='/workers')
+#app.register_blueprint(workers, url_prefix='/workers')
 app.register_blueprint(jobs, url_prefix='/jobs')
 app.register_blueprint(shots, url_prefix='/shots')
 #app.register_blueprint(projects, url_prefix='/projects')
-app.register_blueprint(settings, url_prefix='/settings')
+#app.register_blueprint(settings, url_prefix='/settings')
 app.register_blueprint(stats, url_prefix='/stats')
 
 

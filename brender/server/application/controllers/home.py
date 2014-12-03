@@ -1,12 +1,13 @@
 import urllib
-from application.model import Worker
+#from application.model import Worker
+from application.modules.workers.model import Worker
 from application import db
-from flask import (Flask, 
-    Blueprint, 
-    render_template, 
-    jsonify, 
-    redirect, 
-    url_for, 
+from flask import (Flask,
+    Blueprint,
+    render_template,
+    jsonify,
+    redirect,
+    url_for,
     request)
 
 home = Blueprint('home', __name__)

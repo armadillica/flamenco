@@ -16,3 +16,6 @@ zope.testing==4.1.2
 Flask-SQLAlchemy==1.0
 requests==2.2.1
 Pillow==2.6.1
+Flask-Script==2.0.5
+Flask-RESTful==0.3.0
+Flask-Migrate==1.2.0

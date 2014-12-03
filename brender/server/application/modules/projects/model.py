@@ -1,6 +1,6 @@
 from datetime import date
 from application import db
-from application.model import Setting
+from application.modules.settings.model import Setting
 
 
 class Project(db.Model):
@@ -23,7 +23,7 @@ class Project(db.Model):
         if active_project:
             return int(active_project.value) == self.id
         else:
-            return False    
+            return False
 
     def __repr__(self):
         return '<Project %r>' % self.name
