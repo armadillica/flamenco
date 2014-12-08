@@ -90,7 +90,7 @@ def _checkProcessOutputWin(process, q):
         full_buffer += buffer
     return full_buffer
 
-def _interactiveReadProcessWin(process, job_id):
+def _interactiveReadProcessWin(process, task_id):
     full_buffer = ''
     tmp_buffer = ''
     q = Queue.Queue()
@@ -113,7 +113,7 @@ def _interactiveReadProcessWin(process, job_id):
     full_buffer += _checkProcessOutputWin(process, q)
     return (process.returncode, full_buffer)
 
-def _interactiveReadProcess(process, job_id):
+def _interactiveReadProcess(process, task_id):
     full_buffer = ''
     tmp_buffer = ''
     while True:
@@ -178,9 +178,9 @@ def run_blender_in_thread(options):
         fcntl(process.stderr, F_SETFL, flags | os.O_NONBLOCK)
 
     #flask.g.blender_process = process
-    (retcode, full_output) =  _interactiveReadProcess(process, options["job_id"]) \
+    (retcode, full_output) =  _interactiveReadProcess(process, options["task_id"]) \
         if (platform.system() is not "Windows") \
-        else _interactiveReadProcessWin(process, options["job_id"])
+        else _interactiveReadProcessWin(process, options["task_id"])
 
     print ('[DEBUG] return code: %d') % retcode
 
@@ -193,17 +193,17 @@ def run_blender_in_thread(options):
         f.write(full_output)
 
     if retcode != 0:
-        http_request('jobs/update', {'id': options['job_id'],
+        http_request('tasks/update', {'id': options['task_id'],
                                             'status': 'failed'})
     else:
-        http_request('jobs/update', {'id': options['job_id'],
+        http_request('tasks/update', {'id': options['task_id'],
                                            'status': 'finished'})
 
 
-@app.route('/execute_job', methods=['POST'])
-def execute_job():
+@app.route('/execute_task', methods=['POST'])
+def execute_task():
     options = {
-        'job_id': request.form['job_id'],
+        'task_id': request.form['task_id'],
         'file_path': request.form['file_path'],
         'blender_path': request.form['blender_path'],
         'start_frame': request.form['start'],

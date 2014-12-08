@@ -37,11 +37,17 @@ from modules.settings import RenderSettingsApi
 api.add_resource(SettingsListApi, '/settings')
 api.add_resource(RenderSettingsApi, '/settings/render')
 
+from modules.jobs import JobListApi
+from modules.jobs import JobApi
+from modules.jobs import JobBrowsing
+api.add_resource(JobListApi, '/jobs')
+api.add_resource(JobBrowsing, '/jobs/browse/<path:path>')
+api.add_resource(JobApi, '/jobs/<int:job_id>')
 
 from controllers.home import home
 from controllers.jobs import jobs
 #from controllers.workers import workers
-from controllers.shots import shots
+#from controllers.shots import shots
 #from controllers.projects import projects
 #from controllers.settings import settings
 from controllers.stats import stats

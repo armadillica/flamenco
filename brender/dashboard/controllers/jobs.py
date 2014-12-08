@@ -27,10 +27,10 @@ BRENDER_SERVER = app.config['BRENDER_SERVER']
 
 
 # Name of the Blueprint
-shots = Blueprint('shots', __name__)
+jobs = Blueprint('jobs', __name__)
 
-# def last_thumbnail(shot_id):
-#     render_dir = RENDER_PATH + "/" + str(shot_id)
+# def last_thumbnail(job_id):
+#     render_dir = RENDER_PATH + "/" + str(job_id)
 #     if not exists(render_dir):
 #         return ""
 
@@ -38,120 +38,107 @@ shots = Blueprint('shots', __name__)
 #     return files.pop() if files else ""
 
 
-@shots.route('/')
+@jobs.route('/')
 def index():
-    shots = http_request(BRENDER_SERVER, '/shots')
-    shots_list = []
+    jobs = http_server_request('get', '/jobs')
+    jobs_list = []
 
-    for key, val in shots.iteritems():
+    for key, val in jobs.iteritems():
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
-        shots_list.append({
-            "DT_RowId": "shot_" + str(key),
+        jobs_list.append({
+            "DT_RowId": "job_" + str(key),
             "0": val['checkbox'],
             "1": key,
-            "2": val['shot_name'],
+            "2": val['job_name'],
             "3": val['percentage_done'],
             "4": val['render_settings'],
             "5": val['status'],
             "6" : last_thumbnail(key)})
         #print(v)
 
-    entries = json.dumps(shots_list)
+    entries = json.dumps(jobs_list)
 
-    return render_template('shots/index.html', entries=entries, title='shots')
+    return render_template('jobs/index.html', entries=entries, title='jobs')
 
-@shots.route('/<shot_id>')
-def shot(shot_id):
-    print '[Debug] shot_id is %s' % shot_id
-    shot = None
-    try:
-        shots = http_request(BRENDER_SERVER, '/shots')
-    except KeyError:
-        print 'shot doesnt exist'
-    if shot_id in shots:
-        for key, val in shots.iteritems():
-            if shot_id in key:
-                shot = shots[shot_id]
+@jobs.route('/<job_id>')
+def job(job_id):
+    print '[Debug] job_id is %s' % job_id
+    job = http_server_request('get', '/jobs/' + job_id)
+    #job['thumb'] = last_thumbnail(job['id'])
+    # render_dir = RENDER_PATH + "/" + str(job['id']) +  '/'
+    # if exists(render_dir):
+    #     job['render'] = map(lambda s : join("/" + render_dir, s), \
+    #                     filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
+    # else:
+    #     job['render'] = '#'
 
-    if shot:
-        shot = shots[shot_id]
-        #shot['thumb'] = last_thumbnail(shot['id'])
-        # render_dir = RENDER_PATH + "/" + str(shot['id']) +  '/'
-        # if exists(render_dir):
-        #     shot['render'] = map(lambda s : join("/" + render_dir, s), \
-        #                     filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
-        # else:
-        #     shot['render'] = '#'
-
-        return render_template('shots/view.html', shot=shot)
-    else:
-        return make_response('shot ' + shot_id + ' doesnt exist')
+    return render_template('jobs/view.html', job=job)
 
 
-@shots.route('/browse/', defaults={'path': ''})
-@shots.route('/browse/<path:path>',)
-def shots_browse(path):
-    path = os.path.join('/shots/browse/', path)
+@jobs.route('/browse/', defaults={'path': ''})
+@jobs.route('/browse/<path:path>',)
+def jobs_browse(path):
+    path = os.path.join('/jobs/browse/', path)
     print path
-    path_data = http_request(BRENDER_SERVER, path)
+    path_data = http_server_request('get', path)
     return render_template('browse_modal.html',
         # items=path_data['items'],
         items_list=path_data['items_list'],
         parent_folder=path_data['parent_path'])
 
 
-@shots.route('/delete', methods=['POST'])
-def shots_delete():
-    shot_ids = request.form['id']
-    print(shot_ids)
-    params = {'id': shot_ids}
-    shots = http_request(BRENDER_SERVER, '/shots/delete', params)
+@jobs.route('/delete', methods=['POST'])
+def jobs_delete():
+    job_ids = request.form['id']
+    print(job_ids)
+    params = {'id': job_ids}
+    jobs = http_server_request('delete', '/jobs', params)
     return 'done'
 
 
-@shots.route('/update', methods=['POST'])
-def shots_update():
+@jobs.route('/update', methods=['POST'])
+def jobs_update():
     command = request.form['command'].lower()
-    shot_ids = request.form['id']
-    params = {'id': shot_ids}
+    job_ids = request.form['id']
+    params = {'id': job_ids,
+              'status' : command}
     if command in ['start', 'stop', 'reset']:
-        shots = http_request(BRENDER_SERVER,
-            '/shots/%s' % (command), params)
+        jobs = http_server_request('put',
+            '/jobs', params)
         return 'done'
     else:
         return 'error'
 
 
-@shots.route('/add', methods=['GET', 'POST'])
+@jobs.route('/add', methods=['GET', 'POST'])
 def add():
     if request.method == 'POST':
-        shot_values = {
-            'attract_shot_id': 1,
+        job_values = {
             'project_id': request.form['project_id'],
-            'shot_name': request.form['shot_name'],
+            'job_name': request.form['job_name'],
             'frame_start': request.form['frame_start'],
             'frame_end': request.form['frame_end'],
             'chunk_size': request.form['chunk_size'],
             'current_frame': request.form['frame_start'],
             'filepath': request.form['filepath'],
             'render_settings': request.form['render_settings'],
-            'extension' : request.form['extension'],
+            'format' : request.form['format'],
             'status': 'running',
             'priority': 10,
             'owner': 'fsiddi'
         }
 
-        http_request(BRENDER_SERVER, '/shots/add', shot_values)
+        http_server_request('post', '/jobs', job_values)
 
         #  flashing does not work because we use redirect_url
-        #  flash('New shot added!')
+        #  flash('New job added!')
 
-        return redirect(url_for('shots.index'))
+        return redirect(url_for('jobs.index'))
     else:
         render_settings = http_request(BRENDER_SERVER, '/settings/render')
         projects = http_server_request('get', '/projects')
-        settings = http_request(BRENDER_SERVER, '/settings/')
-        return render_template('shots/add_modal.html',
+        settings = http_server_request('get', '/settings/')
+        return render_template('jobs/add_modal.html',
                             render_settings=render_settings,
                             settings=settings,
                             projects=projects)
