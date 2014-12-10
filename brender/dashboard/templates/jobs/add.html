@@ -1,14 +1,14 @@
 {% extends "layout.html" %}
 
 {% block body %}
-    <h1>Add shot</h1>
+    <h1>Add job</h1>
     <hr>
 
-    <form role="form" class="form-horizontal" action="{{ url_for('shots_add') }}" method=post>
+    <form role="form" class="form-horizontal" action="{{ url_for('jobs_add') }}" method=post>
       <div class="form-group">
-        <label for="shot_name" class="col-sm-2 control-label">Shot name</label>
+        <label for="job_name" class="col-sm-2 control-label">Job name</label>
         <div class="col-sm-4">
-          <input type="text" class="form-control" name="shot_name" id="shot_name" value="test_shot">
+          <input type="text" class="form-control" name="job_name" id="job_name" value="test_job">
         </div>
       </div>
 
@@ -52,7 +52,7 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-default">Add Shot</button>
+      <button type="submit" class="btn btn-default">Add Job</button>
     </form>
 
 

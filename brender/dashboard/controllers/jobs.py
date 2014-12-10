@@ -18,9 +18,9 @@ from flask import (flash,
                    Blueprint)
 
 from dashboard import app
-from dashboard import http_request, list_integers_string
+from dashboard import list_integers_string
 from dashboard import http_server_request
-#from server import RENDER_PATH
+from server import RENDER_PATH
 
 # TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
@@ -29,13 +29,13 @@ BRENDER_SERVER = app.config['BRENDER_SERVER']
 # Name of the Blueprint
 jobs = Blueprint('jobs', __name__)
 
-# def last_thumbnail(job_id):
-#     render_dir = RENDER_PATH + "/" + str(job_id)
-#     if not exists(render_dir):
-#         return ""
+def last_thumbnail(job_id):
+    render_dir = RENDER_PATH + "/" + str(job_id)
+    if not exists(render_dir):
+        return ""
 
-#     files = sorted(["/" + render_dir + "/" + f for f in listdir(render_dir) if  f.endswith(".thumb")])
-#     return files.pop() if files else ""
+    files = sorted(["/" + render_dir + "/" + f for f in listdir(render_dir) if  f.endswith(".thumb")])
+    return files.pop() if files else ""
 
 
 @jobs.route('/')
@@ -78,7 +78,10 @@ def job(job_id):
 @jobs.route('/browse/', defaults={'path': ''})
 @jobs.route('/browse/<path:path>',)
 def jobs_browse(path):
-    path = os.path.join('/jobs/browse/', path)
+    if len(path) > 0:
+        path = os.path.join('/jobs/browse', path)
+    else:
+        path = "/jobs/browse"
     print path
     path_data = http_server_request('get', path)
     return render_template('browse_modal.html',
@@ -92,7 +95,7 @@ def jobs_delete():
     job_ids = request.form['id']
     print(job_ids)
     params = {'id': job_ids}
-    jobs = http_server_request('delete', '/jobs', params)
+    jobs = http_server_request('post', '/jobs/delete', params)
     return 'done'
 
 
@@ -135,9 +138,9 @@ def add():
 
         return redirect(url_for('jobs.index'))
     else:
-        render_settings = http_request(BRENDER_SERVER, '/settings/render')
+        render_settings = http_server_request('get', '/settings/render')
         projects = http_server_request('get', '/projects')
-        settings = http_server_request('get', '/settings/')
+        settings = http_server_request('get', '/settings')
         return render_template('jobs/add_modal.html',
                             render_settings=render_settings,
                             settings=settings,

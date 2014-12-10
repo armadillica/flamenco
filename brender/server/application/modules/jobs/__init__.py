@@ -1,26 +1,31 @@
 from flask.ext.restful import Resource
-from flask.ext.restful import reqparser
+from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
 from application import db
+from application.utils import list_integers_string
 
 from flask import jsonify
 from application import RENDER_PATH
 from model import Job
 from shutil import rmtree
+import os
+from os import listdir
 from os.path import join
 from os.path import exists
 
 from application.modules.tasks import TaskApi
+from application.modules.settings.model import Setting
+from application.modules.projects.model import Project
 
-id_list = reqparser.RequestParser()
-id_list.add_argument('id', type=int, action='append')
+id_list = reqparse.RequestParser()
+id_list.add_argument('id', type=str)
 
 status_parser = id_list.copy()
 status_parser.add_argument('status', type=str)
 
-parser = reqparser.RequestParser()
+parser = reqparse.RequestParser()
 parser.add_argument('project_id', type=int)
 parser.add_argument('frame_start', type=int)
 parser.add_argument('frame_end', type=int)
@@ -53,10 +58,11 @@ class JobListApi(Resource):
         for job in Job.query.all():
             percentage_done = 0
             frame_count = job.frame_end - job.frame_start + 1
-            percentage_done = round(float(current_frame) / float(frame_count) * 100.0,
+            percentage_done = round(float(job.current_frame) / float(frame_count) * 100.0,
                                     1)
 
             jobs[job.id] = {
+                            "job_name" : job.name,
                             "frame_start" : job.frame_start,
                             "frame_end" : job.frame_end,
                             "current_frame" : job.current_frame,
@@ -68,13 +74,14 @@ class JobListApi(Resource):
         return jsonify(jobs)
 
     def start(self, job_id):
-        job = Shot.query.get(job_id)
+        job = Job.query.get(job_id)
         if job:
             if job.status != 'running':
                 job.status = 'running'
                 db.session.add(job)
                 db.session.commit()
-                print ('[debug] Dispatching jobs')
+                print ('[debug] Dispatching tasks')
+            TaskApi.dispatch_tasks()
         else:
             print('[error] Job %d not found' % job_id)
             raise KeyError
@@ -85,7 +92,7 @@ class JobListApi(Resource):
         job = Job.query.get(job_id)
         if job:
             if job.status != 'stopped':
-                stop_tasks(job.id)
+                TaskApi.stop_tasks(job.id)
                 job.status = 'stopped'
                 db.session.add(job)
                 db.session.commit()
@@ -94,7 +101,7 @@ class JobListApi(Resource):
             raise KeyError
 
     def reset(self, job_id):
-        job = Shot.query.get(job_id)
+        job = Job.query.get(job_id)
         if job:
             if job.status == 'running':
                 print'Job %d is running' % job_id
@@ -132,7 +139,6 @@ class JobListApi(Resource):
         except KeyError:
             return args, 404
 
-        dispatch_jobs()
         args['status'] = 'running'
         return args, 200
 
@@ -165,9 +171,20 @@ class JobListApi(Resource):
 
         return job, 201
 
-    def delete(self):
+
+class JobApi(Resource):
+    @marshal_with(job_fields)
+    def get(self, job_id):
+       job = Job.query.get_or_404(job_id)
+       return job
+
+
+class JobDeleteApi(Resource):
+    def post(self):
         args = id_list.parse_args()
-        for j in args['id']:
+        print args['id']
+        int_list = list_integers_string(args['id'])
+        for j in int_list:
             print 'working on %d - %s' % (j, str(type(j)))
             TaskApi.delete_tasks(j)
             job = Job.query.get(j)
@@ -185,18 +202,15 @@ class JobListApi(Resource):
 
         return '', 204
 
-class JobApi(Resource):
-    @marshal_with(job_fields)
-    def get(self, job_id):
-       job = Job.query.get_or_404(job_id)
-       return job
 
 class JobBrowsing(Resource):
-    def get(self, path):
+    @staticmethod
+    def browse(path):
         """We browse the production folder on the server.
         The path value gets appended to the active_project path value. The result is returned
         in JSON format.
         """
+
         active_project = Setting.query.filter_by(name = 'active_project').first()
         active_project = Project.query.get(active_project.value)
 
@@ -234,5 +248,13 @@ class JobBrowsing(Resource):
             # items=items,
             items_list=items_list)
 
-        return jsonify(project_files)
+        return project_files
 
+
+    def get(self, path):
+        return jsonify(self.browse(path))
+
+
+class JobRootBrowsing(Resource):
+    def get(self):
+        return jsonify(JobBrowsing.browse(''))

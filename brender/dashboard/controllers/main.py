@@ -16,7 +16,9 @@ from flask import make_response
 from flask import Blueprint
 
 from dashboard import app
-from dashboard import http_request, list_integers_string, check_connection
+from dashboard import http_server_request
+from dashboard import list_integers_string
+from dashboard import check_connection
 
 from dashboard.controllers.workers import workers
 
@@ -34,14 +36,14 @@ def index():
         return "[error] Dashboard could not connect to server"
 
 
-@main.route('/jobs/')
-def jobs_index():
-    jobs = http_request(BRENDER_SERVER, '/jobs')
-    jobs_list = []
+@main.route('/tasks/')
+def tasks_index():
+    tasks = http_server_request('get', '/tasks')
+    tasks_list = []
 
-    for key, val in jobs.iteritems():
+    for key, val in tasks.iteritems():
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
-        jobs_list.append({
+        tasks_list.append({
             "DT_RowId": "worker_" + str(key),
             "0": val['checkbox'],
             "1": key,
@@ -51,9 +53,9 @@ def jobs_index():
             })
         #print(v)
 
-    entries = json.dumps(jobs_list)
+    entries = json.dumps(tasks_list)
 
-    return render_template('jobs.html', entries=entries, title='jobs')
+    return render_template('tasks.html', entries=entries, title='tasks')
 
 
 @main.route('/log/', methods=['GET', 'POST'])

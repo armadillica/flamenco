@@ -9,11 +9,16 @@ from flask import render_template
 from flask import request
 
 # TODO(sergey): Generally not a good idea to import *
-from application.modules import *
 from application.utils import *
 from application import db, RENDER_PATH
 from PIL import Image
 from platform import system
+
+from application.modules.tasks.model import Task
+from application.modules.workers.model import Worker
+from application.modules.jobs.model import Job
+from application.modules.projects.model import Project
+from application.modules.settings.model import Setting
 
 parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
@@ -49,7 +54,7 @@ class TaskApi(Resource):
             for chunk in range(total_chunks):
                 print('making chunk for job', job.id)
 
-                create_task(job.id, chunk_start, chunk_end)
+                TaskApi.create_task(job.id, chunk_start, chunk_end)
 
                 chunk_start = chunk_end + 1
                 chunk_end = chunk_start + job.chunk_size - 1
@@ -57,7 +62,7 @@ class TaskApi(Resource):
         elif job_chunks_remainder == job.chunk_size:
             print('we have 1 chunk only')
 
-            create_task(job.id, job.frame_start, job.frame_end)
+            TaskApi.create_task(job.id, job.frame_start, job.frame_end)
 
         #elif job_chunks_remainder > 0 and \
         #     job_chunks_remainder < job.chunk_size:
@@ -79,7 +84,7 @@ class TaskApi(Resource):
                 chunk_end = chunk_start + job.chunk_size - 1
 
             chunk_end = chunk_start + job_chunks_remainder - 1
-            create_task(job.id, chunk_start, chunk_end)
+            TaskApi.create_task(job.id, chunk_start, chunk_end)
 
 
     @staticmethod
@@ -138,7 +143,7 @@ class TaskApi(Resource):
                   'start': task.chunk_start,
                   'end': task.chunk_end,
                   'output': "//" + RENDER_PATH + "/" + str(task.job_id)  + "/##",
-                  'format': job.extension}
+                  'format': job.format}
 
         http_request(worker_ip_address, '/execute_task', params)
         #  get a reply from the worker (running, error, etc)
@@ -168,7 +173,7 @@ class TaskApi(Resource):
                 task.status = 'running'
                 db.session.add(task)
                 db.session.commit()
-                start_task(worker, task)
+                TaskApi.start_task(worker, task)
             #else:
             #    print '[error] Task does not exist'
 
@@ -212,6 +217,7 @@ class TaskApi(Resource):
         task.status = 'ready'
         db.session.add(task)
         db.session.commit()
+        print "Task %d stopped" % task_id
 
     @staticmethod
     def stop_tasks(job_id):
@@ -222,7 +228,7 @@ class TaskApi(Resource):
             filter_by(status = 'running').\
             all()
 
-        map(lambda t : print(stop_task(t.id)), tasks)
+        map(lambda t : TaskApi.stop_task(t.id), tasks)
 
 
     def get(self):
@@ -296,6 +302,6 @@ class TaskApi(Resource):
                 db.session.add(job)
             db.session.commit()
 
-        dispatch_tasks()
+        TaskApi.dispatch_tasks()
 
         return '', 204

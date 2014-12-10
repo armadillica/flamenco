@@ -10,7 +10,6 @@ from flask import (flash,
                    Blueprint)
 
 from dashboard import app
-from dashboard import http_request
 from dashboard import list_integers_string
 from dashboard import http_server_request
 
@@ -22,7 +21,7 @@ workers = Blueprint('workers', __name__)
 
 @workers.route('/')
 def index():
-    workers = http_request(BRENDER_SERVER, '/workers')
+    workers = http_server_request('get', '/workers')
     workers_list = []
 
     for key, val in workers.iteritems():
@@ -61,7 +60,7 @@ def view(worker_id):
     #print(workers)
     worker = None
     try:
-        workers = http_request(BRENDER_SERVER, '/workers')
+        workers = http_server_request('get', '/workers')
     except KeyError:
         '''
             there are multiple exceptions that we can use here

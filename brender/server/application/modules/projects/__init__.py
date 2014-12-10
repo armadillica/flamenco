@@ -7,7 +7,7 @@ from flask.ext.restful import reqparse
 from application import db
 from application.modules.projects.model import Project
 from application.modules.settings.model import Setting
-from application.model import Shot
+from application.modules.jobs.model import Job
 
 
 parser = reqparse.RequestParser()

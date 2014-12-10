@@ -29,5 +29,3 @@ class Worker(db.Model):
 
     def __repr__(self):
         return '<Worker %r>' % self.hostname
-
-

@@ -12,8 +12,8 @@ class Task(db.Model):
     * Send email with results to user@brender-farm.org
     """
     id = db.Column(db.Integer, primary_key=True)
-    shot_id = db.Column(db.Integer, db.ForeignKey('shot.id'))
-    shot = db.relationship('Shot',
+    job_id = db.Column(db.Integer, db.ForeignKey('job.id'))
+    job = db.relationship('Job',
         backref=db.backref('tasks', lazy='dynamic'))
     worker_id = db.Column(db.Integer())
     chunk_start = db.Column(db.Integer())

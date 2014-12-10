@@ -11,10 +11,10 @@
 </script>
 <script>
     $(document).ready(function() {
-        $(document).on("click", "#shot-delete", function() {
-            shot_id = {{ shot['id'] }}
-            $.post('/shots/delete', { 'id': shot_id});
-            location = '/shots'
+        $(document).on("click", "#job-delete", function() {
+            job_id = {{ job['id'] }}
+            $.post('/jobs/delete', { 'id': job_id});
+            location = '/jobs'
         });
     });
 </script>
@@ -25,38 +25,38 @@
       <div class="panel panel-primary">
         <div class="panel-heading">
             <h3 class="panel-title">
-                {{ shot['shot_name'] }}
-                <a id="pop-{{ shot['id'] }}"
+                {{ job['job_name'] }}
+                <a id="pop-{{ job['id'] }}"
                     href="#"
                     class="glyphicon glyphicon-remove pull-right"
                     data-toggle="popover",
-                    title="<p class='text-danger'>Delete {{shot['shot_name']}}?</p>"
+                    title="<p class='text-danger'>Delete {{job['job_name']}}?</p>"
                 data-content="
-                    <a href='#' id='shot-delete' class='btn btn-danger'>Ok</a>
-                    <a onclick=&quot;$('#pop-{{ shot['id'] }}').popover('hide');&quot; class='btn btn-default'>Cancel</a>"
+                    <a href='#' id='job-delete' class='btn btn-danger'>Ok</a>
+                    <a onclick=&quot;$('#pop-{{ job['id'] }}').popover('hide');&quot; class='btn btn-default'>Cancel</a>"
                 ></a>
                 <div class="clearfix"></div>
             </h3>
         </div> <!-- end panel-heading -->
         <div class="panel-body">
             <div class="progress">
-                <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: {{ shot['percentage_done'] }}%;">
-                    <span class="sr-only">{{ shot['percentage_done'] }} Complete</span>
+                <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: {{ job['percentage_done'] }}%;">
+                    <span class="sr-only">{{ job['percentage_done'] }} Complete</span>
                 </div>
             </div>
             <br/>
             <a href="#" class="thumbnail pull-right">
-              <img src="{{ shot['thumb'] }}" />
+              <img src="{{ job['thumb'] }}" />
             </a>
-            <p>Status: {{ shot['status'] }}</p>
-            <p>Frame Start: {{ shot['frame_start'] }}</p>
-            <p>Frame End: {{ shot['frame_end'] }}</p>
-            <p>Current Frame: {{ shot['current_frame'] }}</p>
-            <p>Format: {{ shot['extension'] }}</p>
+            <p>Status: {{ job['status'] }}</p>
+            <p>Frame Start: {{ job['frame_start'] }}</p>
+            <p>Frame End: {{ job['frame_end'] }}</p>
+            <p>Current Frame: {{ job['current_frame'] }}</p>
+            <p>Format: {{ job['extension'] }}</p>
             <p>Thumbnails: </p><br />
             <table>
               <!-- TODO find a way to display several images on the same line -->
-              {% for path in shot['render'] %}
+              {% for path in job['render'] %}
                 <tr>
                   <td><img src="{{ path }}" /><br /><br /></td>
                 </tr>

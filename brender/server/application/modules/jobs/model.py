@@ -10,7 +10,7 @@ class Job(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
     project = db.relationship('Project',
-        backref=db.backref('shots', lazy='dynamic'))
+        backref=db.backref('jobs', lazy='dynamic'))
     frame_start = db.Column(db.Integer())
     frame_end = db.Column(db.Integer())
     chunk_size = db.Column(db.Integer())
