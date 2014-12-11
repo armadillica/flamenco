@@ -48,6 +48,9 @@ api.add_resource(JobBrowsing, '/jobs/browse/<path:path>')
 api.add_resource(JobApi, '/jobs/<int:job_id>')
 api.add_resource(JobDeleteApi, '/jobs/delete')
 
+from modules.tasks import TaskApi
+api.add_resource(TaskApi, '/tasks')
+
 from controllers.home import home
 #from controllers.jobs import jobs
 #from controllers.workers import workers

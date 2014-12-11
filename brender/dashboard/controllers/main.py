@@ -22,15 +22,13 @@ from dashboard import check_connection
 
 from dashboard.controllers.workers import workers
 
-# TODO: find a better way to fill/use this variable
-BRENDER_SERVER = app.config['BRENDER_SERVER']
 
 # Name of the Blueprint
 main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
-    if check_connection(BRENDER_SERVER) == 'online':
+    if check_connection() == 'online':
         return redirect(url_for('workers.index'))
     else:
         return "[error] Dashboard could not connect to server"

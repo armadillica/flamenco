@@ -259,10 +259,10 @@ class TaskApi(Resource):
             os.makedirs(thumb_dir)
         for i in range(begin, end + 1):
             # TODO make generic extension
-            img_name = ("0" if i < 10 else "") + str(i) + get_file_ext(job.extension)
+            img_name = ("0" if i < 10 else "") + str(i) + get_file_ext(job.format)
             file_path = thumb_dir + "/" + str(i) + '.thumb'
             # We can't generate thumbnail from multilayer with pillow
-            if job.extension != "MULTILAYER":
+            if job.format != "MULTILAYER":
                 if os.path.exists(file_path):
                     os.remove(file_path)
                 img_path = os.path.abspath(project.path_server + "/" + RENDER_PATH \
@@ -270,7 +270,7 @@ class TaskApi(Resource):
                 img = Image.open(img_path)
                 img.thumbnail((150, 150), Image.ANTIALIAS)
                 thumb_path = thumb_dir + "/" + str(i) + '.thumb'
-                img.save(thumb_path, job.extension)
+                img.save(thumb_path, job.format)
 
 
     def post(self):
@@ -284,7 +284,7 @@ class TaskApi(Resource):
             db.session.add(task)
 
             if status == 'finished':
-                generate_thumbnails(job, task.chunk_start, task.chunk_end)
+                self.generate_thumbnails(job, task.chunk_start, task.chunk_end)
             else:
                 print ('[Info] Task %s failed') % task_id
 

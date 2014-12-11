@@ -193,10 +193,10 @@ def run_blender_in_thread(options):
         f.write(full_output)
 
     if retcode != 0:
-        http_request('tasks/update', {'id': options['task_id'],
+        http_request('tasks', {'id': options['task_id'],
                                             'status': 'failed'})
     else:
-        http_request('tasks/update', {'id': options['task_id'],
+        http_request('tasks', {'id': options['task_id'],
                                            'status': 'finished'})
 
 

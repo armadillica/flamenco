@@ -13,11 +13,11 @@ def index():
 @render.route('/<path:path>')
 def get_render(path):
     #img = RENDER_PATH + "/" + path
-    if not exists(img):
-        return "Not Found", 404
+    #if not exists(img):
+    return "Not Found", 404
 
     #print os.path.abspath(".")
     # TODO Find something less disgusting to get the path
-    return send_file(pardir + "/" + img)
+    #return send_file(pardir + "/" + img)
 
 
