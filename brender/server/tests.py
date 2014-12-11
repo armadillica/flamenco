@@ -40,6 +40,46 @@ class ServerTestCase(unittest.TestCase):
         project = json.loads(cr.data)
         assert project['is_active'] == True
 
+    def test_job_create(self):
+        job = {
+            "project_id" : 1,
+            "frame_start" : 1,
+            "frame_end" : 1,
+            "chunk_size" : 1,
+            "current_frame" : 1,
+            "name" : "job_1",
+            "format" : "PNG",
+            "status" : "running"
+        }
+
+        cr = self.app.post("/jobs", data=job)
+        assert cr.status_code == 201
+
+    def test_job_set_status(self):
+        #status = { "id" : '1', "status" : 'stop'}
+        #self.app.put("/jobs", data=status)
+        #cr = self.app.get('/jobs/1')
+        #job = json.loads(cr.data)
+        #print job
+        #assert job['status'] == "stopped"
+
+        #status['status'] = 'reset'
+        #self.app.put("/jobs", data=status)
+        #cr = self.app.get("/jobs/1")
+        #job = json.loads(cr.data)
+        #assert job['status'] == "ready"
+
+        #status['status'] = 'start'
+        #self.app.put("/jobs", data=status)
+        #cr = self.app.get("/jobs/" + 1)
+        #job = json.loads(cr.data)
+        #assert job['status'] == "running"
+        pass
+
+    def test_job_delete(self):
+        cr = self.app.post('/jobs/delete', data={'id' : '1' })
+        assert cr.status_code == 204
+
     def test_project_delete(self):
         cr = self.app.post('/projects', data=dict(name='test', is_active=True))
         rm = self.app.delete('/projects/1')
@@ -81,6 +121,8 @@ class ServerTestCase(unittest.TestCase):
         settings = json.loads(ed.data)
         assert settings['blender_path_linux'] == "/home/brender/blender"
         assert settings['render_settings_path_linux'] == "/home/brender/render"
+
+
 
 if __name__ == '__main__':
     unittest.main()

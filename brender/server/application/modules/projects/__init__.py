@@ -80,10 +80,10 @@ class ProjectApi(Resource):
         if setting_active_project:
             if setting_active_project.value == str(project_id):
                 setting_active_project.value = None
-        shots_project = Shot.query.filter_by(project_id = project_id).all()
-        for shot_project in shots_project:
-            # print '[Debug] Deleting shot (%s) for project %s ' % (shot_project.shot_name, shot_project.project_id)
-            db.session.delete(shot_project)
+        jobs_project = Job.query.filter_by(project_id = project_id).all()
+        for job_project in jobs_project:
+            # print '[Debug] Deleting job (%s) for project %s ' % (job_project.job_name, job_project.project_id)
+            db.session.delete(job_project)
             db.session.commit()
         project = Project.query.get_or_404(project_id)
         db.session.delete(project)

@@ -132,10 +132,11 @@ class JobListApi(Resource):
         elif args['status'] == "reset":
             fun = self.reset
         else:
+            print "command not found"
             return args, 400
 
         try:
-            map(fun, args['id'])
+            map(fun, list_integers_string(args['id']))
         except KeyError:
             return args, 404
 
@@ -175,17 +176,17 @@ class JobListApi(Resource):
 class JobApi(Resource):
     @marshal_with(job_fields)
     def get(self, job_id):
-       job = Job.query.get_or_404(job_id)
-       return job
+        job = Job.query.get_or_404(job_id)
+        return job
 
 
 class JobDeleteApi(Resource):
     def post(self):
         args = id_list.parse_args()
+        print Job.query.all()
         print args['id']
         int_list = list_integers_string(args['id'])
         for j in int_list:
-            print 'working on %d - %s' % (j, str(type(j)))
             TaskApi.delete_tasks(j)
             job = Job.query.get(j)
             if job:
