@@ -1,3 +1,4 @@
+import logging
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
@@ -190,19 +191,50 @@ class JobApi(Resource):
         # Here we can handle direct commands for a job, that do not fit the
         # restful principle. For example restart, stop, start, etc.
         if commands['command']:
-            pass
+            if commands['command'] == 'start':
+                pass # start job
+            elif commands['command'] == 'stop':
+                pass # stop job
+            elif commands['command'] == 'reset':
+                pass # reset job
+            else:
+                response = jsonify({
+                    'code' : 400,
+                    'message': 'Unknown command. Try "start", "stop" or "reset"'})
+                response.status_code = 400
+                return response
         else:
-            # We edit properties of the shot, such as the title, the frame 
+            # We edit properties of the job, such as the title, the frame 
             # range and so on
             job = Job.query.get_or_404(job_id)
             for arg in args:
                 if args[arg]: setattr(job, arg, args[arg])
-
             db.session.commit()
 
             return jsonify(
                 id=job.id,
                 name=job.name)
+
+    @staticmethod
+    def delete(job_id):
+        """Depending on the database, we migh want to specify or not CASCADE
+        directives for attached tasks. In order to delete a job, it should
+        be not rendering or processing.
+        """
+        job = Job.query.get_or_404(job_id)
+        db.session.delete(job)
+        
+        return '', 204
+
+    @staticmethod
+    def start(job_id):
+        job = Job.query.get_or_404(job_id)
+        if job.status != 'running':
+            job.status = 'running'
+            db.session.add(job)
+            db.session.commit()
+            logging.info('Dispatching tasks')
+        TaskApi.dispatch_tasks()
 
 
 class JobDeleteApi(Resource):

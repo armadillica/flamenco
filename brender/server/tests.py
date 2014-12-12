@@ -153,7 +153,8 @@ class ServerTestCase(unittest.TestCase):
         job = json.loads(cr.data)
 
         # Delete the job (using the returned job id)
-        cr = self.app.post('/jobs/delete', data={'id' : job['id'] })
+        cr = self.app.delete('/jobs/1')
+        print cr.data
         assert cr.status_code == 204
 
 if __name__ == '__main__':
