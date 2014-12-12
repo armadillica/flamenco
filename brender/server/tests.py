@@ -15,11 +15,48 @@ import os
 from application import app
 from application import db
 from application.modules.workers.model import Worker
+from application.modules.jobs.model import Job
+from application.modules.projects.model import Project
+from application.modules.settings.model import Setting
 import unittest
 import tempfile
 import json
 
+class ServerTestingUtils:
+
+    def add_project(self, is_active=True):
+        project = Project(
+            name='Auto project')
+        db.session.add(project)
+        db.session.commit()
+
+        if is_active:
+            setting = Setting(
+                name='active_project',
+                value=str(project.id))
+            db.session.add(setting)
+            db.session.commit()
+        return project.id
+
+    def add_job(self, project_id=None):
+        job = Job(
+            project_id=1,
+            frame_start=1,
+            frame_end=10,
+            chunk_size=5,
+            name='Auto Job',
+            format='PNG',
+            status='created')
+        if project_id:
+            job.project_id = project_id
+        db.session.add(job)
+        db.session.commit()
+        return job.id
+
+
 class ServerTestCase(unittest.TestCase):
+
+    utils = ServerTestingUtils()
 
     def setUp(self):
         #self.db_fd,
@@ -111,70 +148,33 @@ class ServerTestCase(unittest.TestCase):
 
     def test_job_update(self):
         # Create one job
-        job = {
-            'project_id' : 1,
-            'frame_start' : 1,
-            'frame_end' : 1,
-            'chunk_size' : 1,
-            'current_frame' : 1,
-            'name' : 'job_1',
-            'format' : 'PNG',
-            'status' : 'running'
-        }
-
-        cr = self.app.post('/jobs', data=job)
-        assert cr.status_code == 201
-        job = json.loads(cr.data)
+        job_id = self.utils.add_job()
 
         data = { 'name' : 'job_2'}
-        up = self.app.put('/jobs/1', data=data)
+        up = self.app.put('/jobs/{0}'.format(job_id), data=data)
         job = json.loads(up.data)
         assert 'job_2' == job['name']
 
-        re = self.app.get('/jobs/1')
+        re = self.app.get('/jobs/{0}'.format(job_id))
         job = json.loads(re.data)
         assert 'job_2' == job['name']
 
     def test_job_delete(self):
         # Create one job
-        job = {
-            'project_id' : 1,
-            'frame_start' : 1,
-            'frame_end' : 1,
-            'chunk_size' : 1,
-            'current_frame' : 1,
-            'name' : 'job_1',
-            'format' : 'PNG',
-            'status' : 'running'
-        }
-
-        cr = self.app.post('/jobs', data=job)
-        assert cr.status_code == 201
-        job = json.loads(cr.data)
-
+        project_id = self.utils.add_project(is_active=True)
+        job_id = self.utils.add_job(project_id=project_id)
         # Delete the job (using the returned job id)
-        cr = self.app.delete('/jobs/1')
+        cr = self.app.delete('/jobs/{0}'.format(job_id))
         print cr.data
         assert cr.status_code == 204
 
     def test_job_start(self):
-        job = {
-            'project_id' : 1,
-            'frame_start' : 1,
-            'frame_end' : 1,
-            'chunk_size' : 1,
-            'current_frame' : 1,
-            'name' : 'job_1',
-            'format' : 'PNG',
-            'status' : 'created'
-        }
-
-        cr = self.app.post('/jobs', data=job)
-        assert cr.status_code == 201
-        job = json.loads(cr.data)
+        # Create one job
+        project_id = self.utils.add_project(is_active=True)
+        job_id = self.utils.add_job(project_id=project_id)
 
         data = { 'command' : 'start'}
-        up = self.app.put('/jobs/1', data=data)
+        up = self.app.put('/jobs/{0}'.format(job_id), data=data)
         job = json.loads(up.data)
         assert 'running' == job['status']
 
