@@ -134,8 +134,9 @@ class ServerTestCase(unittest.TestCase):
         assert settings['render_settings_path_linux'] == '/home/brender/render'
 
     def test_job_create(self):
+        project_id = self.utils.add_project(is_active=True)
         job = {
-            'project_id' : 1,
+            'project_id' : project_id,
             'frame_start' : 1,
             'frame_end' : 100,
             'chunk_size' : 10,

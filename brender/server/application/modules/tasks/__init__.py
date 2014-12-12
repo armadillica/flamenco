@@ -46,14 +46,14 @@ class TaskApi(Resource):
         job_chunks_division = job_frames_count / job.chunk_size
 
         if job_chunks_remainder == 0:
-            logging.info('We have exact chunks')
+            logging.debug('We have exact chunks')
 
             total_chunks = job_chunks_division
             chunk_start = job.frame_start
             chunk_end = job.frame_start + job.chunk_size - 1
 
             for chunk in range(total_chunks):
-                logging.info('Making chunk for job {0}'.format(job.id))
+                logging.debug('Making chunk for job {0}'.format(job.id))
 
                 TaskApi.create_task(job.id, chunk_start, chunk_end)
 
@@ -61,23 +61,23 @@ class TaskApi(Resource):
                 chunk_end = chunk_start + job.chunk_size - 1
 
         elif job_chunks_remainder == job.chunk_size:
-            logging.info('We have only 1 chunk')
+            logging.debug('We have only 1 chunk')
 
             TaskApi.create_task(job.id, job.frame_start, job.frame_end)
 
         #elif job_chunks_remainder > 0 and \
         #     job_chunks_remainder < job.chunk_size:
         else:
-            logging.info('job_chunks_remainder : {0}'.format(job_chunks_remainder))
-            logging.info('job_frames_count     : {0}'.format(job_frames_count))
-            logging.info('job_chunks_division  : {0}'.format(job_chunks_division))
+            logging.debug('job_chunks_remainder : {0}'.format(job_chunks_remainder))
+            logging.debug('job_frames_count     : {0}'.format(job_frames_count))
+            logging.debug('job_chunks_division  : {0}'.format(job_chunks_division))
 
             total_chunks = job_chunks_division + 1
             chunk_start = job.frame_start
             chunk_end = job.frame_start + job.chunk_size - 1
 
             for chunk in range(total_chunks - 1):
-                logging.info('Making chunk for job {0}'.format(job.id))
+                logging.debug('Making chunk for job {0}'.format(job.id))
 
                 create_task(job.id, chunk_start, chunk_end)
 
@@ -156,7 +156,7 @@ class TaskApi(Resource):
         db.session.commit()
 
     @staticmethod
-    def dispatch_tasks(job_id = None):
+    def dispatch_tasks(job_id=None):
         workers = Worker.query.\
             filter_by(status='enabled').\
             filter_by(connection='online').\
