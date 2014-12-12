@@ -45,9 +45,9 @@ from modules.jobs import JobApi
 from modules.filebrowser import FileBrowserApi
 from modules.filebrowser import FileBrowserRootApi
 from modules.jobs import JobDeleteApi
-api.add_resource(JobListApi, '/jobs')
 api.add_resource(FileBrowserRootApi, '/browse')
 api.add_resource(FileBrowserApi, '/browse/<path:path>')
+api.add_resource(JobListApi, '/jobs')
 api.add_resource(JobApi, '/jobs/<int:job_id>')
 api.add_resource(JobDeleteApi, '/jobs/delete')
 

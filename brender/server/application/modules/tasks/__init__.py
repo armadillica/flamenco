@@ -1,4 +1,5 @@
 import os
+import logging
 
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
@@ -45,14 +46,14 @@ class TaskApi(Resource):
         job_chunks_division = job_frames_count / job.chunk_size
 
         if job_chunks_remainder == 0:
-            print('we have exact chunks')
+            logging.info('We have exact chunks')
 
             total_chunks = job_chunks_division
             chunk_start = job.frame_start
             chunk_end = job.frame_start + job.chunk_size - 1
 
             for chunk in range(total_chunks):
-                print('making chunk for job', job.id)
+                logging.info('Making chunk for job {0}'.format(job.id))
 
                 TaskApi.create_task(job.id, chunk_start, chunk_end)
 
@@ -60,23 +61,23 @@ class TaskApi(Resource):
                 chunk_end = chunk_start + job.chunk_size - 1
 
         elif job_chunks_remainder == job.chunk_size:
-            print('we have 1 chunk only')
+            logging.info('We have only 1 chunk')
 
             TaskApi.create_task(job.id, job.frame_start, job.frame_end)
 
         #elif job_chunks_remainder > 0 and \
         #     job_chunks_remainder < job.chunk_size:
         else:
-            print('job_chunks_remainder', job_chunks_remainder)
-            print('job_frames_count', job_frames_count)
-            print('job_chunks_division', job_chunks_division)
+            logging.info('job_chunks_remainder : {0}'.format(job_chunks_remainder))
+            logging.info('job_frames_count     : {0}'.format(job_frames_count))
+            logging.info('job_chunks_division  : {0}'.format(job_chunks_division))
 
             total_chunks = job_chunks_division + 1
             chunk_start = job.frame_start
             chunk_end = job.frame_start + job.chunk_size - 1
 
             for chunk in range(total_chunks - 1):
-                print('making chunk for job', job.id)
+                logging.info('Making chunk for job {0}'.format(job.id))
 
                 create_task(job.id, chunk_start, chunk_end)
 

@@ -137,8 +137,8 @@ class ServerTestCase(unittest.TestCase):
         job = {
             'project_id' : 1,
             'frame_start' : 1,
-            'frame_end' : 1,
-            'chunk_size' : 1,
+            'frame_end' : 100,
+            'chunk_size' : 10,
             'current_frame' : 1,
             'name' : 'job_1',
             'format' : 'PNG',

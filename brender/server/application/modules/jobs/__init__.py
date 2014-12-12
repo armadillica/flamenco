@@ -168,14 +168,10 @@ class JobListApi(Resource):
         db.session.add(job)
         db.session.commit()
 
-        print 'parsing job to create tasks'
-
+        logging.info('Parsing job to create tasks')
         TaskApi.create_tasks(job)
-
-        print 'refresh list of available workers'
-
+        logging.info('Refresh list of available workers')
         TaskApi.dispatch_tasks(job.id)
-
         return job, 201
 
 
