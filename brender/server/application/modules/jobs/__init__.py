@@ -39,6 +39,7 @@ parser.add_argument('status', type=str)
 parser.add_argument('priority', type=int)
 
 job_fields = {
+    'id' : fields.Integer,
     'project_id' : fields.Integer,
     'frame_start' : fields.Integer,
     'frame_end' : fields.Integer,
@@ -254,7 +255,6 @@ class JobBrowsing(Resource):
 
     def get(self, path):
         return jsonify(self.browse(path))
-
 
 class JobRootBrowsing(Resource):
     def get(self):

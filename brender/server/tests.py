@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+
+"""
+Welcome to the brender test suite. Simply run python test.py and check 
+that all tests pass.
+
+Individual tests can be run with the following syntax:
+
+    python tests.py ServerTestCase.test_job_delete
+
+"""
+
 import os
 from application import app
 from application import db
@@ -17,11 +29,11 @@ class ServerTestCase(unittest.TestCase):
         db.create_all()
         # add fake worker
         worker = Worker(mac_address=42,
-                hostname="debian",
-                status="enabled",
-                system="Linux",
-                ip_address="127.0.0.1:5000",
-                connection="offline")
+                hostname='debian',
+                status='enabled',
+                system='Linux',
+                ip_address='127.0.0.1:5000',
+                connection='offline')
         db.session.add(worker)
         db.session.commit()
 
@@ -39,46 +51,6 @@ class ServerTestCase(unittest.TestCase):
         cr = self.app.post('/projects', data=dict(name='test', is_active=True))
         project = json.loads(cr.data)
         assert project['is_active'] == True
-
-    def test_job_create(self):
-        job = {
-            "project_id" : 1,
-            "frame_start" : 1,
-            "frame_end" : 1,
-            "chunk_size" : 1,
-            "current_frame" : 1,
-            "name" : "job_1",
-            "format" : "PNG",
-            "status" : "running"
-        }
-
-        cr = self.app.post("/jobs", data=job)
-        assert cr.status_code == 201
-
-    def test_job_set_status(self):
-        #status = { "id" : '1', "status" : 'stop'}
-        #self.app.put("/jobs", data=status)
-        #cr = self.app.get('/jobs/1')
-        #job = json.loads(cr.data)
-        #print job
-        #assert job['status'] == "stopped"
-
-        #status['status'] = 'reset'
-        #self.app.put("/jobs", data=status)
-        #cr = self.app.get("/jobs/1")
-        #job = json.loads(cr.data)
-        #assert job['status'] == "ready"
-
-        #status['status'] = 'start'
-        #self.app.put("/jobs", data=status)
-        #cr = self.app.get("/jobs/" + 1)
-        #job = json.loads(cr.data)
-        #assert job['status'] == "running"
-        pass
-
-    def test_job_delete(self):
-        cr = self.app.post('/jobs/delete', data={'id' : '1' })
-        assert cr.status_code == 204
 
     def test_project_delete(self):
         cr = self.app.post('/projects', data=dict(name='test', is_active=True))
@@ -100,29 +72,97 @@ class ServerTestCase(unittest.TestCase):
         assert project['name'] == 'test_edit'
 
     def test_worker_get_informations(self):
-        cr = self.app.get("/workers")
+        cr = self.app.get('/workers')
         worker = json.loads(cr.data)
-        assert worker['debian']['hostname'] == "debian"
-        assert worker['debian']['ip_address'] == "127.0.0.1:5000"
-        assert worker['debian']['connection'] == "offline"
+        assert worker['debian']['hostname'] == 'debian'
+        assert worker['debian']['ip_address'] == '127.0.0.1:5000'
+        assert worker['debian']['connection'] == 'offline'
 
     def test_worker_change_status(self):
-        cr = self.app.post("/workers", data=dict(id="1", status="disabled"))
+        cr = self.app.post('/workers', data=dict(id='1', status='disabled'))
         assert cr.status_code == 204
-        ed = self.app.get("/workers")
+        ed = self.app.get('/workers')
         worker = json.loads(ed.data)
-        assert worker['debian']['status'] == "disabled"
+        assert worker['debian']['status'] == 'disabled'
 
     def test_settings_create(self):
-        cr = self.app.post("/settings", data=dict(blender_path_linux="/home/brender/blender",
-                                                  render_settings_path_linux="/home/brender/render"))
+        cr = self.app.post('/settings', data=dict(blender_path_linux='/home/brender/blender',
+                                                  render_settings_path_linux='/home/brender/render'))
         assert cr.status_code == 204
-        ed = self.app.get("/settings")
+        ed = self.app.get('/settings')
         settings = json.loads(ed.data)
-        assert settings['blender_path_linux'] == "/home/brender/blender"
-        assert settings['render_settings_path_linux'] == "/home/brender/render"
+        assert settings['blender_path_linux'] == '/home/brender/blender'
+        assert settings['render_settings_path_linux'] == '/home/brender/render'
 
+    def test_job_create(self):
+        job = {
+            'project_id' : 1,
+            'frame_start' : 1,
+            'frame_end' : 1,
+            'chunk_size' : 1,
+            'current_frame' : 1,
+            'name' : 'job_1',
+            'format' : 'PNG',
+            'status' : 'running'
+        }
 
+        cr = self.app.post('/jobs', data=job)
+        assert cr.status_code == 201
+
+    def test_job_set_status(self):
+        # Create one job
+        job = {
+            'project_id' : 1,
+            'frame_start' : 1,
+            'frame_end' : 1,
+            'chunk_size' : 1,
+            'current_frame' : 1,
+            'name' : 'job_1',
+            'format' : 'PNG',
+            'status' : 'running'
+        }
+
+        cr = self.app.post('/jobs', data=job)
+        assert cr.status_code == 201
+        job = json.loads(cr.data)
+
+        status = { 'id' : '1', 'status' : 'stop'}
+        self.app.put('/jobs', data=status)
+        assert job['status'] == 'stopped'
+
+        #status['status'] = 'reset'
+        #self.app.put('/jobs', data=status)
+        #cr = self.app.get('/jobs/1')
+        #job = json.loads(cr.data)
+        #assert job['status'] == 'ready'
+
+        #status['status'] = 'start'
+        #self.app.put('/jobs', data=status)
+        #cr = self.app.get('/jobs/' + 1)
+        #job = json.loads(cr.data)
+        #assert job['status'] == 'running'
+        pass
+
+    def test_job_delete(self):
+        # Create one job
+        job = {
+            'project_id' : 1,
+            'frame_start' : 1,
+            'frame_end' : 1,
+            'chunk_size' : 1,
+            'current_frame' : 1,
+            'name' : 'job_1',
+            'format' : 'PNG',
+            'status' : 'running'
+        }
+
+        cr = self.app.post('/jobs', data=job)
+        assert cr.status_code == 201
+        job = json.loads(cr.data)
+
+        # Delete the job (using the returned job id)
+        cr = self.app.post('/jobs/delete', data={'id' : job['id'] })
+        assert cr.status_code == 204
 
 if __name__ == '__main__':
     unittest.main()

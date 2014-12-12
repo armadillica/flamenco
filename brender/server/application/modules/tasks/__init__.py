@@ -24,6 +24,7 @@ parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
 parser.add_argument('status', type=str)
 
+
 class TaskApi(Resource):
     @staticmethod
     def create_task(job_id, chunk_start, chunk_end):
@@ -36,7 +37,6 @@ class TaskApi(Resource):
             priority=50)
         db.session.add(task)
         db.session.commit()
-
 
     @staticmethod
     def create_tasks(job):
@@ -85,7 +85,6 @@ class TaskApi(Resource):
 
             chunk_end = chunk_start + job_chunks_remainder - 1
             TaskApi.create_task(job.id, chunk_start, chunk_end)
-
 
     @staticmethod
     def start_task(worker, task):
@@ -203,7 +202,6 @@ class TaskApi(Resource):
         task.delete_instance()
         print('Deleted task', task_id)
 
-
     @staticmethod
     def delete_tasks(job_id):
         tasks = Task.query.filter_by(job_id=job_id).delete()
@@ -229,7 +227,6 @@ class TaskApi(Resource):
             all()
 
         map(lambda t : TaskApi.stop_task(t.id), tasks)
-
 
     def get(self):
         from decimal import Decimal
@@ -271,7 +268,6 @@ class TaskApi(Resource):
                 img.thumbnail((150, 150), Image.ANTIALIAS)
                 thumb_path = thumb_dir + "/" + str(i) + '.thumb'
                 img.save(thumb_path, job.format)
-
 
     def post(self):
         args = parser.parse_args()
