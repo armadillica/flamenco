@@ -90,8 +90,8 @@ class ServerTestCase(unittest.TestCase):
         assert project['is_active'] == True
 
     def test_project_delete(self):
-        cr = self.app.post('/projects', data=dict(name='test', is_active=True))
-        rm = self.app.delete('/projects/1')
+        project_id = self.utils.add_project(is_active=True)
+        rm = self.app.delete('/projects/{0}'.format(project_id))
         assert rm.status_code == 204
 
     def test_project_update(self):
@@ -123,8 +123,10 @@ class ServerTestCase(unittest.TestCase):
         assert worker['debian']['status'] == 'disabled'
 
     def test_settings_create(self):
-        cr = self.app.post('/settings', data=dict(blender_path_linux='/home/brender/blender',
-                                                  render_settings_path_linux='/home/brender/render'))
+        cr = self.app.post('/settings', 
+            data=dict(
+                blender_path_linux='/home/brender/blender',
+                render_settings_path_linux='/home/brender/render'))
         assert cr.status_code == 204
         ed = self.app.get('/settings')
         settings = json.loads(ed.data)
@@ -177,6 +179,19 @@ class ServerTestCase(unittest.TestCase):
         up = self.app.put('/jobs/{0}'.format(job_id), data=data)
         job = json.loads(up.data)
         assert 'running' == job['status']
+
+    def test_job_stop(self):
+        # Create one job
+        project_id = self.utils.add_project(is_active=True)
+        job_id = self.utils.add_job(project_id=project_id)
+
+        data = { 'command' : 'start'}
+        up = self.app.put('/jobs/{0}'.format(job_id), data=data)
+
+        data = { 'command' : 'stop'}
+        up = self.app.put('/jobs/{0}'.format(job_id), data=data)
+        job = json.loads(up.data)
+        assert 'stopped' == job['status']
 
 
 if __name__ == '__main__':

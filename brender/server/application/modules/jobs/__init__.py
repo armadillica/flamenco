@@ -197,6 +197,7 @@ class JobApi(Resource):
                 self.start(job_id)
                 return job
             elif commands['command'] == 'stop':
+                self.stop(job_id)
                 return job # stop job
             elif commands['command'] == 'reset':
                 return job # reset job
@@ -240,6 +241,19 @@ class JobApi(Resource):
             pass
             # TODO (fsiddi): proper error message if jobs is already running
         TaskApi.dispatch_tasks()
+
+    @staticmethod
+    def stop(job_id):
+        logging.info('Stopping job {0}'.format(job_id))
+        job = Job.query.get(job_id)
+        if job.status != 'stopped':
+            TaskApi.stop_tasks(job.id)
+            job.status = 'stopped'
+            db.session.add(job)
+            db.session.commit()
+        else:
+            pass
+            # TODO (fsiddi): proper error message if jobs is already stopped
 
 
 class JobDeleteApi(Resource):
