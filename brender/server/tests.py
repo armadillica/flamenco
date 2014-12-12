@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Welcome to the brender test suite. Simply run python test.py and check 
+Welcome to the brender test suite. Simply run python test.py and check
 that all tests pass.
 
 Individual tests can be run with the following syntax:
@@ -134,21 +134,6 @@ class ServerTestCase(unittest.TestCase):
         re = self.app.get('/jobs/1')
         job = json.loads(re.data)
         assert 'job_2' == job['name']
-        
-        # assert job['name'] == 'job_2'
-
-        #status['status'] = 'reset'
-        #self.app.put('/jobs', data=status)
-        #cr = self.app.get('/jobs/1')
-        #job = json.loads(cr.data)
-        #assert job['status'] == 'ready'
-
-        #status['status'] = 'start'
-        #self.app.put('/jobs', data=status)
-        #cr = self.app.get('/jobs/' + 1)
-        #job = json.loads(cr.data)
-        #assert job['status'] == 'running'
-        pass
 
     def test_job_delete(self):
         # Create one job
