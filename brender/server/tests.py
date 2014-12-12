@@ -11,13 +11,13 @@ Individual tests can be run with the following syntax:
 """
 
 import os
+
 from application import app
 from application import db
 from application.modules.workers.model import Worker
 import unittest
 import tempfile
 import json
-
 
 class ServerTestCase(unittest.TestCase):
 
@@ -109,7 +109,7 @@ class ServerTestCase(unittest.TestCase):
         cr = self.app.post('/jobs', data=job)
         assert cr.status_code == 201
 
-    def test_job_set_status(self):
+    def test_job_update(self):
         # Create one job
         job = {
             'project_id' : 1,
@@ -126,9 +126,16 @@ class ServerTestCase(unittest.TestCase):
         assert cr.status_code == 201
         job = json.loads(cr.data)
 
-        status = { 'id' : '1', 'status' : 'stop'}
-        self.app.put('/jobs', data=status)
-        assert job['status'] == 'stopped'
+        data = { 'name' : 'job_2'}
+        up = self.app.put('/jobs/1', data=data)
+        job = json.loads(up.data)
+        assert 'job_2' == job['name']
+
+        re = self.app.get('/jobs/1')
+        job = json.loads(re.data)
+        assert 'job_2' == job['name']
+        
+        # assert job['name'] == 'job_2'
 
         #status['status'] = 'reset'
         #self.app.put('/jobs', data=status)

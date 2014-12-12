@@ -25,18 +25,22 @@ id_list.add_argument('id', type=str)
 status_parser = id_list.copy()
 status_parser.add_argument('status', type=str)
 
-parser = reqparse.RequestParser()
-parser.add_argument('project_id', type=int)
-parser.add_argument('frame_start', type=int)
-parser.add_argument('frame_end', type=int)
-parser.add_argument('chunk_size', type=int)
-parser.add_argument('current_frame', type=int)
-parser.add_argument('filepath', type=str)
-parser.add_argument('name', type=str)
-parser.add_argument('render_settings', type=str)
-parser.add_argument('format', type=str)
-parser.add_argument('status', type=str)
-parser.add_argument('priority', type=int)
+job_parser = reqparse.RequestParser()
+job_parser.add_argument('project_id', type=int)
+job_parser.add_argument('frame_start', type=int)
+job_parser.add_argument('frame_end', type=int)
+job_parser.add_argument('chunk_size', type=int)
+job_parser.add_argument('current_frame', type=int)
+job_parser.add_argument('filepath', type=str)
+job_parser.add_argument('name', type=str)
+job_parser.add_argument('render_settings', type=str)
+job_parser.add_argument('format', type=str)
+job_parser.add_argument('status', type=str)
+job_parser.add_argument('priority', type=int)
+
+command_parser = reqparse.RequestParser()
+command_parser.add_argument('command', type=str)
+
 
 job_fields = {
     'id' : fields.Integer,
@@ -146,7 +150,7 @@ class JobListApi(Resource):
 
     @marshal_with(job_fields)
     def post(self):
-        args = parser.parse_args()
+        args = job_parser.parse_args()
         job = Job(
            project_id=args['project_id'],
            frame_start=args['frame_start'],
@@ -179,6 +183,26 @@ class JobApi(Resource):
     def get(self, job_id):
         job = Job.query.get_or_404(job_id)
         return job
+
+    def put(self, job_id):
+        args = job_parser.parse_args()
+        commands = command_parser.parse_args()
+        # Here we can handle direct commands for a job, that do not fit the
+        # restful principle. For example restart, stop, start, etc.
+        if commands['command']:
+            pass
+        else:
+            # We edit properties of the shot, such as the title, the frame 
+            # range and so on
+            job = Job.query.get_or_404(job_id)
+            for arg in args:
+                if args[arg]: setattr(job, arg, args[arg])
+
+            db.session.commit()
+
+            return jsonify(
+                id=job.id,
+                name=job.name)
 
 
 class JobDeleteApi(Resource):
@@ -251,7 +275,6 @@ class JobBrowsing(Resource):
             items_list=items_list)
 
         return project_files
-
 
     def get(self, path):
         return jsonify(self.browse(path))
