@@ -37,19 +37,32 @@ from modules.settings import RenderSettingsApi
 api.add_resource(SettingsListApi, '/settings')
 api.add_resource(RenderSettingsApi, '/settings/render')
 
+from modules.jobs import JobListApi
+from modules.jobs import JobApi
+from modules.jobs import JobBrowsing
+from modules.jobs import JobRootBrowsing
+from modules.jobs import JobDeleteApi
+api.add_resource(JobListApi, '/jobs')
+api.add_resource(JobRootBrowsing, '/jobs/browse')
+api.add_resource(JobBrowsing, '/jobs/browse/<path:path>')
+api.add_resource(JobApi, '/jobs/<int:job_id>')
+api.add_resource(JobDeleteApi, '/jobs/delete')
+
+from modules.tasks import TaskApi
+api.add_resource(TaskApi, '/tasks')
 
 from controllers.home import home
-from controllers.jobs import jobs
+#from controllers.jobs import jobs
 #from controllers.workers import workers
-from controllers.shots import shots
+#from controllers.shots import shots
 #from controllers.projects import projects
 #from controllers.settings import settings
 from controllers.stats import stats
 
 app.register_blueprint(home)
 #app.register_blueprint(workers, url_prefix='/workers')
-app.register_blueprint(jobs, url_prefix='/jobs')
-app.register_blueprint(shots, url_prefix='/shots')
+#app.register_blueprint(jobs, url_prefix='/jobs')
+#app.register_blueprint(shots, url_prefix='/shots')
 #app.register_blueprint(projects, url_prefix='/projects')
 #app.register_blueprint(settings, url_prefix='/settings')
 app.register_blueprint(stats, url_prefix='/stats')

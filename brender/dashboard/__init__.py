@@ -13,9 +13,9 @@ app.config.update(
 )
 
 
-def check_connection(host_address):
+def check_connection():
     try:
-        http_request(host_address, '/')
+        http_server_request('get', '/')
         return "online"
     except:
         return "offline"
@@ -55,7 +55,7 @@ def http_server_request(method, path, params=None):
     if method == 'get':
         r = requests.get('http://' + app.config['BRENDER_SERVER'] + path)
     elif method == 'delete':
-        r = requests.delete('http://' + app.config['BRENDER_SERVER'] + path)
+        r = requests.delete('http://' + app.config['BRENDER_SERVER'] + path, params)
     if method == 'post':
         r = requests.post('http://' + app.config['BRENDER_SERVER'] + path, params)
     if method == 'put':
@@ -76,13 +76,13 @@ def list_integers_string(string_list):
     return integers_list
 
 from dashboard.controllers.main import main
-from dashboard.controllers.shots import shots
+from dashboard.controllers.jobs import jobs
 from dashboard.controllers.workers import workers
 from dashboard.controllers.settings import settings
 from dashboard.controllers.projects import projects
 from dashboard.controllers.render import render
 app.register_blueprint(main)
-app.register_blueprint(shots, url_prefix='/shots')
+app.register_blueprint(jobs, url_prefix='/jobs')
 app.register_blueprint(workers, url_prefix='/workers')
 app.register_blueprint(settings, url_prefix='/settings')
 app.register_blueprint(projects, url_prefix='/projects')

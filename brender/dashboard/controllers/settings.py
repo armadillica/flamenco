@@ -5,11 +5,7 @@ from flask import (flash,
                    Blueprint)
 
 from dashboard import app
-from dashboard import http_request, list_integers_string, check_connection
-
-# TODO: find a better way to fill/use this variable
-BRENDER_SERVER = app.config['BRENDER_SERVER']
-
+from dashboard import http_server_request, list_integers_string, check_connection
 
 # Name of the Blueprint
 settings = Blueprint('settings', __name__)
@@ -19,10 +15,10 @@ settings = Blueprint('settings', __name__)
 def index():
     if request.method == 'POST':
         params = request.form
-        http_request(BRENDER_SERVER, '/settings', params)
+        http_server_request('post', '/settings', params)
 
-    projects = http_request(BRENDER_SERVER, '/projects/')
-    settings = http_request(BRENDER_SERVER, '/settings')
+    projects = http_server_request('get', '/projects')
+    settings = http_server_request('get', '/settings')
     return render_template('settings/index.html',
                            title='settings',
                            settings=settings,
@@ -31,7 +27,7 @@ def index():
 
 @settings.route('/render/', methods=['GET'])
 def render():
-    render_settings = http_request(BRENDER_SERVER, '/settings/render')
+    render_settings = http_server_request('get', '/settings/render')
     return render_template('settings/render.html',
                            title='render settings',
                            render_settings=render_settings)
@@ -40,9 +36,9 @@ def render():
 @settings.route('/status/', methods=['GET'])
 def status():
     try:
-        server_status = check_connection(BRENDER_SERVER)
-        server_stats = http_request(BRENDER_SERVER, '/stats')
-    except :
+        server_status = check_connection()
+        server_stats = http_server_request('get', '/stats')
+    except:
         server_status = 'offline'
         server_stats = ''
     return render_template('settings/status.html',

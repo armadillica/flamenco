@@ -49,12 +49,12 @@
           <div class="modal-footer">
             <input type="hidden" id="modal_variable" name="modal_variable" value="">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" onclick="$('.modal-body > form').submit();" >Submit shot</button>
+            <button type="button" class="btn btn-primary" onclick="$('.modal-body > form').submit();" >Submit job</button>
           </div>
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
-    
+
     {% endblock %}
 
     <header class="navbar navbar-default navbar-static-top" role="navigation">
@@ -76,14 +76,14 @@
             <li {% if title == 'workers': %} class="active"{% endif %}>
               <a href="{{ url_for('workers.index') }}">Workers</a>
             </li>
-            <li {% if title == 'shots': %} class="active"{% endif %}>
-              <a href="{{ url_for('shots.index') }}">Shots</a>
-            </li>
             <li {% if title == 'jobs': %} class="active"{% endif %}>
-              <a href="{{ url_for('main.jobs_index') }}">Jobs</a>
+              <a href="{{ url_for('jobs.index') }}">Jobs</a>
+            </li>
+            <li {% if title == 'tasks': %} class="active"{% endif %}>
+              <a href="{{ url_for('main.tasks_index') }}">Tasks</a>
             </li>
             <li>
-              <a href="#" data-toggle="modal" modal="{{ url_for('shots.add') }}" data-target="#addShotModal">Add Shot</a>
+              <a href="#" data-toggle="modal" modal="{{ url_for('jobs.add') }}" data-target="#addJobModal">Add Job</a>
             </li>
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Server <b class="caret"></b></a>
@@ -136,19 +136,19 @@
       } else {
         $.get(url, function(data) {
           $('<div class="modal fade">' + data + '</div>').modal();
-        }).success(function() { 
-            $('input:text:visible:first').focus(); 
+        }).success(function() {
+            $('input:text:visible:first').focus();
         });
       }*/
 
       $.get(url, function(data) {
-        $('.modal-body').html(data); 
+        $('.modal-body').html(data);
       });
 
-      $('.modal-footer').children('.btn-primary').text('Add Shot');
+      $('.modal-footer').children('.btn-primary').text('Add Job');
       $('#brenderModal').modal('show');
     });
-    
+
   });
 
   </script>

@@ -17,7 +17,7 @@
     // Focuses on first input textbox after it loads the window.
     $('.folder').click(function(e) {
       e.preventDefault();
-      var url = '/shots/browse/' + $(this).attr('href');
+      var url = '/jobs/browse/' + $(this).attr('href');
       $.get(url, function(data) {
         $('.modal-body').html(data);
       });
@@ -25,7 +25,7 @@
 
     $('.blendfile').click(function(e) {
       e.preventDefault();
-      var url = '/shots/browse/' + $(this).attr('href');
+      var url = '/jobs/browse/' + $(this).attr('href');
       $(this).parent().siblings().children('a').removeClass('active');
       $(this).addClass('active');
       $('#modal_variable').val($(this).attr('href'));
@@ -34,11 +34,11 @@
 
     $('.select-file').click(function(e) {
       e.preventDefault();
-      var url = '/shots/add';
+      var url = '/jobs/add';
       $.get(url, function(data) {
         $('.modal-body').html(data);
       });
-      $('.modal-footer').children('.btn-primary').text('Add Shot');
+      $('.modal-footer').children('.btn-primary').text('Add Job');
     });
 
   });
