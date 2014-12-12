@@ -255,6 +255,30 @@ class JobApi(Resource):
             pass
             # TODO (fsiddi): proper error message if jobs is already stopped
 
+    @staticmethod
+    def reset(job_id):
+        job = Job.query.get(job_id)
+        if job.status == 'running':
+            logging.error('Job {0} is running'.format(job_id))
+            response = jsonify({
+                'code' : 400,
+                'message': 'This job is running, stop it first.'})
+            response.status_code = 400
+            return response
+        else:
+            job.current_frame = job.frame_start
+            job.status = 'ready'
+            db.session.add(job)
+            db.session.commit()
+
+            TaskApi.delete_tasks(job.id)
+            TaskApi.create_tasks(job)
+
+            path = RENDER_PATH + "/" + str(job.id)
+            if os.path.exists(path):
+                rmtree(path)
+            logging.info('Job {0} reset end ready'.format(job_id))
+        
 
 class JobDeleteApi(Resource):
     def post(self):
