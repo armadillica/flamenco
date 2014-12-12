@@ -157,5 +157,27 @@ class ServerTestCase(unittest.TestCase):
         print cr.data
         assert cr.status_code == 204
 
+    def test_job_start(self):
+        job = {
+            'project_id' : 1,
+            'frame_start' : 1,
+            'frame_end' : 1,
+            'chunk_size' : 1,
+            'current_frame' : 1,
+            'name' : 'job_1',
+            'format' : 'PNG',
+            'status' : 'created'
+        }
+
+        cr = self.app.post('/jobs', data=job)
+        assert cr.status_code == 201
+        job = json.loads(cr.data)
+
+        data = { 'command' : 'start'}
+        up = self.app.put('/jobs/1', data=data)
+        job = json.loads(up.data)
+        assert 'running' == job['status']
+
+
 if __name__ == '__main__':
     unittest.main()

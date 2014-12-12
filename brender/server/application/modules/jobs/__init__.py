@@ -185,18 +185,21 @@ class JobApi(Resource):
         job = Job.query.get_or_404(job_id)
         return job
 
+    @marshal_with(job_fields)
     def put(self, job_id):
+        job = Job.query.get_or_404(job_id)
         args = job_parser.parse_args()
         commands = command_parser.parse_args()
         # Here we can handle direct commands for a job, that do not fit the
         # restful principle. For example restart, stop, start, etc.
         if commands['command']:
             if commands['command'] == 'start':
-                pass # start job
+                self.start(job_id)
+                return job
             elif commands['command'] == 'stop':
-                pass # stop job
+                return job # stop job
             elif commands['command'] == 'reset':
-                pass # reset job
+                return job # reset job
             else:
                 response = jsonify({
                     'code' : 400,
@@ -206,7 +209,6 @@ class JobApi(Resource):
         else:
             # We edit properties of the job, such as the title, the frame 
             # range and so on
-            job = Job.query.get_or_404(job_id)
             for arg in args:
                 if args[arg]: setattr(job, arg, args[arg])
             db.session.commit()
@@ -228,12 +230,15 @@ class JobApi(Resource):
 
     @staticmethod
     def start(job_id):
-        job = Job.query.get_or_404(job_id)
+        job = Job.query.get(job_id)
         if job.status != 'running':
             job.status = 'running'
             db.session.add(job)
             db.session.commit()
             logging.info('Dispatching tasks')
+        else:
+            pass
+            # TODO (fsiddi): proper error message if jobs is already running
         TaskApi.dispatch_tasks()
 
 
