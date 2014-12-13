@@ -168,7 +168,6 @@ class ServerTestCase(unittest.TestCase):
         job_id = self.utils.add_job(project_id=project_id)
         # Delete the job (using the returned job id)
         cr = self.app.delete('/jobs/{0}'.format(job_id))
-        print cr.data
         assert cr.status_code == 204
 
     def test_job_start(self):

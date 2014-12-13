@@ -206,13 +206,12 @@ class JobApi(Resource):
         else:
             # We edit properties of the job, such as the title, the frame 
             # range and so on
+            logging.info('Updating job: {0} - {1}'.format(job.id, job.name))
             for arg in args:
                 if args[arg]: setattr(job, arg, args[arg])
             db.session.commit()
 
-            return jsonify(
-                id=job.id,
-                name=job.name)
+            return job
 
     @staticmethod
     def delete(job_id):
