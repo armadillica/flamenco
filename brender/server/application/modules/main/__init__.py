@@ -1,24 +1,23 @@
 import urllib
-#from application.model import Worker
+
 from application.modules.workers.model import Worker
 from application import db
-from flask import (Flask,
-    Blueprint,
-    render_template,
-    jsonify,
-    redirect,
-    url_for,
-    request)
+from flask import Flask
+from flask import Blueprint
+from flask import render_template
+from flask import jsonify
+from flask import redirect
+from flask import url_for
+from flask import request
 
-home = Blueprint('home', __name__)
+main = Blueprint('main', __name__)
 
-@home.route('/')
+@main.route('/')
 def index():
-    #add_random_workers(2)
-    return jsonify(status='ok')
+    return jsonify(message='Brender server up and running!')
 
 
-@home.route('/connect', methods=['POST'])
+@main.route('/connect', methods=['POST'])
 def connect():
     # We assemble the remote_addr value with
     # the port value sent from the worker
