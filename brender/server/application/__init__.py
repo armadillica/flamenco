@@ -14,7 +14,7 @@ migrate = Migrate(app, db)
 
 RENDER_PATH = "render"
 
-import model
+
 # This is the default server configuration, in case the user will not provide one.
 # The Application is configured to run on localhost and port 9999
 # The brender.sqlite database will be created inside of the server folder
@@ -22,7 +22,7 @@ app.config.update(
     DEBUG=False,
     HOST='localhost',
     PORT=9999,
-    SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(model.__file__), '../brender.sqlite')
+    SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite')
 )
 
 api = Api(app)
