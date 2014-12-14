@@ -11,10 +11,6 @@ from dashboard import list_integers_string
 from dashboard import check_connection
 from dashboard import http_server_request
 
-# TODO: find a better way to fill/use this variable
-BRENDER_SERVER = app.config['BRENDER_SERVER']
-
-
 # Name of the Blueprint
 projects = Blueprint('projects', __name__)
 

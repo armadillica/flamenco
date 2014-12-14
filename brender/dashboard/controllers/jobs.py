@@ -11,7 +11,7 @@ from os.path import abspath
 from os.path import exists
 
 from glob import iglob
-from flask import flash,
+from flask import flash
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -23,7 +23,7 @@ from flask import Blueprint
 from dashboard import app
 from dashboard import list_integers_string
 from dashboard import http_server_request
-from server import RENDER_PATH
+# from server import RENDER_PATH
 
 # TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
