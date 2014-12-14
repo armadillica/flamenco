@@ -11,7 +11,11 @@ import select
 import gocept.cache.method
 from threading import Thread
 import Queue # for windows
-from flask import Flask, redirect, url_for, request, jsonify
+from flask import Flask
+from flask import redirect
+from flask import url_for
+from flask import request
+from flask import jsonify
 from uuid import getnode as get_mac_address
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker

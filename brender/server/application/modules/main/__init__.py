@@ -1,4 +1,6 @@
 import urllib
+import logging
+import json
 
 from application.modules.workers.model import Worker
 from application import db
@@ -29,13 +31,13 @@ def connect():
     worker = Worker.query.filter_by(mac_address=mac_address).first()
 
     if worker:
-        print('This worker connected before, updating IP address')
+        logging.info('Known worker requested connection, updating IP address')
         worker.ip_address = ip_address
         db.session.add(worker)
         db.session.commit()
 
     else:
-        print('This worker never connected before')
+        logging.info('New worker requested connection')
         # create new worker object with some defaults.
         # Later on most of these values will be passed as JSON object
         # during the first connection
@@ -51,16 +53,17 @@ def connect():
 
         db.session.add(worker)
         db.session.commit()
-
-        print('Worker has been added')
+        logging.info('Worker added')
 
     #params = urllib.urlencode({'worker': 1, 'eggs': 2})
 
     # we verify the identity of the worker (will check on database)
     try:
         f = urllib.urlopen('http://' + ip_address)
-        print('The following worker just connected:')
-        print(f.read())
+        worker = json.loads(f.read())
+        logging.info('Worker connected:')
+        for k, v in worker.iteritems():
+            logging.info('  {0}: {1}'.format(k, v))
         return 'You are now connected to the server'
     except:
         error = "server could not connect to worker with ip=" + ip_address
