@@ -3,19 +3,22 @@ import json
 import os
 import time
 import urllib
+
 from os import listdir
-from os.path import isfile, join, abspath, exists
+from os.path import isfile
+from os.path import join
+from os.path import abspath
+from os.path import exists
+
 from glob import iglob
-from flask import (flash,
-                   Flask,
-                   jsonify,
-                   redirect,
-                   render_template,
-                   request,
-                   url_for,
-                   send_file,
-                   make_response,
-                   Blueprint)
+from flask import flash,
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
+from flask import send_file
+from flask import make_response
+from flask import Blueprint
 
 from dashboard import app
 from dashboard import list_integers_string

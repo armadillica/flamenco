@@ -1,6 +1,7 @@
 import requests
 from HTMLParser import HTMLParser
-from flask import (Flask, render_template)
+from flask import Flask
+from flask import render_template
 
 app = Flask(__name__)
 
@@ -50,7 +51,8 @@ def http_request(ip_address, method, post_params=False):
     return r.json()
 
 def http_server_request(method, path, params=None):
-    """New version of the http_request function"""
+    """New version of the http_request function
+    """
 
     if method == 'get':
         r = requests.get('http://' + app.config['BRENDER_SERVER'] + path)
