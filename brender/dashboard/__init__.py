@@ -2,6 +2,7 @@ import requests
 from HTMLParser import HTMLParser
 from flask import Flask
 from flask import render_template
+from flask import abort
 
 app = Flask(__name__)
 
@@ -65,6 +66,9 @@ def http_server_request(method, path, params=None):
 
     if r.status_code == 204:
         return '', 204
+
+    if r.status_code == 404:
+        return abort(404)
 
     server_check_error(r)
     return r.json()

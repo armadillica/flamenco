@@ -1,3 +1,5 @@
+import json
+import requests
 from flask import jsonify
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
@@ -9,7 +11,7 @@ parser = reqparse.RequestParser()
 parser.add_argument("id", type=str)
 parser.add_argument("status", type=str)
 
-class WorkersListApi(Resource):
+class WorkerListApi(Resource):
     def get(self):
         workers={}
         workers_db = Worker.query.all()
@@ -26,7 +28,6 @@ class WorkersListApi(Resource):
         db.session.commit()
         return jsonify(workers)
 
-
     def post(self):
         args = parser.parse_args()
         for worker_id in list_integers_string(args['id']):
@@ -36,3 +37,11 @@ class WorkersListApi(Resource):
         db.session.commit()
 
         return '', 204
+
+
+class WorkerApi(Resource):
+    def get(self, worker_id):
+        worker = Worker.query.get_or_404(worker_id)
+        r = requests.get('http://' + worker.ip_address + '/run_info')
+        return r.json()
+

@@ -32,8 +32,10 @@ from modules.projects import ProjectApi
 api.add_resource(ProjectListApi, '/projects')
 api.add_resource(ProjectApi, '/projects/<int:project_id>')
 
-from modules.workers import WorkersListApi
-api.add_resource(WorkersListApi, '/workers')
+from modules.workers import WorkerListApi
+from modules.workers import WorkerApi
+api.add_resource(WorkerListApi, '/workers')
+api.add_resource(WorkerApi, '/workers/<int:worker_id>')
 
 from modules.settings import SettingsListApi
 from modules.settings import RenderSettingsApi

@@ -33,7 +33,8 @@ def index():
             "2": val['system'],
             "3": val['ip_address'],
             "4": val['connection'],
-            "5": val['status']
+            "5": val['status'],
+            "6": val['id']
         })
 
     entries = json.dumps(workers_list)
@@ -57,53 +58,6 @@ def edit():
 
 @workers.route('/view/<worker_id>')
 def view(worker_id):
-    #print(workers)
-    worker = None
-    try:
-        workers = http_server_request('get', '/workers')
-    except KeyError:
-        '''
-            there are multiple exceptions that we can use here
+    worker = http_server_request('get', '/workers/{0}'.format(worker_id))
+    return render_template('workers/view.html', worker=worker)
 
-            1. KeyError
-            2. UnboundLocalError
-            3. NameError
-            '''
-        print 'worker does not exist'
-
-    if worker_id in workers:
-        for key, val in workers.iteritems():
-            if worker_id in key:
-                try:
-                    worker = http_request(val['ip_address'], '/run_info')
-                    entry = ({"ip_address": val['ip_address'], "worker_id": worker_id, "status": val['status']})
-                    worker.update(entry)
-                except IOError:
-                    worker = {
-                        'worker_id': worker_id,
-                        'status': val['status'],
-                        'update_frequent': {
-                            'load_average': {
-                                '5min': 'N/A',
-                                '1min': 'N/A',
-                                '15min': 'N/A'
-                            },
-                        },
-                        'update_less_frequent': {
-                            'worker_architecture': 'N/A',
-                            'worker_mem_percent': 'N/A',
-                            'worker_disk_percent': 'N/A',
-                            'worker_cpu_percent': 'N/A',
-                            'worker_num_cpus': 'N/A',
-                        },
-                        'hostname': 'N/A',
-                        'system': 'N/A',
-                        'mac_address': 'N/A',
-                        # 'worker_blender_cpu_usage': 'N/A',
-                        # 'worker_blender_mem_usage': 'N/A'
-                    }
-
-    if worker:
-        return render_template('workers/view.html', worker=worker)
-    else:
-        return make_response('worker ' + worker_id + ' doesnt exist')

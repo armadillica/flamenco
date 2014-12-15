@@ -15,7 +15,8 @@
                  null,
                  null,
                  null,
-                 null
+                 null,
+                 { "bVisible" : false}
              ],
 
             "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
@@ -33,7 +34,7 @@
                 }
                 $('td:eq(5)', nRow).html(worker_status_label);
 
-                $('td:eq(1)', nRow).html('<a href="/workers/view/' + aData[1] + '"> ' + aData[1] + ' </a>');
+                $('td:eq(1)', nRow).html('<a href="/workers/view/' + aData[6] + '"> ' + aData[1] + ' </a>');
             }
 
         });
