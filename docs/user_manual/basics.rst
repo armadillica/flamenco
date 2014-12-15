@@ -1,6 +1,5 @@
 .. _basics:
 
-
 ******
 Basics
 ******
@@ -24,11 +23,17 @@ Brender is currently not ready for deployment, we are still working on it!
 Configuring brender
 ===================
 
-How to run brender in a virtual environment from a shared location.
+To install brender, create a virtual environment and install the content of
+requirements.txt. In order to run the server, navigate to the server directory
+and type::
 
-.. _administration:
+    python manage.py runserver
 
-Brender administration
-======================
+To run the dashboard, we need to run (one level above the server directory)::
 
-How to update, what is missing bla bla bla.
+    python brender.py dashboard
+
+And finally, to run the woker::
+
+    python brender.py worker
+

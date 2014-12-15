@@ -15,9 +15,9 @@ actions.
 Main features
 =============
 
-* Runs on Linux and OSX (Windows currently not supported due to paths)
+* Runs on Linux, OSX and Windows
 * Automatic detection of clients
-* Multiple Project
+* Supports multiple Project
 * Stats on shot completions
 * Priority system
 

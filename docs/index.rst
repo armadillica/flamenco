@@ -2,8 +2,8 @@ Welcome to brender's documentation!
 ===================================
 
 Brender is a distributed rendering solution for the 3D animation suite 
-Blender. The application is under heavy development and refactoring at 
-the moment, so beware: things are not clear and might not work correctly!
+Blender. The application is under development and refactoring at the moment,
+so beware: things are not clear and might not work correctly!
 
 Contents:
 

@@ -43,10 +43,10 @@ this procedure (assuming that the server is up and running):
 Render workflow
 ===============
 
-The render workflow is based on shots. Once a shot is added to brender, we 
-automatically create jobs (collection of instructions) to send to any available
+The render workflow is based on jobs. Once a jobs is added to brender, we 
+automatically create tasks (collection of instructions) to send to any available
 worker. 
-When all jobs are completed, the shot is marked as finished.
+When all tasks are completed, the job is marked as finished.
 
 
 Frames

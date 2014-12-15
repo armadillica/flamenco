@@ -26,3 +26,4 @@ Dashboard
 * Grunt jobs for CSS and JS optimized versions
 * Blender configuration editor 
 * Users and permissions
+* Move to AngularJS?
