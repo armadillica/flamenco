@@ -121,7 +121,7 @@ class TaskApi(Resource):
             print '[Debug] render settings is not set'
 
         render_settings = os.path.join(
-            setting_render_settings.value ,
+            setting_render_settings.value,
             job.render_settings)
 
         worker_ip_address = worker.ip_address
@@ -146,7 +146,7 @@ class TaskApi(Resource):
                   'format': job.format}
 
         http_request(worker_ip_address, '/execute_task', params)
-        #  get a reply from the worker (running, error, etc)
+        # TODO  get a reply from the worker (running, error, etc)
 
         task.status = 'running'
         db.session.add(task)

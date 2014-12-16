@@ -35,6 +35,8 @@ def http_request(ip_address, command, method, params=None):
         r = requests.get('http://' + ip_address + '/' + command)
     elif method == 'put':
         r = requests.put('http://' + ip_address + '/' + command, data=params)
+    elif method == 'patch':
+        r = requests.patch('http://' + ip_address + '/' + command, data=params)
 
     if r.status_code == 404:
         return abort(404)

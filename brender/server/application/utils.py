@@ -12,6 +12,26 @@ def http_request(ip_address, command, post_params=None):
     print('message sent, reply follows:')
     print(f.read())
 
+def http_rest_request(ip_address, command, method, params=None):
+    if method == 'delete':
+        r = requests.get('http://' + ip_address + '/' + commmand)
+    elif method == 'post':
+        r = requests.post('http://' + ip_address + '/' + command, data=params)
+    elif method == 'get':
+        r = requests.get('http://' + ip_address + '/' + command)
+    elif method == 'put':
+        r = requests.put('http://' + ip_address + '/' + command, data=params)
+    elif method == 'patch':
+        r = requests.patch('http://' + ip_address + '/' + command, data=params)
+
+    if r.status_code == 404:
+        return abort(404)
+
+    if r.status_code == 204:
+        return '', 204
+
+    return r.json()
+
 # That seems totally useless but keep it
 # in case of future bugs due to system path separator
 #from platform import system
