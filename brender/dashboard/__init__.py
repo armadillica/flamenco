@@ -59,9 +59,9 @@ def http_server_request(method, path, params=None):
         r = requests.get('http://' + app.config['BRENDER_SERVER'] + path)
     elif method == 'delete':
         r = requests.delete('http://' + app.config['BRENDER_SERVER'] + path, params)
-    if method == 'post':
+    elif method == 'post':
         r = requests.post('http://' + app.config['BRENDER_SERVER'] + path, params)
-    if method == 'put':
+    elif method == 'put':
         r = requests.put('http://' + app.config['BRENDER_SERVER'] + path, params)
 
     if r.status_code == 204:
