@@ -1,7 +1,8 @@
 from application import db
 from urllib import urlopen
+from sqlalchemy import UniqueConstraint
 
-class Worker(db.model):
+class Worker(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ip_address = db.Column(db.String(15))
     port = db.Column(db.Integer())

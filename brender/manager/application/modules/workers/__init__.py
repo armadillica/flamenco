@@ -1,3 +1,4 @@
+from flask import request
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from application.modules.workers.model import Worker
@@ -5,19 +6,19 @@ from flask import jsonify
 
 from application import db
 
-parser = reqparse.Request()
-parser.add_argyement('ip_address', type=str)
+parser = reqparse.RequestParser()
+parser.add_argument('ip_address', type=str)
 parser.add_argument('port', type=int)
 parser.add_argument('hostname', type=str)
 parser.add_argument('system', type=str)
 
-status_parser = reqparse.Request()
-parser.add_argument("status", type=str)
+status_parser = reqparse.RequestParser()
+status_parser.add_argument("status", type=str)
 
-class WorkersApi(Resource):
+class WorkerListApi(Resource):
     def post(self):
         args = parser.parse_args()
-        ip_address = args['ip_address']
+        ip_address = request.remote_addr
 
         worker = Worker.query.filter_by(ip_address=ip_address).first()
         if not worker:
@@ -27,12 +28,8 @@ class WorkersApi(Resource):
                           status='enabled',
                           connection='online',
                           system=args['system'])
-
-            # TODO Notify server
-
         else:
             worker.connection = 'online'
-            # TODO Notify server
 
         db.session.add(worker)
         db.session.commit()
@@ -52,6 +49,7 @@ class WorkersApi(Resource):
                                         "status": worker.status,
                                         "connection": worker.connection,
                                         "system": worker.system,
+                                        "port" : worker.port,
                                         "ip_address": worker.ip_address}
         db.session.commit()
         return jsonify(workers)
@@ -61,5 +59,11 @@ class WorkerApi(Resource):
         args = status_parser.parse_args()
         worker = Worker.query.get_or_404(worker_id)
         worker.status = args['status']
-        return jsonify(dict(status=workers.status))
+        db.session.add(worker)
+        db.session.commit()
+        return jsonify(dict(status=worker.status))
 
+    def get(self, worker_id):
+        worker = Worker.query.get_or_404(worker_id)
+        r = requests.get('http://' + worker.ip_address + '/run_info')
+        return r.json()

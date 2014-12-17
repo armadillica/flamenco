@@ -1,6 +1,6 @@
 from flask import Flask
 from flask import jsonify
-from flask.ext.sqlachemy import SQLAlchemy
+from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import Api
 from flask.ext.migrate import Migrate
 import os
@@ -25,6 +25,11 @@ from modules.tasks import TaskManagementApi
 from modules.tasks import TaskApi
 api.add_resource(TaskManagementApi, '/tasks')
 api.add_resource(TaskApi, '/tasks/<int:task_id>')
+
+from modules.workers import WorkerListApi
+from modules.workers import WorkerApi
+api.add_resource(WorkerListApi, '/workers')
+api.add_resource(WorkerApi, '/workers/<int:worker_id>')
 
 def http_request(ip_address, command, method, params=None):
     if method == 'delete':

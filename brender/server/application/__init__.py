@@ -18,11 +18,15 @@ RENDER_PATH = "render"
 # This is the default server configuration, in case the user will not provide one.
 # The Application is configured to run on localhost and port 9999
 # The brender.sqlite database will be created inside of the server folder
+from application.modules.managers.model import Manager
 app.config.update(
     DEBUG=False,
     HOST='localhost',
     PORT=9999,
-    SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite')
+    SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite'),
+    MANAGERS = [ \
+        Manager(name='debian', ip_address='127.0.0.1', port=5000) \
+    ]
 )
 
 api = Api(app)
@@ -36,6 +40,9 @@ from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
+
+from modules.managers import ManagersApi
+api.add_resource(ManagersApi, '/managers')
 
 from modules.settings import SettingsListApi
 from modules.settings import RenderSettingsApi
