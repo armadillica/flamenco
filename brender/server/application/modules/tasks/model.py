@@ -15,7 +15,7 @@ class Task(db.Model):
     job_id = db.Column(db.Integer, db.ForeignKey('job.id'))
     job = db.relationship('Job',
         backref=db.backref('tasks', lazy='dynamic'))
-    worker_id = db.Column(db.Integer())
+    manager_id = db.Column(db.Integer())
     chunk_start = db.Column(db.Integer())
     chunk_end = db.Column(db.Integer())
     current_frame = db.Column(db.Integer())

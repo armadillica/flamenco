@@ -51,10 +51,9 @@ def register_worker():
             pass
         time.sleep(0.1)
 
-    http_request('connect', {'mac_address': MAC_ADDRESS,
-                                       'port': app.config['PORT'],
-                                       'hostname': HOSTNAME,
-                                       'system': SYSTEM})
+    http_request('workers', {'port': app.config['PORT'],
+                               'hostname': HOSTNAME,
+                               'system': SYSTEM})
 
 def _checkProcessOutput(process):
     ready = select.select([process.stdout.fileno(),
@@ -234,14 +233,15 @@ def get_pid():
     response = dict(pid=PROCESS.pid)
     return jsonify(response)
 
-@app.route('/command', methods=['HEAD']):
+@app.route('/command', methods=['HEAD'])
 def get_command():
+    # TODO Return the running command
     return '', 503
 
 
 
 @app.route('/kill/<int:pid>', methods=['DELETE'])
-def update():
+def update(pid):
     print('killing')
     if platform.system() is 'Windows':
         kill(pid, CTRL_C_EVENT)

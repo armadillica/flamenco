@@ -65,8 +65,8 @@ def add():
         return redirect(url_for('projects.index'))
     else:
         render_settings = http_server_request('get', '/settings/render')
-        projects = http_server_request('get', '/projects/')
-        settings = http_server_request('get', '/settings/')
+        projects = http_server_request('get', '/projects')
+        settings = http_server_request('get', '/settings')
         return render_template('projects/add_modal.html',
                         render_settings=render_settings,
                         settings=settings,

@@ -4,6 +4,7 @@ from flask import jsonify
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from application import db
+from application import app
 from application.utils import list_integers_string
 from application.utils import http_rest_request
 from application.modules.workers.model import Worker
@@ -15,7 +16,9 @@ parser.add_argument("status", type=str)
 class WorkerListApi(Resource):
     def get(self):
         workers={}
-        manager_db = Manager.query.all()
+        # TODO should use db
+        #manager_db = Manager.query.all()
+        manager_db = app.config['MANAGERS']
         for manager in manager_db:
             r = http_rest_request(manager.host, '/workers', 'get')
             workers = dict(workers.items() + r.items())

@@ -18,7 +18,10 @@ class Task(db.Model):
     status = db.Column(db.String(10))
     format = db.Column(db.String(10))
     file_path = db.Column(db.String(256))
+    output = db.Column(db.String(256))
     settings = db.Column(db.String(50))
+    pid = db.Column(db.Integer())
+    blender_path = db.Column(db.String(256))
 
     def __repr__(self):
         return '<Task %r of type %r>' % (self.id, self.task_type.id)

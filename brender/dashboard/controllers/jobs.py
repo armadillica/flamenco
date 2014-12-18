@@ -33,12 +33,13 @@ BRENDER_SERVER = app.config['BRENDER_SERVER']
 jobs = Blueprint('jobs', __name__)
 
 def last_thumbnail(job_id):
-    render_dir = RENDER_PATH + "/" + str(job_id)
-    if not exists(render_dir):
-        return ""
+    pass
+    #render_dir = RENDER_PATH + "/" + str(job_id)
+    #if not exists(render_dir):
+    #    return ""
 
-    files = sorted(["/" + render_dir + "/" + f for f in listdir(render_dir) if  f.endswith(".thumb")])
-    return files.pop() if files else ""
+    #files = sorted(["/" + render_dir + "/" + f for f in listdir(render_dir) if  f.endswith(".thumb")])
+    #return files.pop() if files else ""
 
 
 @jobs.route('/')
@@ -82,9 +83,9 @@ def job(job_id):
 @jobs.route('/browse/<path:path>',)
 def jobs_browse(path):
     if len(path) > 0:
-        path = os.path.join('/jobs/browse', path)
+        path = os.path.join('/browse', path)
     else:
-        path = "/jobs/browse"
+        path = "/browse"
     print path
     path_data = http_server_request('get', path)
     return render_template('browse_modal.html',

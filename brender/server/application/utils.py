@@ -1,4 +1,6 @@
 import urllib
+import requests
+from flask import abort
 
 
 def http_request(ip_address, command, post_params=None):
@@ -14,15 +16,15 @@ def http_request(ip_address, command, post_params=None):
 
 def http_rest_request(ip_address, command, method, params=None):
     if method == 'delete':
-        r = requests.get('http://' + ip_address + '/' + commmand)
+        r = requests.delete('http://' + ip_address + command)
     elif method == 'post':
-        r = requests.post('http://' + ip_address + '/' + command, data=params)
+        r = requests.post('http://' + ip_address + command, data=params)
     elif method == 'get':
-        r = requests.get('http://' + ip_address + '/' + command)
+        r = requests.get('http://' + ip_address + command)
     elif method == 'put':
-        r = requests.put('http://' + ip_address + '/' + command, data=params)
+        r = requests.put('http://' + ip_address + command, data=params)
     elif method == 'patch':
-        r = requests.patch('http://' + ip_address + '/' + command, data=params)
+        r = requests.patch('http://' + ip_address + command, data=params)
 
     if r.status_code == 404:
         return abort(404)

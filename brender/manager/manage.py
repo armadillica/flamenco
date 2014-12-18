@@ -13,7 +13,7 @@ manager.add_command('db', MigrateCommand)
 @manager.command
 def runmanager():
     app.run(
-        port=9999,
+        port=7777,
         debug=True)
 
 @manager.command

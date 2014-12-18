@@ -1,0 +1,10 @@
+import os
+class Config(object):
+    DEBUG=False
+    BRENDER_SERVER='localhost:9999'
+
+class Manager(Config):
+    DEBUG=TRUE
+    PORT=7777
+    HOST='localhost'
+    DATABASE=os.path.join(os.path.dirname(__file__), 'manager', 'task_queue.sqlite')

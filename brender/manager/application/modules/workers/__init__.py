@@ -7,7 +7,6 @@ from flask import jsonify
 from application import db
 
 parser = reqparse.RequestParser()
-parser.add_argument('ip_address', type=str)
 parser.add_argument('port', type=int)
 parser.add_argument('hostname', type=str)
 parser.add_argument('system', type=str)

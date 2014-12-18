@@ -11,12 +11,12 @@ from flask import request
 
 # TODO(sergey): Generally not a good idea to import *
 from application.utils import *
-from application import db, RENDER_PATH
+from application import db, RENDER_PATH, app
 from PIL import Image
 from platform import system
 
 from application.modules.tasks.model import Task
-from application.modules.workers.model import Worker
+from application.modules.managers.model import Manager
 from application.modules.jobs.model import Job
 from application.modules.projects.model import Project
 from application.modules.settings.model import Setting
@@ -29,8 +29,9 @@ parser.add_argument('status', type=str)
 class TaskApi(Resource):
     @staticmethod
     def create_task(job_id, chunk_start, chunk_end):
+        # TODO attribution of the best manager
         task = Task(job_id=job_id,
-            worker_id=12,
+            manager_id=1,
             chunk_start=chunk_start,
             chunk_end=chunk_end,
             current_frame=chunk_start,
@@ -88,9 +89,9 @@ class TaskApi(Resource):
             TaskApi.create_task(job.id, chunk_start, chunk_end)
 
     @staticmethod
-    def start_task(worker, task):
+    def start_task(manager, task):
         """Execute a single task
-        We pass worker and task as objects (and at the moment we use a bad
+        We pass manager and task as objects (and at the moment we use a bad
         way to get the additional job information - should be done with join)
         """
 
@@ -124,8 +125,6 @@ class TaskApi(Resource):
             setting_render_settings.value,
             job.render_settings)
 
-        worker_ip_address = worker.ip_address
-
         """
         Additional params for future reference
 
@@ -138,30 +137,27 @@ class TaskApi(Resource):
 
         params = {'task_id': task.id,
                   'file_path': filepath,
-                  'blender_path': blender_path,
                   'render_settings': render_settings,
                   'start': task.chunk_start,
                   'end': task.chunk_end,
                   'output': "//" + RENDER_PATH + "/" + str(task.job_id)  + "/##",
                   'format': job.format}
 
-        http_request(worker_ip_address, '/execute_task', params)
+        http_rest_request(manager.host, '/tasks', 'post', params)
         # TODO  get a reply from the worker (running, error, etc)
 
-        task.status = 'running'
-        db.session.add(task)
+        #task.status = 'running'
+        #db.session.add(task)
 
-        job.current_frame = task.chunk_end
-        db.session.add(job)
-        db.session.commit()
+        #job.current_frame = task.chunk_end
+        #db.session.add(job)
+        #db.session.commit()
 
     @staticmethod
     def dispatch_tasks(job_id=None):
-        workers = Worker.query.\
-            filter_by(status='enabled').\
-            filter_by(connection='online').\
+        managers = Manager.query.\
             all()
-        for worker in workers:
+        for manager in managers:
             # pick the task with the highest priority (it means the lowest number)
 
             task = Task.query.\
@@ -170,10 +166,7 @@ class TaskApi(Resource):
                 first()
 
             if task:
-                task.status = 'running'
-                db.session.add(task)
-                db.session.commit()
-                TaskApi.start_task(worker, task)
+                TaskApi.start_task(manager, task)
             #else:
             #    print '[error] Task does not exist'
 
@@ -205,7 +198,18 @@ class TaskApi(Resource):
 
     @staticmethod
     def delete_tasks(job_id):
-        tasks = Task.query.filter_by(job_id=job_id).delete()
+        tasks = Task.query.filter_by(job_id=job_id)
+        for t in tasks:
+            #TODO use database
+            #manager = Manager.query.get(t.manager_id)
+            manager = filter(lambda m : m.id == t.manager_id, app.config['MANAGERS'])[0]
+            delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
+            job = Job.query.get(t.job_id)
+            if job.current_frame < delete_task['frame_current']:
+                job.current_frame = delete_task['frame_current']
+                db.session.add(job)
+                db.session.commit()
+            db.session.delete(t)
         print('All tasks deleted for job', job_id)
 
     @staticmethod
@@ -214,6 +218,9 @@ class TaskApi(Resource):
         """
         task = Task.query.get(task_id)
         task.status = 'ready'
+        manager = Manager.query.get(task.manager_id)
+        delete_task = http_rest_request(manager.host, '/tasks/' + t.id, 'delete')
+        task.current_frame = delete_task['frame_current']
         db.session.add(task)
         db.session.commit()
         print "Task %d stopped" % task_id
@@ -228,6 +235,7 @@ class TaskApi(Resource):
             all()
 
         map(lambda t : TaskApi.stop_task(t.id), tasks)
+        delete_tasks(job_id)
 
     def get(self):
         from decimal import Decimal
