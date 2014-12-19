@@ -77,7 +77,8 @@ def schedule():
             'format' : task.format}
 
         logging.info("send task %d" % task.server_id)
-        http_request(worker.host, '/execute_task', 'post', options)
+        pid = http_request(worker.host, '/execute_task', 'post', options)
+        task.pid = int(pid['pid'])
         db.session.add(task)
         db.session.commit()
 
@@ -128,6 +129,8 @@ class TaskApi(Resource):
 
         if task.status in ['finished', 'failed']:
             db.session.delete(task)
-            http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=task.__dict__)
+            params = task.__dict__
+            params['id'] = params['server_id']
+            http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
 
         return '', 204

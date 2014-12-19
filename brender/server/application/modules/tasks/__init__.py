@@ -209,7 +209,7 @@ class TaskApi(Resource):
         tasks = Task.query.filter_by(job_id=job_id)
         for t in tasks:
             # FIXME find sqlalchemy query to avoid this
-            if t.status in ['finished', 'failed']:
+            if t.status in ['finished', 'failed', 'aborted']:
                 continue
             #TODO use database
             #manager = Manager.query.get(t.manager_id)
@@ -246,7 +246,7 @@ class TaskApi(Resource):
             all()
 
         map(lambda t : TaskApi.stop_task(t.id), tasks)
-        delete_tasks(job_id)
+        TaskApi.delete_tasks(job_id)
 
     def get(self):
         from decimal import Decimal

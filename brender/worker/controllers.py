@@ -26,6 +26,9 @@ PROCESS = None
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
+    from signal import SIGKILL
+else:
+    from signal import CTRL_C_EVENT
 
 app = Flask(__name__)
 
@@ -199,13 +202,13 @@ def run_blender_in_thread(options):
         f.write(full_output)
 
     if retcode == 137:
-        http_request('tasks', {'id': options['task_id'],
-                                            'status': 'aborted'})
+        requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'aborted'})
     elif retcode != 0:
-        http_request('tasks', {'id': options['task_id'],
-                                            'status': 'failed'})
+        requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'failed'})
     else:
         requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'finished'})
+
+    PROCESS = None
 
 
 @app.route('/execute_task', methods=['POST'])
@@ -222,20 +225,21 @@ def execute_task():
         'format': request.form['format']
     }
 
+    PROCESS = None
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
     render_thread.start()
 
     while PROCESS is None:
         time.sleep(1)
 
-    if PROCESS.poll() is not None:
-        print PROCESS.poll()
+    if PROCESS.poll():
         return '{error:Processus failed}', 500
 
     return jsonify(dict(pid=PROCESS.pid))
 
 @app.route('/pid')
 def get_pid():
+    global PROCESS
     response = dict(pid=PROCESS.pid)
     return jsonify(response)
 
@@ -248,12 +252,14 @@ def get_command():
 
 @app.route('/kill/<int:pid>', methods=['DELETE'])
 def update(pid):
+    global PROCESS
     print('killing')
     if platform.system() is 'Windows':
-        kill(pid, CTRL_C_EVENT)
+        os.kill(pid, CTRL_C_EVENT)
     else:
-        kill(pid, SIGKILL)
+        os.kill(pid, SIGKILL)
 
+    PROCESS = None
     return '', 204
 
 

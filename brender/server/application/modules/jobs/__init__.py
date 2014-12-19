@@ -33,7 +33,7 @@ job_parser.add_argument('frame_end', type=int)
 job_parser.add_argument('chunk_size', type=int)
 job_parser.add_argument('current_frame', type=int)
 job_parser.add_argument('filepath', type=str)
-job_parser.add_argument('name', type=str)
+job_parser.add_argument('job_name', type=str)
 job_parser.add_argument('render_settings', type=str)
 job_parser.add_argument('format', type=str)
 job_parser.add_argument('status', type=str)
@@ -51,7 +51,7 @@ job_fields = {
     'chunk_size' : fields.Integer,
     'current_frame' : fields.Integer,
     'filepath' : fields.String,
-    'name' : fields.String,
+    'job_name' : fields.String,
     'render_settings' : fields.String,
     'format' : fields.String,
     'status' : fields.String,
