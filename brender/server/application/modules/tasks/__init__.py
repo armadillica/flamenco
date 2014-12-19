@@ -15,11 +15,14 @@ from application import db, RENDER_PATH, app
 from PIL import Image
 from platform import system
 
+from application import app
 from application.modules.tasks.model import Task
 from application.modules.managers.model import Manager
 from application.modules.jobs.model import Job
 from application.modules.projects.model import Project
 from application.modules.settings.model import Setting
+
+from threading import Thread
 
 parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
@@ -100,30 +103,30 @@ class TaskApi(Resource):
 
         filepath = job.filepath
 
-        if 'Darwin' in worker.system:
-            setting_blender_path = Setting.query.filter_by(name='blender_path_osx').first()
-            setting_render_settings = Setting.query.filter_by(name='render_settings_path_osx').first()
-            filepath = os.path.join(project.path_osx, job.filepath)
-        elif 'Windows' in worker.system:
-            setting_blender_path = Setting.query.filter_by(name='blender_path_win').first()
-            setting_render_settings = Setting.query.filter_by(name='render_settings_path_win').first()
-            filepath = os.path.join(project.path_win, job.filepath)
-        else:
-            setting_blender_path = Setting.query.filter_by(name='blender_path_linux').first()
-            setting_render_settings = Setting.query.filter_by(name='render_settings_path_linux').first()
-            filepath = os.path.join(project.path_linux, job.filepath)
+        #if 'Darwin' in worker.system:
+        #    setting_blender_path = Setting.query.filter_by(name='blender_path_osx').first()
+        #    setting_render_settings = Setting.query.filter_by(name='render_settings_path_osx').first()
+        #    filepath = os.path.join(project.path_osx, job.filepath)
+        #elif 'Windows' in worker.system:
+        #    setting_blender_path = Setting.query.filter_by(name='blender_path_win').first()
+        #    setting_render_settings = Setting.query.filter_by(name='render_settings_path_win').first()
+        #    filepath = os.path.join(project.path_win, job.filepath)
+        #else:
+        #    setting_blender_path = Setting.query.filter_by(name='blender_path_linux').first()
+        #    setting_render_settings = Setting.query.filter_by(name='render_settings_path_linux').first()
+        #    filepath = os.path.join(project.path_linux, job.filepath)
 
-        if setting_blender_path is None:
-            print '[Debug] blender path is not set'
+        #if setting_blender_path is None:
+        #    print '[Debug] blender path is not set'
 
-        blender_path = setting_blender_path.value
+        #blender_path = setting_blender_path.value
 
-        if setting_render_settings is None:
-            print '[Debug] render settings is not set'
+        #if setting_render_settings is None:
+        #    print '[Debug] render settings is not set'
 
-        render_settings = os.path.join(
-            setting_render_settings.value,
-            job.render_settings)
+        #render_settings = os.path.join(
+        #    setting_render_settings.value,
+        #    job.render_settings)
 
         """
         Additional params for future reference
@@ -136,9 +139,11 @@ class TaskApi(Resource):
         """
 
         params = {'task_id': task.id,
-                  'file_path': filepath,
-                  'render_settings': render_settings,
-                  'start': task.chunk_start,
+                  'file_path_linux': os.path.join(project.path_linux, filepath),
+                  'file_path_win': os.path.join(project.path_win, filepath),
+                  'file_path_osx': os.path.join(project.path_osx, filepath),
+                  'render_settings': job.render_settings,
+                  'start': task.current_frame,
                   'end': task.chunk_end,
                   'output': "//" + RENDER_PATH + "/" + str(task.job_id)  + "/##",
                   'format': job.format}
@@ -155,8 +160,11 @@ class TaskApi(Resource):
 
     @staticmethod
     def dispatch_tasks(job_id=None):
-        managers = Manager.query.\
-            all()
+        logging.info('dispatch tasks')
+        # TODO Use databse
+        #managers = Manager.query.\
+        #    all()
+        managers = app.config['MANAGERS']
         for manager in managers:
             # pick the task with the highest priority (it means the lowest number)
 
@@ -200,6 +208,9 @@ class TaskApi(Resource):
     def delete_tasks(job_id):
         tasks = Task.query.filter_by(job_id=job_id)
         for t in tasks:
+            # FIXME find sqlalchemy query to avoid this
+            if t.status in ['finished', 'failed']:
+                continue
             #TODO use database
             #manager = Manager.query.get(t.manager_id)
             manager = filter(lambda m : m.id == t.manager_id, app.config['MANAGERS'])[0]
@@ -307,6 +318,6 @@ class TaskApi(Resource):
                 db.session.add(job)
             db.session.commit()
 
-        TaskApi.dispatch_tasks()
+        Thread(target=TaskApi.dispatch_tasks).start()
 
         return '', 204

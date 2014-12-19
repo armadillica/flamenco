@@ -10,6 +10,7 @@ class TaskType(db.Model):
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    server_id = db.Column(db.Integer, nullable=False)
     worker_id = db.Column(db.Integer)
     priority = db.Column(db.Integer)
     frame_start = db.Column(db.Integer, nullable=True)
@@ -17,11 +18,12 @@ class Task(db.Model):
     frame_current = db.Column(db.Integer, nullable=True)
     status = db.Column(db.String(10))
     format = db.Column(db.String(10))
-    file_path = db.Column(db.String(256))
+    file_path_linux = db.Column(db.String(256))
+    file_path_win = db.Column(db.String(256))
+    file_path_osx = db.Column(db.String(256))
     output = db.Column(db.String(256))
     settings = db.Column(db.String(50))
     pid = db.Column(db.Integer())
-    blender_path = db.Column(db.String(256))
 
     def __repr__(self):
         return '<Task %r of type %r>' % (self.id, self.task_type.id)

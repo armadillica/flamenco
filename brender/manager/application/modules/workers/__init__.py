@@ -5,6 +5,7 @@ from application.modules.workers.model import Worker
 from flask import jsonify
 
 from application import db
+import logging
 
 parser = reqparse.RequestParser()
 parser.add_argument('port', type=int)
@@ -18,12 +19,14 @@ class WorkerListApi(Resource):
     def post(self):
         args = parser.parse_args()
         ip_address = request.remote_addr
+        port = args['port']
 
-        worker = Worker.query.filter_by(ip_address=ip_address).first()
+        worker = Worker.query.filter_by(ip_address=ip_address, port=port).first()
         if not worker:
+            logging.info("new worker")
             worker = Worker(hostname=args['hostname'],
                           ip_address=ip_address,
-                          port=args['port'],
+                          port=port,
                           status='enabled',
                           connection='online',
                           system=args['system'])
@@ -64,5 +67,5 @@ class WorkerApi(Resource):
 
     def get(self, worker_id):
         worker = Worker.query.get_or_404(worker_id)
-        r = requests.get('http://' + worker.ip_address + '/run_info')
+        r = requests.get('http://' + worker.host + '/run_info')
         return r.json()

@@ -3,19 +3,30 @@ from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
+from flask import jsonify
+
 from application import http_request
 from application import db
+from application import app
 from application.modules.tasks.model import Task
 from application.modules.workers.model import Worker
+
+from os.path import join
+
+import logging
 
 parser = reqparse.RequestParser()
 parser.add_argument('priority', type=int)
 # TODO add task_type informations
-parser.add_argument('frame_start', type=int, required=False)
-parser.add_argument('frame_end', type=int, required=False)
-parser.add_argument('frame_current', type=int, required=False)
+parser.add_argument('start', type=int, required=False)
+parser.add_argument('end', type=int, required=False)
 parser.add_argument('output', type=str)
 parser.add_argument('format', type=str)
+parser.add_argument('file_path_linux', type=str)
+parser.add_argument('file_path_win', type=str)
+parser.add_argument('file_path_osx', type=str)
+parser.add_argument('task_id', type=int, required=True)
+parser.add_argument('render_settings', type=str)
 
 status_parser = reqparse.RequestParser()
 status_parser.add_argument('status', type=str, required=True)
@@ -34,10 +45,10 @@ task_fields = {
 }
 
 def get_availabe_worker():
-    worker = Worker.query.filter_by(status='enabled', connection='online').first()
+    worker = Worker.query.filter_by(status='enabled').filter_by(connection='online').first()
     if worker is None:
         return None
-    else:
+    elif not worker.is_connected:
         worker.connection = 'offline'
 
     db.session.add(worker)
@@ -45,23 +56,28 @@ def get_availabe_worker():
     return worker if worker.connection == 'online' else get_availabe_worker()
 
 def schedule():
+    logging.info("Scheduling")
     task_queue = Task.query.filter_by(status='ready').order_by(Task.priority.desc())
     for task in task_queue:
         worker = get_availabe_worker()
         if worker is None:
+            logging.debug("No worker available")
             break
         task.worker_id = worker.id
         task.status = 'running'
+        #TODO Select infos according to worker's system
         options = {
             'task_id' : task.id,
-            'file_path' : task.file_path,
+            'file_path' : task.file_path_linux,
             'blender_path' : app.config['BLENDER_PATH_LINUX'],
-            'start_frame' : task.current_frame,
-            'end_frame' : task.end_frame,
-            'render_settings' : task.settings,
+            'start' : task.frame_current,
+            'end' : task.frame_end,
+            'render_settings' : join(app.config['SETTINGS_PATH_LINUX'], task.settings),
             'output' : task.output,
             'format' : task.format}
-        http_request(worker.host, '/execute_task', 'post', data=options)
+
+        logging.info("send task %d" % task.server_id)
+        http_request(worker.host, '/execute_task', 'post', options)
         db.session.add(task)
         db.session.commit()
 
@@ -70,12 +86,17 @@ class TaskManagementApi(Resource):
     def post(self):
         args = parser.parse_args()
         task = Task(
+            server_id = args['task_id'],
             priority = args['priority'],
-            frame_start = args['frame_start'],
-            frame_end = args['frame_end'],
-            frame_current = args['frame_current'],
+            frame_start = args['start'],
+            frame_end = args['end'],
+            frame_current = args['start'],
             output = args['output'],
             format = args['format'],
+            file_path_linux = args['file_path_linux'],
+            file_path_win = args['file_path_win'],
+            file_path_osx = args['file_path_osx'],
+            settings = args['render_settings'],
             status = 'ready'
         )
 
@@ -91,22 +112,22 @@ class TaskApi(Resource):
     def delete(self, task_id):
         task = Task.query.get_or_404(task_id)
         worker = Worker.query.get(task.worker_id)
-        http_request(worker.host, '/kill/' + task.pid, 'delete')
+        http_request(worker.host, '/kill/' + str(task.pid), 'delete')
         db.session.delete(task)
 
-        if task.status not in ['completed', 'failed']:
+        if task.status not in ['finished', 'failed']:
             task.status = 'aborted'
 
         return task, 202
 
     def patch(self, task_id):
-        task = db.query.get_or_404(task_id)
+        task = Task.query.get_or_404(task_id)
         args = status_parser.parse_args()
 
         task.status = args['status']
 
-        if task.status in ['completed', 'failed']:
-            http_request(BRENDER_SERVER, '/tasks', '/post', data=jsonify(task))
+        if task.status in ['finished', 'failed']:
             db.session.delete(task)
+            http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=task.__dict__)
 
         return '', 204

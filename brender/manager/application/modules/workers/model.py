@@ -20,10 +20,10 @@ class Worker(db.Model):
     @property
     def is_connected(self):
         try:
-            urlopen("http://" + self.ip_address)
+            urlopen("http://" + self.host)
             return True
         except:
-            print "[Warning] Worker %s is not online" % self.hostname
+            print "[Warning] Worker %s is not online" % self.host
             return False
 
     def __repr__(self):

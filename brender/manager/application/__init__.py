@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import jsonify
+from flask import abort
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import Api
 from flask.ext.migrate import Migrate
@@ -31,7 +32,7 @@ api = Api(app)
 
 def http_request(ip_address, command, method, params=None):
     if method == 'delete':
-        r = requests.get('http://' + ip_address + commmand)
+        r = requests.delete('http://' + ip_address + command)
     elif method == 'post':
         r = requests.post('http://' + ip_address + command, data=params)
     elif method == 'get':
@@ -44,8 +45,18 @@ def http_request(ip_address, command, method, params=None):
     if r.status_code == 404:
         return abort(404)
 
+    # Only for debug
+    if r.status_code == 400:
+        for chunk in r.iter_content(50):
+            print chunk
+        return abort(404)
+
     if r.status_code == 204:
         return '', 204
+
+    if r.status_code >= 500:
+        logging.debug("STATUS CODE: %d" % r.status_code)
+        return abort(500)
 
     return r.json()
 

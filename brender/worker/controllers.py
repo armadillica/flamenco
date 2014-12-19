@@ -17,6 +17,7 @@ from flask import url_for
 from flask import request
 from flask import jsonify
 from uuid import getnode as get_mac_address
+import requests
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
@@ -148,6 +149,7 @@ def info():
 
 
 def run_blender_in_thread(options):
+    global PROCESS
     """We build the command to run blender in a thread
     """
     render_command = [
@@ -178,7 +180,7 @@ def run_blender_in_thread(options):
     if platform.system() is not 'Windows':
         flags = fcntl(PROCESS.stdout, F_GETFL)
         fcntl(PROCESS.stdout, F_SETFL, flags | os.O_NONBLOCK)
-        flags = fcntl(process.stderr, F_GETFL)
+        flags = fcntl(PROCESS.stderr, F_GETFL)
         fcntl(PROCESS.stderr, F_SETFL, flags | os.O_NONBLOCK)
 
     #flask.g.blender_process = process
@@ -203,12 +205,12 @@ def run_blender_in_thread(options):
         http_request('tasks', {'id': options['task_id'],
                                             'status': 'failed'})
     else:
-        http_request('tasks', {'id': options['task_id'],
-                                           'status': 'finished'})
+        requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'finished'})
 
 
 @app.route('/execute_task', methods=['POST'])
 def execute_task():
+    global PROCESS
     options = {
         'task_id': request.form['task_id'],
         'file_path': request.form['file_path'],
@@ -226,7 +228,11 @@ def execute_task():
     while PROCESS is None:
         time.sleep(1)
 
-    return jsonify(pid=PROCESS.pid)
+    if PROCESS.poll() is not None:
+        print PROCESS.poll()
+        return '{error:Processus failed}', 500
+
+    return jsonify(dict(pid=PROCESS.pid))
 
 @app.route('/pid')
 def get_pid():
