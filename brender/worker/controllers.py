@@ -10,6 +10,7 @@ import os
 import select
 import gocept.cache.method
 from threading import Thread
+from threading import Lock
 import Queue # for windows
 from flask import Flask
 from flask import redirect
@@ -23,6 +24,7 @@ MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
 SYSTEM = platform.system() + ' ' + platform.release()
 PROCESS = None
+LOCK = Lock()
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
@@ -192,6 +194,7 @@ def run_blender_in_thread(options):
         else _interactiveReadProcessWin(PROCESS, options["task_id"])
 
     print ('[DEBUG] return code: %d') % retcode
+    PROCESS = None
 
     #flask.g.blender_process = None
     #print(full_output)
@@ -208,12 +211,12 @@ def run_blender_in_thread(options):
     else:
         requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'finished'})
 
-    PROCESS = None
 
 
 @app.route('/execute_task', methods=['POST'])
 def execute_task():
     global PROCESS
+    global LOCK
     options = {
         'task_id': request.form['task_id'],
         'file_path': request.form['file_path'],
@@ -225,6 +228,7 @@ def execute_task():
         'format': request.form['format']
     }
 
+    LOCK.acquire()
     PROCESS = None
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
     render_thread.start()
@@ -232,6 +236,7 @@ def execute_task():
     while PROCESS is None:
         time.sleep(1)
 
+    LOCK.release()
     if PROCESS.poll():
         return '{error:Processus failed}', 500
 
@@ -253,13 +258,16 @@ def get_command():
 @app.route('/kill/<int:pid>', methods=['DELETE'])
 def update(pid):
     global PROCESS
+    global LOCK
     print('killing')
     if platform.system() is 'Windows':
         os.kill(pid, CTRL_C_EVENT)
     else:
         os.kill(pid, SIGKILL)
 
+    LOCK.acquire()
     PROCESS = None
+    LOCK.release()
     return '', 204
 
 

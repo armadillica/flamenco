@@ -4,6 +4,7 @@ from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
 from flask import jsonify
+from flask import abort
 
 from application import http_request
 from application import db
@@ -78,8 +79,10 @@ def schedule():
 
         logging.info("send task %d" % task.server_id)
         pid = http_request(worker.host, '/execute_task', 'post', options)
+        worker.status = 'busy'
         task.pid = int(pid['pid'])
         db.session.add(task)
+        db.session.add(worker)
         db.session.commit()
 
 class TaskManagementApi(Resource):
@@ -111,13 +114,19 @@ class TaskManagementApi(Resource):
 class TaskApi(Resource):
     @marshal_with(task_fields)
     def delete(self, task_id):
-        task = Task.query.get_or_404(task_id)
-        worker = Worker.query.get(task.worker_id)
-        http_request(worker.host, '/kill/' + str(task.pid), 'delete')
+        task = Task.query.filter_by(server_id=task_id).first()
+        if task is None:
+            abort(404)
         db.session.delete(task)
+        db.session.commit()
 
         if task.status not in ['finished', 'failed']:
+            worker = Worker.get(task.worker_id)
+            worker.status = 'enabled'
+            db.session.add(worker)
+            db.session.commit()
             task.status = 'aborted'
+            http_request(worker.host, '/kill/' + str(task.pid), 'delete')
 
         return task, 202
 
@@ -128,9 +137,12 @@ class TaskApi(Resource):
         task.status = args['status']
 
         if task.status in ['finished', 'failed']:
+            worker = Worker.query.get(task.worker_id)
+            worker.status = 'enabled'
+            db.session.add(worker)
             db.session.delete(task)
-            params = task.__dict__
-            params['id'] = params['server_id']
+            db.session.commit()
+            params = { 'id' : task.server_id, 'status' : task.status }
             http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
 
         return '', 204

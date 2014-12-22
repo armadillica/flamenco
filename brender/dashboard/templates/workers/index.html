@@ -31,6 +31,8 @@
                   worker_status_label = '<span class="label label-success">' + aData[5] + '</label>';
                 } else if (aData[5] === 'disabled'){
                   worker_status_label = '<span class="label label-warning">' + aData[5] + '</label>';
+                } else if (aData[5] === 'busy') {
+                  worker_status_label = '<span class="label label-info">' + aData[5] + '</label>';
                 }
                 $('td:eq(5)', nRow).html(worker_status_label);
 

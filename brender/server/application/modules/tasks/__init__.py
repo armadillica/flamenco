@@ -149,6 +149,9 @@ class TaskApi(Resource):
                   'format': job.format}
 
         http_rest_request(manager.host, '/tasks', 'post', params)
+        task.status = 'running'
+        db.session.add(task)
+        db.session.commit()
         # TODO  get a reply from the worker (running, error, etc)
 
         #task.status = 'running'
@@ -208,19 +211,19 @@ class TaskApi(Resource):
     def delete_tasks(job_id):
         tasks = Task.query.filter_by(job_id=job_id)
         for t in tasks:
-            # FIXME find sqlalchemy query to avoid this
-            if t.status in ['finished', 'failed', 'aborted']:
-                continue
             #TODO use database
             #manager = Manager.query.get(t.manager_id)
             manager = filter(lambda m : m.id == t.manager_id, app.config['MANAGERS'])[0]
-            delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
-            job = Job.query.get(t.job_id)
-            if job.current_frame < delete_task['frame_current']:
-                job.current_frame = delete_task['frame_current']
-                db.session.add(job)
-                db.session.commit()
+            # FIXME find sqlalchemy query to avoid this
+            if t.status not in ['finished', 'failed', 'aborted']:
+                delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
+                job = Job.query.get(t.job_id)
+                if job.current_frame < delete_task['frame_current']:
+                    job.current_frame = delete_task['frame_current']
+                    db.session.add(job)
+                    db.session.commit()
             db.session.delete(t)
+            db.session.commit()
         print('All tasks deleted for job', job_id)
 
     @staticmethod
@@ -229,9 +232,12 @@ class TaskApi(Resource):
         """
         task = Task.query.get(task_id)
         task.status = 'ready'
-        manager = Manager.query.get(task.manager_id)
-        delete_task = http_rest_request(manager.host, '/tasks/' + t.id, 'delete')
+        #TODO use database
+        #manager = Manager.query.get(task.manager_id)
+        manager = filter(lambda m : m.id == task.manager_id, app.config['MANAGERS'])[0]
+        delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
         task.current_frame = delete_task['frame_current']
+        task.status = delete_task['status']
         db.session.add(task)
         db.session.commit()
         print "Task %d stopped" % task_id
@@ -245,8 +251,11 @@ class TaskApi(Resource):
             filter_by(status = 'running').\
             all()
 
+        print tasks
+        for t in tasks:
+            print t
         map(lambda t : TaskApi.stop_task(t.id), tasks)
-        TaskApi.delete_tasks(job_id)
+        #TaskApi.delete_tasks(job_id)
 
     def get(self):
         from decimal import Decimal
@@ -295,6 +304,9 @@ class TaskApi(Resource):
         status = args['status'].lower()
         if status in ['finished', 'failed']:
             task = Task.query.get(task_id)
+            # A non running task cannot be failed or finished
+            if task is None or task.status != 'running':
+                return '', 204
             job = Job.query.get(task.job_id)
             task.status = status
             db.session.add(task)
