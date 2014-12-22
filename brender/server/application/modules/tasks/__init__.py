@@ -11,15 +11,18 @@ from flask import request
 
 # TODO(sergey): Generally not a good idea to import *
 from application.utils import *
-from application import db, RENDER_PATH
+from application import db, RENDER_PATH, app
 from PIL import Image
 from platform import system
 
+from application import app
 from application.modules.tasks.model import Task
-from application.modules.workers.model import Worker
+from application.modules.managers.model import Manager
 from application.modules.jobs.model import Job
 from application.modules.projects.model import Project
 from application.modules.settings.model import Setting
+
+from threading import Thread
 
 parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
@@ -29,8 +32,9 @@ parser.add_argument('status', type=str)
 class TaskApi(Resource):
     @staticmethod
     def create_task(job_id, chunk_start, chunk_end):
+        # TODO attribution of the best manager
         task = Task(job_id=job_id,
-            worker_id=12,
+            manager_id=1,
             chunk_start=chunk_start,
             chunk_end=chunk_end,
             current_frame=chunk_start,
@@ -88,9 +92,9 @@ class TaskApi(Resource):
             TaskApi.create_task(job.id, chunk_start, chunk_end)
 
     @staticmethod
-    def start_task(worker, task):
+    def start_task(manager, task):
         """Execute a single task
-        We pass worker and task as objects (and at the moment we use a bad
+        We pass manager and task as objects (and at the moment we use a bad
         way to get the additional job information - should be done with join)
         """
 
@@ -99,32 +103,30 @@ class TaskApi(Resource):
 
         filepath = job.filepath
 
-        if 'Darwin' in worker.system:
-            setting_blender_path = Setting.query.filter_by(name='blender_path_osx').first()
-            setting_render_settings = Setting.query.filter_by(name='render_settings_path_osx').first()
-            filepath = os.path.join(project.path_osx, job.filepath)
-        elif 'Windows' in worker.system:
-            setting_blender_path = Setting.query.filter_by(name='blender_path_win').first()
-            setting_render_settings = Setting.query.filter_by(name='render_settings_path_win').first()
-            filepath = os.path.join(project.path_win, job.filepath)
-        else:
-            setting_blender_path = Setting.query.filter_by(name='blender_path_linux').first()
-            setting_render_settings = Setting.query.filter_by(name='render_settings_path_linux').first()
-            filepath = os.path.join(project.path_linux, job.filepath)
+        #if 'Darwin' in worker.system:
+        #    setting_blender_path = Setting.query.filter_by(name='blender_path_osx').first()
+        #    setting_render_settings = Setting.query.filter_by(name='render_settings_path_osx').first()
+        #    filepath = os.path.join(project.path_osx, job.filepath)
+        #elif 'Windows' in worker.system:
+        #    setting_blender_path = Setting.query.filter_by(name='blender_path_win').first()
+        #    setting_render_settings = Setting.query.filter_by(name='render_settings_path_win').first()
+        #    filepath = os.path.join(project.path_win, job.filepath)
+        #else:
+        #    setting_blender_path = Setting.query.filter_by(name='blender_path_linux').first()
+        #    setting_render_settings = Setting.query.filter_by(name='render_settings_path_linux').first()
+        #    filepath = os.path.join(project.path_linux, job.filepath)
 
-        if setting_blender_path is None:
-            print '[Debug] blender path is not set'
+        #if setting_blender_path is None:
+        #    print '[Debug] blender path is not set'
 
-        blender_path = setting_blender_path.value
+        #blender_path = setting_blender_path.value
 
-        if setting_render_settings is None:
-            print '[Debug] render settings is not set'
+        #if setting_render_settings is None:
+        #    print '[Debug] render settings is not set'
 
-        render_settings = os.path.join(
-            setting_render_settings.value ,
-            job.render_settings)
-
-        worker_ip_address = worker.ip_address
+        #render_settings = os.path.join(
+        #    setting_render_settings.value,
+        #    job.render_settings)
 
         """
         Additional params for future reference
@@ -137,31 +139,36 @@ class TaskApi(Resource):
         """
 
         params = {'task_id': task.id,
-                  'file_path': filepath,
-                  'blender_path': blender_path,
-                  'render_settings': render_settings,
-                  'start': task.chunk_start,
+                  'file_path_linux': os.path.join(project.path_linux, filepath),
+                  'file_path_win': os.path.join(project.path_win, filepath),
+                  'file_path_osx': os.path.join(project.path_osx, filepath),
+                  'render_settings': job.render_settings,
+                  'start': task.current_frame,
                   'end': task.chunk_end,
                   'output': "//" + RENDER_PATH + "/" + str(task.job_id)  + "/##",
                   'format': job.format}
 
-        http_request(worker_ip_address, '/execute_task', params)
-        #  get a reply from the worker (running, error, etc)
-
+        http_rest_request(manager.host, '/tasks', 'post', params)
         task.status = 'running'
         db.session.add(task)
-
-        job.current_frame = task.chunk_end
-        db.session.add(job)
         db.session.commit()
+        # TODO  get a reply from the worker (running, error, etc)
+
+        #task.status = 'running'
+        #db.session.add(task)
+
+        #job.current_frame = task.chunk_end
+        #db.session.add(job)
+        #db.session.commit()
 
     @staticmethod
     def dispatch_tasks(job_id=None):
-        workers = Worker.query.\
-            filter_by(status='enabled').\
-            filter_by(connection='online').\
-            all()
-        for worker in workers:
+        logging.info('dispatch tasks')
+        # TODO Use databse
+        #managers = Manager.query.\
+        #    all()
+        managers = app.config['MANAGERS']
+        for manager in managers:
             # pick the task with the highest priority (it means the lowest number)
 
             task = Task.query.\
@@ -170,10 +177,7 @@ class TaskApi(Resource):
                 first()
 
             if task:
-                task.status = 'running'
-                db.session.add(task)
-                db.session.commit()
-                TaskApi.start_task(worker, task)
+                TaskApi.start_task(manager, task)
             #else:
             #    print '[error] Task does not exist'
 
@@ -205,7 +209,21 @@ class TaskApi(Resource):
 
     @staticmethod
     def delete_tasks(job_id):
-        tasks = Task.query.filter_by(job_id=job_id).delete()
+        tasks = Task.query.filter_by(job_id=job_id)
+        for t in tasks:
+            #TODO use database
+            #manager = Manager.query.get(t.manager_id)
+            manager = filter(lambda m : m.id == t.manager_id, app.config['MANAGERS'])[0]
+            # FIXME find sqlalchemy query to avoid this
+            if t.status not in ['finished', 'failed', 'aborted']:
+                delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
+                job = Job.query.get(t.job_id)
+                if job.current_frame < delete_task['frame_current']:
+                    job.current_frame = delete_task['frame_current']
+                    db.session.add(job)
+                    db.session.commit()
+            db.session.delete(t)
+            db.session.commit()
         print('All tasks deleted for job', job_id)
 
     @staticmethod
@@ -214,6 +232,12 @@ class TaskApi(Resource):
         """
         task = Task.query.get(task_id)
         task.status = 'ready'
+        #TODO use database
+        #manager = Manager.query.get(task.manager_id)
+        manager = filter(lambda m : m.id == task.manager_id, app.config['MANAGERS'])[0]
+        delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
+        task.current_frame = delete_task['frame_current']
+        task.status = delete_task['status']
         db.session.add(task)
         db.session.commit()
         print "Task %d stopped" % task_id
@@ -227,7 +251,11 @@ class TaskApi(Resource):
             filter_by(status = 'running').\
             all()
 
+        print tasks
+        for t in tasks:
+            print t
         map(lambda t : TaskApi.stop_task(t.id), tasks)
+        #TaskApi.delete_tasks(job_id)
 
     def get(self):
         from decimal import Decimal
@@ -276,6 +304,9 @@ class TaskApi(Resource):
         status = args['status'].lower()
         if status in ['finished', 'failed']:
             task = Task.query.get(task_id)
+            # A non running task cannot be failed or finished
+            if task is None or task.status != 'running':
+                return '', 204
             job = Job.query.get(task.job_id)
             task.status = status
             db.session.add(task)
@@ -299,6 +330,6 @@ class TaskApi(Resource):
                 db.session.add(job)
             db.session.commit()
 
-        TaskApi.dispatch_tasks()
+        Thread(target=TaskApi.dispatch_tasks).start()
 
         return '', 204

@@ -33,7 +33,7 @@ job_parser.add_argument('frame_end', type=int)
 job_parser.add_argument('chunk_size', type=int)
 job_parser.add_argument('current_frame', type=int)
 job_parser.add_argument('filepath', type=str)
-job_parser.add_argument('name', type=str)
+job_parser.add_argument('job_name', type=str)
 job_parser.add_argument('render_settings', type=str)
 job_parser.add_argument('format', type=str)
 job_parser.add_argument('status', type=str)
@@ -51,7 +51,7 @@ job_fields = {
     'chunk_size' : fields.Integer,
     'current_frame' : fields.Integer,
     'filepath' : fields.String,
-    'name' : fields.String,
+    'job_name' : fields.String,
     'render_settings' : fields.String,
     'format' : fields.String,
     'status' : fields.String,
@@ -67,8 +67,7 @@ class JobListApi(Resource):
             percentage_done = round(float(job.current_frame) / float(frame_count) * 100.0,
                                     1)
 
-            jobs[job.id] = {
-                            "job_name" : job.name,
+            jobs[job.id] = {"job_name" : job.name,
                             "frame_start" : job.frame_start,
                             "frame_end" : job.frame_end,
                             "current_frame" : job.current_frame,
@@ -159,7 +158,7 @@ class JobListApi(Resource):
            chunk_size=args['chunk_size'],
            current_frame=args['current_frame'],
            filepath=args['filepath'],
-           name=args['name'],
+           name=args['job_name'],
            render_settings=args['render_settings'],
            format=args['format'],
            status=args['status'],
@@ -204,7 +203,7 @@ class JobApi(Resource):
                 response.status_code = 400
                 return response
         else:
-            # We edit properties of the job, such as the title, the frame 
+            # We edit properties of the job, such as the title, the frame
             # range and so on
             logging.info('Updating job: {0} - {1}'.format(job.id, job.name))
             for arg in args:
@@ -221,7 +220,7 @@ class JobApi(Resource):
         """
         job = Job.query.get_or_404(job_id)
         db.session.delete(job)
-        
+
         return '', 204
 
     @staticmethod
@@ -273,7 +272,7 @@ class JobApi(Resource):
             if os.path.exists(path):
                 rmtree(path)
             logging.info('Job {0} reset end ready'.format(job_id))
-        
+
 
 class JobDeleteApi(Resource):
     def post(self):

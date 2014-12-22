@@ -10,6 +10,7 @@ import os
 import select
 import gocept.cache.method
 from threading import Thread
+from threading import Lock
 import Queue # for windows
 from flask import Flask
 from flask import redirect
@@ -17,13 +18,19 @@ from flask import url_for
 from flask import request
 from flask import jsonify
 from uuid import getnode as get_mac_address
+import requests
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
 SYSTEM = platform.system() + ' ' + platform.release()
+PROCESS = None
+LOCK = Lock()
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
+    from signal import SIGKILL
+else:
+    from signal import CTRL_C_EVENT
 
 app = Flask(__name__)
 
@@ -50,10 +57,9 @@ def register_worker():
             pass
         time.sleep(0.1)
 
-    http_request('connect', {'mac_address': MAC_ADDRESS,
-                                       'port': app.config['PORT'],
-                                       'hostname': HOSTNAME,
-                                       'system': SYSTEM})
+    http_request('workers', {'port': app.config['PORT'],
+                               'hostname': HOSTNAME,
+                               'system': SYSTEM})
 
 def _checkProcessOutput(process):
     ready = select.select([process.stdout.fileno(),
@@ -148,6 +154,7 @@ def info():
 
 
 def run_blender_in_thread(options):
+    global PROCESS
     """We build the command to run blender in a thread
     """
     render_command = [
@@ -170,23 +177,24 @@ def run_blender_in_thread(options):
 
     print("[Info] Running %s" % render_command)
 
-    process = subprocess.Popen(render_command,
+    PROCESS = subprocess.Popen(render_command,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
 
     # Make I/O non blocking for unix
     if platform.system() is not 'Windows':
-        flags = fcntl(process.stdout, F_GETFL)
-        fcntl(process.stdout, F_SETFL, flags | os.O_NONBLOCK)
-        flags = fcntl(process.stderr, F_GETFL)
-        fcntl(process.stderr, F_SETFL, flags | os.O_NONBLOCK)
+        flags = fcntl(PROCESS.stdout, F_GETFL)
+        fcntl(PROCESS.stdout, F_SETFL, flags | os.O_NONBLOCK)
+        flags = fcntl(PROCESS.stderr, F_GETFL)
+        fcntl(PROCESS.stderr, F_SETFL, flags | os.O_NONBLOCK)
 
     #flask.g.blender_process = process
-    (retcode, full_output) =  _interactiveReadProcess(process, options["task_id"]) \
+    (retcode, full_output) =  _interactiveReadProcess(PROCESS, options["task_id"]) \
         if (platform.system() is not "Windows") \
-        else _interactiveReadProcessWin(process, options["task_id"])
+        else _interactiveReadProcessWin(PROCESS, options["task_id"])
 
     print ('[DEBUG] return code: %d') % retcode
+    PROCESS = None
 
     #flask.g.blender_process = None
     #print(full_output)
@@ -196,16 +204,19 @@ def run_blender_in_thread(options):
     with open(abs_file_path, 'w') as f:
         f.write(full_output)
 
-    if retcode != 0:
-        http_request('tasks', {'id': options['task_id'],
-                                            'status': 'failed'})
+    if retcode == 137:
+        requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'aborted'})
+    elif retcode != 0:
+        requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'failed'})
     else:
-        http_request('tasks', {'id': options['task_id'],
-                                           'status': 'finished'})
+        requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'finished'})
+
 
 
 @app.route('/execute_task', methods=['POST'])
 def execute_task():
+    global PROCESS
+    global LOCK
     options = {
         'task_id': request.form['task_id'],
         'file_path': request.form['file_path'],
@@ -217,19 +228,47 @@ def execute_task():
         'format': request.form['format']
     }
 
+    LOCK.acquire()
+    PROCESS = None
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
     render_thread.start()
 
-    return jsonify(status='worker is running the command')
+    while PROCESS is None:
+        time.sleep(1)
+
+    LOCK.release()
+    if PROCESS.poll():
+        return '{error:Processus failed}', 500
+
+    return jsonify(dict(pid=PROCESS.pid))
+
+@app.route('/pid')
+def get_pid():
+    global PROCESS
+    response = dict(pid=PROCESS.pid)
+    return jsonify(response)
+
+@app.route('/command', methods=['HEAD'])
+def get_command():
+    # TODO Return the running command
+    return '', 503
 
 
-@app.route('/update', methods=['POST'])
-def update():
-    print('updating')
-    blender_process = flask.g.get("blender_process")
-    if blender_process:
-        blender_process.kill()
-    return('done')
+
+@app.route('/kill/<int:pid>', methods=['DELETE'])
+def update(pid):
+    global PROCESS
+    global LOCK
+    print('killing')
+    if platform.system() is 'Windows':
+        os.kill(pid, CTRL_C_EVENT)
+    else:
+        os.kill(pid, SIGKILL)
+
+    LOCK.acquire()
+    PROCESS = None
+    LOCK.release()
+    return '', 204
 
 
 def online_stats(system_stat):

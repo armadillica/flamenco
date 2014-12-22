@@ -13,3 +13,4 @@ config.py
 /brender/config.py
 /brender/render
 /brender/server/migrations
+/brender/manager/migrations
