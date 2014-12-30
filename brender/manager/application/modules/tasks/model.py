@@ -26,4 +26,4 @@ class Task(db.Model):
     pid = db.Column(db.Integer())
 
     def __repr__(self):
-        return '<Task %r of type %r>' % (self.id, self.task_type.id)
+        return '<Task %r of type %r>' % (self.id)
