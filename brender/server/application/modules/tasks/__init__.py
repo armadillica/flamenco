@@ -146,6 +146,7 @@ class TaskApi(Resource):
                   'start': task.current_frame,
                   'end': task.chunk_end,
                   'output': "//" + RENDER_PATH + "/" + str(task.job_id)  + "/##",
+                  'priority' : job.priority,
                   'format': job.format}
 
         http_rest_request(manager.host, '/tasks', 'post', params)
@@ -167,17 +168,31 @@ class TaskApi(Resource):
         # TODO Use databse
         #managers = Manager.query.\
         #    all()
-        managers = app.config['MANAGERS']
-        for manager in managers:
-            # pick the task with the highest priority (it means the lowest number)
+        managers = iter(sorted(app.config['MANAGERS'], key=lambda m : m.total_workers, reverse=True))
+        tasks = Task.query.filter_by(status='ready').order_by(Task.priority.desc())
 
-            task = Task.query.\
-                filter_by(status='ready').\
-                order_by(Task.priority.desc()).\
-                first()
+        # We get the available managers
+        m = managers.next()
+        while not m.is_available():
+            m = managers.next()
 
-            if task:
-                TaskApi.start_task(manager, task)
+        for task in tasks:
+            TaskApi.start_task(m, task)
+            m.running_tasks = m.running_tasks + 1
+
+            while not m.is_available():
+                m = managers.next()
+
+        #for manager in managers:
+        #    # pick the task with the highest priority (it means the lowest number)
+
+        #    task = Task.query.\
+        #        filter_by(status='ready').\
+        #        order_by(Task.priority.desc()).\
+        #        first()
+
+        #    if task:
+        #        TaskApi.start_task(manager, task)
             #else:
             #    print '[error] Task does not exist'
 
@@ -217,6 +232,7 @@ class TaskApi(Resource):
             # FIXME find sqlalchemy query to avoid this
             if t.status not in ['finished', 'failed', 'aborted']:
                 delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
+                mananger.running_tasks = manager.running_tasks - 1
                 job = Job.query.get(t.job_id)
                 if job.current_frame < delete_task['frame_current']:
                     job.current_frame = delete_task['frame_current']
@@ -310,6 +326,10 @@ class TaskApi(Resource):
             job = Job.query.get(task.job_id)
             task.status = status
             db.session.add(task)
+
+            # TODO Use database
+            manager = filter(lambda m : m.id == task.manager_id, app.config['MANAGERS'])[0]
+            manager.running_tasks = manager.running_tasks - 1
 
             if status == 'finished':
                 self.generate_thumbnails(job, task.chunk_start, task.chunk_end)
