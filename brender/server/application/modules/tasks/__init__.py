@@ -169,7 +169,11 @@ class TaskApi(Resource):
         #managers = Manager.query.\
         #    all()
         managers = iter(sorted(app.config['MANAGERS'], key=lambda m : m.total_workers, reverse=True))
-        tasks = Task.query.filter_by(status='ready').order_by(Task.priority.desc())
+        tasks = None
+        if job_id is None:
+            tasks = Task.query.filter_by(status='ready').order_by(Task.priority.desc())
+        else:
+            tasks = Task.query.filter_by(job_id=job_id).order_by(Task.priority.desc())
 
         # We get the available managers
         m = managers.next()
