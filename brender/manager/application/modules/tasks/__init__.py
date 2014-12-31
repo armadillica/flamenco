@@ -34,13 +34,12 @@ status_parser.add_argument('status', type=str, required=True)
 
 task_fields = {
     'id' : fields.Integer,
-    'task_type_id' : fields.Integer,
+    #'task_type_id' : fields.Integer,
     'worker_id' : fields.Integer,
     'priority' : fields.Integer,
     'frame_start' : fields.Integer,
     'frame_end' : fields.Integer,
     'frame_current' : fields.Integer,
-    'output' : fields.String,
     'status' : fields.String,
     'format' : fields.String
 }
@@ -121,7 +120,7 @@ class TaskApi(Resource):
         db.session.commit()
 
         if task.status not in ['finished', 'failed']:
-            worker = Worker.get(task.worker_id)
+            worker = Worker.query.get(task.worker_id)
             worker.status = 'enabled'
             db.session.add(worker)
             db.session.commit()

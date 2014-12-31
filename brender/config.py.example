@@ -3,6 +3,7 @@ class Config(object):
     DEBUG=False
 
     BRENDER_SERVER='localhost:9999'
+    BRENDER_MANAGER='localhost:7777'
 
 class Server(Config):
     DATABASE=os.path.join(os.path.dirname(__file__), 'server', 'brender.sqlite')

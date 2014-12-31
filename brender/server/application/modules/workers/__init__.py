@@ -20,8 +20,11 @@ class WorkerListApi(Resource):
         #manager_db = Manager.query.all()
         manager_db = app.config['MANAGERS']
         for manager in manager_db:
-            r = http_rest_request(manager.host, '/workers', 'get')
-            workers = dict(workers.items() + r.items())
+            try:
+                r = http_rest_request(manager.host, '/workers', 'get')
+                workers = dict(workers.items() + r.items())
+            except:
+                pass
         return jsonify(workers)
 
     # FIXME How to get the manager from the worker
