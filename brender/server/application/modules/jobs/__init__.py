@@ -5,6 +5,7 @@ from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
 from application import db
+from application import app
 from application.utils import list_integers_string
 
 from flask import jsonify
@@ -16,7 +17,10 @@ from os import listdir
 from os.path import join
 from os.path import exists
 
+from functools import partial
+
 from application.modules.tasks import TaskApi
+from application.modules.tasks.model import Task
 from application.modules.settings.model import Setting
 from application.modules.projects.model import Project
 
@@ -127,6 +131,25 @@ class JobListApi(Resource):
             print('[error] Job %d not found' % job_id)
             raise KeyError
 
+    def respawn(self, job_id):
+        job = Job.query.get(job_id)
+        if job:
+            if job.status == 'running':
+                self.stop(job_id)
+
+            tasks = Task.query.filter_by(job_id=job_id)
+            best_managers = filter(lambda m : m.total_workers == -1, app.config['MANAGERS'])
+
+            if best_managers:
+                fun = partial(TaskApi.start_task, best_managers[0])
+                map(fun, tasks)
+            else:
+                TaskApi.dispatch_tasks(job_id)
+        else:
+            logging.error('Job %d not found' % job_id)
+            raise KeyError
+
+
     def put(self):
         args = status_parser.parse_args()
         fun = None
@@ -136,6 +159,8 @@ class JobListApi(Resource):
             fun = self.stop
         elif args['status'] == "reset":
             fun = self.reset
+        elif args['status'] == "respawn":
+            fun = self.respawn
         else:
             print "command not found"
             return args, 400

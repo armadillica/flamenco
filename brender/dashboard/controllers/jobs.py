@@ -109,12 +109,12 @@ def jobs_update():
     job_ids = request.form['id']
     params = {'id': job_ids,
               'status' : command}
-    if command in ['start', 'stop', 'reset']:
+    if command in ['start', 'stop', 'respawn', 'reset']:
         jobs = http_server_request('put',
             '/jobs', params)
         return 'done'
     else:
-        return 'error'
+        return 'error', 400
 
 
 @jobs.route('/add', methods=['GET', 'POST'])
