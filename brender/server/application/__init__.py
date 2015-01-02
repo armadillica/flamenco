@@ -22,6 +22,7 @@ try:
     import config
     app.config.from_object(config.Server)
 except:
+    from modules.managers.model import Manager
     app.config.update(
         DEBUG=False,
         HOST='localhost',
