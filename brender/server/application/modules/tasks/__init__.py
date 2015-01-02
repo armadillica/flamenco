@@ -352,6 +352,10 @@ class TaskApi(Resource):
                 # if task.current_frame == job.frame_end:
                 #     job.status = 'finished'
                 db.session.add(job)
+            if task.chunk_end > job.current_frame:
+                job.current_frame = task.chunk_end
+                db.session.add(job)
+
             db.session.commit()
 
         Thread(target=TaskApi.dispatch_tasks).start()
