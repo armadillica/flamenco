@@ -138,7 +138,7 @@ class JobListApi(Resource):
                 self.stop(job_id)
 
             tasks = db.session.query(Task).filter(Task.job_id == job_id, Task.status.notin_(['finished','failed']))
-            best_managers = filter(lambda m : m.total_workers == -1, app.config['MANAGERS'])
+            best_managers = filter(lambda m : m.total_workers is None, app.config['MANAGERS'])
 
             if best_managers:
                 fun = partial(TaskApi.start_task, best_managers[0])
