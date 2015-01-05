@@ -12,5 +12,5 @@ class Server(Config):
     HOST='localhost'
     SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite')
     MANAGERS = [ \
-        Manager(name='debian', ip_address='127.0.0.1', port=5000) \
+        Manager(name='debian', ip_address='127.0.0.1', port=5000, total_workers=1) \
     ]
