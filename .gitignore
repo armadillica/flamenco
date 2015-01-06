@@ -12,5 +12,4 @@ venv/
 config.py
 /brender/config.py
 /brender/server/render
-/brender/server/migrations
 /brender/manager/migrations
