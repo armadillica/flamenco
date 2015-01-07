@@ -34,9 +34,9 @@ except ImportError:
         BLENDER_PATH_LINUX=server_settings['blender_path_linux'],
         BLENDER_PATH_OSX=server_settings['blender_path_osx'],
         BLENDER_PATH_WIN=server_settings['blender_path_win'],
-        SETTINGS_PATH_LINUX=server_settings['blender_path_linux'],
-        SETTINGS_PATH_OSX=server_settings['blender_path_osx'],
-        SETTINGS_PATH_WIN=server_settings['blender_path_win']
+        SETTINGS_PATH_LINUX=server_settings['render_settings_path_linux'],
+        SETTINGS_PATH_OSX=server_settings['render_settings_path_osx'],
+        SETTINGS_PATH_WIN=server_settings['render_settings_path_win']
     )
 
 api = Api(app)
