@@ -8,17 +8,18 @@ import psutil
 import flask
 import os
 import select
+import requests
 import gocept.cache.method
 from threading import Thread
 from threading import Lock
 import Queue # for windows
+
 from flask import Flask
 from flask import redirect
 from flask import url_for
 from flask import request
 from flask import jsonify
 from uuid import getnode as get_mac_address
-import requests
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
@@ -162,7 +163,7 @@ def run_blender_in_thread(options):
         '--background',
         options['file_path'],
         '--render-output',
-        options['output'],
+        options['output_path'],
         '--python',
         options['render_settings'],
         '--frame-start' ,
@@ -224,7 +225,7 @@ def execute_task():
         'start_frame': request.form['start'],
         'end_frame': request.form['end'],
         'render_settings': request.form['render_settings'],
-        'output': request.form['output'],
+        'output_path': request.form['output_path'],
         'format': request.form['format']
     }
 

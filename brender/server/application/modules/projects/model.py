@@ -16,6 +16,10 @@ class Project(db.Model):
     path_linux = db.Column(db.Text())
     path_win = db.Column(db.Text())
     path_osx = db.Column(db.Text())
+    render_path_server = db.Column(db.Text())
+    render_path_linux = db.Column(db.Text())
+    render_path_win = db.Column(db.Text())
+    render_path_osx = db.Column(db.Text())
 
     @property
     def is_active(self):

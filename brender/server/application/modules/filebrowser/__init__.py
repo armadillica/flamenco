@@ -2,7 +2,6 @@ from flask.ext.restful import Resource
 
 from flask import jsonify
 from flask import abort
-from application import RENDER_PATH
 import os
 from os import listdir
 from os.path import join
