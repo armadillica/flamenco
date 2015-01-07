@@ -11,7 +11,8 @@ from flask import request
 
 # TODO(sergey): Generally not a good idea to import *
 from application.utils import *
-from application import db, RENDER_PATH, app
+from application import app
+from application import db
 from PIL import Image
 from platform import system
 
@@ -153,7 +154,9 @@ class TaskApi(Resource):
                   'render_settings': job.render_settings,
                   'start': task.current_frame,
                   'end': task.chunk_end,
-                  'output': "//" + RENDER_PATH + "/" + str(task.job_id)  + "/##",
+                  'output_path_linux': os.path.join(project.render_path_linux, str(task.job_id), '#####'),
+                  'output_path_win': os.path.join(project.render_path_win, str(task.job_id), '#####'),
+                  'output_path_osx': os.path.join(project.render_path_osx, str(task.job_id), '#####'),
                   'priority' : job.priority,
                   'format': job.format}
 
@@ -308,26 +311,29 @@ class TaskApi(Resource):
         return jsonify(tasks)
 
     @staticmethod
-    def generate_thumbnails(job, begin, end):
-        thumb_dir = RENDER_PATH + "/" + str(job.id)
+    def generate_thumbnails(job, start, end):
+        #thumb_dir = RENDER_PATH + "/" + str(job.id)
         project = Project.query.get(job.project_id)
-        if not os.path.exists(thumb_dir):
-            print '[Debug] ' + os.path.abspath(thumb_dir) + " does not exist"
-            os.makedirs(thumb_dir)
-        for i in range(begin, end + 1):
+        thumbnail_dir = os.path.join(project.render_path_server, str(job.id), 'thumbnails')
+        if not os.path.exists(thumbnail_dir):
+            print '[Debug] ' + os.path.abspath(thumbnail_dir) + " does not exist"
+            os.makedirs(thumbnail_dir)
+        for i in range(start, end + 1):
             # TODO make generic extension
-            img_name = ("0" if i < 10 else "") + str(i) + get_file_ext(job.format)
-            file_path = thumb_dir + "/" + str(i) + '.thumb'
+            #img_name = ("0" if i < 10 else "") + str(i) + get_file_ext(job.format)
+            img_name = '{0:05d}'.format(i) + get_file_ext(job.format)
+            #file_path = thumb_dir + "/" + str(i) + '.thumb'
+            file_path = os.path.join(thumbnail_dir, str(i), '.thumb')
             # We can't generate thumbnail from multilayer with pillow
             if job.format != "MULTILAYER":
                 if os.path.exists(file_path):
                     os.remove(file_path)
-                img_path = os.path.abspath(project.path_server + "/" + RENDER_PATH \
-                        + "/" + str(job.id) + "/" + img_name)
-                img = Image.open(img_path)
+                frame = os.path.abspath(
+                    os.path.join(project.render_path_server, str(job.id), img_name))
+                img = Image.open(frame)
                 img.thumbnail((150, 150), Image.ANTIALIAS)
-                thumb_path = thumb_dir + "/" + str(i) + '.thumb'
-                img.save(thumb_path, job.format)
+                thumbnail_path = os.path.join(thumbnail_dir, '{0:05d}'.format(i) + '.thumb')
+                img.save(thumbnail_path, job.format)
 
     def post(self):
         args = parser.parse_args()

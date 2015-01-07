@@ -1,17 +1,17 @@
 import json
-from flask import (flash,
-                   render_template,
-                   request,
-                   Blueprint,
-                   url_for,
-                   redirect)
+
+from flask import flash
+from flask import render_template
+from flask import request
+from flask import Blueprint
+from flask import url_for
+from flask import redirect
 
 from dashboard import app
 from dashboard import list_integers_string
 from dashboard import check_connection
 from dashboard import http_server_request
 
-# Name of the Blueprint
 projects = Blueprint('projects', __name__)
 
 
@@ -35,7 +35,11 @@ def update(project_id):
         path_server=request.form['path_server'],
         path_linux=request.form['path_linux'],
         path_win=request.form['path_win'],
-        path_osx=request.form['path_osx'])
+        path_osx=request.form['path_osx'],
+        render_path_server=request.form['render_path_server'],
+        render_path_linux=request.form['render_path_linux'],
+        render_path_win=request.form['render_path_win'],
+        render_path_osx=request.form['render_path_osx'])
 
     projects = http_server_request('put', '/projects/' + project_id, params)
     print projects
@@ -60,6 +64,10 @@ def add():
             path_linux=request.form['path_linux'],
             path_win=request.form['path_win'],
             path_osx=request.form['path_osx'],
+            render_path_server=request.form['render_path_server'],
+            render_path_linux=request.form['render_path_linux'],
+            render_path_win=request.form['render_path_win'],
+            render_path_osx=request.form['render_path_osx'],
             is_active=request.form['set_project_option'])
         http_server_request('post', '/projects', params)
         return redirect(url_for('projects.index'))

@@ -1,4 +1,13 @@
 import logging
+import os
+from os import listdir
+from os.path import join
+from os.path import exists
+from shutil import rmtree
+from functools import partial
+
+from flask import jsonify
+
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
@@ -8,21 +17,11 @@ from application import db
 from application import app
 from application.utils import list_integers_string
 
-from flask import jsonify
-from application import RENDER_PATH
-from model import Job
-from shutil import rmtree
-import os
-from os import listdir
-from os.path import join
-from os.path import exists
-
-from functools import partial
-
 from application.modules.tasks import TaskApi
 from application.modules.tasks.model import Task
 from application.modules.settings.model import Setting
 from application.modules.projects.model import Project
+from application.modules.jobs.model import Job
 
 id_list = reqparse.RequestParser()
 id_list.add_argument('id', type=str)
@@ -124,7 +123,7 @@ class JobListApi(Resource):
                 TaskApi.delete_tasks(job.id)
                 TaskApi.create_tasks(job)
 
-                path = RENDER_PATH + "/" + str(job.id)
+                path = os.path.join(job.project.render_path_server, str(job.id))
                 if os.path.exists(path):
                     rmtree(path)
         else:
@@ -293,7 +292,7 @@ class JobApi(Resource):
             TaskApi.delete_tasks(job.id)
             TaskApi.create_tasks(job)
 
-            path = RENDER_PATH + "/" + str(job.id)
+            path = os.path.join(job.project.render_path_server, str(job.id))
             if os.path.exists(path):
                 rmtree(path)
             logging.info('Job {0} reset end ready'.format(job_id))
@@ -309,7 +308,7 @@ class JobDeleteApi(Resource):
             TaskApi.delete_tasks(j)
             job = Job.query.get(j)
             if job:
-                path = join(RENDER_PATH, str(j))
+                path = os.path.join(job.project.render_path_server, str(j))
                 if exists(path):
                     rmtree(path)
 

@@ -24,7 +24,7 @@
             </div>
         </div>
     </div> <!-- end path linux row -->
-	<div class="row">
+    <div class="row">
         <div class="col-md-12">
             <div class="form-group">
                 <label for="path_win">Project path on Windows workers</label>
@@ -40,6 +40,41 @@
             </div>
         </div>
     </div> <!-- end path osx row -->
+
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="render_path_server">Shared render path on the server</label>
+                <input type="text" class="form-control" id="render_path_server" name="render_path_server" placeholder="/shared/<project_name>" required="">
+            </div>
+        </div>
+    </div> <!-- end path server row -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="render_path_linux">Shared render path on Linux workers</label>
+                <input type="text" class="form-control" id="render_path_linux" name="render_path_linux" placeholder="/local/storage/<project_name>" required="">
+            </div>
+        </div>
+    </div> <!-- end path linux row -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="render_path_win">Shared render path on Windows workers</label>
+                <input type="text" class="form-control" id="render_path_win" name="render_path_win" placeholder="/local/storage/<project_name>" required="">
+            </div>
+        </div>
+    </div> <!-- end path windows row -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <label for="render_path_osx">Shared render path on OSX workers</label>
+                <input type="text" class="form-control" id="render_path_osx" name="render_path_osx" placeholder="/local/storage/<project_name>" required="">
+            </div>
+        </div>
+    </div> <!-- end path osx row -->
+
     <div class="row col-md-12">
         <div class="form-group">
             <label for="set_project_option"> Set <i id="new_project_name"></i> as active project?</label>

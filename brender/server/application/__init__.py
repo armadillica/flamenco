@@ -12,7 +12,7 @@ app = Flask(__name__)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-RENDER_PATH = "render"
+#RENDER_PATH = "render"
 
 
 # This is the default server configuration, in case the user will not provide one.
