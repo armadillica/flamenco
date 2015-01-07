@@ -139,7 +139,7 @@ class TaskApi(Resource):
         """
 
         # NOTE: probably file_path_linux win and osx should only contain a hashed
-        # version of the file name. The full path should be determined by the 
+        # version of the file name. The full path should be determined by the
         # manager itself. Right now we are assuming that the manager has access
         # to the server storage, which will often not be the case.
 
@@ -184,16 +184,19 @@ class TaskApi(Resource):
             tasks = Task.query.filter_by(job_id=job_id).order_by(Task.priority.desc())
 
         # We get the available managers
-        m = managers.next()
-        while not m.is_available():
+        try:
             m = managers.next()
-
-        for task in tasks:
-            TaskApi.start_task(m, task)
-            m.running_tasks = m.running_tasks + 1
-
             while not m.is_available():
                 m = managers.next()
+
+            for task in tasks:
+                TaskApi.start_task(m, task)
+                m.running_tasks = m.running_tasks + 1
+
+                while not m.is_available():
+                    m = managers.next()
+        except StopIteration:
+            pass
 
         #for manager in managers:
         #    # pick the task with the highest priority (it means the lowest number)
