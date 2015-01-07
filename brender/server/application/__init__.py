@@ -29,7 +29,7 @@ except:
         PORT=9999,
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite'),
         MANAGERS = [ \
-            Manager(name='debian', ip_address='127.0.0.1', port=7777) \
+            Manager(id=1, name='debian', ip_address='127.0.0.1', port=7777, total_workers=1) \
         ]
     )
 

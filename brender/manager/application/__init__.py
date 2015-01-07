@@ -25,7 +25,10 @@ except:
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite'),
         BLENDER_PATH_OSX = "",
         BLENDER_PATH_LINUX = "",
-        BLENDER_PATH_WIN = ""
+        BLENDER_PATH_WIN = "",
+        SETTINGS_PATH_OSX = "",
+        SETTINGS_PATH_LINUX = "",
+        SETTINGS_PATH_WIN = ""
     )
 
 api = Api(app)

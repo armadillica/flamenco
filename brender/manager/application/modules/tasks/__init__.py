@@ -12,7 +12,7 @@ from application import app
 from application.modules.tasks.model import Task
 from application.modules.workers.model import Worker
 
-from os.path import join
+import os
 
 import logging
 
@@ -65,14 +65,39 @@ def schedule():
             break
         task.worker_id = worker.id
         task.status = 'running'
-        #TODO Select infos according to worker's system
+
+        if 'Darwin' in worker.system:
+           setting_blender_path = app.config['BLENDER_PATH_OSX']
+           setting_render_settings = app.config['SETTINGS_PATH_OSX']
+           file_path = task.file_path_osx
+        elif 'Windows' in worker.system:
+           setting_blender_path = app.config['BLENDER_PATH_WIN']
+           setting_render_settings = app.config['SETTINGS_PATH_WIN']
+           file_path = task.file_path_win
+        else:
+           setting_blender_path = app.config['BLENDER_PATH_LINUX']
+           setting_render_settings = app.config['SETTINGS_PATH_LINUX']
+           file_path = task.file_path_linux
+
+        if setting_blender_path is None:
+           print '[Debug] blender path is not set'
+
+        blender_path = setting_blender_path
+
+        if setting_render_settings is None:
+           logging.warning("Render settings path not set!")
+
+        render_settings = os.path.join(
+           setting_render_settings,
+            task.settings)
+
         options = {
             'task_id' : task.id,
-            'file_path' : task.file_path_linux,
-            'blender_path' : app.config['BLENDER_PATH_LINUX'],
+            'file_path' : file_path,
+            'blender_path' : blender_path,
             'start' : task.frame_current,
             'end' : task.frame_end,
-            'render_settings' : join(app.config['SETTINGS_PATH_LINUX'], task.settings),
+            'render_settings' : render_settings,
             'output' : task.output,
             'format' : task.format}
 

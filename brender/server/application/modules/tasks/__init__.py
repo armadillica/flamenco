@@ -138,6 +138,14 @@ class TaskApi(Resource):
                           'post-run': 'clear variables, empty /tmp'}
         """
 
+        # NOTE: probably file_path_linux win and osx should only contain a hashed
+        # version of the file name. The full path should be determined by the 
+        # manager itself. Right now we are assuming that the manager has access
+        # to the server storage, which will often not be the case.
+
+        # Also we should consider what to do when sending data over from the server
+        # to the wokers.
+
         params = {'task_id': task.id,
                   'file_path_linux': os.path.join(project.path_linux, filepath),
                   'file_path_win': os.path.join(project.path_win, filepath),
