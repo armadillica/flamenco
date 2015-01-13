@@ -65,6 +65,17 @@
       </div>
     </div>
 
+    <div class="col-md-4">
+      <div class="form-group">
+        <label for="managers">Managers</label>
+        <select class="form-control" name="managers" id="managers" multiple>
+            {% for m in managers %}
+                <option value="{{ m.id }}">{{ m.name }}</option>
+            {% endfor %}
+        </select>
+      </div>
+    </div>
+
   </div>
 </form>
 

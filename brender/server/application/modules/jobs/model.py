@@ -24,8 +24,11 @@ class Job(db.Model):
     # started and waiting / stopped / running / paused
     priority = db.Column(db.Integer())
 
-
     def __repr__(self):
         return '<Job %r>' % self.name
 
-
+class RelationJobManager(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer(), db.ForeignKey('job.id'))
+    job = db.relationship('Job', backref=db.backref('manager_list', lazy='dynamic'))
+    manager_id = db.Column(db.Integer())

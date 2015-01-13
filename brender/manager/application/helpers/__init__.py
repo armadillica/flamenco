@@ -6,6 +6,7 @@ from hashlib import md5
 from threading import Thread
 from werkzeug import secure_filename
 from flask import flash
+from flask import abort
 from application import app
 
 
@@ -51,7 +52,7 @@ def pretty_date(time=False):
     if type(time) is int:
         diff = now - datetime.fromtimestamp(time)
     elif isinstance(time,datetime):
-        diff = now - time 
+        diff = now - time
     elif not time:
         diff = now - now
     second_diff = diff.seconds

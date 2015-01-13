@@ -175,5 +175,6 @@ class TaskApi(Resource):
             db.session.commit()
             params = { 'id' : task.server_id, 'status' : task.status }
             http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
+            schedule()
 
         return '', 204

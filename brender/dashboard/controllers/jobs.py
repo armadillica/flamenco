@@ -132,6 +132,7 @@ def add():
             'format' : request.form['format'],
             'status': 'running',
             'priority': 10,
+            'managers' : request.form.getlist('managers'),
             'owner': 'fsiddi'
         }
 
@@ -145,8 +146,10 @@ def add():
         render_settings = http_server_request('get', '/settings/render')
         projects = http_server_request('get', '/projects')
         settings = http_server_request('get', '/settings')
+        managers = http_server_request('get', '/managers')
         return render_template('jobs/add_modal.html',
                             render_settings=render_settings,
                             settings=settings,
-                            projects=projects)
+                            projects=projects,
+                            managers=managers.values())
 

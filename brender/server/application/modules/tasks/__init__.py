@@ -9,6 +9,8 @@ from flask import jsonify
 from flask import render_template
 from flask import request
 
+from sqlalchemy import func
+
 # TODO(sergey): Generally not a good idea to import *
 from application.utils import *
 from application import app
@@ -22,6 +24,7 @@ from application.modules.managers.model import Manager
 from application.modules.jobs.model import Job
 from application.modules.projects.model import Project
 from application.modules.settings.model import Setting
+from application.modules.jobs.model import RelationJobManager
 
 from threading import Thread
 
@@ -35,7 +38,6 @@ class TaskApi(Resource):
     def create_task(job_id, chunk_start, chunk_end):
         # TODO attribution of the best manager
         task = Task(job_id=job_id,
-            manager_id=1,
             chunk_start=chunk_start,
             chunk_end=chunk_end,
             current_frame=chunk_start,
@@ -84,7 +86,7 @@ class TaskApi(Resource):
             for chunk in range(total_chunks - 1):
                 logging.debug('Making chunk for job {0}'.format(job.id))
 
-                create_task(job.id, chunk_start, chunk_end)
+                TaskApi.create_task(job.id, chunk_start, chunk_end)
 
                 chunk_start = chunk_end + 1
                 chunk_end = chunk_start + job.chunk_size - 1
@@ -162,6 +164,7 @@ class TaskApi(Resource):
 
         http_rest_request(manager.host, '/tasks', 'post', params)
         task.status = 'running'
+        task.manager_id = manager.id
         db.session.add(task)
         db.session.commit()
         # TODO  get a reply from the worker (running, error, etc)
@@ -179,55 +182,105 @@ class TaskApi(Resource):
         # TODO Use databse
         #managers = Manager.query.\
         #    all()
-        managers = iter(sorted(app.config['MANAGERS'], key=lambda m : m.total_workers, reverse=True))
+        #managers = iter(sorted(app.config['MANAGERS'], key=lambda m : m.total_workers, reverse=True))
+        # TODO FIX ALGORITHM
+
         tasks = None
+
+        #managers list
+        job_managers_id = db.session.query(RelationJobManager.manager_id, func.count(RelationJobManager.manager_id))\
+                                .group_by(RelationJobManager.manager_id)\
+                                .all()
+        #List of tuple (manager, how many time the manager is asked) [only limited managers]
+        #mgrs = [(filter(lambda x : x.id == m[0] and x.total_workers is not None, app.config['MANAGERS'])[0], m[1]) for m in job_managers_id]
+        mgrs = []
+        for m in job_managers_id:
+            lst = filter(lambda x : x.id == m[0] and x.total_workers is not None, app.config['MANAGERS'])
+            if lst:
+                mgrs.append((lst[0], m[1]))
+
         if job_id is None:
-            tasks = Task.query.filter_by(status='ready').order_by(Task.priority.desc())
+            #tasks list
+            tasks = Task.query.filter_by(status='ready').all()
+            if tasks:
+                #How many possible manager per task
+                task_mgr_count = db.session.query(RelationJobManager.job_id, func.count(RelationJobManager.manager_id)).group_by(job_id).all()
+                #List of tuples (task, amount of possible manager)
+                #tasks = [ (t, filter(lambda x : x[0] == t.job_id, task_mgr_count)[0][1]) for t in tasks ]
+                newtasks = []
+                for t in tasks:
+                    lst = filter(lambda x : x[0] == t.job_id, task_mgr_count)[0]
+                    if lst:
+                        newtasks.append((t, lst[1]))
+                tasks = newtasks
+                #Sort task by priority and then by amount of possible manager
+                tasks.sort(cmp=lambda x, y : \
+                        y[0].priority - x[0].priority if y[0].priority != x[0].priority \
+                        else x[1] - y[1])
+
+
+            for t in tasks:
+                rela = db.session.query(RelationJobManager.manager_id).filter(RelationJobManager.job_id==t[0].job_id).all()
+                # Get only accepted available managers
+                mgr_list = filter(lambda m : m[0].is_available() and (m[0].id,) in rela, mgrs)
+
+                #Sort managers by asking
+                mgr_list.sort(key=lambda m : m[1])
+                if not mgr_list:
+                    #Get unlimited associated managers
+                    none_list = filter(lambda m : m.total_workers is None and m.id in rela, app.config['MANAGERS'])
+                    if none_list:
+                        TaskApi.start_task(none_list[0], t[0])
+                        none_list[0].running_tasks = none_list[0].running_tasks + 1
+
+                else:
+                    TaskApi.start_task(mgr_list[0][0], t[0])
+                    mgr_list[0][0].running_tasks = mgr_list[0][0].running_tasks + 1
+
+
         else:
-            tasks = Task.query.filter_by(job_id=job_id).order_by(Task.priority.desc())
+            tasks = Task.query.filter_by(job_id=job_id).all()
+            rela = db.session.query(RelationJobManager.manager_id).filter(RelationJobManager.job_id==job_id).all()
+            print rela
+            for t in tasks:
+                # Get only accepted available managers
+                mgr_list = filter(lambda m : m[0].is_available() and (m[0].id,) in rela, mgrs)
+                for m in mgr_list:
+                    print m[0].is_available()
+                    print m[0].total_workers - m[0].running_tasks
+                #Sort managers by asking
+                mgr_list.sort(key=lambda m : m[1])
+                if not mgr_list:
+                    #Get unlimited associated managers
+                    logging.info('No limited manager available')
+                    none_list = filter(lambda m : m.total_workers is None and (m.id,) in rela, app.config['MANAGERS'])
+                    if none_list:
+                        logging.info('Send to unlimited manager')
+                        TaskApi.start_task(none_list[0], t)
+                        none_list[0].running_tasks = none_list[0].running_tasks + 1
 
-        # We get the available managers
+                else:
+                    logging.info('Send to limited manager')
+                    TaskApi.start_task(mgr_list[0][0], t)
+                    mgr_list[0][0].running_tasks = mgr_list[0][0].running_tasks + 1
+
+
+
+
+        """Legacy code
+        task = None # will figure out another way
         try:
-            m = managers.next()
-            while not m.is_available():
-                m = managers.next()
+            task = Tasks.select().where(
+                Tasks.status == 'ready'
+            ).order_by(Tasks.priority.desc()).limit(1).get()
 
-            for task in tasks:
-                TaskApi.start_task(m, task)
-                m.running_tasks = m.running_tasks + 1
-
-                while not m.is_available():
-                    m = managers.next()
-        except StopIteration:
-            pass
-
-        #for manager in managers:
-        #    # pick the task with the highest priority (it means the lowest number)
-
-        #    task = Task.query.\
-        #        filter_by(status='ready').\
-        #        order_by(Task.priority.desc()).\
-        #        first()
-
-        #    if task:
-        #        TaskApi.start_task(manager, task)
-            #else:
-            #    print '[error] Task does not exist'
-
-            """Legacy code
-            task = None # will figure out another way
-            try:
-                task = Tasks.select().where(
-                    Tasks.status == 'ready'
-                ).order_by(Tasks.priority.desc()).limit(1).get()
-
-                task.status = 'running'
-                task.save()
-            except Tasks.DoesNotExist:
-                print '[error] Task does not exist'
-            if task:
-                start_task(worker, task)
-            """
+            task.status = 'running'
+            task.save()
+        except Tasks.DoesNotExist:
+            print '[error] Task does not exist'
+        if task:
+            start_task(worker, task)
+        """
 
     @staticmethod
     def delete_task(task_id):
@@ -250,7 +303,8 @@ class TaskApi(Resource):
             # FIXME find sqlalchemy query to avoid this
             if t.status not in ['finished', 'failed', 'aborted']:
                 delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
-                mananger.running_tasks = manager.running_tasks - 1
+                if manager.total_workers is not None:
+                    manager.running_tasks = manager.running_tasks - 1
                 job = Job.query.get(t.job_id)
                 if job.current_frame < delete_task['frame_current']:
                     job.current_frame = delete_task['frame_current']
@@ -270,6 +324,8 @@ class TaskApi(Resource):
         #manager = Manager.query.get(task.manager_id)
         manager = filter(lambda m : m.id == task.manager_id, app.config['MANAGERS'])[0]
         delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
+        if manager.total_workers is not None:
+            manager.running_tasks = manager.running_tasks - 1
         task.current_frame = delete_task['frame_current']
         task.status = delete_task['status']
         db.session.add(task)
@@ -312,6 +368,7 @@ class TaskApi(Resource):
 
     @staticmethod
     def generate_thumbnails(job, start, end):
+        # FIXME problem with PIL (string index out of range)
         #thumb_dir = RENDER_PATH + "/" + str(job.id)
         project = Project.query.get(job.project_id)
         thumbnail_dir = os.path.join(project.render_path_server, str(job.id), 'thumbnails')
@@ -323,7 +380,7 @@ class TaskApi(Resource):
             #img_name = ("0" if i < 10 else "") + str(i) + get_file_ext(job.format)
             img_name = '{0:05d}'.format(i) + get_file_ext(job.format)
             #file_path = thumb_dir + "/" + str(i) + '.thumb'
-            file_path = os.path.join(thumbnail_dir, str(i), '.thumb')
+            file_path = os.path.join(thumbnail_dir, '{0:05d}'.format(i), '.thumb')
             # We can't generate thumbnail from multilayer with pillow
             if job.format != "MULTILAYER":
                 if os.path.exists(file_path):
@@ -353,11 +410,13 @@ class TaskApi(Resource):
             manager.running_tasks = manager.running_tasks - 1
 
             if status == 'finished':
-                self.generate_thumbnails(job, task.chunk_start, task.chunk_end)
+                #self.generate_thumbnails(job, task.chunk_start, task.chunk_end)
+                pass
             else:
                 print ('[Info] Task %s failed') % task_id
 
-            if task.chunk_end == job.frame_end:
+            # Check if all tasks have been completed
+            if all((lambda t : t.status in ['finished', 'failed'])(t) for t in Task.query.filter_by(job_id=job.id).all()):
                 failed_tasks = Task.query.filter_by(job_id=job.id, status='failed').count()
                 print ('[Debug] %d tasks failed before') % failed_tasks
                 if failed_tasks > 0 or status == 'failed':
@@ -369,6 +428,7 @@ class TaskApi(Resource):
                 # if task.current_frame == job.frame_end:
                 #     job.status = 'finished'
                 db.session.add(job)
+                db.session.query(RelationJobManager).filter(RelationJobManager.job_id == job.id).delete()
             if task.chunk_end > job.current_frame:
                 job.current_frame = task.chunk_end
                 db.session.add(job)
