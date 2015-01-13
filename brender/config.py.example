@@ -17,7 +17,7 @@ class Dashboard(Config):
     HOST='localhost'
 
 class Manager(Config):
-    DEBUG=TRUE
+    DEBUG=True
     PORT=7777
     HOST='localhost'
     DATABASE=os.path.join(os.path.dirname(__file__), 'manager', 'task_queue.sqlite')
