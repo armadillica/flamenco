@@ -8,6 +8,8 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import Api
 from flask.ext.migrate import Migrate
 
+from requests.exceptions import ConnectionError
+
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
@@ -24,20 +26,35 @@ except ImportError:
     """If a config is not defined, we use the default settings, importing the
     BLENDER_PATH and SETTINGS_PATH from the server.
     """
-    server_settings = http_request('localhost:9999', '/settings', 'get')
-    app.config.update(
-        DEBUG=False,
-        HOST='localhost',
-        PORT=7777,
-        BRENDER_SERVER='localhost:9999',
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite'),
-        BLENDER_PATH_LINUX=server_settings['blender_path_linux'],
-        BLENDER_PATH_OSX=server_settings['blender_path_osx'],
-        BLENDER_PATH_WIN=server_settings['blender_path_win'],
-        SETTINGS_PATH_LINUX=server_settings['render_settings_path_linux'],
-        SETTINGS_PATH_OSX=server_settings['render_settings_path_osx'],
-        SETTINGS_PATH_WIN=server_settings['render_settings_path_win']
-    )
+    try:
+        server_settings = http_request('localhost:9999', '/settings', 'get')
+        app.config.update(
+            DEBUG=False,
+            HOST='localhost',
+            PORT=7777,
+            BRENDER_SERVER='localhost:9999',
+            SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite'),
+            BLENDER_PATH_LINUX=server_settings['blender_path_linux'],
+            BLENDER_PATH_OSX=server_settings['blender_path_osx'],
+            BLENDER_PATH_WIN=server_settings['blender_path_win'],
+            SETTINGS_PATH_LINUX=server_settings['render_settings_path_linux'],
+            SETTINGS_PATH_OSX=server_settings['render_settings_path_osx'],
+            SETTINGS_PATH_WIN=server_settings['render_settings_path_win']
+        )
+    except ConnectionError:
+        app.config.update(
+            DEBUG=False,
+            HOST='localhost',
+            PORT=7777,
+            BRENDER_SERVER='localhost:9999',
+            SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite'),
+            BLENDER_PATH_LINUX="",
+            BLENDER_PATH_OSX="",
+            BLENDER_PATH_WIN="",
+            SETTINGS_PATH_LINUX="",
+            SETTINGS_PATH_OSX="",
+            SETTINGS_PATH_WIN=""
+        )
 
 api = Api(app)
 
