@@ -58,6 +58,15 @@ Congratulations, brender and its dependencies should be correctly installed and 
 127.0.0.1   brender-manager
 ```
 
+## Initialize brender
+First you need to initialize the server and manager's databases:
+
+```
+$ cd server; ./manage.py db upgrade
+$ cd manager; ./manage.py db upgrade
+
+```
+
 ## Running brender
 It's pretty simple. Move into the brender folder and run - in four different terminals:
 
