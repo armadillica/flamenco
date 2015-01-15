@@ -55,15 +55,17 @@ Congratulations, brender and its dependencies should be correctly installed and 
 ```
 127.0.0.1	brender-server
 127.0.0.1	brender-dashboard
+127.0.0.1   brender-manager
 ```
 
 ## Running brender
-It's pretty simple. Move into the brender folder and run - in three different terminals:
+It's pretty simple. Move into the brender folder and run - in four different terminals:
 
 ```
-$ python brender.py server  		# will start the server
-$ python brender.py worker			# will start the worker
-$ python brender.py dashboard		# will start the dashboard
+$ ./brender.py dashboard		# will start the dashboard
+$ cd server; ./manage.py runserver  		# will start the server
+$ cd manager; ./manage.py runserver  		# will start the manager
+$ ./brender.py worker			# will start the worker
 ```
 
 If you now visit `http://brender-dashboard:8888` with your web browser you should see the dashboard!
@@ -73,10 +75,11 @@ At the moment the content of the `brender` folder is quite messy due to refactor
 
 * `server` containing the server files
 * `worker` containing the worker files (render nodes)
+* `manager` containing the manager files (manage clusters)
 * `dashboard` containing the dashboard (web interface to talk to the server)
 
 This structure explains also the naming conventions adopted to distinguish the different parts of brender.
-Each folder contains an individual Flask application. Server and Worker exchange JSON formatted messages between each other via HTTP, using GET or POST methods.
+Each folder contains an individual Flask application. Server, Manager and Worker exchange JSON formatted messages between each other via a Rest API.
 Dashboard connects to the Server only and accepts connections from clients (Browsers).
 
 At the moment we have the following addresses:
@@ -84,6 +87,7 @@ At the moment we have the following addresses:
 * http://brender-server:9999
 * http://localhost:5000
 * http://brender-dashboard:8888
+* http://brender-manager:7777
 
 
 ### About the web interface
