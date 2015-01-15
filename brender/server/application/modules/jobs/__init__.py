@@ -143,8 +143,8 @@ class JobListApi(Resource):
             if job.status == 'running':
                 self.stop(job_id)
 
-            tasks = db.session.query(Task).filter(Task.job_id == job_id, Task.status.notin_(['finished','failed']))
-            rela = db.session.query(RelationJobManager.manager_id).filter(RelationJobManager.job_id==job_id)
+            tasks = db.session.query(Task).filter(Task.job_id == job_id, Task.status.notin_(['finished','failed'])).all()
+            rela = db.session.query(RelationJobManager.manager_id).filter(RelationJobManager.job_id==job_id).all()
             best_managers = filter(lambda m : m.total_workers is None and (m.id,) in rela, app.config['MANAGERS'])
 
             if best_managers:
