@@ -70,7 +70,7 @@
 
     $(document).on(
       "click",
-      "#job-start, #job-stop, #job-pause, #job-reset",
+      "#job-start, #job-stop, #job-respawn, #job-pause, #job-reset",
 
       function() {
 
@@ -119,7 +119,7 @@
         <div class="btn-group btn-group-sm">
           <div id="job-start" class="btn btn-default" command="start">Start</div>
           <div id="job-stop" class="btn btn-default" command="stop">Stop</div>
-          <div id="job-stop" class="btn btn-default" command="respawn">Respawn</div>
+          <div id="job-respawn" class="btn btn-default" command="respawn">Respawn</div>
           <div id="job-pause" class="btn btn-default" command="pause">Pause</div>
           <div id="job-reset" class="btn btn-default" command="reset">Reset</div>
         </div>
