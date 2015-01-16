@@ -1,4 +1,4 @@
-<form id="addJob" role="form" action="{{ url_for('jobs.add') }}" method=post>
+<form id="addJob" role="form" onsubmit="return Validate()" action="{{ url_for('jobs.add') }}" method=post>
   <input type="hidden" name="project_id" value="{{settings['active_project']}}">
 
   <div class="row">
@@ -6,7 +6,7 @@
       <div class="form-group">
         <label for="project">Job</label>
         <div class="input-group">
-          <input id="filepath" name="filepath" type="text" class="form-control">
+          <input id="filepath" name="filepath" type="text" class="form-control" required="">
           <div class="input-group-btn">
             <a id="browse_filepath" type="button" class="btn btn-default">Browse</a>
           </div><!-- /btn-group -->
@@ -18,7 +18,7 @@
     <div class="col-md-6">
         <div class="form-group">
           <label for="job_name">Job name</label>
-          <input type="text" class="form-control" id="job_name" name="job_name" placeholder="a2s31" required="">
+          <input type="text" class="form-control" id="job_name" name="job_name" placeholder="a2s31" required>
         </div>
     </div>
     <div class="col-md-6">
@@ -37,7 +37,7 @@
     <div class="col-md-4">
         <div class="form-group">
           <label for="frame_start">Frame start</label>
-          <input type="text" class="form-control" id="frame_start" name="frame_start" value="1" required="">
+          <input type="text" class="form-control" id="frame_start" name="frame_start" value="1" required>
         </div>
     </div>
     <div class="col-md-4">
@@ -68,7 +68,7 @@
     <div class="col-md-4">
       <div class="form-group">
         <label for="managers">Managers</label>
-        <select class="form-control" name="managers" id="managers" multiple>
+        <select class="form-control" name="managers" id="managers" required="" multiple>
             {% for m in managers %}
                 <option value="{{ m.id }}">{{ m.name }}</option>
             {% endfor %}
@@ -80,6 +80,10 @@
 </form>
 
 <script>
+  function isInt(n) {
+    return n != "" && Number(n) % 1 === 0;
+  }
+
   $(document).ready(function() {
   {% if projects %}
     $('#brenderModalLabel').text('Add job for {{projects[settings['active_project']]['name']}}');
@@ -101,7 +105,52 @@
       $('.modal-footer').children('.btn-primary').addClass('select-file');
     });
 
-  });
+     });
+
+ function Validate(){
+
+        var res = true;
+
+        var value = $("#filepath")[0].value;
+        if (value == null || value == "") {
+
+            $('#filepath').css('border', '1px solid red');
+            res = false;
+        }
+
+        value = $("#job_name")[0].value;
+        if (value == null || value == "") {
+
+            $('#job_name').css('border', '1px solid red');
+            res = false;
+        }
+
+        if (!isInt($('#frame_start')[0].value)) {
+            $('#frame_start').css('border', '1px solid red');
+            res = false;
+        }
+
+        if (!isInt($('#frame_end')[0].value)) {
+            $('#frame_end').css('border', '1px solid red');
+            res = false;
+        }
+
+        if (!isInt($('#chunk_size')[0].value) || Number($('#chunk_size')[0].value) <= 0) {
+            $('#chunk_size').css('border', '1px solid red');
+            res = false;
+        }
+
+        if ($("#managers :selected").length == 0) {
+            $('#managers').css('border', '1px solid red');
+            res = false;
+        }
+
+
+        if (!res) {
+            return false;
+        }
+}
+
 
 </script>
 
