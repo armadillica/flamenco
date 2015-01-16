@@ -60,6 +60,7 @@ def index():
             "6" : last_thumbnail(key)})
         #print(v)
 
+    jobs_list = sorted(jobs_list, key=lambda x: x['1'])
     entries = json.dumps(jobs_list)
 
     return render_template('jobs/index.html', entries=entries, title='jobs')
