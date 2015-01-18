@@ -4,8 +4,10 @@ from flask import (flash,
                    request,
                    Blueprint)
 
-from dashboard import app
-from dashboard import http_server_request, list_integers_string, check_connection
+from application import app
+from application import http_server_request
+from application import list_integers_string
+from application import check_connection
 
 # Name of the Blueprint
 settings = Blueprint('settings', __name__)

@@ -9,9 +9,9 @@ from flask import (flash,
                    make_response,
                    Blueprint)
 
-from dashboard import app
-from dashboard import list_integers_string
-from dashboard import http_server_request
+from application import app
+from application import list_integers_string
+from application import http_server_request
 
 BRENDER_SERVER = app.config['BRENDER_SERVER']
 

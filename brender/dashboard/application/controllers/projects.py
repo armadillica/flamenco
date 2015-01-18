@@ -7,10 +7,10 @@ from flask import Blueprint
 from flask import url_for
 from flask import redirect
 
-from dashboard import app
-from dashboard import list_integers_string
-from dashboard import check_connection
-from dashboard import http_server_request
+from application import app
+from application import list_integers_string
+from application import check_connection
+from application import http_server_request
 
 projects = Blueprint('projects', __name__)
 

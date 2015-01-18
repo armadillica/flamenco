@@ -15,12 +15,12 @@ from flask import url_for
 from flask import make_response
 from flask import Blueprint
 
-from dashboard import app
-from dashboard import http_server_request
-from dashboard import list_integers_string
-from dashboard import check_connection
+from application import app
+from application import http_server_request
+from application import list_integers_string
+from application import check_connection
 
-from dashboard.controllers.workers import workers
+from application.controllers.workers import workers
 
 
 # Name of the Blueprint

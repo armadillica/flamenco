@@ -81,12 +81,12 @@ def list_integers_string(string_list):
     integers_list = map(int, integers_list)
     return integers_list
 
-from dashboard.controllers.main import main
-from dashboard.controllers.jobs import jobs
-from dashboard.controllers.workers import workers
-from dashboard.controllers.settings import settings
-from dashboard.controllers.projects import projects
-from dashboard.controllers.render import render
+from application.controllers.main import main
+from application.controllers.jobs import jobs
+from application.controllers.workers import workers
+from application.controllers.settings import settings
+from application.controllers.projects import projects
+from application.controllers.render import render
 app.register_blueprint(main)
 app.register_blueprint(jobs, url_prefix='/jobs')
 app.register_blueprint(workers, url_prefix='/workers')
