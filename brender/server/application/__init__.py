@@ -23,17 +23,6 @@ except ImportError:
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite'),
     )
 
-from modules.managers.model import Manager
-
-if not Manager.query.all():
-    default_manager = Manager(
-        name='Default Manager', 
-        ip_address='127.0.0.1', 
-        port=7777, 
-        total_workers=1)
-    db.session.add(default_manager)
-    db.session.commit()
-
 api = Api(app)
 
 from modules.projects import ProjectListApi
