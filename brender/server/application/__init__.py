@@ -14,19 +14,13 @@ migrate = Migrate(app, db)
 
 #RENDER_PATH = "render"
 
-
-# This is the default server configuration, in case the user will not provide one.
-# The Application is configured to run on localhost and port 9999
-# The brender.sqlite database will be created inside of the server folder
 try:
-    import config
-    app.config.from_object(config.Server)
-except:
+    from application import config
+    app.config['SQLALCHEMY_DATABASE_URI'] = config.Config.SQLALCHEMY_DATABASE_URI
+    app.config['MANAGERS'] = config.Config.MANAGERS
+except ImportError:
     from modules.managers.model import Manager
     app.config.update(
-        DEBUG=False,
-        HOST='localhost',
-        PORT=9999,
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite'),
         MANAGERS = [ \
             Manager(id=1, name='debian', ip_address='127.0.0.1', port=7777, total_workers=1) \
