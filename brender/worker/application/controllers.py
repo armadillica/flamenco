@@ -19,7 +19,10 @@ from flask import redirect
 from flask import url_for
 from flask import request
 from flask import jsonify
+from flask import Blueprint
 from uuid import getnode as get_mac_address
+
+from application import app
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
@@ -33,14 +36,15 @@ if platform.system() is not 'Windows':
 else:
     from signal import CTRL_C_EVENT
 
-app = Flask(__name__)
 
-BRENDER_SERVER = ''
+BRENDER_MANAGER = app.config['BRENDER_MANAGER']
+
+controller_bp = Blueprint('controllers', __name__)
 
 def http_request(command, values):
     params = urllib.urlencode(values)
     try:
-        urllib.urlopen('http://' + BRENDER_SERVER + '/' + command, params)
+        urllib.urlopen('http://' + BRENDER_MANAGER + '/' + command, params)
         #print(f.read())
     except IOError:
         print("[Warning] Could not connect to server to register")
@@ -206,11 +210,11 @@ def run_blender_in_thread(options):
         f.write(full_output)
 
     if retcode == 137:
-        requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'aborted'})
+        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': 'aborted'})
     elif retcode != 0:
-        requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'failed'})
+        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': 'failed'})
     else:
-        requests.patch('http://' + BRENDER_SERVER  + '/tasks/' + options['task_id'], data={'status': 'finished'})
+        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': 'finished'})
 
 
 
