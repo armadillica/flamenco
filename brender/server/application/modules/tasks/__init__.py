@@ -24,7 +24,7 @@ from application.modules.managers.model import Manager
 from application.modules.jobs.model import Job
 from application.modules.projects.model import Project
 from application.modules.settings.model import Setting
-from application.modules.jobs.model import RelationJobManager
+from application.modules.jobs.model import JobManagers
 
 from threading import Thread
 
@@ -178,7 +178,7 @@ class TaskApi(Resource):
 
     @staticmethod
     def dispatch_tasks(job_id=None):
-        logging.info('dispatch tasks')
+        logging.info('Dispatch tasks')
         # TODO Use databse
         #managers = Manager.query.\
         #    all()
@@ -188,14 +188,14 @@ class TaskApi(Resource):
         tasks = None
 
         #managers list
-        job_managers_id = db.session.query(RelationJobManager.manager_id, func.count(RelationJobManager.manager_id))\
-                                .group_by(RelationJobManager.manager_id)\
+        job_managers_id = db.session.query(JobManagers.manager_id, func.count(JobManagers.manager_id))\
+                                .group_by(JobManagers.manager_id)\
                                 .all()
         #List of tuple (manager, how many time the manager is asked) [only limited managers]
         #mgrs = [(filter(lambda x : x.id == m[0] and x.total_workers is not None, app.config['MANAGERS'])[0], m[1]) for m in job_managers_id]
         mgrs = []
         for m in job_managers_id:
-            lst = filter(lambda x : x.id == m[0] and x.total_workers is not None, app.config['MANAGERS'])
+            lst = filter(lambda x : x.id == m[0] and x.total_workers is not None, Manager.query.all())
             if lst:
                 mgrs.append((lst[0], m[1]))
 
@@ -204,7 +204,7 @@ class TaskApi(Resource):
             tasks = Task.query.filter_by(status='ready').all()
             if tasks:
                 #How many possible manager per task
-                task_mgr_count = db.session.query(RelationJobManager.job_id, func.count(RelationJobManager.manager_id)).group_by(job_id).all()
+                task_mgr_count = db.session.query(JobManagers.job_id, func.count(JobManagers.manager_id)).group_by(job_id).all()
                 #List of tuples (task, amount of possible manager)
                 #tasks = [ (t, filter(lambda x : x[0] == t.job_id, task_mgr_count)[0][1]) for t in tasks ]
                 newtasks = []
@@ -220,7 +220,7 @@ class TaskApi(Resource):
 
 
             for t in tasks:
-                rela = db.session.query(RelationJobManager.manager_id).filter(RelationJobManager.job_id==t[0].job_id).all()
+                rela = db.session.query(JobManagers.manager_id).filter(JobManagers.job_id==t[0].job_id).all()
                 # Get only accepted available managers
                 mgr_list = filter(lambda m : m[0].is_available() and (m[0].id,) in rela, mgrs)
 
@@ -228,7 +228,7 @@ class TaskApi(Resource):
                 mgr_list.sort(key=lambda m : m[1])
                 if not mgr_list:
                     #Get unlimited associated managers
-                    none_list = filter(lambda m : m.total_workers is None and m.id in rela, app.config['MANAGERS'])
+                    none_list = filter(lambda m : m.total_workers is None and m.id in rela, Manager.query.all())
                     if none_list:
                         TaskApi.start_task(none_list[0], t[0])
                         none_list[0].running_tasks = none_list[0].running_tasks + 1
@@ -237,10 +237,9 @@ class TaskApi(Resource):
                     TaskApi.start_task(mgr_list[0][0], t[0])
                     mgr_list[0][0].running_tasks = mgr_list[0][0].running_tasks + 1
 
-
         else:
             tasks = Task.query.filter_by(job_id=job_id).all()
-            rela = db.session.query(RelationJobManager.manager_id).filter(RelationJobManager.job_id==job_id).all()
+            rela = db.session.query(JobManagers.manager_id).filter(JobManagers.job_id==job_id).all()
             print rela
             for t in tasks:
                 # Get only accepted available managers
@@ -253,7 +252,7 @@ class TaskApi(Resource):
                 if not mgr_list:
                     #Get unlimited associated managers
                     logging.info('No limited manager available')
-                    none_list = filter(lambda m : m.total_workers is None and (m.id,) in rela, app.config['MANAGERS'])
+                    none_list = filter(lambda m : m.total_workers is None and (m.id,) in rela, Manager.query.all())
                     if none_list:
                         logging.info('Send to unlimited manager')
                         TaskApi.start_task(none_list[0], t)
@@ -263,9 +262,6 @@ class TaskApi(Resource):
                     logging.info('Send to limited manager')
                     TaskApi.start_task(mgr_list[0][0], t)
                     mgr_list[0][0].running_tasks = mgr_list[0][0].running_tasks + 1
-
-
-
 
         """Legacy code
         task = None # will figure out another way
@@ -299,7 +295,7 @@ class TaskApi(Resource):
         for t in tasks:
             #TODO use database
             #manager = Manager.query.get(t.manager_id)
-            manager = filter(lambda m : m.id == t.manager_id, app.config['MANAGERS'])[0]
+            manager = filter(lambda m : m.id == t.manager_id, Manager.query.all())[0]
             # FIXME find sqlalchemy query to avoid this
             if t.status not in ['finished', 'failed', 'aborted']:
                 delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
@@ -322,7 +318,7 @@ class TaskApi(Resource):
         task.status = 'ready'
         #TODO use database
         #manager = Manager.query.get(task.manager_id)
-        manager = filter(lambda m : m.id == task.manager_id, app.config['MANAGERS'])[0]
+        manager = filter(lambda m : m.id == task.manager_id, Manager.query.all())[0]
         delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
         if manager.total_workers is not None:
             manager.running_tasks = manager.running_tasks - 1
@@ -406,7 +402,7 @@ class TaskApi(Resource):
             db.session.add(task)
 
             # TODO Use database
-            manager = filter(lambda m : m.id == task.manager_id, app.config['MANAGERS'])[0]
+            manager = filter(lambda m : m.id == task.manager_id, Manager.query.all())[0]
             manager.running_tasks = manager.running_tasks - 1
 
             if status == 'finished':
@@ -428,7 +424,7 @@ class TaskApi(Resource):
                 # if task.current_frame == job.frame_end:
                 #     job.status = 'finished'
                 db.session.add(job)
-                db.session.query(RelationJobManager).filter(RelationJobManager.job_id == job.id).delete()
+                db.session.query(JobManagers).filter(JobManagers.job_id == job.id).delete()
             if task.chunk_end > job.current_frame:
                 job.current_frame = task.chunk_end
                 db.session.add(job)

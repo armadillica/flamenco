@@ -1,12 +1,7 @@
 import os
-from application.modules.managers.model import Manager
 
 class Config(object):
     SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite')
     DEBUG=True
     PORT=9999
     HOST='0.0.0.0' # or 'localhost'
-
-    MANAGERS = [ \
-            Manager(id=1, name='Manager1', ip_address='127.0.0.1', port=7777, total_workers=1) \
-        ]

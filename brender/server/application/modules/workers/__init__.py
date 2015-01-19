@@ -8,6 +8,7 @@ from application import app
 from application.utils import list_integers_string
 from application.utils import http_rest_request
 from application.modules.workers.model import Worker
+from application.modules.managers.model import Manager
 
 parser = reqparse.RequestParser()
 parser.add_argument("id", type=str)
@@ -16,14 +17,12 @@ parser.add_argument("status", type=str)
 class WorkerListApi(Resource):
     def get(self):
         workers={}
-        # TODO should use db
-        #manager_db = Manager.query.all()
-        manager_db = app.config['MANAGERS']
-        for manager in manager_db:
+        for manager in Manager.query.all():
             try:
                 r = http_rest_request(manager.host, '/workers', 'get')
                 workers = dict(workers.items() + r.items())
             except:
+                # TODO add proper exception handling!
                 pass
         return jsonify(workers)
 

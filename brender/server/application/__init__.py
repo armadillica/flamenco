@@ -17,15 +17,22 @@ migrate = Migrate(app, db)
 try:
     from application import config
     app.config['SQLALCHEMY_DATABASE_URI'] = config.Config.SQLALCHEMY_DATABASE_URI
-    app.config['MANAGERS'] = config.Config.MANAGERS
 except ImportError:
     from modules.managers.model import Manager
     app.config.update(
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite'),
-        MANAGERS = [ \
-            Manager(id=1, name='debian', ip_address='127.0.0.1', port=7777, total_workers=1) \
-        ]
     )
+
+from modules.managers.model import Manager
+
+if not Manager.query.all():
+    default_manager = Manager(
+        name='Default Manager', 
+        ip_address='127.0.0.1', 
+        port=7777, 
+        total_workers=1)
+    db.session.add(default_manager)
+    db.session.commit()
 
 api = Api(app)
 
@@ -71,7 +78,7 @@ app.register_blueprint(stats, url_prefix='/stats')
 
 @app.errorhandler(404)
 def not_found(error):
-    response = jsonify({'code': 404,'message': 'No interface defined for URL'})
+    response = jsonify({'code': 404, 'message': 'No interface defined for URL'})
     response.status_code = 404
     return response
 

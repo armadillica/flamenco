@@ -22,7 +22,7 @@ from application.modules.tasks.model import Task
 from application.modules.settings.model import Setting
 from application.modules.projects.model import Project
 from application.modules.jobs.model import Job
-from application.modules.jobs.model import RelationJobManager
+from application.modules.jobs.model import JobManagers
 
 id_list = reqparse.RequestParser()
 id_list.add_argument('id', type=str)
@@ -137,14 +137,14 @@ class JobListApi(Resource):
             raise KeyError
 
     def respawn(self, job_id):
-        from application.modules.jobs.model import RelationJobManager
+        from application.modules.jobs.model import JobManagers
         job = Job.query.get(job_id)
         if job:
             if job.status == 'running':
                 self.stop(job_id)
 
             tasks = db.session.query(Task).filter(Task.job_id == job_id, Task.status.notin_(['finished','failed'])).all()
-            rela = db.session.query(RelationJobManager.manager_id).filter(RelationJobManager.job_id==job_id).all()
+            rela = db.session.query(JobManagers.manager_id).filter(JobManagers.job_id==job_id).all()
             best_managers = filter(lambda m : m.total_workers is None and (m.id,) in rela, app.config['MANAGERS'])
 
             if best_managers:
@@ -202,7 +202,7 @@ class JobListApi(Resource):
         allowed_managers = args['managers']
         for m in allowed_managers:
             print "allowed managers: %d" % int(m)
-            db.session.add(RelationJobManager(job_id=job.id, manager_id=int(m)))
+            db.session.add(JobManagers(job_id=job.id, manager_id=int(m)))
 
         db.session.commit()
 
@@ -326,7 +326,7 @@ class JobDeleteApi(Resource):
                 if exists(path):
                     rmtree(path)
 
-                db.session.query(RelationJobManager).filter(RelationJobManager.job_id == job.id).delete()
+                db.session.query(JobManagers).filter(JobManagers.job_id == job.id).delete()
                 db.session.delete(job)
                 db.session.commit()
                 print "[info] Deleted job %d" % j
