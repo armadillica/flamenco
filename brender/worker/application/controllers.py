@@ -51,18 +51,18 @@ def http_request(command, values):
 
 # this is going to be an HTTP request to the server with all the info
 # for registering the render node
-def register_worker():
+def register_worker(port):
     import httplib
     while True:
         try:
-            connection = httplib.HTTPConnection('127.0.0.1', app.config['PORT'])
+            connection = httplib.HTTPConnection('127.0.0.1', port)
             connection.request("GET", "/info")
             break
         except socket.error:
             pass
         time.sleep(0.1)
 
-    http_request('workers', {'port': app.config['PORT'],
+    http_request('workers', {'port': port,
                                'hostname': HOSTNAME,
                                'system': SYSTEM})
 

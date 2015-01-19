@@ -5,6 +5,10 @@ from application import app
 
 manager = Manager(app)
 
+import os
+from threading import Thread
+from application import controllers
+
 @manager.command
 def runserver():
     try:
@@ -15,8 +19,13 @@ def runserver():
 
     except ImportError:
         DEBUG = False
-        PORT = 7777
+        PORT = 5000
         HOST = '0.0.0.0'
+
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        register_thread = Thread(target=controllers.register_worker, args=(PORT,))
+        register_thread.setDaemon(False)
+        register_thread.start()
 
     app.run(port=PORT, debug=DEBUG, host=HOST)
 
