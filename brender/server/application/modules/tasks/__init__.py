@@ -178,6 +178,15 @@ class TaskApi(Resource):
 
     @staticmethod
     def dispatch_tasks(job_id=None):
+        """The task dispaching algorithm works as follows:
+        
+        - collect all available managers
+            - detect managers with non virtual workers
+        - check if we are dispatching the tasks of a specific job
+            - sort tasks in order by priority and assignability to compatible managers
+            - assign each task to a compatible manager
+
+        """
         logging.info('Dispatch tasks')
         # TODO Use databse
         #managers = Manager.query.\
@@ -308,7 +317,7 @@ class TaskApi(Resource):
                     db.session.commit()
             db.session.delete(t)
             db.session.commit()
-        print('All tasks deleted for job', job_id)
+        logging.info("All tasks deleted for job {0}".format(job_id))
 
     @staticmethod
     def stop_task(task_id):
