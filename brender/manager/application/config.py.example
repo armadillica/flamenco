@@ -1,16 +1,19 @@
 import os
+import socket
 class Config(object):
     DEBUG = True
     PORT = 7777
     HOST = '0.0.0.0' # or 'localhost'
+    HOSTNAME = 'My Manager' # or use socket.gethostname()
 
     BRENDER_SERVER = 'localhost:9999'
 
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite')
 
+    VIRTUAL_WORKERS = False # If true, the manager will not have a fixed number of workers 
     IS_PRIVATE_MANAGER = False
 
-    # If False, the following settings are not neede
+    # If IS_PRIVATE_MANAGER is False, the following settings are not neede
     BLENDER_PATH_LINUX = ""
     BLENDER_PATH_OSX = ""
     BLENDER_PATH_WIN = ""

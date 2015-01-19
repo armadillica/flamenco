@@ -13,12 +13,14 @@ from application.modules.managers.model import Manager
 parser = reqparse.RequestParser()
 parser.add_argument('port', type=int)
 parser.add_argument('name', type=str)
+parser.add_argument('workers', type=int)
 
 class ManagersApi(Resource):
     def post(self):
         args = parser.parse_args()
         ip_address = request.remote_addr
         port = args['port']
+        workers = args['workers']
 
         manager = Manager.query\
             .filter_by(ip_address=ip_address)\
@@ -28,7 +30,8 @@ class ManagersApi(Resource):
         if not manager:
             manager = Manager(name=args['name'],
                 ip_address=ip_address,
-                port=port)
+                port=port,
+                total_workers=workers)
             db.session.add(manager)
             db.session.commit()
 

@@ -72,6 +72,7 @@ except ImportError:
         logging.info("The server {0} seems be unavailable.".format(app.config['BRENDER_SERVER']))
         exit(3)
 
+
 api = Api(app)
 
 from modules.tasks import TaskManagementApi
@@ -83,6 +84,29 @@ from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
+
+
+def register_manager(port, name, total_workers):
+    """This is going to be an HTTP request to the server with all the info for
+    registering the render node. This is called by the runserver script.
+    """
+    import httplib
+    while True:
+        try:
+            connection = httplib.HTTPConnection(app.config['BRENDER_SERVER'])
+            connection.request("GET", "/managers")
+            break
+        except socket.error:
+            pass
+        time.sleep(0.1)
+
+    params = {
+        'port' : port,
+        'name' : name,
+        'workers' : total_workers
+        }
+    http_request(app.config['BRENDER_SERVER'], '/managers', 'post', params=params)
+
 
 @app.errorhandler(404)
 def not_found(error):
