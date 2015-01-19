@@ -1,13 +1,19 @@
 import os
 class Config(object):
-    DEBUG=False
-    BRENDER_SERVER='localhost:9999'
+    DEBUG = True
+    PORT = 7777
+    HOST = '0.0.0.0' # or 'localhost'
 
-class Manager(Config):
-    DEBUG=TRUE
-    PORT=7777
-    HOST='localhost'
-    DATABASE=os.path.join(os.path.dirname(__file__), 'manager', 'task_queue.sqlite')
-    SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite')
-    BLENDER_PATH_LINUX="/home/matthieu/Downloads/blender-2.72b-linux-glibc211-x86_64/blender"
-    SETTINGS_PATH_LINUX="/home/matthieu/brender/brender/server/application/render_settings"
+    BRENDER_SERVER = 'localhost:9999'
+
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite')
+
+    IS_PRIVATE_MANAGER = False
+
+    # If False, the following settings are not neede
+    BLENDER_PATH_LINUX = ""
+    BLENDER_PATH_OSX = ""
+    BLENDER_PATH_WIN = ""
+    SETTINGS_PATH_LINUX = ""
+    SETTINGS_PATH_OSX = ""
+    SETTINGS_PATH_WIN = ""
