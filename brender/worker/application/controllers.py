@@ -49,9 +49,10 @@ def http_request(command, values):
     except IOError:
         print("[Warning] Could not connect to server to register")
 
-# this is going to be an HTTP request to the server with all the info
-# for registering the render node
 def register_worker(port):
+    """This is going to be an HTTP request to the server with all the info
+    for registering the render node.
+    """
     import httplib
     while True:
         try:
@@ -91,7 +92,6 @@ def _checkOutputThreadWin(fd, q):
         else:
             print buffer
             q.put(buffer)
-
 
 def _checkProcessOutputWin(process, q):
     full_buffer = ''
@@ -145,18 +145,20 @@ def _interactiveReadProcess(process, task_id):
     full_buffer += _checkProcessOutput(process)
     return (process.returncode, full_buffer)
 
-
 @app.route('/')
 def index():
     return redirect(url_for('info'))
 
-
 @app.route('/info')
 def info():
+    if PROCESS:
+        status = 'rendering'
+    else:
+        status = 'enabled'
     return jsonify(mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
-                   system=SYSTEM)
-
+                   system=SYSTEM,
+                   status=status)
 
 def run_blender_in_thread(options):
     global PROCESS
@@ -216,8 +218,6 @@ def run_blender_in_thread(options):
     else:
         requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': 'finished'})
 
-
-
 @app.route('/execute_task', methods=['POST'])
 def execute_task():
     global PROCESS
@@ -258,8 +258,6 @@ def get_command():
     # TODO Return the running command
     return '', 503
 
-
-
 @app.route('/kill/<int:pid>', methods=['DELETE'])
 def update(pid):
     global PROCESS
@@ -274,7 +272,6 @@ def update(pid):
     PROCESS = None
     LOCK.release()
     return '', 204
-
 
 def online_stats(system_stat):
     '''
@@ -317,14 +314,12 @@ def online_stats(system_stat):
         disk_percent = psutil.disk_usage('/').percent
         return disk_percent
 
-
 def offline_stats(offline_stat):
     if 'number_cpu' in [offline_stat]:
         return psutil.NUM_CPUS
 
     if 'arch' in [offline_stat]:
         return platform.machine()
-
 
 @gocept.cache.method.Memoize(5)
 def get_system_load_frequent():
@@ -359,7 +354,6 @@ def get_system_load_less_frequent():
         "worker_disk_percent": online_stats('system_disk'),
         # "worker_blender_mem_usage": online_stats('blender_mem')
         })
-
 
 @app.route('/run_info')
 def run_info():

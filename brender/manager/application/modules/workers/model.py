@@ -1,5 +1,8 @@
+import requests
+import logging
+from requests.exceptions import Timeout
+from requests.exceptions import ConnectionError
 from application import db
-from urllib import urlopen
 from sqlalchemy import UniqueConstraint
 
 class Worker(db.Model):
@@ -20,10 +23,17 @@ class Worker(db.Model):
     @property
     def is_connected(self):
         try:
-            urlopen("http://" + self.host)
+            r = requests.get("http://" + self.host, timeout=0.5)
+            info = r.json()
+            self.status = info['status']
+            print info['status']
+            db.session.commit()
             return True
-        except:
-            print "[Warning] Worker %s is not online" % self.host
+        except Timeout:
+            logging.warning("Worker {0} is not online".format(self.host))
+            return False
+        except ConnectionError:
+            logging.warning("Worker {0} is not online".format(self.host))
             return False
 
     def __repr__(self):
