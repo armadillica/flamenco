@@ -38,12 +38,12 @@ def runserver():
     # while the manager app starts up
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         if VIRTUAL_WORKERS:
-            total_workers = None
+            has_virtual_worker = 1
         else:
-            total_workers = 0
+            has_virtual_worker = 0
         register_thread = Thread(
             target=register_manager,
-            args=(PORT, HOSTNAME, total_workers))
+            args=(PORT, HOSTNAME, has_virtual_worker))
         register_thread.setDaemon(False)
         register_thread.start()
 

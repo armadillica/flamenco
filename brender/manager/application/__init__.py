@@ -86,7 +86,7 @@ api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
 
 
-def register_manager(port, name, total_workers):
+def register_manager(port, name, has_virtual_workers):
     """This is going to be an HTTP request to the server with all the info for
     registering the render node. This is called by the runserver script.
     """
@@ -103,7 +103,7 @@ def register_manager(port, name, total_workers):
     params = {
         'port' : port,
         'name' : name,
-        'workers' : total_workers
+        'has_virtual_workers' : has_virtual_workers
         }
     http_request(app.config['BRENDER_SERVER'], '/managers', 'post', params=params)
 
