@@ -178,14 +178,32 @@ class TaskApi(Resource):
 
     @staticmethod
     def dispatch_tasks(job_id=None):
-        """The task dispaching algorithm works as follows:
-        
-        - collect all available managers
+        """
+        We want to assign a task according to its priority and its assignability
+        to the less requested available compatible limited manager. If it does not exist,
+        we assign it to the unlimited compatible manager. Otherwise, keep the task and wait
+        to the next call to dispatch_tasks
+
+
+        The task dispaching algorithm works as follows:
+
+        - collect all asked managers
             - detect managers with non virtual workers
         - check if we are dispatching the tasks of a specific job
             - sort tasks in order by priority and assignability to compatible managers
             - assign each task to a compatible manager
+        - otherwise
+            - assign each task to a compatible manager
 
+
+        How to assign a task to a manager:
+
+        - collect compatible and available managers and sort them by request
+        - if manager's list is not empty
+            - assign task to first manager of the list
+        - else
+            - assign task to compatible unlimited manager
+            - if no compatible manager is unlimited, do not assign task (it will wait the next call of dispatch_tasks)
         """
         logging.info('Dispatch tasks')
         # TODO Use databse
