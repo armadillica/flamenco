@@ -8,7 +8,7 @@ class Manager(db.Model):
     port = db.Column(db.Integer)
     name = db.Column(db.String(50), nullable=True)
 
-    has_virtual_workers = db.Column(db.SmallInteger(), default=False)
+    has_virtual_workers = db.Column(db.SmallInteger(), default=0)
     # This represent the total number of worker that this manager holds.
     # If total_workers is NULL then, the manager can handle an infinity of worker
     total_workers = db.Column(db.Integer(), default=0)
