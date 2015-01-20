@@ -320,11 +320,9 @@ class TaskApi(Resource):
     def delete_tasks(job_id):
         tasks = Task.query.filter_by(job_id=job_id)
         for t in tasks:
-            #TODO use database
-            #manager = Manager.query.get(t.manager_id)
-            manager = filter(lambda m : m.id == t.manager_id, Manager.query.all())[0]
             # FIXME find sqlalchemy query to avoid this
-            if t.status not in ['finished', 'failed', 'aborted']:
+            if t.status not in ['finished', 'failed', 'aborted', 'ready']:
+                manager = Manager.query.get(t.manager_id)
                 delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
                 if manager.total_workers is not None:
                     manager.running_tasks = manager.running_tasks - 1
