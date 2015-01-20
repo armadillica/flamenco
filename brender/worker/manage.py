@@ -10,7 +10,8 @@ from threading import Thread
 from application import controllers
 
 @manager.command
-def runserver():
+@manager.option('-p', '--port', help='The port')
+def runserver(port_number=None):
     try:
         from application import config
         PORT = config.Config.PORT
@@ -21,6 +22,11 @@ def runserver():
         DEBUG = False
         PORT = 5000
         HOST = '0.0.0.0'
+
+    # Override port value (no matter if set in the config) if specified
+    # at runtime with the --port argument.
+    if port_number:
+        PORT = int(port_number)
 
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         register_thread = Thread(target=controllers.register_worker, args=(PORT,))
