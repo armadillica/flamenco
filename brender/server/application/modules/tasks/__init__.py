@@ -259,10 +259,14 @@ class TaskApi(Resource):
                     if none_list:
                         TaskApi.start_task(none_list[0], t[0])
                         none_list[0].running_tasks = none_list[0].running_tasks + 1
+                        db.session.add(none_list[0])
+                        db.session.commit()
 
                 else:
                     TaskApi.start_task(mgr_list[0][0], t[0])
                     mgr_list[0][0].running_tasks = mgr_list[0][0].running_tasks + 1
+                    db.session.add(mgr_list[0][0])
+                    db.session.commit()
 
         else:
             tasks = Task.query.filter_by(job_id=job_id).all()
@@ -284,11 +288,16 @@ class TaskApi(Resource):
                         logging.info('Send to unlimited manager')
                         TaskApi.start_task(none_list[0], t)
                         none_list[0].running_tasks = none_list[0].running_tasks + 1
+                        db.session.add(none_list[0])
+                        db.session.commit()
 
                 else:
                     logging.info('Send to limited manager')
                     TaskApi.start_task(mgr_list[0][0], t)
                     mgr_list[0][0].running_tasks = mgr_list[0][0].running_tasks + 1
+                    db.session.add(mgr_list[0][0])
+                    db.session.commit()
+
 
         """Legacy code
         task = None # will figure out another way
