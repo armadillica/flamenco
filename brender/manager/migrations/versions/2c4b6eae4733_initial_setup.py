@@ -30,8 +30,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=40), nullable=False),
     sa.Column('url', sa.String(length=128), nullable=False),
-    sa.Column('pre_command', sa.String(), nullable=True),
-    sa.Column('post_command', sa.String(), nullable=True),
+    sa.Column('pre_command', sa.String(length=256), nullable=True),
+    sa.Column('post_command', sa.String(length=256), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
