@@ -15,7 +15,7 @@ parser.add_argument('port', type=int)
 parser.add_argument('name', type=str)
 parser.add_argument('has_virtual_workers', type=int)
 
-class ManagersApi(Resource):
+class ManagersListApi(Resource):
     def post(self):
         args = parser.parse_args()
         ip_address = request.remote_addr
@@ -51,3 +51,4 @@ class ManagersApi(Resource):
                 "port" : manager.port
             }
         return jsonify(managers)
+
