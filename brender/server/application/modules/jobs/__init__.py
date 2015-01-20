@@ -145,7 +145,7 @@ class JobListApi(Resource):
 
             tasks = db.session.query(Task).filter(Task.job_id == job_id, Task.status.notin_(['finished','failed'])).all()
             rela = db.session.query(JobManagers.manager_id).filter(JobManagers.job_id==job_id).all()
-            best_managers = filter(lambda m : m.total_workers is None and (m.id,) in rela, app.config['MANAGERS'])
+            best_managers = filter(lambda m : m.has_virtual_workers == 1 and (m.id,) in rela, app.config['MANAGERS'])
 
             if best_managers:
                 fun = partial(TaskApi.start_task, best_managers[0])

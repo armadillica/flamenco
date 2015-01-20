@@ -222,7 +222,7 @@ class TaskApi(Resource):
         #mgrs = [(filter(lambda x : x.id == m[0] and x.total_workers is not None, app.config['MANAGERS'])[0], m[1]) for m in job_managers_id]
         mgrs = []
         for m in job_managers_id:
-            lst = filter(lambda x : x.id == m[0] and x.total_workers is not None, Manager.query.all())
+            lst = filter(lambda x : x.id == m[0] and x.has_virtual_workers == 0, Manager.query.all())
             if lst:
                 mgrs.append((lst[0], m[1]))
 
@@ -255,7 +255,7 @@ class TaskApi(Resource):
                 mgr_list.sort(key=lambda m : m[1])
                 if not mgr_list:
                     #Get unlimited associated managers
-                    none_list = filter(lambda m : m.total_workers is None and m.id in rela, Manager.query.all())
+                    none_list = filter(lambda m : m.has_virtual_workers == 1 and m.id in rela, Manager.query.all())
                     if none_list:
                         TaskApi.start_task(none_list[0], t[0])
                         none_list[0].running_tasks = none_list[0].running_tasks + 1
@@ -283,7 +283,7 @@ class TaskApi(Resource):
                 if not mgr_list:
                     #Get unlimited associated managers
                     logging.info('No limited manager available')
-                    none_list = filter(lambda m : m.total_workers is None and (m.id,) in rela, Manager.query.all())
+                    none_list = filter(lambda m : m.has_virtual_workers == 1 and (m.id,) in rela, Manager.query.all())
                     if none_list:
                         logging.info('Send to unlimited manager')
                         TaskApi.start_task(none_list[0], t)

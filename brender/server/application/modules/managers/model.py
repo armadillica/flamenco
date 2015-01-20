@@ -23,7 +23,7 @@ class Manager(db.Model):
         return self.ip_address + ':' + str(self.port)
 
     def is_available(self):
-        return self.total_workers is None or self.total_workers - self.running_tasks > 0
+        return self.has_virtual_workers == 1 or self.total_workers - self.running_tasks > 0
 
     @property
     def is_connected(self):
