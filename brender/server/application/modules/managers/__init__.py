@@ -1,5 +1,5 @@
 import logging
-
+import uuid
 from flask import request
 from flask import jsonify
 from flask.ext.restful import Resource
@@ -34,7 +34,6 @@ class ManagerListApi(Resource):
             .first()
 
         if not manager:
-            import uuid
             u = uuid.uuid1()
             manager = Manager(
                 name=args['name'],
@@ -45,6 +44,13 @@ class ManagerListApi(Resource):
             db.session.add(manager)
             db.session.commit()
             logging.info("New manager registered with uuid: {0}".format(u.hex))
+        else:
+            # Handle the case where the manager has no UUID
+            if not manager.uuid:
+                u = uuid.uuid1()
+                manager.uuid = u.hex
+                db.session.commit()
+                logging.info("Manager updated with uuid: {0}".format(u.hex))
 
         logging.info("Manager connected at {0}:{1}".format(manager.ip_address, manager.port))
 
