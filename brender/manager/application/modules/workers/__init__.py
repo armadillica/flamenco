@@ -1,11 +1,18 @@
+import logging
+
+from flask import jsonify
 from flask import request
+
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
-from application.modules.workers.model import Worker
-from flask import jsonify
 
+from application import app
 from application import db
-import logging
+
+from application.modules.workers.model import Worker
+from application.modules.settings.model import Setting
+from application.helpers import http_request
+
 
 parser = reqparse.RequestParser()
 parser.add_argument('port', type=int)
@@ -15,6 +22,7 @@ parser.add_argument('system', type=str)
 status_parser = reqparse.RequestParser()
 status_parser.add_argument("status", type=str)
 
+
 class WorkerListApi(Resource):
     def post(self):
         args = parser.parse_args()
@@ -23,7 +31,7 @@ class WorkerListApi(Resource):
 
         worker = Worker.query.filter_by(ip_address=ip_address, port=port).first()
         if not worker:
-            logging.info("new worker")
+            logging.info("New worker connecting from {0}".format(ip_address))
             worker = Worker(hostname=args['hostname'],
                           ip_address=ip_address,
                           port=port,
@@ -36,8 +44,27 @@ class WorkerListApi(Resource):
         db.session.add(worker)
         db.session.commit()
 
-        return '', 204
+        # Count the currently available workers
+        # TODO: refactor this into own reusable and concurrent function!
+        total_workers = 0
+        for worker in Worker.query.all():
+            if worker.is_connected:
+                if worker.status == 'enabled':
+                    total_workers += 1
 
+        # Get the manager uuid
+        uuid = Setting.query.filter_by(name='uuid').one()
+
+        params = {'total_workers' : total_workers}
+
+        # Update the resource on the server
+        http_request(
+            app.config['BRENDER_SERVER'], 
+            '/managers/{0}'.format(uuid.value),
+            'patch',
+            params=params)
+
+        return '', 204
 
     def get(self):
         workers={}
@@ -56,6 +83,7 @@ class WorkerListApi(Resource):
         db.session.commit()
         return jsonify(workers)
 
+
 class WorkerApi(Resource):
     def patch(self, worker_id):
         args = status_parser.parse_args()
@@ -67,5 +95,4 @@ class WorkerApi(Resource):
 
     def get(self, worker_id):
         worker = Worker.query.get_or_404(worker_id)
-        r = requests.get('http://' + worker.host + '/run_info')
-        return r.json()
+        return http_request(worker.host, '/run_info', 'get')

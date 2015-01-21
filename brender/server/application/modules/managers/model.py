@@ -3,7 +3,15 @@ from urllib import urlopen
 from sqlalchemy import UniqueConstraint
 
 class Manager(db.Model):
+    """Model for the managers connected to the server. When a manager
+    connects, we veryfy that it has connected before, by checking its 
+    ip_address and port fields (which are unique keys).
+
+    This will be updated to support a UUID, which will be stored in the
+    manager's setting, as well as in the uuid field of the model.
+    """
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.String(128), nullable=True, unique=True)
     ip_address = db.Column(db.String(15))
     port = db.Column(db.Integer)
     name = db.Column(db.String(50), nullable=True)

@@ -13,10 +13,16 @@ from application.modules.managers.model import Manager
 parser = reqparse.RequestParser()
 parser.add_argument('port', type=int)
 parser.add_argument('name', type=str)
+parser.add_argument('total_workers', type=int)
 parser.add_argument('has_virtual_workers', type=int)
 
-class ManagersListApi(Resource):
+
+class ManagerListApi(Resource):
     def post(self):
+        """Upon every manager startup, we check this resource to know if
+        the manager already existed. If not, we create one and assign it a
+        unique identifier.
+        """
         args = parser.parse_args()
         ip_address = request.remote_addr
         port = args['port']
@@ -28,22 +34,29 @@ class ManagersListApi(Resource):
             .first()
 
         if not manager:
-            manager = Manager(name=args['name'],
+            import uuid
+            u = uuid.uuid1()
+            manager = Manager(
+                name=args['name'],
                 ip_address=ip_address,
                 port=port,
-                has_virtual_workers=has_virtual_workers)
+                has_virtual_workers=has_virtual_workers,
+                uuid=u.hex)
             db.session.add(manager)
             db.session.commit()
+            logging.info("New manager registered with uuid: {0}".format(u.hex))
 
         logging.info("Manager connected at {0}:{1}".format(manager.ip_address, manager.port))
 
-        return '', 204
+        return jsonify(uuid=manager.uuid)
 
 
     def get(self):
         managers={}
         for manager in Manager.query.all():
+            # We check if the manager is connected by actually attempting a connection
             manager.connection = 'online' if manager.is_connected else 'offline'
+            # TODO: possibly update count of total_workers
             managers[manager.name] = {
                 "id" : manager.id,
                 "name" : manager.name,
@@ -52,3 +65,13 @@ class ManagersListApi(Resource):
             }
         return jsonify(managers)
 
+
+class ManagerApi(Resource):
+    def patch(self, manager_uuid):
+        args = parser.parse_args()
+        manager = Manager.query.filter_by(uuid=manager_uuid).one()
+        # TODO add try except statement to safely handle .one() query
+        manager.total_workers = args['total_workers']
+        db.session.add(manager)
+        db.session.commit()
+        return jsonify(dict(total_workers=manager.total_workers))

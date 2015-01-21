@@ -35,8 +35,10 @@ from modules.workers import WorkerApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
 
-from modules.managers import ManagersListApi
-api.add_resource(ManagersListApi, '/managers')
+from modules.managers import ManagerListApi
+from modules.managers import ManagerApi
+api.add_resource(ManagerListApi, '/managers')
+api.add_resource(ManagerApi, '/managers/<manager_uuid>')
 
 from modules.settings import SettingsListApi
 from modules.settings import RenderSettingsApi

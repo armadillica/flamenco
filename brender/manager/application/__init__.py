@@ -1,5 +1,7 @@
 import os
 import logging
+import requests
+from requests.exceptions import ConnectionError
 
 from flask import Flask
 from flask import jsonify
@@ -8,14 +10,11 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.restful import Api
 from flask.ext.migrate import Migrate
 
-from requests.exceptions import ConnectionError
-
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
 
 from helpers import http_request
 
@@ -105,7 +104,19 @@ def register_manager(port, name, has_virtual_workers):
         'name' : name,
         'has_virtual_workers' : has_virtual_workers
         }
-    http_request(app.config['BRENDER_SERVER'], '/managers', 'post', params=params)
+    
+    r = http_request(app.config['BRENDER_SERVER'], '/managers', 'post', params=params)
+    
+    # Search in the settings if we have a uuid for the manager
+    from modules.settings.model import Setting
+    uuid = Setting.query.filter_by(name='uuid').first()
+    # If we don't find one, we proceed to create it, using the server reponse
+    if not uuid:
+        uuid = Setting(name='uuid', value=r['uuid'])
+        db.session.add(uuid)
+        db.session.commit()
+    # TODO: manage update if uuid already exists and does not match with the one
+    # returned by the server
 
 
 @app.errorhandler(404)
