@@ -215,35 +215,50 @@ class TaskApi(Resource):
         tasks = None
 
         #managers list
-        job_managers_id = db.session.query(JobManagers.manager_id, func.count(JobManagers.manager_id))\
-                                .group_by(JobManagers.manager_id)\
-                                .all()
+        #job_managers_id = db.session.query(JobManagers.manager_id, func.count(JobManagers.manager_id))\
+        #                        .group_by(JobManagers.manager_id)\
+        #                        .all()
+
         #List of tuple (manager, how many time the manager is asked) [only limited managers]
         #mgrs = [(filter(lambda x : x.id == m[0] and x.total_workers is not None, app.config['MANAGERS'])[0], m[1]) for m in job_managers_id]
-        mgrs = []
-        for m in job_managers_id:
-            lst = filter(lambda x : x.id == m[0] and x.has_virtual_workers == 0, Manager.query.all())
-            if lst:
-                mgrs.append((lst[0], m[1]))
+        #mgrs = []
+        #for m in job_managers_id:
+        #    lst = filter(lambda x : x.id == m[0] and x.has_virtual_workers == 0, Manager.query.all())
+        #    if lst:
+        #        mgrs.append((lst[0], m[1]))
+
+        mgrs = db.session.query(Manager, func.count(JobManagers.manager_id))\
+                .join(JobManagers, Manager.id == JobManagers.manager_id)\
+                .filter(Manager.has_virtual_workers == 0)\
+                .group_by(Manager)\
+                .all()
 
         if job_id is None:
             #tasks list
             tasks = Task.query.filter_by(status='ready').all()
             if tasks:
                 #How many possible manager per task
-                task_mgr_count = db.session.query(JobManagers.job_id, func.count(JobManagers.manager_id)).group_by(job_id).all()
+                #task_mgr_count = db.session.query(JobManagers.job_id, func.count(JobManagers.manager_id)).group_by(job_id).all()
+
                 #List of tuples (task, amount of possible manager)
                 #tasks = [ (t, filter(lambda x : x[0] == t.job_id, task_mgr_count)[0][1]) for t in tasks ]
-                newtasks = []
-                for t in tasks:
-                    lst = filter(lambda x : x[0] == t.job_id, task_mgr_count)[0]
-                    if lst:
-                        newtasks.append((t, lst[1]))
-                tasks = newtasks
+                #newtasks = []
+                #for t in tasks:
+                #    lst = filter(lambda x : x[0] == t.job_id, task_mgr_count)[0]
+                #    if lst:
+                #        newtasks.append((t, lst[1]))
+                #tasks = newtasks
+
                 #Sort task by priority and then by amount of possible manager
-                tasks.sort(cmp=lambda x, y : \
-                        y[0].priority - x[0].priority if y[0].priority != x[0].priority \
-                        else x[1] - y[1])
+                #tasks.sort(cmp=lambda x, y : \
+                #        y[0].priority - x[0].priority if y[0].priority != x[0].priority \
+                #        else x[1] - y[1])
+
+                tasks = db.session.query(Task, func.count(JobManagers.manager_id).label('mgr'))\
+                            .join(JobManagers, Task.job_id == JobManagers.job_id)\
+                            .group_by(Task)\
+                            .order_by(Task.priority, 'mgr')\
+                            .all()
 
 
             for t in tasks:
@@ -253,9 +268,15 @@ class TaskApi(Resource):
 
                 #Sort managers by asking
                 mgr_list.sort(key=lambda m : m[1])
+
                 if not mgr_list:
                     #Get unlimited associated managers
-                    none_list = filter(lambda m : m.has_virtual_workers == 1 and m.id in rela, Manager.query.all())
+                    #none_list = filter(lambda m : m.has_virtual_workers == 1 and m.id in rela, Manager.query.all())
+                    none_list = Manager.query.join(JobManagers, Manager.id == JobManagers.manager_id)\
+                            .filter(JobManagers.job_id == t[0].job_id)\
+                            .filter(Manager.has_virtual_workers == 1)\
+                            .all()
+
                     if none_list:
                         TaskApi.start_task(none_list[0], t[0])
                         none_list[0].running_tasks = none_list[0].running_tasks + 1
@@ -283,7 +304,11 @@ class TaskApi(Resource):
                 if not mgr_list:
                     #Get unlimited associated managers
                     logging.info('No limited manager available')
-                    none_list = filter(lambda m : m.has_virtual_workers == 1 and (m.id,) in rela, Manager.query.all())
+                    #none_list = filter(lambda m : m.has_virtual_workers == 1 and (m.id,) in rela, Manager.query.all())
+                    none_list = Manager.query.join(JobManagers, Manager.id == JobManagers.manager_id)\
+                            .filter(JobManagers.job_id == job_id)\
+                            .filter(Manager.has_virtual_workers == 1)\
+                            .all()
                     if none_list:
                         logging.info('Send to unlimited manager')
                         TaskApi.start_task(none_list[0], t)
