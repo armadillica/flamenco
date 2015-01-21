@@ -216,19 +216,15 @@ class TaskApi(Resource):
                 .all()
 
         if job_id is None:
-            #tasks list
-            tasks = Task.query.filter_by(status='ready').all()
-            if tasks:
-                #How many possible manager per task
-                #task_mgr_count = db.session.query(JobManagers.job_id, func.count(JobManagers.manager_id)).group_by(job_id).all()
+            #Sort task by priority and then by amount of possible manager
+            tasks = db.session.query(Task, func.count(JobManagers.manager_id).label('mgr'))\
+                        .join(JobManagers, Task.job_id == JobManagers.job_id)\
+                        .filter(Task.status == 'ready')\
+                        .group_by(Task)\
+                        .order_by(Task.priority, 'mgr')\
+                        .all()
 
-                #Sort task by priority and then by amount of possible manager
-                tasks = db.session.query(Task, func.count(JobManagers.manager_id).label('mgr'))\
-                            .join(JobManagers, Task.job_id == JobManagers.job_id)\
-                            .group_by(Task)\
-                            .order_by(Task.priority, 'mgr')\
-                            .all()
-
+            print tasks
             for t in tasks:
                 rela = db.session.query(JobManagers.manager_id)\
                     .filter(JobManagers.job_id == t[0].job_id)\
@@ -260,7 +256,8 @@ class TaskApi(Resource):
                     db.session.commit()
 
         else:
-            tasks = Task.query.filter_by(job_id=job_id).all()
+            tasks = Task.query.filter_by(job_id=job_id,status='ready').all()
+            print tasks
             rela = db.session.query(JobManagers.manager_id)\
                 .filter(JobManagers.job_id == job_id)\
                 .all()
@@ -415,15 +412,15 @@ class TaskApi(Resource):
             task.status = status
             db.session.add(task)
 
-            # TODO Use database
-            manager = filter(lambda m : m.id == task.manager_id, Manager.query.all())[0]
+            manager = Manager.query.get(task.manager_id)
             manager.running_tasks = manager.running_tasks - 1
+            db.session.add(manager)
 
             if status == 'finished':
                 #self.generate_thumbnails(job, task.chunk_start, task.chunk_end)
-                pass
+                logging.info('Task %s finished' % task_id)
             else:
-                print ('[Info] Task %s failed') % task_id
+                logging.info('[Info] Task %s failed' % task_id)
 
             # Check if all tasks have been completed
             if all((lambda t : t.status in ['finished', 'failed'])(t) for t in Task.query.filter_by(job_id=job.id).all()):
