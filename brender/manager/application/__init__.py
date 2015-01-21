@@ -84,6 +84,11 @@ from modules.workers import WorkerApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
 
+from modules.settings import SettingsListApi
+from modules.settings import SettingApi
+api.add_resource(SettingsListApi, '/settings')
+api.add_resource(SettingApi, '/settings/<string:name>')
+
 
 def register_manager(port, name, has_virtual_workers):
     """This is going to be an HTTP request to the server with all the info for
@@ -104,9 +109,9 @@ def register_manager(port, name, has_virtual_workers):
         'name' : name,
         'has_virtual_workers' : has_virtual_workers
         }
-    
+
     r = http_request(app.config['BRENDER_SERVER'], '/managers', 'post', params=params)
-    
+
     # Search in the settings if we have a uuid for the manager
     from modules.settings.model import Setting
     uuid = Setting.query.filter_by(name='uuid').first()

@@ -18,13 +18,32 @@ parser.add_argument('blender_path_osx', type=str)
 parser.add_argument('render_settings_path_linux', type=str)
 parser.add_argument('render_settings_path_win', type=str)
 parser.add_argument('render_settings_path_osx', type=str)
+parser.add_argument('group', type=str)
+
+setting_parser = reqparse.RequestParser()
+setting_parser.add_argument('value', type=str)
 
 
 class SettingsListApi(Resource):
     def get(self):
+        args = parser.parse_args()
         settings = {}
-        for setting in Setting.query.all():
-            settings[setting.name] = setting.value
+        if not args['group']:
+            for setting in Setting.query.all():
+                settings[setting.name] = setting.value
+        elif args['group'] == 'render':
+            name = ''
+            if system() == 'Linux':
+                name = 'render_settings_path_linux'
+            elif system() == 'Windows':
+                name = 'render_settings_path_win'
+            else:
+                name = 'render_settings_path_osx'
+
+            path = Setting.query.filter_by(name=name).first()
+            onlyfiles = [f for f in listdir(path.value) if isfile(join(path.value, f))]
+            settings = dict(settings_files=onlyfiles)
+
         return jsonify(settings)
 
     def post(self):
@@ -40,23 +59,6 @@ class SettingsListApi(Resource):
             db.session.add(setting)
         db.session.commit()
         return '', 204
-
-
-class RenderSettingsApi(Resource):
-    def get(self):
-        name = ''
-        if system() == 'Linux':
-            name = 'render_settings_path_linux'
-        elif system() == 'Windows':
-            name = 'render_settings_path_win'
-        else:
-            name = 'render_settings_path_osx'
-
-        path = Setting.query.filter_by(name=name).first()
-        onlyfiles = [f for f in listdir(path.value) if isfile(join(path.value, f))]
-        settings_files = dict(settings_files=onlyfiles)
-        return jsonify(settings_files)
-
 
 class SettingApi(Resource):
     """API to edit individual settings.
