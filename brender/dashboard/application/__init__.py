@@ -59,7 +59,7 @@ def http_server_request(method, path, params=None):
     if method == 'get':
         r = requests.get('http://' + app.config['BRENDER_SERVER'] + path)
     elif method == 'delete':
-        r = requests.delete('http://' + app.config['BRENDER_SERVER'] + path, params)
+        r = requests.delete('http://' + app.config['BRENDER_SERVER'] + path)
     elif method == 'post':
         r = requests.post('http://' + app.config['BRENDER_SERVER'] + path, params)
     elif method == 'put':
