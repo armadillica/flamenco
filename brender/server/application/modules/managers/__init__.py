@@ -67,7 +67,8 @@ class ManagerListApi(Resource):
                 "id" : manager.id,
                 "name" : manager.name,
                 "ip_address" : manager.ip_address,
-                "port" : manager.port
+                "port" : manager.port,
+                "connection" : manager.connection
             }
         return jsonify(managers)
 

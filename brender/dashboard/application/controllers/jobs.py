@@ -152,5 +152,6 @@ def add():
                             render_settings=render_settings,
                             settings=settings,
                             projects=projects,
-                            managers=managers.values())
+                            managers=filter(lambda m : m['connection'] == 'online',
+                                            managers.values()))
 
