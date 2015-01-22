@@ -211,6 +211,9 @@ def run_blender_in_thread(options):
     with open(abs_file_path, 'w') as f:
         f.write(full_output)
 
+
+    time.sleep(1)
+
     if retcode == 137:
         requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': 'aborted'})
     elif retcode != 0:
