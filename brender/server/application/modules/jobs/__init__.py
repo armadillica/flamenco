@@ -23,6 +23,7 @@ from application.modules.settings.model import Setting
 from application.modules.projects.model import Project
 from application.modules.jobs.model import Job
 from application.modules.jobs.model import JobManagers
+from application.modules.managers.model import Manager
 
 id_list = reqparse.RequestParser()
 id_list.add_argument('id', type=str)
@@ -137,20 +138,23 @@ class JobListApi(Resource):
             raise KeyError
 
     def respawn(self, job_id):
-        from application.modules.jobs.model import JobManagers
         job = Job.query.get(job_id)
         if job:
             if job.status == 'running':
                 self.stop(job_id)
 
             tasks = db.session.query(Task).filter(Task.job_id == job_id, Task.status.notin_(['finished','failed'])).all()
-            rela = db.session.query(JobManagers.manager_id).filter(JobManagers.job_id==job_id).all()
-            best_managers = filter(lambda m : m.has_virtual_workers == 1 and (m.id,) in rela, app.config['MANAGERS'])
+            best_managers = db.session.query(Manager).join(JobManagers, Manager.id == JobManagers.manager_id)\
+                                                    .filter(JobManagers.job_id == job_id)\
+                                                    .filter(Manager.has_virtual_workers == 1)\
+                                                    .first()
 
             if best_managers:
-                fun = partial(TaskApi.start_task, best_managers[0])
+                fun = partial(TaskApi.start_task, best_managers)
                 map(fun, tasks)
             else:
+                map(lambda t : setattr(t, 'status', 'ready'), tasks)
+                db.session.commit()
                 TaskApi.dispatch_tasks(job_id)
         else:
             logging.error('Job %d not found' % job_id)
