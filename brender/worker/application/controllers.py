@@ -165,19 +165,19 @@ def run_blender_in_thread(options):
     """We build the command to run blender in a thread
     """
     render_command = [
-        options['blender_path'],
+        str(options['blender_path']),
         '--background',
-        options['file_path'],
+        str(options['file_path']),
         '--render-output',
-        options['output_path'],
+        str(options['output_path']),
         '--python',
-        options['render_settings'],
+        str(options['render_settings']),
         '--frame-start' ,
-        options['start_frame'],
+        str(options['start_frame']),
         '--frame-end',
-        options['end_frame'],
+        str(options['end_frame']),
         '--render-format',
-        options['format'],
+        str(options['format']),
         '--render-anim',
         '--enable-autoexec'
         ]
