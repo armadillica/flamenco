@@ -69,9 +69,8 @@ class JobListApi(Resource):
         jobs = {}
         for job in Job.query.all():
 
-            #FIXME - Hacky and dirty fix to show correct percentage done
-            tasksforjob = len( Task.query.filter(Task.job_id == job.id).all() )
-            taskscompleteforjob = len( Task.query.filter(Task.job_id == job.id, Task.status == 'finished').all() )
+            tasksforjob = Task.query.filter(Task.job_id == job.id).count()
+            taskscompleteforjob = Task.query.filter(Task.job_id == job.id, Task.status == 'finished').count()
 
             percentage_done = 0
             frame_count = job.frame_end - job.frame_start + 1
