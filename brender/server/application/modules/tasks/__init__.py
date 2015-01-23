@@ -162,7 +162,7 @@ class TaskApi(Resource):
                   'priority' : job.priority,
                   'format': job.format}
 
-        http_rest_request(manager.host, '/tasks', 'post', params)
+        Thread(target=http_rest_request, args=[manager.host, '/tasks', 'post', params]).start()
         task.status = 'running'
         task.manager_id = manager.id
         db.session.add(task)
@@ -442,6 +442,6 @@ class TaskApi(Resource):
 
             db.session.commit()
 
-        Thread(target=TaskApi.dispatch_tasks).start()
+        TaskApi.dispatch_tasks()
 
         return '', 204
