@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 import os
 import socket
 from threading import Thread
@@ -28,7 +28,7 @@ def runserver():
         VIRTUAL_WORKERS = config.Config.VIRTUAL_WORKERS
     except ImportError:
         DEBUG = False
-        PORT = 7777 
+        PORT = 7777
         HOST = '0.0.0.0'
         VIRTUAL_WORKERS = False
         HOSTNAME = socket.gethostname()
