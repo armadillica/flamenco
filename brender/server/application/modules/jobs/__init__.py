@@ -91,7 +91,7 @@ class JobListApi(Resource):
     def start(self, job_id):
         job = Job.query.get(job_id)
         if job:
-            if job.status != 'running':
+            if job.status not in ['running', 'completed', 'failed']:
                 job.status = 'running'
                 db.session.add(job)
 
@@ -110,7 +110,7 @@ class JobListApi(Resource):
         # first we delete the associated jobs (no foreign keys)
         job = Job.query.get(job_id)
         if job:
-            if job.status != 'stopped':
+            if job.status not in ['stopped', 'completed', 'failed']:
                 TaskApi.stop_tasks(job.id)
                 job.status = 'stopped'
                 db.session.add(job)
