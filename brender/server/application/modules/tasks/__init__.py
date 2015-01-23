@@ -1,24 +1,23 @@
 import os
 import logging
-
-from flask.ext.restful import Resource
-from flask.ext.restful import reqparse
+from PIL import Image
+from platform import system
+from threading import Thread
+from sqlalchemy import func
 
 from flask import abort
 from flask import jsonify
 from flask import render_template
 from flask import request
+from flask.ext.restful import Resource
+from flask.ext.restful import reqparse
 
-from sqlalchemy import func
-
-# TODO(sergey): Generally not a good idea to import *
-from application.utils import *
 from application import app
 from application import db
-from PIL import Image
-from platform import system
 
-from application import app
+from application.utils import http_rest_request
+from application.utils import get_file_ext
+
 from application.modules.tasks.model import Task
 from application.modules.managers.model import Manager
 from application.modules.jobs.model import Job
@@ -26,7 +25,6 @@ from application.modules.projects.model import Project
 from application.modules.settings.model import Setting
 from application.modules.jobs.model import JobManagers
 
-from threading import Thread
 
 parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
@@ -105,41 +103,6 @@ class TaskApi(Resource):
         project = Project.query.filter_by(id = job.project_id).first()
 
         filepath = job.filepath
-
-        #if 'Darwin' in worker.system:
-        #    setting_blender_path = Setting.query.filter_by(name='blender_path_osx').first()
-        #    setting_render_settings = Setting.query.filter_by(name='render_settings_path_osx').first()
-        #    filepath = os.path.join(project.path_osx, job.filepath)
-        #elif 'Windows' in worker.system:
-        #    setting_blender_path = Setting.query.filter_by(name='blender_path_win').first()
-        #    setting_render_settings = Setting.query.filter_by(name='render_settings_path_win').first()
-        #    filepath = os.path.join(project.path_win, job.filepath)
-        #else:
-        #    setting_blender_path = Setting.query.filter_by(name='blender_path_linux').first()
-        #    setting_render_settings = Setting.query.filter_by(name='render_settings_path_linux').first()
-        #    filepath = os.path.join(project.path_linux, job.filepath)
-
-        #if setting_blender_path is None:
-        #    print '[Debug] blender path is not set'
-
-        #blender_path = setting_blender_path.value
-
-        #if setting_render_settings is None:
-        #    print '[Debug] render settings is not set'
-
-        #render_settings = os.path.join(
-        #    setting_render_settings.value,
-        #    job.render_settings)
-
-        """
-        Additional params for future reference
-
-        task_parameters = {'pre-run': 'svn up or other things',
-                          'command': 'blender_path -b ' +
-                                     '/filepath.blend -o /render_out -a',
-                          'post-frame': 'post frame',
-                          'post-run': 'clear variables, empty /tmp'}
-        """
 
         # NOTE: probably file_path_linux win and osx should only contain a hashed
         # version of the file name. The full path should be determined by the
