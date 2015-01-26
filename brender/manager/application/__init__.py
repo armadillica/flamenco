@@ -124,6 +124,57 @@ def register_manager(port, name, has_virtual_workers):
     # returned by the server
 
 
+from application.modules.workers.model import Worker
+from application.modules.settings.model import Setting
+
+import threading
+
+POOL_TIME = 5 #Seconds
+worker_lock = threading.Lock()
+worker_thread = threading.Thread()
+total_workers = 0
+
+def worker_loop_interrupt():
+    global worker_thread
+    worker_thread.cancel()
+
+
+def worker_loop():
+    global commonDataStruct
+    global worker_thread
+    global worker_lock
+    global total_workers
+
+    with worker_lock:
+        # Count the currently available workers
+        count_workers = 0
+        for worker in Worker.query.all():
+            if worker.is_connected:
+                if worker.status in ['enabled', 'rendering']:
+                    count_workers += 1
+
+        if total_workers != count_workers:
+            total_workers = count_workers
+            # Get the manager uuid
+            uuid = Setting.query.filter_by(name='uuid').one()
+
+            params = {'total_workers' : total_workers}
+
+            # Update the resource on the server
+            http_request(
+                app.config['BRENDER_SERVER'],
+                '/managers/{0}'.format(uuid.value),
+                'patch',
+                params=params)
+
+    worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
+    worker_thread.start()
+
+def worker_loop_start():
+    global worker_thread
+    worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
+    worker_thread.start()
+
 @app.errorhandler(404)
 def not_found(error):
     response = jsonify({'code' : 404, 'message' : 'No interface defined for URL'})

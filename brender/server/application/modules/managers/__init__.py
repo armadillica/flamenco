@@ -8,6 +8,10 @@ from flask.ext.restful import reqparse
 from application import db
 from application import app
 
+from flask.ext.restful import marshal_with
+from flask.ext.restful import fields
+from application.utils import list_integers_string
+
 from application.modules.managers.model import Manager
 
 parser = reqparse.RequestParser()
@@ -75,10 +79,13 @@ class ManagerListApi(Resource):
 
 class ManagerApi(Resource):
     def patch(self, manager_uuid):
+        from application.modules.tasks import TaskApi
+
         args = parser.parse_args()
         manager = Manager.query.filter_by(uuid=manager_uuid).one()
         # TODO add try except statement to safely handle .one() query
         manager.total_workers = args['total_workers']
         db.session.add(manager)
         db.session.commit()
+        TaskApi.dispatch_tasks()
         return jsonify(dict(total_workers=manager.total_workers))

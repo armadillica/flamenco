@@ -44,26 +44,6 @@ class WorkerListApi(Resource):
         db.session.add(worker)
         db.session.commit()
 
-        # Count the currently available workers
-        # TODO: refactor this into own reusable and concurrent function!
-        total_workers = 0
-        for worker in Worker.query.all():
-            if worker.is_connected:
-                if worker.status == 'enabled':
-                    total_workers += 1
-
-        # Get the manager uuid
-        uuid = Setting.query.filter_by(name='uuid').one()
-
-        params = {'total_workers' : total_workers}
-
-        # Update the resource on the server
-        http_request(
-            app.config['BRENDER_SERVER'], 
-            '/managers/{0}'.format(uuid.value),
-            'patch',
-            params=params)
-
         return '', 204
 
     def get(self):

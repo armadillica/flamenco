@@ -9,6 +9,8 @@ from flask.ext.migrate import MigrateCommand
 from application import app
 from application import db
 from application import register_manager
+from application import worker_loop_start
+from application import worker_loop_interrupt
 from tests import unittest
 
 manager = Manager(app)
@@ -47,10 +49,15 @@ def runserver():
         register_thread.setDaemon(False)
         register_thread.start()
 
+        worker_loop_start()
+
     app.run(
         port=PORT,
         debug=DEBUG,
         host=HOST)
+
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        worker_loop_interrupt()
 
 if __name__ == "__main__":
     manager.run()
