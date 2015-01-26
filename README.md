@@ -121,6 +121,8 @@ The documentation is made with Sphinx and uses the readthedocs.org theme, so mak
 
 The `_build` contains the locally compiled documentation, which does not need to be committed to the branch.
 
+We are using sphinxcontrib-httpdomain for the API docs, so make sure you do:
 
-
-
+```
+pip install sphinxcontrib-httpdomain
+```
