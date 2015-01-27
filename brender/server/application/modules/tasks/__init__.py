@@ -189,6 +189,11 @@ class TaskApi(Resource):
 
             print tasks
             for t in tasks:
+
+                job = Job.query.filter_by(id=t[0].job_id).first()
+                if not job.status in ['running', 'ready']:
+                    continue
+
                 rela = db.session.query(JobManagers.manager_id)\
                     .filter(JobManagers.job_id == t[0].job_id)\
                     .all()
@@ -290,9 +295,7 @@ class TaskApi(Resource):
         """
         task = Task.query.get(task_id)
         task.status = 'ready'
-        #TODO use database
-        #manager = Manager.query.get(task.manager_id)
-        manager = filter(lambda m : m.id == task.manager_id, Manager.query.all())[0]
+        manager = Manager.query.filter_by(id = task.manager_id).first()
         delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
         if manager.total_workers is not None:
             manager.running_tasks = manager.running_tasks - 1
