@@ -153,7 +153,7 @@ class TaskApi(Resource):
         db.session.commit()
 
         if task.status not in ['finished', 'failed']:
-            worker = Worker.query.get(task.worker_id)
+            worker = Worker.query.filter_by(current_task = task.id).first()
             worker.status = 'enabled'
             worker.current_task = None
             db.session.add(worker)
