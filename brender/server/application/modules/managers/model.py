@@ -38,13 +38,9 @@ class Manager(db.Model):
     def is_available(self):
         #return self.has_virtual_workers == 1 or self.total_workers - self.running_tasks > 0
         try:
-            print ('Asking manager for workers')
             r = requests.get("http://" + self.host + '/workers')
             info = r.json()
             for worker_hostname in info:
-                print('DBUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG')
-                print (info)
-                print (worker_hostname)
                 if not info[worker_hostname]['current_task']:
                     return True
         except Timeout:
