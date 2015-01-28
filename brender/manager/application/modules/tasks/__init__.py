@@ -13,6 +13,7 @@ from application.modules.tasks.model import Task
 from application.modules.workers.model import Worker
 
 import os
+import json
 
 import logging
 from threading import Thread
@@ -96,15 +97,29 @@ def schedule():
            setting_render_settings,
             task.settings)
 
+        #TODO the command will be in the database,
+        #and not generated in the fly
+        task_command = [
+        str(blender_path),
+        '--background',
+        str(file_path),
+        '--render-output',
+        str(output_path),
+        '--python',
+        str(render_settings),
+        '--frame-start' ,
+        str(task.frame_current),
+        '--frame-end',
+        str(task.frame_end),
+        '--render-format',
+        str(task.format),
+        '--render-anim',
+        '--enable-autoexec'
+        ]
+
         options = {
             'task_id' : task.id,
-            'file_path' : file_path,
-            'blender_path' : blender_path,
-            'start' : task.frame_current,
-            'end' : task.frame_end,
-            'render_settings' : render_settings,
-            'output_path' : output_path,
-            'format' : task.format}
+            'task_command' : json.dumps(task_command)}
 
         logging.info("send task %d" % task.server_id)
         pid = http_request(worker.host, '/execute_task', 'post', options)

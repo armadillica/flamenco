@@ -7,6 +7,7 @@ import platform
 import psutil
 import flask
 import os
+import json
 import select
 import requests
 import gocept.cache.method
@@ -162,25 +163,9 @@ def info():
 
 def run_blender_in_thread(options):
     global PROCESS
-    """We build the command to run blender in a thread
+    """We take the command and run it
     """
-    render_command = [
-        str(options['blender_path']),
-        '--background',
-        str(options['file_path']),
-        '--render-output',
-        str(options['output_path']),
-        '--python',
-        str(options['render_settings']),
-        '--frame-start' ,
-        str(options['start_frame']),
-        '--frame-end',
-        str(options['end_frame']),
-        '--render-format',
-        str(options['format']),
-        '--render-anim',
-        '--enable-autoexec'
-        ]
+    render_command = json.loads(options['task_command'])
 
     print("[Info] Running %s" % render_command)
 
@@ -227,13 +212,7 @@ def execute_task():
     global LOCK
     options = {
         'task_id': request.form['task_id'],
-        'file_path': request.form['file_path'],
-        'blender_path': request.form['blender_path'],
-        'start_frame': request.form['start'],
-        'end_frame': request.form['end'],
-        'render_settings': request.form['render_settings'],
-        'output_path': request.form['output_path'],
-        'format': request.form['format']
+        'task_command': request.form['task_command'],
     }
 
     LOCK.acquire()
