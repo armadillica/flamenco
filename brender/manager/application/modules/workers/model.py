@@ -13,6 +13,7 @@ class Worker(db.Model):
     status = db.Column(db.String(20))
     connection = db.Column(db.String(20))
     system = db.Column(db.String(20))
+    current_task = db.Column(db.String(20))
 
     __table_args__ = (UniqueConstraint('ip_address', 'port', name='connection_uix'),)
 

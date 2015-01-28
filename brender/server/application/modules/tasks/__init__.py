@@ -140,7 +140,7 @@ class TaskApi(Resource):
         #db.session.commit()
 
     @staticmethod
-    def dispatch_tasks(job_id=None):
+    def dispatch_tasks():
         """
         We want to assign a task according to its priority and its assignability
         to the less requested available compatible limited manager. If it does not exist,
@@ -178,86 +178,45 @@ class TaskApi(Resource):
                 .group_by(Manager)\
                 .all()
 
-        if job_id is None:
-            #Sort task by priority and then by amount of possible manager
-            tasks = db.session.query(Task, func.count(JobManagers.manager_id).label('mgr'))\
-                        .join(JobManagers, Task.job_id == JobManagers.job_id)\
-                        .filter(Task.status == 'ready')\
-                        .group_by(Task)\
-                        .order_by(Task.priority, 'mgr')\
-                        .all()
-
-            print tasks
-            for t in tasks:
-
-                job = Job.query.filter_by(id=t[0].job_id).first()
-                if not job.status in ['running', 'ready']:
-                    continue
-
-                rela = db.session.query(JobManagers.manager_id)\
-                    .filter(JobManagers.job_id == t[0].job_id)\
+        #Sort task by priority and then by amount of possible manager
+        tasks = db.session.query(Task, func.count(JobManagers.manager_id).label('mgr'))\
+                    .join(JobManagers, Task.job_id == JobManagers.job_id)\
+                    .filter(Task.status == 'ready')\
+                    .group_by(Task)\
+                    .order_by(Task.priority, 'mgr')\
                     .all()
 
-                # Get only accepted available managers
-                managers_available = filter(lambda m : m[0].is_available() and (m[0].id,) in rela, managers)
+        for t in tasks:
 
-                #Sort managers_available by asking
-                managers_available.sort(key=lambda m : m[1])
+            job = Job.query.filter_by(id=t[0].job_id).first()
+            if not job.status in ['running', 'ready']:
+                continue
 
-                if not managers_available:
-                    #Get the first unlimited manager available
-                    manager_unlimited = Manager.query\
-                        .join(JobManagers, Manager.id == JobManagers.manager_id)\
-                        .filter(JobManagers.job_id == t[0].job_id)\
-                        .filter(Manager.has_virtual_workers == 1)\
-                        .first()
-
-                    if manager_unlimited:
-                        TaskApi.start_task(manager_unlimited, t[0])
-                        manager_unlimited.running_tasks += 1
-                        db.session.commit()
-
-                else:
-                    TaskApi.start_task(managers_available[0][0], t[0])
-                    managers_available[0][0].running_tasks = managers_available[0][0].running_tasks + 1
-                    db.session.add(managers_available[0][0])
-                    db.session.commit()
-
-        else:
-            tasks = Task.query.filter_by(job_id=job_id,status='ready').all()
-            print tasks
             rela = db.session.query(JobManagers.manager_id)\
-                .filter(JobManagers.job_id == job_id)\
+                .filter(JobManagers.job_id == t[0].job_id)\
                 .all()
 
-            for t in tasks:
-                # Get only accepted available managers_available
-                managers_available = filter(lambda m : m[0].is_available() and (m[0].id,) in rela, managers)
-                for m in managers_available:
-                    print m[0].is_available()
-                    print m[0].total_workers - m[0].running_tasks
-                #Sort managers_available by asking
-                managers_available.sort(key=lambda m : m[1])
-                if not managers_available:
-                    #Get unlimited associated managers_available
-                    logging.info('No limited manager available')
-                    #managers_unlimited = filter(lambda m : m.has_virtual_workers == 1 and (m.id,) in rela, Manager.query.all())
-                    manager_unlimited = Manager.query.join(JobManagers, Manager.id == JobManagers.manager_id)\
-                            .filter(JobManagers.job_id == job_id)\
-                            .filter(Manager.has_virtual_workers == 1)\
-                            .first()
-                    if manager_unlimited:
-                        logging.info('Send to unlimited manager')
-                        TaskApi.start_task(manager_unlimited, t)
-                        manager_unlimited.running_tasks += 1
-                        db.session.commit()
+            # Get only accepted available managers
+            managers_available = filter(lambda m : m[0].is_available() and (m[0].id,) in rela, managers)
 
-                else:
-                    logging.info('Send to limited manager')
-                    TaskApi.start_task(managers_available[0][0], t)
-                    managers_available[0][0].running_tasks = managers_available[0][0].running_tasks + 1
-                    db.session.add(managers_available[0][0])
-                    db.session.commit()
+            #Sort managers_available by asking
+            managers_available.sort(key=lambda m : m[1])
+
+            if not managers_available:
+                print ('No Managers available')
+                #Get the first unlimited manager available
+                manager_unlimited = Manager.query\
+                    .join(JobManagers, Manager.id == JobManagers.manager_id)\
+                    .filter(JobManagers.job_id == t[0].job_id)\
+                    .filter(Manager.has_virtual_workers == 1)\
+                    .first()
+
+                if manager_unlimited:
+                    TaskApi.start_task(manager_unlimited, t[0])
+
+            else:
+                print ('Managers available')
+                TaskApi.start_task(managers_available[0][0], t[0])
 
     @staticmethod
     def delete_task(task_id):
@@ -278,8 +237,6 @@ class TaskApi(Resource):
             if t.status not in ['finished', 'failed', 'aborted', 'ready']:
                 manager = Manager.query.get(t.manager_id)
                 delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
-                if manager.total_workers is not None:
-                    manager.running_tasks = manager.running_tasks - 1
                 job = Job.query.get(t.job_id)
                 if job.current_frame < delete_task['frame_current']:
                     job.current_frame = delete_task['frame_current']
@@ -293,12 +250,15 @@ class TaskApi(Resource):
     def stop_task(task_id):
         """Stop a single task
         """
+        print ('Stoping task %s' % task_id)
         task = Task.query.get(task_id)
         task.status = 'ready'
         manager = Manager.query.filter_by(id = task.manager_id).first()
-        delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
-        if manager.total_workers is not None:
-            manager.running_tasks = manager.running_tasks - 1
+        try:
+            delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
+        except:
+            return
+            pass
         task.current_frame = delete_task['frame_current']
         task.status = delete_task['status']
         db.session.add(task)
@@ -379,8 +339,6 @@ class TaskApi(Resource):
             db.session.add(task)
 
             manager = Manager.query.get(task.manager_id)
-            manager.running_tasks = manager.running_tasks - 1
-            db.session.add(manager)
 
             if status == 'finished':
                 #self.generate_thumbnails(job, task.chunk_start, task.chunk_end)

@@ -2,6 +2,11 @@ from application import db
 from urllib import urlopen
 from sqlalchemy import UniqueConstraint
 
+import requests
+import logging
+from requests.exceptions import Timeout
+from requests.exceptions import ConnectionError
+
 class Manager(db.Model):
     """Model for the managers connected to the server. When a manager
     connects, we veryfy that it has connected before, by checking its 
@@ -31,7 +36,23 @@ class Manager(db.Model):
         return self.ip_address + ':' + str(self.port)
 
     def is_available(self):
-        return self.has_virtual_workers == 1 or self.total_workers - self.running_tasks > 0
+        #return self.has_virtual_workers == 1 or self.total_workers - self.running_tasks > 0
+        try:
+            print ('Asking manager for workers')
+            r = requests.get("http://" + self.host + '/workers')
+            info = r.json()
+            for worker_hostname in info:
+                print('DBUGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG')
+                print (info)
+                print (worker_hostname)
+                if not info[worker_hostname]['current_task']:
+                    return True
+        except Timeout:
+            logging.warning("Manager {0} is not online".format(self.host))
+            return False
+        except ConnectionError:
+            logging.warning("Manager {0} is not online".format(self.host))
+            return False
 
     @property
     def is_connected(self):

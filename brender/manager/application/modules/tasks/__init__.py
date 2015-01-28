@@ -15,6 +15,7 @@ from application.modules.workers.model import Worker
 import os
 
 import logging
+from threading import Thread
 
 parser = reqparse.RequestParser()
 parser.add_argument('priority', type=int)
@@ -47,7 +48,7 @@ task_fields = {
 }
 
 def get_availabe_worker():
-    worker = Worker.query.filter_by(status='enabled').filter_by(connection='online').first()
+    worker = Worker.query.filter_by(status='enabled', connection='online', current_task=None).first()
     if worker is None:
         return None
     elif not worker.is_connected:
@@ -65,7 +66,6 @@ def schedule():
         if worker is None:
             logging.debug("No worker available")
             break
-        task.worker_id = worker.id
         task.status = 'running'
 
         if 'Darwin' in worker.system:
@@ -109,6 +109,7 @@ def schedule():
         logging.info("send task %d" % task.server_id)
         pid = http_request(worker.host, '/execute_task', 'post', options)
         worker.status = 'busy'
+        worker.current_task = task.id
         task.pid = int(pid['pid'])
         db.session.add(task)
         db.session.add(worker)
@@ -154,6 +155,7 @@ class TaskApi(Resource):
         if task.status not in ['finished', 'failed']:
             worker = Worker.query.get(task.worker_id)
             worker.status = 'enabled'
+            worker.current_task = None
             db.session.add(worker)
             db.session.commit()
             task.status = 'aborted'
@@ -168,13 +170,14 @@ class TaskApi(Resource):
         task.status = args['status']
 
         if task.status in ['finished', 'failed']:
-            worker = Worker.query.get(task.worker_id)
+            worker = Worker.query.filter_by(current_task = task.id).first()
             worker.status = 'enabled'
+            worker.current_task = None
             db.session.add(worker)
             db.session.delete(task)
             db.session.commit()
             params = { 'id' : task.server_id, 'status' : task.status }
-            http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
-            schedule()
+            request_thread = Thread(target=http_request, args=(app.config['BRENDER_SERVER'], '/tasks', 'post'), kwargs= {'params':params})
+            request_thread.start()
 
         return '', 204

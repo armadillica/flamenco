@@ -100,13 +100,13 @@ class JobListApi(Resource):
                         .update({'status' : 'ready'})
                 db.session.commit()
                 print ('[debug] Dispatching tasks')
-            TaskApi.dispatch_tasks(job_id)
+            TaskApi.dispatch_tasks()
         else:
             print('[error] Job %d not found' % job_id)
             raise KeyError
 
     def stop(self, job_id):
-        print '[info] Working on job', job_id
+        print '[info] Stopping job', job_id
         # first we delete the associated jobs (no foreign keys)
         job = Job.query.get(job_id)
         if job:
@@ -159,7 +159,7 @@ class JobListApi(Resource):
             else:
                 map(lambda t : setattr(t, 'status', 'ready'), tasks)
                 db.session.commit()
-                TaskApi.dispatch_tasks(job_id)
+                TaskApi.dispatch_tasks()
         else:
             logging.error('Job %d not found' % job_id)
             raise KeyError
@@ -217,7 +217,7 @@ class JobListApi(Resource):
         logging.info('Parsing job to create tasks')
         TaskApi.create_tasks(job)
         logging.info('Refresh list of available workers')
-        TaskApi.dispatch_tasks(job.id)
+        TaskApi.dispatch_tasks()
         return job, 201
 
 
