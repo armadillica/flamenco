@@ -74,8 +74,9 @@ class JobListApi(Resource):
 
             percentage_done = 0
             frame_count = job.frame_end - job.frame_start + 1
-            percentage_done = round(float(taskscompleteforjob) / float(tasksforjob) * 100.0,
-                                    1)
+
+            if tasksforjob and taskscompleteforjob:
+                percentage_done = round(float(taskscompleteforjob) / float(tasksforjob) * 100.0, 1)
 
             jobs[job.id] = {"job_name" : job.name,
                             "frame_start" : job.frame_start,
