@@ -5,3 +5,5 @@ class Config(object):
     DEBUG=True
     PORT=9999
     HOST='0.0.0.0' # or 'localhost'
+    TMP_FOLDER = '/tmp/'
+    THUMBNAIL_EXTENSIONS = set(['png'])

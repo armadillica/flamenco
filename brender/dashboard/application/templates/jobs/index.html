@@ -18,7 +18,7 @@
 
       "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
         $('td:eq(1)', nRow).html(aData[1]);
-        $('td:eq(2)', nRow).html('<a href="/jobs/' + aData[1] + '">' /* <img src="' + aData[6] + '"/> </a>'*/);
+        $('td:eq(2)', nRow).html('<a href="/jobs/' + aData[1] + '"> <img src="' + aData[6] + '"/> </a>');
         $('td:eq(3)', nRow).html(aData[2]);
         $('td:eq(4)', nRow).html('<div class="progress"><div class="progress-bar" role="progressbar" aria-valuenow="' + aData[3] + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + aData[3] + '%;"><span class="sr-only">' + aData[3] + '% Complete</span></div></div>');
         var job_status_label = '';

@@ -7,10 +7,12 @@ app = Flask(__name__)
 try:
     import config
     app.config.update(
-        BRENDER_MANAGER = config.Config.BRENDER_MANAGER
+        BRENDER_MANAGER = config.Config.BRENDER_MANAGER,
+        TMP_FOLDER = config.Config.TMP_FOLDER,
     )
 except ImportError:
     app.config['BRENDER_MANAGER'] = 'localhost:7777'
+    app.config['TMP_FOLDER'] = '/tmp/'
 
 from controllers import controller_bp
 app.register_blueprint(controller_bp, url_prefix='/')

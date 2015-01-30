@@ -129,6 +129,30 @@ def _interactiveReadProcessWin(process, task_id):
     full_buffer += _checkProcessOutputWin(process, q)
     return (process.returncode, full_buffer)
 
+import re
+
+def parser(output, task_id):
+    """
+    Parser test, TODO: move this.
+    """
+
+    re_frame = re.compile(
+    r'Saved: (.*?)\s'
+    )
+
+    match = re_frame.findall(output)
+    if len(match):
+        file_name = "thumbnail_%s.png" % task_id
+        output_path = os.path.join(app.config['TMP_FOLDER'], file_name)
+        subprocess.call(["convert", "-identify", match[-1], "-thumbnail", "50x50^", "-gravity", "center", "-extent", "50x50", "-colorspace", "RGB", output_path ])
+
+        params = dict(task_id=task_id)
+
+        thumbnail_file = open(str(output_path), 'r')
+        manager_url = "http://%s/thumbnails" % (app.config['BRENDER_MANAGER'])
+        r = requests.post(manager_url, files={'file': thumbnail_file}, data=params)
+        thumbnail_file.close()
+
 def _interactiveReadProcess(process, task_id):
     full_buffer = ''
     tmp_buffer = ''
@@ -136,8 +160,7 @@ def _interactiveReadProcess(process, task_id):
         tmp_buffer += _checkProcessOutput(process)
 
         if tmp_buffer:
-            # http_request("update_blender_output_from_i_dont_know", tmp_buffer)
-            pass
+            parser(tmp_buffer, task_id)
         full_buffer += tmp_buffer
         if process.poll() is not None:
             break

@@ -17,6 +17,8 @@ migrate = Migrate(app, db)
 try:
     from application import config
     app.config['SQLALCHEMY_DATABASE_URI'] = config.Config.SQLALCHEMY_DATABASE_URI
+    app.config['TMP_FOLDER']= config.Config.TMP_FOLDER
+    app.config['THUMBNAIL_EXTENSIONS']= config.Config.THUMBNAIL_EXTENSIONS
 except ImportError:
     from modules.managers.model import Manager
     app.config.update(
@@ -32,8 +34,12 @@ api.add_resource(ProjectApi, '/projects/<int:project_id>')
 
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
+from modules.workers import ThumbnailListApi
+from modules.workers import ThumbnailApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
+api.add_resource(ThumbnailListApi, '/thumbnails')
+api.add_resource(ThumbnailApi, '/thumbnail/<int:job_id>')
 
 from modules.managers import ManagerListApi
 from modules.managers import ManagerApi

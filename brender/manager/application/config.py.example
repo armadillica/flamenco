@@ -20,3 +20,5 @@ class Config(object):
     SETTINGS_PATH_LINUX = ""
     SETTINGS_PATH_OSX = ""
     SETTINGS_PATH_WIN = ""
+    TMP_FOLDER = '/tmp/'
+    THUMBNAIL_EXTENSIONS = set(['png'])

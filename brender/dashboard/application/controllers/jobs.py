@@ -32,15 +32,6 @@ BRENDER_SERVER = app.config['BRENDER_SERVER']
 # Name of the Blueprint
 jobs = Blueprint('jobs', __name__)
 
-def last_thumbnail(job_id):
-    pass
-    #render_dir = RENDER_PATH + "/" + str(job_id)
-    #if not exists(render_dir):
-    #    return ""
-
-    #files = sorted(["/" + render_dir + "/" + f for f in listdir(render_dir) if  f.endswith(".thumb")])
-    #return files.pop() if files else ""
-
 
 @jobs.route('/')
 def index():
@@ -57,7 +48,7 @@ def index():
             "3": val['percentage_done'],
             "4": val['render_settings'],
             "5": val['status'],
-            "6" : last_thumbnail(key)})
+            "6" : 'http://%s/thumbnail/%s' % (BRENDER_SERVER, key)})
         #print(v)
 
     jobs_list = sorted(jobs_list, key=lambda x: x['1'])

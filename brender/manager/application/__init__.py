@@ -20,9 +20,11 @@ from helpers import http_request
 
 try:
     from application import config
+    app.config['TMP_FOLDER']= config.Config.TMP_FOLDER
+    app.config['THUMBNAIL_EXTENSIONS']= config.Config.THUMBNAIL_EXTENSIONS
     app.config.update(
         BRENDER_SERVER=config.Config.BRENDER_SERVER,
-        SQLALCHEMY_DATABASE_URI= config.Config.SQLALCHEMY_DATABASE_URI
+        SQLALCHEMY_DATABASE_URI= config.Config.SQLALCHEMY_DATABASE_URI,
     )
 
     if not config.Config.IS_PRIVATE_MANAGER:
@@ -81,8 +83,10 @@ api.add_resource(TaskApi, '/tasks/<int:task_id>')
 
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
+from modules.workers import ThumbnailListApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
+api.add_resource(ThumbnailListApi, '/thumbnails')
 
 from modules.settings import SettingsListApi
 from modules.settings import SettingApi
