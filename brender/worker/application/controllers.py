@@ -148,7 +148,8 @@ def parser(output, task_id):
     if len(match):
         file_name = "thumbnail_%s.png" % task_id
         output_path = os.path.join(app.config['TMP_FOLDER'], file_name)
-        subprocess.call(["convert", "-identify", match[-1], "-thumbnail", "50x50^", "-gravity", "center", "-extent", "50x50", "-colorspace", "RGB", output_path ])
+        #subprocess.call(["convert", "-identify", match[-1], "-thumbnail", "50x50^", "-gravity", "center", "-extent", "50x50", "-colorspace", "RGB", output_path ])
+        subprocess.call(["convert", "-identify", match[-1], "-colorspace", "RGB", output_path ])
 
         params = dict(task_id=task_id)
         manager_url = "http://%s/thumbnails" % (app.config['BRENDER_MANAGER'])
