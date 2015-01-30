@@ -131,6 +131,11 @@ def _interactiveReadProcessWin(process, task_id):
 
 import re
 
+def send_thumbnail(manager_url, file_path, params):
+            thumbnail_file = open(file_path, 'r')
+            requests.post(manager_url, files={'file': thumbnail_file}, data=params)
+            thumbnail_file.close()
+
 def parser(output, task_id):
     """Parser test, TODO: move this.
     """
@@ -146,11 +151,10 @@ def parser(output, task_id):
         subprocess.call(["convert", "-identify", match[-1], "-thumbnail", "50x50^", "-gravity", "center", "-extent", "50x50", "-colorspace", "RGB", output_path ])
 
         params = dict(task_id=task_id)
-
-        thumbnail_file = open(str(output_path), 'r')
         manager_url = "http://%s/thumbnails" % (app.config['BRENDER_MANAGER'])
-        r = requests.post(manager_url, files={'file': thumbnail_file}, data=params)
-        thumbnail_file.close()
+
+        request_thread = Thread(target=send_thumbnail, args=(manager_url, output_path, params))
+        request_thread.start()
 
 def _interactiveReadProcess(process, task_id):
     full_buffer = ''

@@ -18,6 +18,7 @@ from application.modules.settings.model import Setting
 from application.modules.tasks.model import Task
 from application.helpers import http_request
 
+from threading import Thread
 
 parser = reqparse.RequestParser()
 parser.add_argument('port', type=int)
@@ -89,6 +90,11 @@ class ThumbnailListApi(Resource):
     """Thumbnail list interface for the Manager
     """
 
+    def send_thumbnail(self, server_url, file_path, params):
+            thumbnail_file = open(file_path, 'r')
+            requests.post(server_url, files={'file': thumbnail_file}, data=params)
+            thumbnail_file.close()
+
     def allowed_file(self, filename):
         """Filter extensions acording to THUMBNAIL_EXTENSIONS configuration.
         """
@@ -99,6 +105,7 @@ class ThumbnailListApi(Resource):
         """Accepts a thumbnail file and a task_id (worker task_id),
         and send it to the Server with the task_id (server task_id).
         """
+
         args = parser_thumbnail.parse_args()
         task = Task.query.get(args['task_id'])
         file = request.files['file']
@@ -108,8 +115,7 @@ class ThumbnailListApi(Resource):
             file.save(full_path)
 
         params = dict(task_id=task.server_id)
-
-        thumbnail_file = open(full_path, 'r')
         server_url = "http://%s/thumbnails" % (app.config['BRENDER_SERVER'])
-        r = requests.post(server_url, files={'file': thumbnail_file}, data=params)
-        thumbnail_file.close()
+
+        request_thread = Thread(target=self.send_thumbnail, args=(server_url, full_path, params))
+        request_thread.start()
