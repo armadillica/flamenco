@@ -57,8 +57,8 @@ def register_worker(port):
     import httplib
     while True:
         try:
-            connection = httplib.HTTPConnection('127.0.0.1', port)
-            connection.request("GET", "/info")
+            manager_url = "http://{0}/thumbnails".format(app.config['BRENDER_MANAGER'])
+            requests.get(manager_url)
             break
         except socket.error:
             pass
