@@ -169,12 +169,13 @@ class TaskApi(Resource):
 
         if task.status not in ['finished', 'failed']:
             worker = Worker.query.filter_by(current_task = task.id).first()
-            worker.status = 'enabled'
-            worker.current_task = None
-            db.session.add(worker)
-            db.session.commit()
-            task.status = 'aborted'
-            http_request(worker.host, '/kill/' + str(task.pid), 'delete')
+            if worker:
+                worker.status = 'enabled'
+                worker.current_task = None
+                db.session.add(worker)
+                db.session.commit()
+                task.status = 'aborted'
+                http_request(worker.host, '/kill/' + str(task.pid), 'delete')
 
         return task, 202
 
