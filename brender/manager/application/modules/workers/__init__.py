@@ -86,20 +86,17 @@ class WorkerApi(Resource):
         return http_request(worker.host, '/run_info', 'get')
 
 class ThumbnailListApi(Resource):
-    """
-    Thumbnail list interface for the Manager
+    """Thumbnail list interface for the Manager
     """
 
     def allowed_file(self, filename):
-        """
-        Filter extensions acording to THUMBNAIL_EXTENSIONS configuration.
+        """Filter extensions acording to THUMBNAIL_EXTENSIONS configuration.
         """
         return '.' in filename and \
                filename.rsplit('.', 1)[1] in app.config['THUMBNAIL_EXTENSIONS']
 
     def post(self):
-        """
-        Accepts a thumbnail file and a task_id (worker task_id),
+        """Accepts a thumbnail file and a task_id (worker task_id),
         and send it to the Server with the task_id (server task_id).
         """
         args = parser_thumbnail.parse_args()

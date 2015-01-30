@@ -55,19 +55,16 @@ class WorkerApi(Resource):
 
 
 class ThumbnailListApi(Resource):
-    """
-    Thumbnail list interface for the Server
+    """Thumbnail list interface for the Server
     """
     def allowed_file(self, filename):
-        """
-        Filter extensions acording to THUMBNAIL_EXTENSIONS configuration.
+        """Filter extensions acording to THUMBNAIL_EXTENSIONS configuration.
         """
         return '.' in filename and \
                filename.rsplit('.', 1)[1] in app.config['THUMBNAIL_EXTENSIONS']
 
     def post(self):
-        """
-        Accepts a thumbnail file and a task_id and stores it.
+        """Accepts a thumbnail file and a task_id and stores it.
         """
         args = parser_thumbnail.parse_args()
         task = Task.query.get(args['task_id'])
@@ -79,12 +76,10 @@ class ThumbnailListApi(Resource):
 
 
 class ThumbnailApi(Resource):
-    """
-    Thumbnail interface for the Server
+    """Thumbnail interface for the Server
     """
     def get(self, job_id):
-        """
-        Returns the last thumbnail for the Job, or a blank
+        """Returns the last thumbnail for the Job, or a blank
         image if none.
         """
         def generate():

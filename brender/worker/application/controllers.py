@@ -132,8 +132,7 @@ def _interactiveReadProcessWin(process, task_id):
 import re
 
 def parser(output, task_id):
-    """
-    Parser test, TODO: move this.
+    """Parser test, TODO: move this.
     """
 
     re_frame = re.compile(
