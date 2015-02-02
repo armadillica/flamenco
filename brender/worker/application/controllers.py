@@ -57,7 +57,7 @@ def register_worker(port):
     import httplib
     while True:
         try:
-            manager_url = "http://{0}/thumbnails".format(app.config['BRENDER_MANAGER'])
+            manager_url = "http://{0}/info".format(app.config['BRENDER_MANAGER'])
             requests.get(manager_url)
             break
         except socket.error:
