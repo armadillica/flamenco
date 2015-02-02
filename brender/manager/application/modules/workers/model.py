@@ -25,7 +25,7 @@ class Worker(db.Model):
     @property
     def is_connected(self):
         try:
-            r = requests.get("http://" + self.host, timeout=0.5)
+            r = requests.get("http://" + self.host + '/info', timeout=0.5)
             r.raise_for_status()
             info = r.json()
             self.status = info['status']
