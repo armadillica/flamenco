@@ -2,6 +2,7 @@ import requests
 import logging
 from requests.exceptions import Timeout
 from requests.exceptions import ConnectionError
+from requests.exceptions import HTTPError
 from application import db
 from sqlalchemy import UniqueConstraint
 
@@ -25,16 +26,20 @@ class Worker(db.Model):
     def is_connected(self):
         try:
             r = requests.get("http://" + self.host, timeout=0.5)
+            r.raise_for_status()
             info = r.json()
             self.status = info['status']
             print info['status']
             db.session.commit()
             return True
         except Timeout:
-            logging.warning("Worker {0} is not online".format(self.host))
+            logging.warning("Worker {0} is not online (Timeout)".format(self.host))
             return False
         except ConnectionError:
-            logging.warning("Worker {0} is not online".format(self.host))
+            logging.warning("Worker {0} is not online (Connection Error)".format(self.host))
+            return False
+        except HTTPError:
+            logging.warning("Worker {0} is not online (HTTP Error)".format(self.host))
             return False
 
     def __repr__(self):
