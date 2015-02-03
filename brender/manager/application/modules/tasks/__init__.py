@@ -56,7 +56,7 @@ task_fields = {
 }
 
 def get_availabe_worker():
-    worker = Worker.query.filter_by(status='enabled', connection='online', current_task=None).first()
+    worker = Worker.query.filter_by(status='enabled', connection='online').first()
     if worker is None:
         return None
     elif not worker.is_connected:
@@ -192,7 +192,7 @@ class TaskApi(Resource):
 
         task.status = args['status']
 
-        if task.status in ['finished', 'failed']:
+        if task.status in ['finished', 'failed', 'aborted']:
             worker = Worker.query.filter_by(current_task = task.id).first()
             worker.status = 'enabled'
             worker.current_task = None
