@@ -227,6 +227,11 @@ class TaskThumbnailListApi(Resource):
 
         args = parser_thumbnail.parse_args()
         task = Task.query.get(args['task_id'])
+
+        if not task:
+            logging.info("Task {0} don't exist anymore".format(args['task_id']))
+            return
+
         file = request.files['file']
         full_path = os.path.join(app.config['TMP_FOLDER'], file.filename)
         if file and self.allowed_file(file.filename):
