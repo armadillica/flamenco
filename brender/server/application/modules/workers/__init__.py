@@ -1,4 +1,5 @@
 import os
+import shutil
 import json
 import requests
 from flask import Flask
@@ -69,10 +70,13 @@ class ThumbnailListApi(Resource):
         args = parser_thumbnail.parse_args()
         task = Task.query.get(args['task_id'])
         thumbnail_filename = "thumbnail_%s.png" % task.job_id
+
         file = request.files['file']
         if file and self.allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join( app.config['TMP_FOLDER'] , thumbnail_filename))
+            filepath=os.path.join( app.config['TMP_FOLDER'] , thumbnail_filename)
+            filepath_last=os.path.join( app.config['TMP_FOLDER'] , 'thumbnail_last.png')
+            file.save(filepath)
+            shutil.copy2(filepath, filepath_last)
 
 
 class ThumbnailApi(Resource):
@@ -83,7 +87,11 @@ class ThumbnailApi(Resource):
         image if none.
         """
         def generate():
-            file_path = os.path.join(app.config['TMP_FOLDER'],'thumbnail_%s.png' % job_id)
+            if (job_id==0):
+                filename='thumbnail_last.png'
+            else:
+                filename='thumbnail_%s.png' % job_id
+            file_path = os.path.join(app.config['TMP_FOLDER'],filename)
             print (file_path)
             if os.path.isfile(file_path):
                 thumb_file = open(str(file_path), 'r')
