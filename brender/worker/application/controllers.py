@@ -161,16 +161,21 @@ def _interactiveReadProcess(process, task_id):
     full_buffer = ''
     tmp_buffer = ''
     while True:
-        tmp_buffer += _checkProcessOutput(process)
+        tmp_buffer = _checkProcessOutput(process)
 
         if tmp_buffer:
-            parser(tmp_buffer, task_id)
-        full_buffer += tmp_buffer
+            parser(tmp_buffer,task_id)
+            logpath = os.path.join(app.config['TMP_FOLDER'], "{0}.log".format(task_id))
+            f = open(logpath,"a")
+            f.write(tmp_buffer)
+            f.close()
+            pass
         if process.poll() is not None:
             break
     # It might be some data hanging around in the buffers after
     # the process finished
-    full_buffer += _checkProcessOutput(process)
+    #full_buffer += _checkProcessOutput(process)
+
     return (process.returncode, full_buffer)
 
 @app.route('/')
