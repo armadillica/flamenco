@@ -78,15 +78,15 @@ api = Api(app)
 
 from modules.tasks import TaskManagementApi
 from modules.tasks import TaskApi
+from modules.tasks import TaskThumbnailListApi
 api.add_resource(TaskManagementApi, '/tasks')
 api.add_resource(TaskApi, '/tasks/<int:task_id>')
+api.add_resource(TaskThumbnailListApi, '/tasks/thumbnails')
 
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
-from modules.workers import ThumbnailListApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
-api.add_resource(ThumbnailListApi, '/thumbnails')
 
 from modules.settings import SettingsListApi
 from modules.settings import SettingApi

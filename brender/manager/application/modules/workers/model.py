@@ -15,6 +15,7 @@ class Worker(db.Model):
     connection = db.Column(db.String(20))
     system = db.Column(db.String(20))
     current_task = db.Column(db.String(20))
+    activity = db.Column(db.String(64))
 
     __table_args__ = (UniqueConstraint('ip_address', 'port', name='connection_uix'),)
 
@@ -29,7 +30,8 @@ class Worker(db.Model):
             r.raise_for_status()
             info = r.json()
             self.status = info['status']
-            print info['status']
+            self.activity = info['activity']
+            #print info['status']
             db.session.commit()
             return True
         except Timeout:

@@ -30,6 +30,7 @@ HOSTNAME = socket.gethostname()  # the hostname of the worker
 SYSTEM = platform.system() + ' ' + platform.release()
 PROCESS = None
 LOCK = Lock()
+ACTIVITY = ""
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
@@ -139,11 +140,20 @@ def send_thumbnail(manager_url, file_path, params):
 def parser(output, task_id):
     """Parser test, TODO: move this.
     """
+    global ACTIVITY
 
+    #Store Activity
+    re_frame = re.compile(
+    r'.* \| (.*)'
+    )
+    match = re_frame.findall(output)
+    if len(match):
+        ACTIVITY=match[-1]
+
+    #Send Thumbnail
     re_frame = re.compile(
     r'Saved: (.*?)\s'
     )
-
     match = re_frame.findall(output)
     if len(match):
         file_name = "thumbnail_%s.png" % task_id
@@ -152,7 +162,7 @@ def parser(output, task_id):
         subprocess.call(["convert", "-identify", match[-1], "-colorspace", "RGB", output_path ])
 
         params = dict(task_id=task_id)
-        manager_url = "http://%s/thumbnails" % (app.config['BRENDER_MANAGER'])
+        manager_url = "http://%s/tasks/thumbnails" % (app.config['BRENDER_MANAGER'])
 
         request_thread = Thread(target=send_thumbnail, args=(manager_url, output_path, params))
         request_thread.start()
@@ -191,6 +201,7 @@ def info():
     return jsonify(mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
                    system=SYSTEM,
+                   activity=ACTIVITY,
                    status=status)
 
 def run_blender_in_thread(options):

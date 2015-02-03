@@ -34,12 +34,8 @@ api.add_resource(ProjectApi, '/projects/<int:project_id>')
 
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
-from modules.workers import ThumbnailListApi
-from modules.workers import ThumbnailApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
-api.add_resource(ThumbnailListApi, '/thumbnails')
-api.add_resource(ThumbnailApi, '/thumbnail/<int:job_id>')
 
 from modules.managers import ManagerListApi
 from modules.managers import ManagerApi
@@ -59,9 +55,13 @@ api.add_resource(FileBrowserApi, '/browse/<path:path>')
 from modules.jobs import JobListApi
 from modules.jobs import JobApi
 from modules.jobs import JobDeleteApi
+from modules.jobs import JobThumbnailListApi
+from modules.jobs import JobThumbnailApi
 api.add_resource(JobListApi, '/jobs')
 api.add_resource(JobApi, '/jobs/<int:job_id>')
 api.add_resource(JobDeleteApi, '/jobs/delete')
+api.add_resource(JobThumbnailListApi, '/jobs/thumbnails')
+api.add_resource(JobThumbnailApi, '/jobs/thumbnails/<int:job_id>')
 
 from modules.tasks import TaskApi
 api.add_resource(TaskApi, '/tasks')

@@ -34,7 +34,8 @@ def index():
             "3": val['ip_address'],
             "4": val['connection'],
             "5": val['status'],
-            "6": val['id']
+            "6": val['id'],
+            "7": val['activity']
         })
 
     entries = json.dumps(workers_list)

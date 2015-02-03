@@ -48,7 +48,7 @@ def index():
             "3": val['percentage_done'],
             "4": val['render_settings'],
             "5": val['status'],
-            "6" : 'http://%s/thumbnail/%s' % (BRENDER_SERVER, key)})
+            "6" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key)})
         #print(v)
 
     jobs_list = sorted(jobs_list, key=lambda x: x['1'])

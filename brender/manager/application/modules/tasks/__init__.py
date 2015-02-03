@@ -5,6 +5,9 @@ from flask.ext.restful import fields
 
 from flask import jsonify
 from flask import abort
+from flask import request
+
+from werkzeug import secure_filename
 
 from application import http_request
 from application import db
@@ -14,6 +17,7 @@ from application.modules.workers.model import Worker
 
 import os
 import json
+import requests
 
 import logging
 from threading import Thread
@@ -35,6 +39,9 @@ parser.add_argument('render_settings', type=str)
 
 status_parser = reqparse.RequestParser()
 status_parser.add_argument('status', type=str, required=True)
+
+parser_thumbnail = reqparse.RequestParser()
+parser_thumbnail.add_argument("task_id", type=int)
 
 task_fields = {
     'id' : fields.Integer,
@@ -197,3 +204,37 @@ class TaskApi(Resource):
             request_thread.start()
 
         return '', 204
+
+class TaskThumbnailListApi(Resource):
+    """Thumbnail list interface for the Manager
+    """
+
+    def send_thumbnail(self, server_url, file_path, params):
+            thumbnail_file = open(file_path, 'r')
+            requests.post(server_url, files={'file': thumbnail_file}, data=params)
+            thumbnail_file.close()
+
+    def allowed_file(self, filename):
+        """Filter extensions acording to THUMBNAIL_EXTENSIONS configuration.
+        """
+        return '.' in filename and \
+               filename.rsplit('.', 1)[1] in app.config['THUMBNAIL_EXTENSIONS']
+
+    def post(self):
+        """Accepts a thumbnail file and a task_id (worker task_id),
+        and send it to the Server with the task_id (server task_id).
+        """
+
+        args = parser_thumbnail.parse_args()
+        task = Task.query.get(args['task_id'])
+        file = request.files['file']
+        full_path = os.path.join(app.config['TMP_FOLDER'], file.filename)
+        if file and self.allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(full_path)
+
+        params = dict(task_id=task.server_id)
+        server_url = "http://%s/jobs/thumbnails" % (app.config['BRENDER_SERVER'])
+
+        request_thread = Thread(target=self.send_thumbnail, args=(server_url, full_path, params))
+        request_thread.start()

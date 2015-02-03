@@ -16,15 +16,18 @@
                  null,
                  null,
                  null,
+                 null,
                  { "bVisible" : false}
              ],
 
             "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
                 if (aData[4] == "offline"){
-                    $('td:eq(4)', nRow).html('<span class="label label-danger">offline</span>');
+                    $('td:eq(5)', nRow).html('<span class="label label-danger">offline</span>');
                 } else if (aData[4] == "online"){
-                    $('td:eq(4)', nRow).html('<span class="label label-success">online</span>');
+                    $('td:eq(5)', nRow).html('<span class="label label-success">online</span>');
                 }
+
+                $('td:eq(4)', nRow).html( aData[7] );
 
                 var worker_status_label = '';
                 if (aData[5] === 'enabled') {
@@ -33,8 +36,10 @@
                   worker_status_label = '<span class="label label-warning">' + aData[5] + '</label>';
                 } else if (aData[5] === 'busy') {
                   worker_status_label = '<span class="label label-info">' + aData[5] + '</label>';
+                } else if (aData[5] === 'rendering') {
+                  worker_status_label = '<span class="label label-info">' + aData[5] + '</label>';
                 }
-                $('td:eq(5)', nRow).html(worker_status_label);
+                $('td:eq(6)', nRow).html(worker_status_label);
 
                 $('td:eq(1)', nRow).html('<a href="/workers/view/' + aData[6] + '"> ' + aData[1] + ' </a>');
             }
@@ -121,6 +126,7 @@
                         <th width="20%">Hostname</th>
                         <th width="20%">System</th>
                         <th width="20%">IP Address</th>
+                        <th width="20%">Activity</th>
                         <th width="20%">Connection</th>
                         <th width="20%">Status</th>
                     </tr>
@@ -134,6 +140,7 @@
                         <th>Hostname</th>
                         <th>System</th>
                         <th>IP Address</th>
+                        <th>Activity</th>
                         <th>Connection</th>
                         <th>Status</th>
                     </tr>

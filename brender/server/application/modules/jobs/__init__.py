@@ -1,5 +1,7 @@
 import logging
 import os
+import shutil
+import requests
 from os import listdir
 from os.path import join
 from os.path import exists
@@ -7,6 +9,8 @@ from shutil import rmtree
 from functools import partial
 
 from flask import jsonify
+from flask import Response
+from flask import request
 
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
@@ -47,6 +51,9 @@ job_parser.add_argument('managers', type=int, action='append')
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
+
+parser_thumbnail = reqparse.RequestParser()
+parser_thumbnail.add_argument("task_id", type=int)
 
 
 job_fields = {
@@ -344,3 +351,52 @@ class JobDeleteApi(Resource):
                 return '', 404
 
         return '', 204
+
+
+class JobThumbnailListApi(Resource):
+    """Thumbnail list interface for the Server
+    """
+    def allowed_file(self, filename):
+        """Filter extensions acording to THUMBNAIL_EXTENSIONS configuration.
+        """
+        return '.' in filename and \
+               filename.rsplit('.', 1)[1] in app.config['THUMBNAIL_EXTENSIONS']
+
+    def post(self):
+        """Accepts a thumbnail file and a task_id and stores it.
+        """
+        args = parser_thumbnail.parse_args()
+        task = Task.query.get(args['task_id'])
+        thumbnail_filename = "thumbnail_%s.png" % task.job_id
+
+        file = request.files['file']
+        if file and self.allowed_file(file.filename):
+            filepath=os.path.join( app.config['TMP_FOLDER'] , thumbnail_filename)
+            filepath_last=os.path.join( app.config['TMP_FOLDER'] , 'thumbnail_0.png')
+            file.save(filepath)
+            shutil.copy2(filepath, filepath_last)
+
+
+class JobThumbnailApi(Resource):
+    """Thumbnail interface for the Server
+    """
+    def get(self, job_id):
+        """Returns the last thumbnail for the Job, or a blank
+        image if none. If job_id is 0 return the global last
+        thumbnail.
+        """
+        def generate():
+            filename='thumbnail_%s.png' % job_id
+            file_path = os.path.join(app.config['TMP_FOLDER'],filename)
+            if os.path.isfile(file_path):
+                thumb_file = open(str(file_path), 'r')
+                return thumb_file.read()
+            else:
+                with app.open_resource('static/missing_thumbnail.png') as thumb_file:
+                    return thumb_file.read()
+            return False
+        bin = generate()
+        if bin:
+            return Response(bin, mimetype='image/png')
+        else:
+            return '',404
