@@ -74,7 +74,7 @@ class ThumbnailListApi(Resource):
         file = request.files['file']
         if file and self.allowed_file(file.filename):
             filepath=os.path.join( app.config['TMP_FOLDER'] , thumbnail_filename)
-            filepath_last=os.path.join( app.config['TMP_FOLDER'] , 'thumbnail_last.png')
+            filepath_last=os.path.join( app.config['TMP_FOLDER'] , 'thumbnail_0.png')
             file.save(filepath)
             shutil.copy2(filepath, filepath_last)
 
@@ -84,15 +84,12 @@ class ThumbnailApi(Resource):
     """
     def get(self, job_id):
         """Returns the last thumbnail for the Job, or a blank
-        image if none.
+        image if none. If job_id is 0 return the global last
+        thumbnail.
         """
         def generate():
-            if (job_id==0):
-                filename='thumbnail_last.png'
-            else:
-                filename='thumbnail_%s.png' % job_id
+            filename='thumbnail_%s.png' % job_id
             file_path = os.path.join(app.config['TMP_FOLDER'],filename)
-            print (file_path)
             if os.path.isfile(file_path):
                 thumb_file = open(str(file_path), 'r')
                 return thumb_file.read()
