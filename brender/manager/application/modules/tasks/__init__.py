@@ -170,7 +170,7 @@ class TaskApi(Resource):
     def delete(self, task_id):
         task = Task.query.filter_by(server_id=task_id).first()
         if task is None:
-            abort(404)
+            return '', 404
         db.session.delete(task)
         db.session.commit()
 
@@ -184,6 +184,8 @@ class TaskApi(Resource):
                 task.status = 'aborted'
                 http_request(worker.host, '/kill/' + str(task.pid), 'delete')
 
+        schedule()
+
         return task, 202
 
     def patch(self, task_id):
@@ -191,6 +193,7 @@ class TaskApi(Resource):
         args = status_parser.parse_args()
 
         task.status = args['status']
+        db.session.commit()
 
         if task.status in ['finished', 'failed', 'aborted']:
             worker = Worker.query.filter_by(current_task = task.id).first()
@@ -202,6 +205,8 @@ class TaskApi(Resource):
             params = { 'id' : task.server_id, 'status' : task.status }
             request_thread = Thread(target=http_request, args=(app.config['BRENDER_SERVER'], '/tasks', 'post'), kwargs= {'params':params})
             request_thread.start()
+
+        schedule()
 
         return '', 204
 
