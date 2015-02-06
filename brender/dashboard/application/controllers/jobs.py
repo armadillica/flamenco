@@ -40,25 +40,28 @@ def index():
 
     for key, val in jobs.iteritems():
 
-        #Settings
+        """#Settings
         settings_list = json.loads(val['settings'])
         settings= "<ul>"
         for setting in settings_list:
             settings="{0}<li><span style=\"font-weight:bold\">{1}</span>: {2}</li>".format(settings, setting, settings_list[setting])
         settings = "{0}</ul>".format(settings)
 
-        #Tasks
-        task_list = json.loads(val['tasks'])
         task_name = "<ul>"
         task_completion = "<ul>"
         task_activity = "<ul>"
-        for task in task_list:
-            task_name="{0}<li>{1}</li>".format(task_name, task['name'])
-            task_completion="{0}<li>{1}</li>".format(task_completion, task['status'])
-            task_activity="{0}<li>{1}</li>".format(task_activity, task['activity'])
+
         task_completion = "{0}</ul>".format(task_completion)
         task_activity = "{0}</ul>".format(task_activity)
         task_name = "{0}</ul>".format(task_name)
+        """
+
+        #Tasks
+        task_activity=''
+        task_list = json.loads(val['tasks'])
+        for task in task_list:
+            if task['status']=='running':
+                task_activity="[{0}] {1}".format(task['name'], task['activity'])
 
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
@@ -67,12 +70,9 @@ def index():
             "1": key,
             "2": val['job_name'],
             "3": val['percentage_done'],
-            "4": settings,
-            "5": val['status'],
-            "6" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key),
-            "7" : task_name,
-            "8" : task_completion,
-            "9" : task_activity,
+            "4": val['status'],
+            "5" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key),
+            "6" : task_activity,
             })
         #print(v)
 
@@ -84,7 +84,21 @@ def index():
 @jobs.route('/<job_id>')
 def job(job_id):
     print '[Debug] job_id is %s' % job_id
-    job = http_server_request('get', '/jobs/' + job_id)
+    #job = http_server_request('get', '/jobs/' + job_id)
+    jobs = http_server_request('get', '/jobs')
+    job = jobs[job_id]
+    job['settings']=json.loads(job['settings'])
+
+    #Tasks
+    task_activity=''
+    task_list = json.loads(job['tasks'])
+    for task in task_list:
+        if task['status']=='running':
+            task_activity="[{0}] {1}".format(task['name'], task['activity'])
+
+    job['activity']= task_activity
+    job['thumbnail']='http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, job_id)
+
     #job['thumb'] = last_thumbnail(job['id'])
     # render_dir = RENDER_PATH + "/" + str(job['id']) +  '/'
     # if exists(render_dir):

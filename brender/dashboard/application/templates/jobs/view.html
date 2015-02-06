@@ -45,16 +45,19 @@
                 </div>
             </div>
             <br/>
-            <a href="#" class="thumbnail pull-right">
-              <img src="{{ job['thumb'] }}" />
-            </a>
+            
             <p>Status: {{ job['status'] }}</p>
-            <p>Frame Start: {{ job['frame_start'] }}</p>
-            <p>Frame End: {{ job['frame_end'] }}</p>
-            <p>Current Frame: {{ job['current_frame'] }}</p>
-            <p>Format: {{ job['format'] }}</p>
+            <p>Frame Start: {{ job['settings']['frame_start'] }}</p>
+            <p>Frame End: {{ job['settings']['frame_end'] }}</p>
+            <p>Format: {{ job['settings']['format'] }}</p>
+            <p>Current Activity: {{ job['activity'] }}</p>
             <p>Thumbnails: </p><br />
-            <table>
+
+            <a href="#" class="thumbnail">
+              <img src="{{ job['thumbnail'] }}" style="width:100%"/>
+            </a>
+
+            <table style="display:none">
               <!-- TODO find a way to display several images on the same line -->
               {% for path in job['render'] %}
                 <tr>

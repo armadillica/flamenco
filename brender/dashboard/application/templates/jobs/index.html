@@ -13,30 +13,24 @@
           null,
           null,
           null,
-          null,
-          null,
-          null,
           null
       ],
 
       "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
         $('td:eq(1)', nRow).html(aData[1]);
-        $('td:eq(2)', nRow).html('<a href="/jobs/' + aData[1] + '"> <img style="width: 50px;" src="' + aData[6] + '"/> </a>');
+        $('td:eq(2)', nRow).html('<a href="/jobs/' + aData[1] + '"> <img style="width: 50px;" src="' + aData[5] + '"/> </a>');
         $('td:eq(3)', nRow).html(aData[2]);
         $('td:eq(4)', nRow).html('<div class="progress"><div class="progress-bar" role="progressbar" aria-valuenow="' + aData[3] + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + aData[3] + '%;"><span class="sr-only">' + aData[3] + '% Complete</span></div></div>');
         var job_status_label = '';
-        $('td:eq(5)', nRow).html(aData[4]);
-        if (aData[5] === 'completed') {
-          job_status_label = '<span class="label label-success">' + aData[5] + '</label>';
-        } else if (aData[5] === 'failed') {
-          job_status_label = '<span class="label label-danger">' + aData[5] + '</label>';
+        $('td:eq(5)', nRow).html(aData[6]);
+        if (aData[4] === 'completed') {
+          job_status_label = '<span class="label label-success">' + aData[4] + '</label>';
+        } else if (aData[4] === 'failed') {
+          job_status_label = '<span class="label label-danger">' + aData[4] + '</label>';
         } else {
-          job_status_label = '<span class="label label-default">' + aData[5] + '</label>';
+          job_status_label = '<span class="label label-default">' + aData[4] + '</label>';
         }
-        $('td:eq(9)', nRow).html(job_status_label);
-        $('td:eq(7)', nRow).html(aData[8]);
-        $('td:eq(8)', nRow).html(aData[9]);
-        $('td:eq(6)', nRow).html(aData[7]);
+        $('td:eq(6)', nRow).html(job_status_label);
         }
     });
 
@@ -144,12 +138,9 @@
             <th width="1%"><input class="check-all" type="checkbox"></th>
             <th width="1%">ID</th>
             <th width="1%">Thumbnail</th>
-            <th width="20%">Job name</th>
-            <th width="20%">Job Completion</th>
-            <th width="20%">Settings</th>
-            <th width="20%">Task</th>
-            <th width="20%">Task Completion</th>
-            <th width="20%">Task Activity</th>
+            <th width="10%">Job name</th>
+            <th width="15%">Job Completion</th>
+            <th width="20%">Activity</th>
             <th width="1%">Status</th>
           </tr>
         </thead>
@@ -163,10 +154,7 @@
             <th>Thumbnail</th>
             <th>Job name</th>
             <th>Job Completion</th>
-            <th>Settings</th>
-            <th>Task</th>
-            <th>Task Completion</th>
-            <th>Task Activity</th>
+            <th>Activity</th>
             <th>Status</th>
           </tr>
         </tfoot>
