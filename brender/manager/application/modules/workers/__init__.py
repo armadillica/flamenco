@@ -36,7 +36,8 @@ class WorkerListApi(Resource):
                           ip_address=ip_address,
                           port=port,
                           status='enabled',
-                          activity='',
+                          log=None,
+                          activity=None,
                           connection='online',
                           system=args['system'])
         else:
@@ -58,6 +59,7 @@ class WorkerListApi(Resource):
                                         "hostname": worker.hostname,
                                         "status": worker.status,
                                         "activity": worker.activity,
+                                        "log": worker.log,
                                         "connection": worker.connection,
                                         "system": worker.system,
                                         "port" : worker.port,
@@ -73,6 +75,7 @@ class WorkerApi(Resource):
         worker = Worker.query.get_or_404(worker_id)
         worker.status = args['status']
         worker.activity = args['activity']
+        worker.log = args['log']
         db.session.add(worker)
         db.session.commit()
         return jsonify(dict(status=worker.status))

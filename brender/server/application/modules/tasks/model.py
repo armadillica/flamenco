@@ -16,12 +16,13 @@ class Task(db.Model):
     job = db.relationship('Job',
         backref=db.backref('tasks', lazy='dynamic'))
     manager_id = db.Column(db.Integer())
-    chunk_start = db.Column(db.Integer())
-    chunk_end = db.Column(db.Integer())
-    current_frame = db.Column(db.Integer())
+    name = db.Column(db.String(64))
     status = db.Column(db.String(64))
     priority = db.Column(db.Integer())
-
+    type = db.Column(db.String(64))
+    settings = db.Column(db.Text())
+    log = db.Column(db.Text())
+    activity = db.Column(db.String(128))
 
     def __repr__(self):
         return '<Task %r>' % self.id

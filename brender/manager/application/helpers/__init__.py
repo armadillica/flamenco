@@ -29,14 +29,14 @@ def http_request(ip_address, command, method, params=None):
     if r.status_code == 400:
         for chunk in r.iter_content(50):
             print chunk
-        return abort(404)
+        return '', 404
 
     if r.status_code == 204:
         return '', 204
 
     if r.status_code >= 500:
         logging.debug("STATUS CODE: %d" % r.status_code)
-        return abort(500)
+        return '', 500
 
     return r.json()
 

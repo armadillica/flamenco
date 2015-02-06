@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 import shutil
 import requests
 from os import listdir
@@ -80,19 +81,23 @@ class JobListApi(Resource):
             taskscompleteforjob = Task.query.filter(Task.job_id == job.id, Task.status == 'finished').count()
 
             percentage_done = 0
-            frame_count = job.frame_end - job.frame_start + 1
 
             if tasksforjob and taskscompleteforjob:
                 percentage_done = round(float(taskscompleteforjob) / float(tasksforjob) * 100.0, 1)
 
+            tasks=[]
+            for task in Task.query.filter(Task.job_id == job.id).all():
+                tasks.append( {'name':task.name, 'status':task.status, 'type':task.type, 'settings':task.settings, 'log':task.log, 'activity':task.activity} )
+
+
             jobs[job.id] = {"job_name" : job.name,
-                            "frame_start" : job.frame_start,
-                            "frame_end" : job.frame_end,
-                            "current_frame" : job.current_frame,
+                            "project_id" : job.project_id,
                             "status" : job.status,
-                            "percentage_done" : percentage_done,
-                            "render_settings" : job.render_settings,
-                            "format" : job.format }
+                            "settings" : job.settings,
+                            "tasks" : json.dumps(tasks),
+                            "type" : job.type,
+                            "priority" : job.priority,
+                            "percentage_done" : percentage_done }
 
         return jsonify(jobs)
 
@@ -134,7 +139,6 @@ class JobListApi(Resource):
                 print'Job %d is running' % job_id
                 raise KeyError
             else:
-                job.current_frame = job.frame_start
                 job.status = 'ready'
                 db.session.add(job)
                 db.session.commit()
@@ -199,17 +203,23 @@ class JobListApi(Resource):
     @marshal_with(job_fields)
     def post(self):
         args = job_parser.parse_args()
+
+        job_settings = {
+            'frame_start' : args['frame_start'],
+            'frame_end' : args['frame_end'],
+            'chunk_size' : args['chunk_size'],
+            'filepath' : args['filepath'],
+            'render_settings' : args['render_settings'],
+            'format' : args['format'],
+            }
+
+        #TODO Job type hardcoded!
         job = Job(
            project_id=args['project_id'],
-           frame_start=args['frame_start'],
-           frame_end=args['frame_end'],
-           chunk_size=args['chunk_size'],
-           current_frame=args['current_frame'],
-           filepath=args['filepath'],
+           settings=json.dumps(job_settings),
            name=args['job_name'],
-           render_settings=args['render_settings'],
-           format=args['format'],
            status=args['status'],
+           type='simple_blender_render',
            priority=args['priority'])
 
         db.session.add(job)
@@ -222,10 +232,10 @@ class JobListApi(Resource):
 
         db.session.commit()
 
-        logging.info('Parsing job to create tasks')
+        #logging.info('Parsing job to create tasks')
         TaskApi.create_tasks(job)
-        logging.info('Refresh list of available workers')
-        TaskApi.dispatch_tasks()
+        #logging.info('Refresh list of available workers')
+        #TaskApi.dispatch_tasks()
         return job, 201
 
 

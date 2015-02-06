@@ -10,6 +10,7 @@ import os
 import json
 import select
 import requests
+import logging
 import gocept.cache.method
 from threading import Thread
 from threading import Lock
@@ -30,7 +31,8 @@ HOSTNAME = socket.gethostname()  # the hostname of the worker
 SYSTEM = platform.system() + ' ' + platform.release()
 PROCESS = None
 LOCK = Lock()
-ACTIVITY = ""
+ACTIVITY = None
+LOG = None
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
@@ -107,7 +109,7 @@ def _checkProcessOutputWin(process, q):
         full_buffer += buffer
     return full_buffer
 
-def _interactiveReadProcessWin(process, task_id):
+def _interactiveReadProcessWin(process, task_id, task_type):
     full_buffer = ''
     tmp_buffer = ''
     q = Queue.Queue()
@@ -137,44 +139,39 @@ def send_thumbnail(manager_url, file_path, params):
             requests.post(manager_url, files={'file': thumbnail_file}, data=params)
             thumbnail_file.close()
 
-def parser(output, task_id):
-    """Parser test, TODO: move this.
-    """
+def _interactiveReadProcess(process, task_id, task_type):
     global ACTIVITY
+    global LOG
 
-    #Store Activity
-    re_frame = re.compile(
-    r'.* \| (.*)'
-    )
-    match = re_frame.findall(output)
-    if len(match):
-        ACTIVITY=match[-1]
+    module_name = 'application.task_parsers.{0}'.format(task_type)
+    task_parser = None
+    try:
+        module_loader = __import__(module_name, globals(), locals(), ['task_parser'], 0)
+        task_parser = module_loader.task_parser
+    except:
+        print('Cant find module {0}'.format(module_name))
 
-    #Send Thumbnail
-    re_frame = re.compile(
-    r'Saved: (.*?)\s'
-    )
-    match = re_frame.findall(output)
-    if len(match):
-        file_name = "thumbnail_%s.png" % task_id
-        output_path = os.path.join(app.config['TMP_FOLDER'], file_name)
-        #subprocess.call(["convert", "-identify", match[-1], "-thumbnail", "50x50^", "-gravity", "center", "-extent", "50x50", "-colorspace", "RGB", output_path ])
-        subprocess.call(["convert", "-identify", match[-1], "-colorspace", "RGB", output_path ])
+    if not LOG:
+        LOG=""
 
-        params = dict(task_id=task_id)
-        manager_url = "http://%s/tasks/thumbnails" % (app.config['BRENDER_MANAGER'])
-
-        request_thread = Thread(target=send_thumbnail, args=(manager_url, output_path, params))
-        request_thread.start()
-
-def _interactiveReadProcess(process, task_id):
     full_buffer = ''
     tmp_buffer = ''
     while True:
         tmp_buffer = _checkProcessOutput(process)
 
         if tmp_buffer:
-            parser(tmp_buffer,task_id)
+            if task_parser:
+                parser_output = task_parser.parse(tmp_buffer,task_id)
+                if parser_output['activity']:
+                    ACTIVITY = parser_output['activity']
+
+                if parser_output['thumbnail']:
+                    params = dict(task_id=task_id)
+                    manager_url = "http://%s/tasks/thumbnails" % (app.config['BRENDER_MANAGER'])
+                    request_thread = Thread(target=send_thumbnail, args=(manager_url, parser_output['thumbnail'], params))
+                    request_thread.start()
+
+            LOG = "{0}{1}".format(LOG, tmp_buffer)
             logpath = os.path.join(app.config['TMP_FOLDER'], "{0}.log".format(task_id))
             f = open(logpath,"a")
             f.write(tmp_buffer)
@@ -194,6 +191,10 @@ def index():
 
 @app.route('/info')
 def info():
+    global PROCESS
+    global ACTIVITY
+    global LOG
+
     if PROCESS:
         status = 'rendering'
     else:
@@ -202,15 +203,19 @@ def info():
                    hostname=HOSTNAME,
                    system=SYSTEM,
                    activity=ACTIVITY,
+                   log=LOG,
                    status=status)
 
 def run_blender_in_thread(options):
-    global PROCESS
     """We take the command and run it
     """
+    global PROCESS
+    global ACTIVITY
+    global LOG
+
     render_command = json.loads(options['task_command'])
 
-    print("[Info] Running %s" % render_command)
+    logging.info( "Running %s" % render_command)
 
     PROCESS = subprocess.Popen(render_command,
                                stdout=subprocess.PIPE,
@@ -224,12 +229,17 @@ def run_blender_in_thread(options):
         fcntl(PROCESS.stderr, F_SETFL, flags | os.O_NONBLOCK)
 
     #flask.g.blender_process = process
-    (retcode, full_output) =  _interactiveReadProcess(PROCESS, options["task_id"]) \
+    (retcode, full_output) =  _interactiveReadProcess(PROCESS, options["task_id"], options["task_type"]) \
         if (platform.system() is not "Windows") \
-        else _interactiveReadProcessWin(PROCESS, options["task_id"])
+        else _interactiveReadProcessWin(PROCESS, options["task_id"], options["task_type"])
 
-    print ('[DEBUG] return code: %d') % retcode
+    log = LOG
+    activity = ACTIVITY
+
+    logging.debug( 'Return code: {0}'.format(retcode) )
     PROCESS = None
+    ACTIVITY = None
+    LOG = None
 
     #flask.g.blender_process = None
     #print(full_output)
@@ -239,38 +249,38 @@ def run_blender_in_thread(options):
     with open(abs_file_path, 'w') as f:
         f.write(full_output)
 
-
-    time.sleep(1)
-
-    if retcode == 137:
-        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': 'aborted'})
+    if retcode == -9:
+        status='aborted'
     elif retcode != 0:
-        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': 'failed'})
+        status='failed'
     else:
-        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': 'finished'})
+        status='finished'
+
+    logging.debug(status)
+
+    requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': status, 'log':log, 'activity': activity})
 
 @app.route('/execute_task', methods=['POST'])
 def execute_task():
     global PROCESS
     global LOCK
+
+    if PROCESS:
+        return '{error:Processus failed}', 500
+
     options = {
         'task_id': request.form['task_id'],
+        'task_type': request.form['task_type'],
         'task_command': request.form['task_command'],
     }
 
     LOCK.acquire()
     PROCESS = None
+    LOG = None
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
     render_thread.start()
-
-    while PROCESS is None:
-        time.sleep(1)
-
     LOCK.release()
-    if PROCESS.poll():
-        return '{error:Processus failed}', 500
-
-    return jsonify(dict(pid=PROCESS.pid))
+    return jsonify(dict(pid=0))
 
 @app.route('/pid')
 def get_pid():
@@ -283,15 +293,18 @@ def get_command():
     # TODO Return the running command
     return '', 503
 
-@app.route('/kill/<int:pid>', methods=['DELETE'])
-def update(pid):
+@app.route('/kill', methods=['DELETE'])
+def update():
     global PROCESS
     global LOCK
-    print('killing')
+    if not PROCESS:
+        return '',204
+
+    logging.info('killing {0}'.format(PROCESS.pid))
     if platform.system() is 'Windows':
-        os.kill(pid, CTRL_C_EVENT)
+        os.kill(PROCESS.pid, CTRL_C_EVENT)
     else:
-        os.kill(pid, SIGKILL)
+        os.kill(PROCESS.pid, SIGKILL)
 
     LOCK.acquire()
     PROCESS = None

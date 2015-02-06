@@ -27,7 +27,7 @@ def http_rest_request(ip_address, command, method, params=None):
         r = requests.patch('http://' + ip_address + command, data=params)
 
     if r.status_code == 404:
-        return abort(404)
+        return '', 404
 
     if r.status_code == 204:
         return '', 204

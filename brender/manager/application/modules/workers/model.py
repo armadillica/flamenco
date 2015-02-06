@@ -16,6 +16,7 @@ class Worker(db.Model):
     system = db.Column(db.String(20))
     current_task = db.Column(db.String(20))
     activity = db.Column(db.String(64))
+    log = db.Column(db.Text())
 
     __table_args__ = (UniqueConstraint('ip_address', 'port', name='connection_uix'),)
 
@@ -31,6 +32,7 @@ class Worker(db.Model):
             info = r.json()
             self.status = info['status']
             self.activity = info['activity']
+            self.log = info['log']
             #print info['status']
             db.session.commit()
             return True

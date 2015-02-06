@@ -39,6 +39,27 @@ def index():
     jobs_list = []
 
     for key, val in jobs.iteritems():
+
+        #Settings
+        settings_list = json.loads(val['settings'])
+        settings= "<ul>"
+        for setting in settings_list:
+            settings="{0}<li><span style=\"font-weight:bold\">{1}</span>: {2}</li>".format(settings, setting, settings_list[setting])
+        settings = "{0}</ul>".format(settings)
+
+        #Tasks
+        task_list = json.loads(val['tasks'])
+        task_name = "<ul>"
+        task_completion = "<ul>"
+        task_activity = "<ul>"
+        for task in task_list:
+            task_name="{0}<li>{1}</li>".format(task_name, task['name'])
+            task_completion="{0}<li>{1}</li>".format(task_completion, task['status'])
+            task_activity="{0}<li>{1}</li>".format(task_activity, task['activity'])
+        task_completion = "{0}</ul>".format(task_completion)
+        task_activity = "{0}</ul>".format(task_activity)
+        task_name = "{0}</ul>".format(task_name)
+
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
             "DT_RowId": "job_" + str(key),
@@ -46,9 +67,13 @@ def index():
             "1": key,
             "2": val['job_name'],
             "3": val['percentage_done'],
-            "4": val['render_settings'],
+            "4": settings,
             "5": val['status'],
-            "6" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key)})
+            "6" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key),
+            "7" : task_name,
+            "8" : task_completion,
+            "9" : task_activity,
+            })
         #print(v)
 
     jobs_list = sorted(jobs_list, key=lambda x: x['1'])
@@ -122,7 +147,7 @@ def add():
             'filepath': request.form['filepath'],
             'render_settings': request.form['render_settings'],
             'format' : request.form['format'],
-            'status': 'running',
+            'status': 'stopped',
             'priority': 10,
             'managers' : request.form.getlist('managers'),
             'owner': 'fsiddi'

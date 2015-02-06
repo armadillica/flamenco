@@ -22,12 +22,6 @@ class Manager(db.Model):
     name = db.Column(db.String(50), nullable=True)
 
     has_virtual_workers = db.Column(db.SmallInteger(), default=0)
-    # This represent the total number of worker that this manager holds.
-    # If total_workers is NULL then, the manager can handle an infinity of worker
-    total_workers = db.Column(db.Integer(), default=0)
-
-    # Number of running task in the manager
-    running_tasks = db.Column(db.Integer(), default=0, nullable=False)
 
     __table_args__ = (UniqueConstraint('ip_address', 'port', name='connection_uix'),)
 

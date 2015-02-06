@@ -13,18 +13,11 @@ class Job(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
     project = db.relationship('Project',
         backref=db.backref('jobs', lazy='dynamic'))
-    frame_start = db.Column(db.Integer())
-    frame_end = db.Column(db.Integer())
-    chunk_size = db.Column(db.Integer())
-    current_frame = db.Column(db.Integer())
     name = db.Column(db.String(120))
-    filepath = db.Column(db.String(256))
-    render_settings = db.Column(db.String(120))
-    format = db.Column(db.String(10))
-    # yolo settings (pre render / render / post)
     status = db.Column(db.String(64))
-    # started and waiting / stopped / running / paused
     priority = db.Column(db.Integer())
+    settings = db.Column(db.Text())
+    type = db.Column(db.String(64))
 
     def __repr__(self):
         return '<Job %r>' % self.name

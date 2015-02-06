@@ -1,5 +1,6 @@
 import os
 import logging
+import json
 from PIL import Image
 from platform import system
 from threading import Thread
@@ -25,72 +26,43 @@ from application.modules.projects.model import Project
 from application.modules.settings.model import Setting
 from application.modules.jobs.model import JobManagers
 
-
 parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
 parser.add_argument('status', type=str)
+parser.add_argument('log', type=str)
+parser.add_argument('activity', type=str)
 
 
 class TaskApi(Resource):
     @staticmethod
-    def create_task(job_id, chunk_start, chunk_end):
+    def create_task(job_id, task_type, task_settings, name):
         # TODO attribution of the best manager
         task = Task(job_id=job_id,
-            chunk_start=chunk_start,
-            chunk_end=chunk_end,
-            current_frame=chunk_start,
+            name=name,
+            type=task_type,
+            settings=json.dumps(task_settings),
             status='ready',
-            priority=50)
+            priority=50,
+            log=None,
+            activity=None)
         db.session.add(task)
         db.session.commit()
 
     @staticmethod
     def create_tasks(job):
-        job_frames_count = job.frame_end - job.frame_start + 1
-        job_chunks_remainder = job_frames_count % job.chunk_size
-        job_chunks_division = job_frames_count / job.chunk_size
+        """Send the job to the Job Compiler"""
+        #from application.job_compilers.simple_blender_render import job_compiler
+        module_name = 'application.job_compilers.{0}'.format(job.type)
+        job_compiler = None
+        try:
+            module_loader = __import__(module_name, globals(), locals(), ['job_compiler'], 0)
+            job_compiler = module_loader.job_compiler
+        except:
+            print('Cant find module {0}'.format(module_name))
+            return
 
-        if job_chunks_remainder == 0:
-            logging.debug('We have exact chunks')
-
-            total_chunks = job_chunks_division
-            chunk_start = job.frame_start
-            chunk_end = job.frame_start + job.chunk_size - 1
-
-            for chunk in range(total_chunks):
-                logging.debug('Making chunk for job {0}'.format(job.id))
-
-                TaskApi.create_task(job.id, chunk_start, chunk_end)
-
-                chunk_start = chunk_end + 1
-                chunk_end = chunk_start + job.chunk_size - 1
-
-        elif job_chunks_remainder == job.chunk_size:
-            logging.debug('We have only 1 chunk')
-
-            TaskApi.create_task(job.id, job.frame_start, job.frame_end)
-
-        #elif job_chunks_remainder > 0 and \
-        #     job_chunks_remainder < job.chunk_size:
-        else:
-            logging.debug('job_chunks_remainder : {0}'.format(job_chunks_remainder))
-            logging.debug('job_frames_count     : {0}'.format(job_frames_count))
-            logging.debug('job_chunks_division  : {0}'.format(job_chunks_division))
-
-            total_chunks = job_chunks_division + 1
-            chunk_start = job.frame_start
-            chunk_end = job.frame_start + job.chunk_size - 1
-
-            for chunk in range(total_chunks - 1):
-                logging.debug('Making chunk for job {0}'.format(job.id))
-
-                TaskApi.create_task(job.id, chunk_start, chunk_end)
-
-                chunk_start = chunk_end + 1
-                chunk_end = chunk_start + job.chunk_size - 1
-
-            chunk_end = chunk_start + job_chunks_remainder - 1
-            TaskApi.create_task(job.id, chunk_start, chunk_end)
+        project = Project.query.filter_by(id = job.project_id).first()
+        job_compiler.compile(job, project, TaskApi.create_task)
 
     @staticmethod
     def start_task(manager, task):
@@ -99,31 +71,10 @@ class TaskApi(Resource):
         way to get the additional job information - should be done with join)
         """
 
-        job = Job.query.filter_by(id = task.job_id).first()
-        project = Project.query.filter_by(id = job.project_id).first()
-
-        filepath = job.filepath
-
-        # NOTE: probably file_path_linux win and osx should only contain a hashed
-        # version of the file name. The full path should be determined by the
-        # manager itself. Right now we are assuming that the manager has access
-        # to the server storage, which will often not be the case.
-
-        # Also we should consider what to do when sending data over from the server
-        # to the wokers.
-
-        params = {'task_id': task.id,
-                  'file_path_linux': os.path.join(project.path_linux, filepath),
-                  'file_path_win': os.path.join(project.path_win, filepath),
-                  'file_path_osx': os.path.join(project.path_osx, filepath),
-                  'render_settings': job.render_settings,
-                  'start': task.current_frame,
-                  'end': task.chunk_end,
-                  'output_path_linux': os.path.join(project.render_path_linux, str(task.job_id), '#####'),
-                  'output_path_win': os.path.join(project.render_path_win, str(task.job_id), '#####'),
-                  'output_path_osx': os.path.join(project.render_path_osx, str(task.job_id), '#####'),
-                  'priority' : job.priority,
-                  'format': job.format}
+        params={'priority':task.priority,
+            'type':task.type,
+            'task_id':task.id,
+            'settings':task.settings}
 
         Thread(target=http_rest_request, args=[manager.host, '/tasks', 'post', params]).start()
         task.status = 'running'
@@ -131,13 +82,6 @@ class TaskApi(Resource):
         db.session.add(task)
         db.session.commit()
         # TODO  get a reply from the worker (running, error, etc)
-
-        #task.status = 'running'
-        #db.session.add(task)
-
-        #job.current_frame = task.chunk_end
-        #db.session.add(job)
-        #db.session.commit()
 
     @staticmethod
     def dispatch_tasks():
@@ -233,15 +177,6 @@ class TaskApi(Resource):
     def delete_tasks(job_id):
         tasks = Task.query.filter_by(job_id=job_id)
         for t in tasks:
-            # FIXME find sqlalchemy query to avoid this
-            if t.status not in ['finished', 'failed', 'aborted', 'ready']:
-                manager = Manager.query.get(t.manager_id)
-                delete_task = http_rest_request(manager.host, '/tasks/' + str(t.id), 'delete')
-                job = Job.query.get(t.job_id)
-                if job.current_frame < delete_task['frame_current']:
-                    job.current_frame = delete_task['frame_current']
-                    db.session.add(job)
-                    db.session.commit()
             db.session.delete(t)
             db.session.commit()
         logging.info("All tasks deleted for job {0}".format(job_id))
@@ -257,6 +192,7 @@ class TaskApi(Resource):
         try:
             delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
         except:
+            logging.info("Error deleting task from Manager")
             return
             pass
         task.current_frame = delete_task['frame_current']
@@ -286,14 +222,14 @@ class TaskApi(Resource):
         percentage_done = 0
         for task in Task.query.all():
 
-            frame_count = task.chunk_end - task.chunk_start + 1
-            current_frame = task.current_frame - task.chunk_start + 1
+            frame_count = 1
+            current_frame = 0
             percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
             percentage_done = round(percentage_done, 1)
             tasks[task.id] = {"job_id": task.job_id,
-                            "chunk_start": task.chunk_start,
-                            "chunk_end": task.chunk_end,
-                            "current_frame": task.current_frame,
+                            "chunk_start": 0,
+                            "chunk_end": 0,
+                            "current_frame": 0,
                             "status": task.status,
                             "percentage_done": percentage_done,
                             "priority": task.priority}
@@ -329,14 +265,21 @@ class TaskApi(Resource):
         args = parser.parse_args()
         task_id = args['id']
         status = args['status'].lower()
+        log = args['log']
+        activity = args['activity']
+        task = Task.query.get(task_id)
+        if task is None:
+                return '', 404
+
+        task.status = status
+        task.log = log
+        task.activity = activity
+        db.session.add(task)
+        db.session.commit()
+
         if status in ['finished', 'failed']:
-            task = Task.query.get(task_id)
             # A non running task cannot be failed or finished
-            if task is None or task.status != 'running':
-                return '', 204
             job = Job.query.get(task.job_id)
-            task.status = status
-            db.session.add(task)
 
             manager = Manager.query.get(task.manager_id)
 
@@ -359,11 +302,7 @@ class TaskApi(Resource):
                 # if task.current_frame == job.frame_end:
                 #     job.status = 'finished'
                 db.session.add(job)
-            if task.chunk_end > job.current_frame:
-                job.current_frame = task.chunk_end
-                db.session.add(job)
-
-            db.session.commit()
+                db.session.commit()
 
         TaskApi.dispatch_tasks()
 

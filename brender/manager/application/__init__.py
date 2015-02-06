@@ -149,11 +149,20 @@ def worker_loop():
     global worker_lock
     global total_workers
 
+    worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
+    worker_thread.start()
+
     with worker_lock:
         # Count the currently available workers
         count_workers = 0
         for worker in Worker.query.all():
             if worker.is_connected:
+                if worker.current_task and worker.status=='rendering':
+                    params = { 'id' : worker.current_task, 'status': 'running', 'log' : worker.log, 'activity' : worker.activity }
+                    try:
+                        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
+                    except:
+                        logging('Error connecting to Server (Task not found?)')
                 if worker.status in ['enabled', 'rendering']:
                     count_workers += 1
 
@@ -171,8 +180,6 @@ def worker_loop():
                 'patch',
                 params=params)
 
-    worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
-    worker_thread.start()
 
 def worker_loop_start():
     global worker_thread

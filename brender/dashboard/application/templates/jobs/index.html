@@ -13,6 +13,9 @@
           null,
           null,
           null,
+          null,
+          null,
+          null,
           null
       ],
 
@@ -30,7 +33,10 @@
         } else {
           job_status_label = '<span class="label label-default">' + aData[5] + '</label>';
         }
-        $('td:eq(6)', nRow).html(job_status_label);
+        $('td:eq(9)', nRow).html(job_status_label);
+        $('td:eq(7)', nRow).html(aData[8]);
+        $('td:eq(8)', nRow).html(aData[9]);
+        $('td:eq(6)', nRow).html(aData[7]);
         }
     });
 
@@ -136,12 +142,15 @@
         <thead>
           <tr>
             <th width="1%"><input class="check-all" type="checkbox"></th>
-            <th width="5%">ID</th>
-            <th width="30%">Job (thumbnail)</th>
+            <th width="1%">ID</th>
+            <th width="1%">Thumbnail</th>
             <th width="20%">Job name</th>
-            <th width="20%">Completion</th>
-            <th width="20%">Configuration</th>
-            <th width="10%">Status</th>
+            <th width="20%">Job Completion</th>
+            <th width="20%">Settings</th>
+            <th width="20%">Task</th>
+            <th width="20%">Task Completion</th>
+            <th width="20%">Task Activity</th>
+            <th width="1%">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -153,8 +162,11 @@
             <th>ID</th>
             <th>Thumbnail</th>
             <th>Job name</th>
-            <th>Completion</th>
-            <th>Configuration</th>
+            <th>Job Completion</th>
+            <th>Settings</th>
+            <th>Task</th>
+            <th>Task Completion</th>
+            <th>Task Activity</th>
             <th>Status</th>
           </tr>
         </tfoot>
