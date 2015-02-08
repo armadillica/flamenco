@@ -258,7 +258,10 @@ def run_blender_in_thread(options):
 
     logging.debug(status)
 
-    requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': status, 'log':log, 'activity': activity})
+    try:
+        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': status, 'log':log, 'activity': activity})
+    except ConnectionError:
+        logging.error( 'Cant connect with the Manager {0}'.format(BRENDER_MANAGER) )
 
 @app.route('/execute_task', methods=['POST'])
 def execute_task():

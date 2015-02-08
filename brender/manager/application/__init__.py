@@ -179,16 +179,11 @@ def worker_loop_function():
 
 
 def worker_loop():
+    global worker_thread
     try:
         worker_loop_function()
     except:
         pass
-    worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
-    worker_thread.start()
-
-
-def worker_loop_start():
-    global worker_thread
     worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
     worker_thread.start()
 

@@ -108,11 +108,11 @@ class TaskApi(Resource):
     def delete(self, task_id):
         worker = Worker.query.filter_by(current_task = task_id).first()
         if worker:
+            http_request(worker.host, '/kill', 'delete')
             worker.status = 'enabled'
             worker.current_task = None
             db.session.add(worker)
             db.session.commit()
-            http_request(worker.host, '/kill', 'delete')
 
         return task_id, 202
 
