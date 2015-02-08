@@ -377,6 +377,8 @@ class JobThumbnailListApi(Resource):
         """
         args = parser_thumbnail.parse_args()
         task = Task.query.get(args['task_id'])
+        if not task:
+            return
         thumbnail_filename = "thumbnail_%s.png" % task.job_id
 
         file = request.files['file']

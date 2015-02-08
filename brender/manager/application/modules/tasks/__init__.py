@@ -83,7 +83,7 @@ def schedule(task):
 
     #logging.info("send task %d" % task.server_id)
     pid = http_request(worker.host, '/execute_task', 'post', options)
-    worker.status = 'busy'
+    worker.status = 'rendering'
     worker.current_task = task['task_id']
     db.session.add(worker)
     db.session.commit()
