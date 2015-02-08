@@ -187,7 +187,6 @@ class TaskApi(Resource):
         """
         print ('Stoping task %s' % task_id)
         task = Task.query.get(task_id)
-        task.status = 'ready'
         manager = Manager.query.filter_by(id = task.manager_id).first()
         try:
             delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
@@ -195,8 +194,7 @@ class TaskApi(Resource):
             logging.info("Error deleting task from Manager")
             return
             pass
-        task.current_frame = delete_task['frame_current']
-        task.status = delete_task['status']
+        task.status = 'ready'
         db.session.add(task)
         db.session.commit()
         print "Task %d stopped" % task_id
