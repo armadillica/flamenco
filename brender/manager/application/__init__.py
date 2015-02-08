@@ -143,14 +143,11 @@ def worker_loop_interrupt():
     worker_thread.cancel()
 
 
-def worker_loop():
+def worker_loop_function():
     global commonDataStruct
     global worker_thread
     global worker_lock
     global total_workers
-
-    worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
-    worker_thread.start()
 
     with worker_lock:
         # Count the currently available workers
@@ -181,10 +178,20 @@ def worker_loop():
                 params=params)
 
 
+def worker_loop():
+    try:
+        worker_loop_function()
+    except:
+        pass
+    worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
+    worker_thread.start()
+
+
 def worker_loop_start():
     global worker_thread
     worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
     worker_thread.start()
+
 
 @app.errorhandler(404)
 def not_found(error):

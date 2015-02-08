@@ -52,8 +52,6 @@ class WorkerListApi(Resource):
         workers={}
         workers_db = Worker.query.all()
         for worker in workers_db:
-            worker.connection = 'online' if worker.is_connected else 'offline'
-            db.session.add(worker)
 
             workers[worker.hostname] = {"id": worker.id,
                                         "hostname": worker.hostname,
