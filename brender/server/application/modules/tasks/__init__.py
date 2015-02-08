@@ -269,23 +269,17 @@ class TaskApi(Resource):
         if task is None:
                 return '', 404
 
+        status_old = task.status
         task.status = status
         task.log = log
         task.activity = activity
         db.session.add(task)
         db.session.commit()
 
-        if status in ['finished', 'failed']:
-            # A non running task cannot be failed or finished
+        if status != status_old:
             job = Job.query.get(task.job_id)
-
             manager = Manager.query.get(task.manager_id)
-
-            if status == 'finished':
-                #self.generate_thumbnails(job, task.chunk_start, task.chunk_end)
-                logging.info('Task %s finished' % task_id)
-            else:
-                logging.info('[Info] Task %s failed' % task_id)
+            logging.info('Task {0} changed from {1} to {2}'.format(task_id, status_old, status))
 
             # Check if all tasks have been completed
             if all((lambda t : t.status in ['finished', 'failed'])(t) for t in Task.query.filter_by(job_id=job.id).all()):
@@ -295,13 +289,9 @@ class TaskApi(Resource):
                     job.status = 'failed'
                 else:
                     job.status = 'completed'
-                # this can be added when we update the job for every
-                # frame rendered
-                # if task.current_frame == job.frame_end:
-                #     job.status = 'finished'
                 db.session.add(job)
                 db.session.commit()
 
-        TaskApi.dispatch_tasks()
+            TaskApi.dispatch_tasks()
 
         return '', 204
