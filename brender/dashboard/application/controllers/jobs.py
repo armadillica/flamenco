@@ -164,6 +164,7 @@ def add():
             'status': 'stopped',
             'priority': 10,
             'managers' : request.form.getlist('managers'),
+            'job_type' : request.form['job_type'],
             'owner': 'fsiddi'
         }
 

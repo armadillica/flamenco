@@ -35,7 +35,7 @@ parser.add_argument('activity', type=str)
 
 class TaskApi(Resource):
     @staticmethod
-    def create_task(job_id, task_type, task_settings, name):
+    def create_task(job_id, task_type, task_settings, name, child_id=None):
         # TODO attribution of the best manager
         task = Task(job_id=job_id,
             name=name,
@@ -44,9 +44,12 @@ class TaskApi(Resource):
             status='ready',
             priority=50,
             log=None,
-            activity=None)
+            activity=None,
+            child_id=child_id,
+            )
         db.session.add(task)
         db.session.commit()
+        return task.id
 
     @staticmethod
     def create_tasks(job):
@@ -131,6 +134,9 @@ class TaskApi(Resource):
                     .all()
 
         for t in tasks:
+            unfinished_parents = Task.query.filter(Task.child_id==t[0].id, Task.status!='finished').count()
+            if unfinished_parents>0:
+                continue
 
             job = Job.query.filter_by(id=t[0].job_id).first()
             if not job.status in ['running', 'ready']:

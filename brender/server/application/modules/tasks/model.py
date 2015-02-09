@@ -23,6 +23,7 @@ class Task(db.Model):
     settings = db.Column(db.Text())
     log = db.Column(db.Text())
     activity = db.Column(db.String(128))
+    child_id = db.Column(db.Integer())
 
     def __repr__(self):
         return '<Task %r>' % self.id

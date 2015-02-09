@@ -49,6 +49,7 @@ job_parser.add_argument('format', type=str)
 job_parser.add_argument('status', type=str)
 job_parser.add_argument('priority', type=int)
 job_parser.add_argument('managers', type=int, action='append')
+job_parser.add_argument('job_type', type=str)
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
@@ -213,13 +214,12 @@ class JobListApi(Resource):
             'format' : args['format'],
             }
 
-        #TODO Job type hardcoded!
         job = Job(
            project_id=args['project_id'],
            settings=json.dumps(job_settings),
            name=args['job_name'],
            status=args['status'],
-           type='simple_blender_render',
+           type=args['job_type'],
            priority=args['priority'])
 
         db.session.add(job)
