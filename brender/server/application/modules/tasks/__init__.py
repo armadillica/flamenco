@@ -30,12 +30,13 @@ parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
 parser.add_argument('status', type=str)
 parser.add_argument('log', type=str)
+parser.add_argument('time_cost', type=int)
 parser.add_argument('activity', type=str)
 
 
 class TaskApi(Resource):
     @staticmethod
-    def create_task(job_id, task_type, task_settings, name, child_id=None):
+    def create_task(job_id, task_type, task_settings, name, child_id, parser):
         # TODO attribution of the best manager
         task = Task(job_id=job_id,
             name=name,
@@ -44,8 +45,10 @@ class TaskApi(Resource):
             status='ready',
             priority=50,
             log=None,
+            time_cost=None,
             activity=None,
             child_id=child_id,
+            parser=parser,
             )
         db.session.add(task)
         db.session.commit()
@@ -76,6 +79,7 @@ class TaskApi(Resource):
 
         params={'priority':task.priority,
             'type':task.type,
+            'parser':task.parser,
             'task_id':task.id,
             'settings':task.settings}
 
@@ -270,6 +274,7 @@ class TaskApi(Resource):
         task_id = args['id']
         status = args['status'].lower()
         log = args['log']
+        time_cost = args['time_cost']
         activity = args['activity']
         task = Task.query.get(task_id)
         if task is None:
@@ -278,6 +283,7 @@ class TaskApi(Resource):
         status_old = task.status
         task.status = status
         task.log = log
+        task.time_cost = time_cost
         task.activity = activity
         db.session.add(task)
         db.session.commit()

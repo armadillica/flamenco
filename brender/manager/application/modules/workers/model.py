@@ -17,6 +17,7 @@ class Worker(db.Model):
     current_task = db.Column(db.String(20))
     activity = db.Column(db.String(64))
     log = db.Column(db.Text())
+    time_cost = db.Column(db.Integer())
 
     __table_args__ = (UniqueConstraint('ip_address', 'port', name='connection_uix'),)
 
@@ -33,6 +34,7 @@ class Worker(db.Model):
             self.status = info['status']
             self.activity = info['activity']
             self.log = info['log']
+            self.time_cost = info['time_cost']
             #print info['status']
             db.session.commit()
             return True

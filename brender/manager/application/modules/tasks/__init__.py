@@ -27,11 +27,13 @@ parser.add_argument('priority', type=int)
 parser.add_argument('type', type=str)
 parser.add_argument('task_id', type=int, required=True)
 parser.add_argument('settings', type=str)
+parser.add_argument('parser', type=str)
 
 status_parser = reqparse.RequestParser()
 status_parser.add_argument('status', type=str, required=True)
 status_parser.add_argument('log', type=str)
 status_parser.add_argument('activity', type=str)
+status_parser.add_argument('time_cost', type=int)
 
 parser_thumbnail = reqparse.RequestParser()
 parser_thumbnail.add_argument("task_id", type=int)
@@ -78,7 +80,8 @@ def schedule(task):
 
     options = {
         'task_id' : task['task_id'],
-        'task_type' : task['type'],
+        'task_parser' : task['parser'],
+        'settings' : task['settings'],
         'task_command' : json.dumps(task_command)}
 
     #logging.info("send task %d" % task.server_id)
@@ -97,6 +100,7 @@ class TaskManagementApi(Resource):
             'settings' : args['settings'],
             'task_id' : args['task_id'],
             'type' : args['type'],
+            'parser' : args['parser'],
             }
 
         schedule(task)
@@ -124,7 +128,7 @@ class TaskApi(Resource):
             worker.current_task = None
             db.session.add(worker)
             db.session.commit()
-        params = { 'id' : task_id, 'status': args['status'], 'log' : args['log'], 'activity' : args['activity'] }
+        params = { 'id' : task_id, 'status': args['status'], 'time_cost' : args['time_cost'], 'log' : args['log'], 'activity' : args['activity'] }
         request_thread = Thread(target=http_request, args=(app.config['BRENDER_SERVER'], '/tasks', 'post'), kwargs= {'params':params})
         request_thread.start()
 

@@ -155,7 +155,7 @@ def worker_loop_function():
         for worker in Worker.query.all():
             if worker.is_connected:
                 if worker.current_task and worker.status=='rendering':
-                    params = { 'id' : worker.current_task, 'status': 'running', 'log' : worker.log, 'activity' : worker.activity }
+                    params = { 'id' : worker.current_task, 'status': 'running', 'log' : worker.log, 'activity' : worker.activity, 'time_cost' : worker.time_cost }
                     try:
                         http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
                     except:

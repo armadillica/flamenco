@@ -86,16 +86,57 @@ class JobListApi(Resource):
             if tasksforjob and taskscompleteforjob:
                 percentage_done = round(float(taskscompleteforjob) / float(tasksforjob) * 100.0, 1)
 
-            tasks=[]
-            for task in Task.query.filter(Task.job_id == job.id).all():
-                tasks.append( {'name':task.name, 'status':task.status, 'type':task.type, 'settings':task.settings, 'log':task.log, 'activity':task.activity} )
+            remaining_time=None
+            average_time=None
+            total_time=0
+            finished_time=0
+            finished_tasks=0
+            running_tasks=0
+            frames_rendering=""
+            frame_remaining=None
+            activity=""
+            tasks=Task.query.filter(Task.job_id == job.id).all()
+            for task in tasks:
+                #tasks.append( {'name':task.name, 'status':task.status, 'type':task.type, 'settings':task.settings, 'log':task.log, 'activity':task.activity} )
+                try:
+                    task_activity=json.loads(task.activity)
+                except:
+                    task_activity=None
 
+
+                if task.status=='finished':
+                    if task.time_cost:
+                        finished_time=finished_time+task.time_cost
+                    finished_tasks+=1
+                if task.status=='running':
+                    running_tasks+=1
+                    if task_activity and task_activity.get('current_frame'):
+                        frames_rendering="{0} {1}".format(frames_rendering, task_activity.get('current_frame'))
+                        if task_activity.get('remaining'):
+                            frames_rendering="{0} ({1}sec)".format(frames_rendering, task_activity.get('remaining'))
+
+
+                if task.time_cost:
+                    total_time+=task.time_cost
+
+            if job.status=='running':
+                if finished_tasks>0:
+                    average_time=finished_time/finished_tasks
+                if finished_tasks>0:
+                    remaining_time=(average_time*len(tasks))-total_time
+                #activity="{0} tasks running".format(running_tasks)
+                activity="Rendering: {0}.".format(frames_rendering)
+
+            total_time="{0}sec".format(total_time)
 
             jobs[job.id] = {"job_name" : job.name,
                             "project_id" : job.project_id,
                             "status" : job.status,
                             "settings" : job.settings,
-                            "tasks" : json.dumps(tasks),
+                            "activity" : activity,
+                            "remaining_time" : remaining_time,
+                            "average_time" : average_time,
+                            "total_time" : total_time,
                             "type" : job.type,
                             "priority" : job.priority,
                             "percentage_done" : percentage_done }

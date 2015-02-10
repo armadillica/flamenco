@@ -37,6 +37,7 @@ class WorkerListApi(Resource):
                           port=port,
                           status='enabled',
                           log=None,
+                          time_cost=None,
                           activity=None,
                           connection='online',
                           system=args['system'])
@@ -58,6 +59,7 @@ class WorkerListApi(Resource):
                                         "status": worker.status,
                                         "activity": worker.activity,
                                         "log": worker.log,
+                                        "time_cost": worker.time_cost,
                                         "connection": worker.connection,
                                         "system": worker.system,
                                         "port" : worker.port,
@@ -74,6 +76,7 @@ class WorkerApi(Resource):
         worker.status = args['status']
         worker.activity = args['activity']
         worker.log = args['log']
+        worker.time_cost = args['time_cost']
         db.session.add(worker)
         db.session.commit()
         return jsonify(dict(status=worker.status))

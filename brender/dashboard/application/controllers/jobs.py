@@ -40,28 +40,12 @@ def index():
 
     for key, val in jobs.iteritems():
 
-        """#Settings
-        settings_list = json.loads(val['settings'])
-        settings= "<ul>"
-        for setting in settings_list:
-            settings="{0}<li><span style=\"font-weight:bold\">{1}</span>: {2}</li>".format(settings, setting, settings_list[setting])
-        settings = "{0}</ul>".format(settings)
-
-        task_name = "<ul>"
-        task_completion = "<ul>"
-        task_activity = "<ul>"
-
-        task_completion = "{0}</ul>".format(task_completion)
-        task_activity = "{0}</ul>".format(task_activity)
-        task_name = "{0}</ul>".format(task_name)
-        """
-
-        #Tasks
-        task_activity=''
-        task_list = json.loads(val['tasks'])
-        for task in task_list:
-            if task['status']=='running':
-                task_activity="[{0}] {1}".format(task['name'], task['activity'])
+        remaining_time = val['remaining_time']
+        if not remaining_time:
+            remaining_time='-'
+        average_time = val['average_time']
+        if not average_time:
+            average_time='-'
 
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
@@ -72,9 +56,11 @@ def index():
             "3": val['percentage_done'],
             "4": val['status'],
             "5" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key),
-            "6" : task_activity,
+            "6" : remaining_time,
+            "7" : average_time,
+            "8" : val['total_time'],
+            "9" : val['activity'],
             })
-        #print(v)
 
     jobs_list = sorted(jobs_list, key=lambda x: x['1'])
     entries = json.dumps(jobs_list)
@@ -91,12 +77,6 @@ def job(job_id):
 
     #Tasks
     task_activity=''
-    task_list = json.loads(job['tasks'])
-    for task in task_list:
-        if task['status']=='running':
-            task_activity="[{0}] {1}".format(task['name'], task['activity'])
-
-    job['activity']= task_activity
     job['thumbnail']='http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, job_id)
 
     #job['thumb'] = last_thumbnail(job['id'])

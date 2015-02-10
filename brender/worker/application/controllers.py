@@ -33,6 +33,7 @@ PROCESS = None
 LOCK = Lock()
 ACTIVITY = None
 LOG = None
+TIME_INIT = None
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
@@ -109,7 +110,7 @@ def _checkProcessOutputWin(process, q):
         full_buffer += buffer
     return full_buffer
 
-def _interactiveReadProcessWin(process, task_id, task_type):
+def _interactiveReadProcessWin(process, options):
     full_buffer = ''
     tmp_buffer = ''
     q = Queue.Queue()
@@ -133,17 +134,19 @@ def _interactiveReadProcessWin(process, task_id, task_type):
     return (process.returncode, full_buffer)
 
 import re
+#from application.task_parsers.blender_render import task_parser
 
 def send_thumbnail(manager_url, file_path, params):
             thumbnail_file = open(file_path, 'r')
             requests.post(manager_url, files={'file': thumbnail_file}, data=params)
             thumbnail_file.close()
 
-def _interactiveReadProcess(process, task_id, task_type):
+def _interactiveReadProcess(process, options):
     global ACTIVITY
     global LOG
 
-    module_name = 'application.task_parsers.{0}'.format(task_type)
+    task_id=options['task_id']
+    module_name = 'application.task_parsers.{0}'.format(options['task_parser'])
     task_parser = None
     try:
         module_loader = __import__(module_name, globals(), locals(), ['task_parser'], 0)
@@ -161,14 +164,15 @@ def _interactiveReadProcess(process, task_id, task_type):
 
         if tmp_buffer:
             if task_parser:
-                parser_output = task_parser.parse(tmp_buffer,task_id)
-                if parser_output['activity']:
-                    ACTIVITY = parser_output['activity']
+                parser_output = task_parser.parse(tmp_buffer,options, ACTIVITY)
+                if parser_output:
+                    ACTIVITY = parser_output
+                    activity=json.loads(parser_output)
 
-                if parser_output['thumbnail']:
+                if activity.get('thumbnail'):
                     params = dict(task_id=task_id)
                     manager_url = "http://%s/tasks/thumbnails" % (app.config['BRENDER_MANAGER'])
-                    request_thread = Thread(target=send_thumbnail, args=(manager_url, parser_output['thumbnail'], params))
+                    request_thread = Thread(target=send_thumbnail, args=(manager_url, activity.get('thumbnail'), params))
                     request_thread.start()
 
             LOG = "{0}{1}".format(LOG, tmp_buffer)
@@ -194,16 +198,23 @@ def info():
     global PROCESS
     global ACTIVITY
     global LOG
+    global TIME_INIT
 
     if PROCESS:
         status = 'rendering'
     else:
         status = 'enabled'
+
+    time_cost=None
+    if TIME_INIT:
+        time_cost=int(time.time())-TIME_INIT
+
     return jsonify(mac_address=MAC_ADDRESS,
                    hostname=HOSTNAME,
                    system=SYSTEM,
                    activity=ACTIVITY,
                    log=LOG,
+                   time_cost=time_cost,
                    status=status)
 
 def run_blender_in_thread(options):
@@ -212,11 +223,13 @@ def run_blender_in_thread(options):
     global PROCESS
     global ACTIVITY
     global LOG
+    global TIME_INIT
 
     render_command = json.loads(options['task_command'])
 
     logging.info( "Running %s" % render_command)
 
+    TIME_INIT = int(time.time())
     PROCESS = subprocess.Popen(render_command,
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE)
@@ -229,17 +242,19 @@ def run_blender_in_thread(options):
         fcntl(PROCESS.stderr, F_SETFL, flags | os.O_NONBLOCK)
 
     #flask.g.blender_process = process
-    (retcode, full_output) =  _interactiveReadProcess(PROCESS, options["task_id"], options["task_type"]) \
+    (retcode, full_output) =  _interactiveReadProcess(PROCESS, options) \
         if (platform.system() is not "Windows") \
-        else _interactiveReadProcessWin(PROCESS, options["task_id"], options["task_type"])
+        else _interactiveReadProcessWin(PROCESS, options)
 
     log = LOG
     activity = ACTIVITY
+    time_init = TIME_INIT
 
     logging.debug( 'Return code: {0}'.format(retcode) )
     PROCESS = None
     ACTIVITY = None
     LOG = None
+    TIME_INIT = None
 
     #flask.g.blender_process = None
     #print(full_output)
@@ -258,8 +273,17 @@ def run_blender_in_thread(options):
 
     logging.debug(status)
 
+    time_cost=int(time.time())-time_init
+
+    params={
+        'status': status,
+        'log' : log,
+        'activity': activity,
+        'time_cost': time_cost
+        }
+
     try:
-        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data={'status': status, 'log':log, 'activity': activity})
+        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data=params)
     except ConnectionError:
         logging.error( 'Cant connect with the Manager {0}'.format(BRENDER_MANAGER) )
 
@@ -273,13 +297,17 @@ def execute_task():
 
     options = {
         'task_id': request.form['task_id'],
-        'task_type': request.form['task_type'],
+        'task_parser': request.form['task_parser'],
+        'settings': request.form['settings'],
         'task_command': request.form['task_command'],
     }
 
     LOCK.acquire()
     PROCESS = None
     LOG = None
+    TIME_INIT = None
+    ACTIVITY = None
+
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
     render_thread.start()
     LOCK.release()
