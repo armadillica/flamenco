@@ -124,10 +124,9 @@ class JobListApi(Resource):
                     average_time=finished_time/finished_tasks
                 if finished_tasks>0:
                     remaining_time=(average_time*len(tasks))-total_time
-                #activity="{0} tasks running".format(running_tasks)
+                if remaining_time and running_tasks>0:
+                    remaining_time=remaining_time/running_tasks
                 activity="Rendering: {0}.".format(frames_rendering)
-
-            total_time="{0}sec".format(total_time)
 
             jobs[job.id] = {"job_name" : job.name,
                             "project_id" : job.project_id,

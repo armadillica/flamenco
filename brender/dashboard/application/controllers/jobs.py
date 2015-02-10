@@ -43,9 +43,18 @@ def index():
         remaining_time = val['remaining_time']
         if not remaining_time:
             remaining_time='-'
+        else:
+            remaining_time="{0}~ sec".format(remaining_time)
         average_time = val['average_time']
         if not average_time:
             average_time='-'
+        else:
+            average_time="{0}sec".format(average_time)
+        total_time=val['total_time']
+        if not total_time:
+            total_time='-'
+        else:
+            total_time="{0}~ sec".format(total_time)
 
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
@@ -58,7 +67,7 @@ def index():
             "5" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key),
             "6" : remaining_time,
             "7" : average_time,
-            "8" : val['total_time'],
+            "8" : total_time,
             "9" : val['activity'],
             })
 
