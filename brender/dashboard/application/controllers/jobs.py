@@ -54,7 +54,10 @@ def index():
         if not total_time:
             total_time='-'
         else:
-            total_time="{0}~ sec".format(total_time)
+            total_time="{0} sec".format(total_time)
+        job_time=val['job_time']
+        if job_time:
+            total_time="{0} ({1}~ sec)".format(total_time, job_time)
 
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({

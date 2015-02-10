@@ -89,6 +89,7 @@ class JobListApi(Resource):
             remaining_time=None
             average_time=None
             total_time=0
+            job_time=0
             finished_time=0
             finished_tasks=0
             running_tasks=0
@@ -128,6 +129,9 @@ class JobListApi(Resource):
                     remaining_time=remaining_time/running_tasks
                 activity="Rendering: {0}.".format(frames_rendering)
 
+            if running_tasks>0:
+                job_time=total_time/running_tasks
+
             jobs[job.id] = {"job_name" : job.name,
                             "project_id" : job.project_id,
                             "status" : job.status,
@@ -136,6 +140,7 @@ class JobListApi(Resource):
                             "remaining_time" : remaining_time,
                             "average_time" : average_time,
                             "total_time" : total_time,
+                            "job_time" : job_time,
                             "type" : job.type,
                             "priority" : job.priority,
                             "percentage_done" : percentage_done }
