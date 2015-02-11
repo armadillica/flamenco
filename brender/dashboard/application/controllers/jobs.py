@@ -3,6 +3,7 @@ import json
 import os
 import time
 import urllib
+import datetime
 
 from os import listdir
 from os.path import isfile
@@ -38,26 +39,29 @@ def index():
     jobs = http_server_request('get', '/jobs')
     jobs_list = []
 
+    def seconds_to_time(seconds):
+        return str(datetime.timedelta(seconds=seconds))
+
     for key, val in jobs.iteritems():
 
         remaining_time = val['remaining_time']
         if not remaining_time:
             remaining_time='-'
         else:
-            remaining_time="{0}~ sec".format(remaining_time)
+            remaining_time=seconds_to_time(remaining_time)
         average_time = val['average_time']
         if not average_time:
             average_time='-'
         else:
-            average_time="{0}sec".format(average_time)
+            average_time=seconds_to_time(average_time)
         total_time=val['total_time']
         if not total_time:
             total_time='-'
         else:
-            total_time="{0} sec".format(total_time)
+            total_time=seconds_to_time(total_time)
         job_time=val['job_time']
         if job_time:
-            total_time="{0} ({1}~ sec)".format(total_time, job_time)
+            total_time="{0} ({1})".format(total_time, seconds_to_time(job_time))
 
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
