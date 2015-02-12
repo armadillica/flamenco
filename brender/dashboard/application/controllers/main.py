@@ -56,3 +56,7 @@ def tasks_index():
     return render_template('tasks.html', entries=entries, title='tasks')
 
 
+@main.route('/about')
+def about():
+        return render_template('about.html')
+

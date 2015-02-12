@@ -1,13 +1,13 @@
 {% extends "layout.html" %}
-{% block nav_2 %}
+{% block nav %}
 <ul class="nav navbar-nav navbar-left">
   <span class="navbar-brand">Jobs</span>
   <li>
     <div class="btn-group navbar-btn">
       <div id="job-start" class="btn btn-default" command="start">Start</div>
       <div id="job-stop" class="btn btn-default" command="stop">Stop</div>
-      <div id="job-respawn" class="btn btn-default" command="respawn">Respawn</div>
-      <div id="job-pause" class="btn btn-default" command="pause">Pause</div>
+      <div id="job-respawn" class="btn btn-default disabled" command="respawn">Respawn</div>
+      <div id="job-pause" class="btn btn-default disabled" command="pause">Pause</div>
       <div id="job-reset" class="btn btn-default" command="reset">Reset</div>
     </div>
     <div class="btn-group navbar-btn">

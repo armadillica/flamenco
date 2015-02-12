@@ -65,11 +65,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="{{ url_for('main.index') }}">b<strong>render</strong></a>
+          <!-- <a class="navbar-brand" href="{{ url_for('main.index') }}">b<strong>render</strong></a> -->
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
         <nav class="collapse navbar-collapse" id="brender-navbar-collapse-1">
+          {% block nav %}
+          {% endblock %}
           <ul class="nav navbar-nav navbar-right">
             <li {% if title == 'workers': %} class="active"{% endif %}>
               <a href="{{ url_for('workers.index') }}">Workers</a>
@@ -89,15 +91,15 @@
                 <li><a href="{{ url_for('settings.index') }}">Settings</a></li>
                 <!-- <li><a href="{{ url_for('settings.render') }}">Render Settings</a></li> -->
                 <li><a href="{{ url_for('projects.index') }}">Projects</a></li>
+                <li>
+                  <a href="#" data-toggle="modal" modal="{{ url_for('main.about') }}" data-target="#addJobModal">About</a>
+                </li>
               </ul>
             </li>
           </ul>
         </nav><!-- /.navbar-collapse -->
         <!-- Context specific navigation -->
-        <nav class="collapse navbar-collapse" id="brender-navbar-collapse-2">
-          {% block nav_2 %}
-          {% endblock %}
-        </nav><!-- /.navbar-collapse -->
+
       </div>
     </header>
 
