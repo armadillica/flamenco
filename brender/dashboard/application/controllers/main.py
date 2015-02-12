@@ -56,36 +56,3 @@ def tasks_index():
     return render_template('tasks.html', entries=entries, title='tasks')
 
 
-@main.route('/log/', methods=['GET', 'POST'])
-def log():
-    path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
-    log_files = []
-    for i in glob.iglob('*.log'):
-        log_files.append(i)
-    print('[Debug] %s') % log_files
-    if request.method == 'POST':
-
-        result = request.form['log_files']
-        if result:
-            try:
-                with open(result) as log:
-                        lines = log.readlines()
-                return render_template('log.html',
-                                       title='logs',
-                                       lines=lines,
-                                       result=result,
-                                       log_files=log_files)
-            except IOError:
-                flash('Couldn\'t open file. ' +
-                      'Please make sure the log file exists at ' + result)
-        else:
-            flash('No log to read Please input a filepath ex: ' +
-                  'log.log')
-    return render_template('log.html', title='logs', log_files=log_files)
-
-
-@main.route('/sandbox/')
-def sandbox():
-    return render_template('sandbox.html', title='sandbox')
-

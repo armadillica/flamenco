@@ -53,7 +53,6 @@ class RenderSettingsApi(Resource):
             name = 'render_settings_path_win'
         else:
             name = 'render_settings_path_osx'
-
         path = Setting.query.filter_by(name=name).first()
         onlyfiles = [f for f in listdir(path.value) if isfile(join(path.value, f))]
         settings_files = dict(settings_files=onlyfiles)

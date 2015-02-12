@@ -22,6 +22,14 @@ hr {
     border-bottom: 1px solid #ffffff;
 }
 
+.navbar-default .navbar-brand {
+    color: #333;
+}
+
+#brender-navbar-collapse-2 .navbar-brand {
+    color: #666;
+}
+
 .page-title {
     text-transform:capitalize;
 }
@@ -95,7 +103,7 @@ h2 {
 
 #  --- client status -----
 
-.enabled {
+/*.enabled {
     color:green;
 }
 .disabled {
@@ -106,4 +114,4 @@ h2 {
 }
 .waiting {
     color:orange;
-}
+}*/

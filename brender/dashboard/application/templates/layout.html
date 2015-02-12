@@ -15,7 +15,6 @@
     <script src="{{ url_for('static', filename='js/jquery.readmore-readless.js') }}" type="text/javascript"></script>
     <!-- <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,300' rel='stylesheet' type='text/css'> -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}" rel="stylesheet">
 <!--     <link rel="stylesheet" type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css"> -->
     <link href="{{ url_for('static', filename='css/brender.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/dataTables.bootstrap.css') }}" rel="stylesheet">
@@ -56,7 +55,6 @@
     </div><!-- /.modal -->
 
     {% endblock %}
-
     <header class="navbar navbar-default navbar-static-top" role="navigation">
       <div class="container">
         <!-- Brand and toggle get grouped for better mobile display -->
@@ -71,7 +69,7 @@
         </div>
 
         <!-- Collect the nav links, forms, and other content for toggling -->
-        <nav class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <nav class="collapse navbar-collapse" id="brender-navbar-collapse-1">
           <ul class="nav navbar-nav navbar-right">
             <li {% if title == 'workers': %} class="active"{% endif %}>
               <a href="{{ url_for('workers.index') }}">Workers</a>
@@ -79,30 +77,31 @@
             <li {% if title == 'jobs': %} class="active"{% endif %}>
               <a href="{{ url_for('jobs.index') }}">Jobs</a>
             </li>
-            <li {% if title == 'tasks': %} class="active"{% endif %}>
+            <!-- <li {% if title == 'tasks': %} class="active"{% endif %}>
               <a href="{{ url_for('main.tasks_index') }}">Tasks</a>
-            </li>
+            </li> -->
             <li>
               <a href="#" data-toggle="modal" modal="{{ url_for('jobs.add') }}" data-target="#addJobModal">Add Job</a>
             </li>
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Server <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ url_for('settings.status') }}">Status</a></li>
-                <li class="divider"></li>
                 <li><a href="{{ url_for('settings.index') }}">Settings</a></li>
                 <li><a href="{{ url_for('settings.render') }}">Render Settings</a></li>
                 <li><a href="{{ url_for('projects.index') }}">Projects</a></li>
-                <li><a href="{{ url_for('main.log') }}">Logs</a></li>
-                <li><a href="{{ url_for('main.sandbox') }}">Sandbox</a></li>
               </ul>
             </li>
           </ul>
         </nav><!-- /.navbar-collapse -->
+        <!-- Context specific navigation -->
+        <nav class="collapse navbar-collapse" id="brender-navbar-collapse-2">
+          {% block nav_2 %}
+          {% endblock %}
+        </nav><!-- /.navbar-collapse -->
       </div>
     </header>
 
-    <div class="container">
+    <div class="container-fluid">
       <div class="row">
         <div class="col-md-12">
           {% for message in get_flashed_messages() %}

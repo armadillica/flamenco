@@ -1,4 +1,63 @@
 {% extends "layout.html" %}
+{% block nav_2 %}
+<ul class="nav navbar-nav navbar-left">
+  <span class="navbar-brand">Jobs</span>
+  <li>
+    <div class="btn-group navbar-btn">
+      <div id="job-start" class="btn btn-default" command="start">Start</div>
+      <div id="job-stop" class="btn btn-default" command="stop">Stop</div>
+      <div id="job-respawn" class="btn btn-default" command="respawn">Respawn</div>
+      <div id="job-pause" class="btn btn-default" command="pause">Pause</div>
+      <div id="job-reset" class="btn btn-default" command="reset">Reset</div>
+    </div>
+    <div class="btn-group navbar-btn">
+      <div id="job-delete" class="btn btn-danger">Delete</div>
+    </div>
+  </li>
+</ul>
+{% endblock %}
+
+{% block body %}
+  <div class="row">
+    <div class="col-md-12">
+      <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs">
+        <thead>
+          <tr>
+            <th width="1%"><input class="check-all" type="checkbox"></th>
+            <th width="1%">ID</th>
+            <th width="1%">Thumbnail</th>
+            <th width="10%">Job name</th>
+            <th width="15%">Job Completion</th>
+            <th width="20%">Remaining Time</th>
+            <th width="20%">Average Time</th>
+            <th width="20%">Total Time</th>
+            <th width="20%">Activity</th>
+            <th width="1%">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+        <tfoot>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Thumbnail</th>
+            <th>Job name</th>
+            <th>Job Completion</th>
+            <th>Remaining Time</th>
+            <th>Average Time</th>
+            <th>Total Time</th>
+            <th>Activity</th>
+            <th>Status</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+{% endblock %}
+
 {% block footer_scripts %}
 <script type="text/javascript">
   $(document).ready(function() {
@@ -113,65 +172,4 @@
 
   });
 </script>
-{% endblock %}
-
-{% block body %}
-
-  <h1 class="page-title">{{title}}</h1>
-  <hr>
-  <div class="row">
-    <div class="col-md-12">
-      <div class="btn-toolbar">
-        <div class="btn-group btn-group-sm">
-          <div id="job-start" class="btn btn-default" command="start">Start</div>
-          <div id="job-stop" class="btn btn-default" command="stop">Stop</div>
-          <div id="job-respawn" class="btn btn-default" command="respawn">Respawn</div>
-          <div id="job-pause" class="btn btn-default" command="pause">Pause</div>
-          <div id="job-reset" class="btn btn-default" command="reset">Reset</div>
-        </div>
-        <div class="btn-group btn-group-sm">
-          <div id="job-delete" class="btn btn-danger">Delete</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <hr>
-  <div class="row">
-    <div class="col-md-12">
-      <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs">
-        <thead>
-          <tr>
-            <th width="1%"><input class="check-all" type="checkbox"></th>
-            <th width="1%">ID</th>
-            <th width="1%">Thumbnail</th>
-            <th width="10%">Job name</th>
-            <th width="15%">Job Completion</th>
-            <th width="20%">Remaining Time</th>
-            <th width="20%">Average Time</th>
-            <th width="20%">Total Time</th>
-            <th width="20%">Activity</th>
-            <th width="1%">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-
-        </tbody>
-        <tfoot>
-          <tr>
-            <th></th>
-            <th>ID</th>
-            <th>Thumbnail</th>
-            <th>Job name</th>
-            <th>Job Completion</th>
-            <th>Remaining Time</th>
-            <th>Average Time</th>
-            <th>Total Time</th>
-            <th>Activity</th>
-            <th>Status</th>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  </div>
-
 {% endblock %}
