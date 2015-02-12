@@ -34,31 +34,27 @@ class task_compiler():
       if setting_render_settings is None:
          logging.warning("Render settings path not set!")
 
-      tile_output_path= os.path.join( output_path, "tiled_{0}".format(settings['tile']) )
+      tile_output_path= os.path.join( output_path, "tiled_{0}_".format(settings['tile']) )
 
       setting_render_settings = app.config['SETTINGS_PATH_LINUX']
       render_settings = os.path.join(
          setting_render_settings,
           settings['render_settings'])
 
-      script="""
-import bpy
+      script_path=os.path.join(output_path , 'tile_mix')
 
-render_context = bpy.context.scene.render
+      dir = os.path.dirname(__file__)
+      template_path = os.path.join(dir, 'tiled_blender_render.template')
+      with open (template_path, "r") as f:
+         script=f.read()
+      f.close()
 
-tile = {0}
-tiles = {1}
-
-bpy.context.scene.render.use_border = True
-bpy.context.scene.render.use_compositing = False
-bpy.context.scene.render.image_settings.color_mode = 'RGB'
-
-render_context.border_max_x = 1
-render_context.border_min_x = 0
-
-render_context.border_min_y = tile/tiles
-render_context.border_max_y = ((tile+1)/tiles)
+      data="""
+tile={0}
+tiles={1}
       """.format(settings['tile'], settings['tiles'])
+
+      script = script.replace("##VARS_INSERTED_HERE##",data)
 
       script_path=os.path.join(output_path , 'tile_{0}'.format(settings['tile']))
 
@@ -71,8 +67,6 @@ render_context.border_max_y = ((tile+1)/tiles)
       f.write(script)
       f.close()
 
-      #TODO the command will be in the database,
-      #and not generated in the fly
       task_command = [
       str( app.config['BLENDER_PATH_LINUX'] ),
       '--background',
@@ -85,8 +79,6 @@ render_context.border_max_y = ((tile+1)/tiles)
       str(settings['frame_start']),
       '--frame-end',
       str(settings['frame_end']),
-      '--render-format',
-      str(settings['format']),
       '--render-anim',
       '--enable-autoexec'
       ]

@@ -41,71 +41,21 @@ class task_compiler():
       #render_folder=os.path.split(tile_output_path)[0]
 
       for tile in range(0, settings['tiles']):
-         script_path=os.path.join(output_path , 'tile_mix')
-         script="""
-import bpy
+        script_path=os.path.join(output_path , 'tile_mix')
 
-D=bpy.data
-C=bpy.context
+        dir = os.path.dirname(__file__)
+        template_path = os.path.join(dir, 'tiled_blender_render_simple_mix.template')
+        with open (template_path, "r") as f:
+          script=f.read()
+        f.close()
 
-if not C.scene.use_nodes:
-   C.scene.use_nodes=True
+        data="""
+tiles={0}
+output='{1}'
+frame={2}
+      """.format(settings['tiles'], os.path.join(output_path, 'tiled'), settings['frame_start'])
 
-compo_nodes= bpy.context.scene.node_tree.nodes
-compo_links= bpy.context.scene.node_tree.links
-
-bpy.context.scene.render.use_border = False
-bpy.context.scene.render.use_compositing = True
-bpy.context.scene.render.image_settings.color_mode = 'RGB'
-
-removing=True
-while removing:
-    removing=False
-    for node in compo_nodes:
-        if node.type=='R_LAYERS':
-            compo_nodes.remove(node)
-            removing=True
-            break
-
-output_node=None
-for node in compo_nodes:
-    print (node.type)
-    if node.type=='COMPOSITE':
-        output_node=node
-        break
-
-tiles=%s
-for tile in range(0, tiles):
-    node_name="imput_tile_{0}".format(tile)
-    node_image=compo_nodes.new(type='CompositorNodeImage')
-    node_image.name=node_name
-    node_image.location.y=290*tile
-    
-    imagepath='%s_{0}0001.png'.format(tile)
-    node_image.image=D.images.load(filepath=imagepath)
-    
-    if tile>0:
-        node_name="mix_tile_{0}_{1}".format(tile, tile+1)
-        node=compo_nodes.new(type='CompositorNodeMixRGB')
-        node.name=node_name
-        node.blend_type = 'SCREEN'
-        node.location.y=60 + (290*tile)
-        node.location.x=200+(200*tile)
-        
-        compo_links.new(node_image.outputs[0], node.inputs[1])
-        try:
-            compo_links.new(last_mix.outputs[0], node.inputs[2])
-        except:
-            compo_links.new(last_image.outputs[0], node.inputs[2])
-            pass
-        
-        last_mix=node
-        
-    last_image=node_image
-    
-compo_links.new(last_mix.outputs[0], output_node.inputs[0])
-
-      """ % (settings['tiles'], os.path.join(output_path, 'tiled'))
+        script = script.replace("##VARS_INSERTED_HERE##",data)
 
       #script_path=os.path.join(tile_output_path , 'tile_{0}'.format(settings['tile']))
 
