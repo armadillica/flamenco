@@ -6,7 +6,6 @@ from hashlib import md5
 from threading import Thread
 from werkzeug import secure_filename
 from flask import flash
-from flask import abort
 from application import app
 
 
@@ -23,7 +22,7 @@ def http_request(ip_address, command, method, params=None):
         r = requests.patch('http://' + ip_address + command, data=params)
 
     if r.status_code == 404:
-        return abort(404)
+        return '', 404
 
     # Only for debug
     if r.status_code == 400:
