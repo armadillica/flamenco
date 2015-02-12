@@ -394,8 +394,11 @@ class JobDeleteApi(Resource):
             job = Job.query.get(j)
             if job:
                 path = os.path.join(job.project.render_path_server, str(j))
-                if exists(path):
-                    rmtree(path)
+                #Security check
+                insecure_names=[None, "", "/", "\\", ".", ".."]
+                if job.project.render_path_server not in insecure_names and str(j) not in insecure_names:
+                    if exists(path):
+                        rmtree(path)
 
                 db.session.query(JobManagers).filter(JobManagers.job_id == job.id).delete()
                 db.session.delete(job)
