@@ -48,6 +48,14 @@ hr {
     margin-top: 3px;
 }
 
+.progress-bar {
+    line-height: 13px;
+}
+
+.progress span {
+    font-size: 9px;
+}
+
 footer p {
     font-size: 11px;
 }
