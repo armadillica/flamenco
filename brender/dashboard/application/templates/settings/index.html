@@ -1,9 +1,12 @@
 {% extends "layout.html" %}
+{% block nav %}
+<ul class="nav navbar-nav navbar-left">
+  <span class="navbar-brand">Settings</span>
+</ul>
+{% endblock %}
 
 {% block body %}
 
-    <h1 class="page-title">{{title}}</h1>
-    <hr>
     <form role="form" class="form-horizontal" action="{{ url_for('settings.index') }}" method=post>
 
       <div class="form-group">

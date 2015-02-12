@@ -1,4 +1,14 @@
 {% extends "layout.html" %}
+{% block nav %}
+<ul class="nav navbar-nav navbar-left">
+  <span class="navbar-brand">Projects</span>
+  <li>
+    <div class="btn-group navbar-btn" role="group" aria-label="...">
+      <a href="#" class="btn btn-default" data-toggle="modal" modal="{{ url_for('projects.add') }}" data-target="#addProjectModal">Add Project</a>
+    </div>
+  </li>
+</ul>
+{% endblock %}
 {% block footer_scripts %}
 <script>
 $('[data-toggle="popover"]').popover({
@@ -11,10 +21,7 @@ $('[data-toggle="popover"]').popover({
 </script>
 {% endblock %}
 {% block body %}
-  <h1 class="pull-left page-title">{{title}}</h1>
-  <a href="#" class="btn btn-success pull-right" data-toggle="modal" modal="{{ url_for('projects.add') }}" data-target="#addProjectModal">Add Project</a>
-  <div class="clearfix"></div>
-  <hr>
+
   {% for project in projects %}
   <div class="row">
     <div class="col-md-12">
