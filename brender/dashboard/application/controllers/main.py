@@ -20,7 +20,7 @@ from application import http_server_request
 from application import list_integers_string
 from application import check_connection
 
-from application.controllers.workers import workers
+from application.controllers.jobs import jobs
 
 
 # Name of the Blueprint
@@ -29,7 +29,7 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     if check_connection() == 'online':
-        return redirect(url_for('workers.index'))
+        return redirect(url_for('jobs.index'))
     else:
         return "[error] Dashboard could not connect to server"
 
