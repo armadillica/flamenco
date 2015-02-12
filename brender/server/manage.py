@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+import logging
+
 from flask.ext.script import Manager
 from flask.ext.migrate import MigrateCommand
 
@@ -14,6 +16,16 @@ manager.add_command('db', MigrateCommand)
 def runserver():
     """This command is meant for development. If no configuration is found,
     we start the app listening from all hosts, from port 9999."""
+
+    #Testing Database
+    from application.modules.settings.model import Setting
+    from sqlalchemy.exc import OperationalError
+    try:
+        Setting.query.first()
+    except OperationalError:
+        logging.error("Please run \"python manager.py db upgrade\" to initialize the database")
+        exit(3)
+
     try:
         from application import config
         PORT = config.Config.PORT

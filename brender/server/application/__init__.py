@@ -1,4 +1,5 @@
 import os
+import tempfile
 from flask import Flask
 from flask import jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -23,6 +24,8 @@ except ImportError:
     from modules.managers.model import Manager
     app.config.update(
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite'),
+        TMP_FOLDER=tempfile.gettempdir(),
+        THUMBNAIL_EXTENSIONS=set(['png'])
     )
 
 api = Api(app)
@@ -71,7 +74,6 @@ from modules.stats import stats
 
 app.register_blueprint(main)
 app.register_blueprint(stats, url_prefix='/stats')
-
 
 @app.errorhandler(404)
 def not_found(error):

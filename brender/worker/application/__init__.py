@@ -1,4 +1,5 @@
 import os
+import tempfile
 from threading import Thread
 from flask import Flask
 
@@ -12,7 +13,7 @@ try:
     )
 except ImportError:
     app.config['BRENDER_MANAGER'] = 'localhost:7777'
-    app.config['TMP_FOLDER'] = '/tmp/'
+    app.config['TMP_FOLDER'] = tempfile.gettempdir()
 
 from controllers import controller_bp
 app.register_blueprint(controller_bp, url_prefix='/')

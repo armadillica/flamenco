@@ -1,4 +1,5 @@
 import os
+import tempfile
 import logging
 import requests
 from requests.exceptions import ConnectionError
@@ -39,7 +40,7 @@ try:
                 SETTINGS_PATH_WIN=server_settings['render_settings_path_win']
             )
         except ConnectionError:
-            logging.info("The server {0} seems be unavailable.".format(app.config['BRENDER_SERVER']))
+            logging.error("The server {0} seems be unavailable.".format(app.config['BRENDER_SERVER']))
             exit(3)
     else:
         app.config.update(
@@ -55,9 +56,12 @@ except ImportError:
     """If a config is not defined, we use the default settings, importing the
     BLENDER_PATH and SETTINGS_PATH from the server.
     """
+    logging.error("No config.py file found, importing config from Server.")
 
     app.config['BRENDER_SERVER'] = 'localhost:9999'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite')
+    app.config['TMP_FOLDER'] = tempfile.gettempdir()
+    app.config['THUMBNAIL_EXTENSIONS'] = set(['png'])
 
     try:
         server_settings = http_request(app.config['BRENDER_SERVER'], '/settings', 'get')
@@ -70,7 +74,10 @@ except ImportError:
             SETTINGS_PATH_WIN=server_settings['render_settings_path_win']
         )
     except ConnectionError:
-        logging.info("The server {0} seems be unavailable.".format(app.config['BRENDER_SERVER']))
+        logging.error("The server {0} seems be unavailable.".format(app.config['BRENDER_SERVER']))
+        exit(3)
+    except KeyError:
+        logging.error("Please, configure Brender Paths using browsing Dashboard->Server->Settings")
         exit(3)
 
 
@@ -92,7 +99,6 @@ from modules.settings import SettingsListApi
 from modules.settings import SettingApi
 api.add_resource(SettingsListApi, '/settings')
 api.add_resource(SettingApi, '/settings/<string:name>')
-
 
 def register_manager(port, name, has_virtual_workers):
     """This is going to be an HTTP request to the server with all the info for
@@ -117,7 +123,6 @@ def register_manager(port, name, has_virtual_workers):
     r = http_request(app.config['BRENDER_SERVER'], '/managers', 'post', params=params)
 
     # Search in the settings if we have a uuid for the manager
-    from modules.settings.model import Setting
     uuid = Setting.query.filter_by(name='uuid').first()
     # If we don't find one, we proceed to create it, using the server reponse
     if not uuid:
