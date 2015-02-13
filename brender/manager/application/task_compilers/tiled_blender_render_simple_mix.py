@@ -20,7 +20,7 @@ class task_compiler():
          setting_render_settings = app.config['SETTINGS_PATH_WIN']
          file_path = settings['file_path_win']
          output_path = settings['output_path_win']
-      else:
+      else 'Linux' in worker.system:
          setting_blender_path = app.config['BLENDER_PATH_LINUX']
          setting_render_settings = app.config['SETTINGS_PATH_LINUX']
          file_path = settings['file_path_linux']
@@ -30,15 +30,14 @@ class task_compiler():
 
       if setting_render_settings is None:
          logging.warning("Render settings path not set!")
+         return None
 
-      #tile_output_path="{0}_{1}".format(output_path, settings['tile'])
-      tile_output_path="{0}/".format(output_path)
+      tiles_path=os.path.join(output_path, "tiled_{{0}}_{0:04d}.exr".format(settings['frame_start']))
 
       render_settings = os.path.join(
          setting_render_settings,
           settings['render_settings'])
 
-      #render_folder=os.path.split(tile_output_path)[0]
 
       for tile in range(0, settings['tiles']):
         script_path=os.path.join(output_path , 'tile_mix')
@@ -50,17 +49,15 @@ class task_compiler():
         f.close()
 
         data="""
-tiles={0}
-output='{1}'
-frame={2}
-      """.format(settings['tiles'], os.path.join(output_path, 'tiled'), settings['frame_start'])
+tiles_path='{0}'
+tiles={1}
+      """.format(tiles_path, settings['tiles'])
 
         script = script.replace("##VARS_INSERTED_HERE##",data)
 
-      #script_path=os.path.join(tile_output_path , 'tile_{0}'.format(settings['tile']))
 
       try:
-         os.mkdir(tile_output_path)
+         os.mkdir(output_path)
       except:
          pass
 
@@ -70,11 +67,11 @@ frame={2}
 
 
       task_command = [
-      str( app.config['BLENDER_PATH_LINUX'] ),
+      str( blender_path),
       '--background',
       str( file_path ),
       '--render-output',
-      str(tile_output_path),
+      str(os.path.join(output_path, "")),
       '--python',
       str(script_path),
       '--frame-start' ,

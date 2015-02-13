@@ -86,6 +86,7 @@ def switch_z(pass_name, prefix, tiles_path, layers_node, tiles):
     for tile in range(0, tiles):
         node_name="{0}imput_tile_z_{1}".format(prefix, tile)
         node_image=create_node('CompositorNodeImage', node_name, 0, 100*tile, True)
+
         imagepath=tiles_path.format(tile)
         node_image.image=D.images.load(filepath=imagepath)
         z_output=find_output(node_image, pass_name)
@@ -128,8 +129,6 @@ def relink(out, new_out):
 
 tiles_path='/render/brender/render_test/137/tiled_{0}_0001.exr'
 tiles=4
-output=''
-frame=1
 
 ##VARS_INSERTED_HERE##
 

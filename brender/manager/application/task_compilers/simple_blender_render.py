@@ -34,6 +34,7 @@ class task_compiler():
 
       if setting_render_settings is None:
          logging.warning("Render settings path not set!")
+         return None
 
 
 
