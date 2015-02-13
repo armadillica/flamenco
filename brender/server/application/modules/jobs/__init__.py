@@ -1,5 +1,8 @@
 import logging
 import os
+import json
+import shutil
+import requests
 from os import listdir
 from os.path import join
 from os.path import exists
@@ -7,6 +10,8 @@ from shutil import rmtree
 from functools import partial
 
 from flask import jsonify
+from flask import Response
+from flask import request
 
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
@@ -22,6 +27,8 @@ from application.modules.tasks.model import Task
 from application.modules.settings.model import Setting
 from application.modules.projects.model import Project
 from application.modules.jobs.model import Job
+from application.modules.jobs.model import JobManagers
+from application.modules.managers.model import Manager
 
 id_list = reqparse.RequestParser()
 id_list.add_argument('id', type=str)
@@ -41,9 +48,14 @@ job_parser.add_argument('render_settings', type=str)
 job_parser.add_argument('format', type=str)
 job_parser.add_argument('status', type=str)
 job_parser.add_argument('priority', type=int)
+job_parser.add_argument('managers', type=int, action='append')
+job_parser.add_argument('job_type', type=str)
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
+
+parser_thumbnail = reqparse.RequestParser()
+parser_thumbnail.add_argument("task_id", type=int)
 
 
 job_fields = {
@@ -61,32 +73,93 @@ job_fields = {
     'priority' : fields.String
 }
 
+class jobInfo():
+    @staticmethod
+    def get(job):
+        tasksforjob = Task.query.filter(Task.job_id == job.id).count()
+        taskscompleteforjob = Task.query.filter(Task.job_id == job.id, Task.status == 'finished').count()
+
+        percentage_done = 0
+
+        if tasksforjob and taskscompleteforjob:
+            percentage_done = round(float(taskscompleteforjob) / float(tasksforjob) * 100.0, 1)
+
+        remaining_time=None
+        average_time=None
+        total_time=0
+        job_time=0
+        finished_time=0
+        finished_tasks=0
+        running_tasks=0
+        frames_rendering=""
+        frame_remaining=None
+        activity=""
+        tasks=Task.query.filter(Task.job_id == job.id).all()
+        for task in tasks:
+            try:
+                task_activity=json.loads(task.activity)
+            except:
+                task_activity=None
+
+            if task.status=='finished':
+                if task.time_cost:
+                    finished_time=finished_time+task.time_cost
+                finished_tasks+=1
+            if task.status=='running':
+                running_tasks+=1
+                if task_activity and task_activity.get('current_frame'):
+                    frames_rendering="{0} {1}".format(frames_rendering, task_activity.get('current_frame'))
+                    if task_activity.get('remaining'):
+                        frames_rendering="{0} ({1}sec)".format(frames_rendering, task_activity.get('remaining'))
+
+
+            if task.time_cost:
+                total_time+=task.time_cost
+
+        if job.status=='running':
+            if finished_tasks>0:
+                average_time=finished_time/finished_tasks
+            if finished_tasks>0:
+                remaining_time=(average_time*len(tasks))-total_time
+            if remaining_time and running_tasks>0:
+                remaining_time=remaining_time/running_tasks
+            activity="Rendering: {0}.".format(frames_rendering)
+
+        if running_tasks>0:
+            job_time=total_time/running_tasks
+
+        job_info = {"job_name" : job.name,
+            "project_id" : job.project_id,
+            "status" : job.status,
+            "settings" : job.settings,
+            "activity" : activity,
+            "remaining_time" : remaining_time,
+            "average_time" : average_time,
+            "total_time" : total_time,
+            "job_time" : job_time,
+            "type" : job.type,
+            "priority" : job.priority,
+            "percentage_done" : percentage_done }
+        return job_info
+
 class JobListApi(Resource):
     def get(self):
         jobs = {}
         for job in Job.query.all():
-            percentage_done = 0
-            frame_count = job.frame_end - job.frame_start + 1
-            percentage_done = round(float(job.current_frame) / float(frame_count) * 100.0,
-                                    1)
-
-            jobs[job.id] = {"job_name" : job.name,
-                            "frame_start" : job.frame_start,
-                            "frame_end" : job.frame_end,
-                            "current_frame" : job.current_frame,
-                            "status" : job.status,
-                            "percentage_done" : percentage_done,
-                            "render_settings" : job.render_settings,
-                            "format" : job.format }
+            jobs[job.id]=jobInfo.get(job)
 
         return jsonify(jobs)
 
     def start(self, job_id):
         job = Job.query.get(job_id)
         if job:
-            if job.status != 'running':
+            if job.status not in ['running', 'completed', 'failed']:
                 job.status = 'running'
                 db.session.add(job)
+
+                db.session.query(Task).filter(Task.job_id == job_id)\
+                        .filter(Task.status == 'aborted')\
+                        .update({'status' : 'ready'})
                 db.session.commit()
                 print ('[debug] Dispatching tasks')
             TaskApi.dispatch_tasks()
@@ -95,11 +168,11 @@ class JobListApi(Resource):
             raise KeyError
 
     def stop(self, job_id):
-        print '[info] Working on job', job_id
+        print '[info] Stopping job', job_id
         # first we delete the associated jobs (no foreign keys)
         job = Job.query.get(job_id)
         if job:
-            if job.status != 'stopped':
+            if job.status not in ['stopped', 'completed', 'failed']:
                 TaskApi.stop_tasks(job.id)
                 job.status = 'stopped'
                 db.session.add(job)
@@ -115,7 +188,6 @@ class JobListApi(Resource):
                 print'Job %d is running' % job_id
                 raise KeyError
             else:
-                job.current_frame = job.frame_start
                 job.status = 'ready'
                 db.session.add(job)
                 db.session.commit()
@@ -136,14 +208,19 @@ class JobListApi(Resource):
             if job.status == 'running':
                 self.stop(job_id)
 
-            tasks = db.session.query(Task).filter(Task.job_id == job_id, Task.status.notin_(['finished','failed']))
-            best_managers = filter(lambda m : m.total_workers is None, app.config['MANAGERS'])
+            tasks = db.session.query(Task).filter(Task.job_id == job_id, Task.status.notin_(['finished','failed'])).all()
+            best_managers = db.session.query(Manager).join(JobManagers, Manager.id == JobManagers.manager_id)\
+                                                    .filter(JobManagers.job_id == job_id)\
+                                                    .filter(Manager.has_virtual_workers == 1)\
+                                                    .first()
 
             if best_managers:
-                fun = partial(TaskApi.start_task, best_managers[0])
+                fun = partial(TaskApi.start_task, best_managers)
                 map(fun, tasks)
             else:
-                TaskApi.dispatch_tasks(job_id)
+                map(lambda t : setattr(t, 'status', 'ready'), tasks)
+                db.session.commit()
+                TaskApi.dispatch_tasks()
         else:
             logging.error('Job %d not found' % job_id)
             raise KeyError
@@ -175,34 +252,46 @@ class JobListApi(Resource):
     @marshal_with(job_fields)
     def post(self):
         args = job_parser.parse_args()
+
+        job_settings = {
+            'frame_start' : args['frame_start'],
+            'frame_end' : args['frame_end'],
+            'chunk_size' : args['chunk_size'],
+            'filepath' : args['filepath'],
+            'render_settings' : args['render_settings'],
+            'format' : args['format'],
+            }
+
         job = Job(
            project_id=args['project_id'],
-           frame_start=args['frame_start'],
-           frame_end=args['frame_end'],
-           chunk_size=args['chunk_size'],
-           current_frame=args['current_frame'],
-           filepath=args['filepath'],
+           settings=json.dumps(job_settings),
            name=args['job_name'],
-           render_settings=args['render_settings'],
-           format=args['format'],
            status=args['status'],
+           type=args['job_type'],
            priority=args['priority'])
 
         db.session.add(job)
         db.session.commit()
 
-        logging.info('Parsing job to create tasks')
+        allowed_managers = args['managers']
+        for m in allowed_managers:
+            print "allowed managers: %d" % int(m)
+            db.session.add(JobManagers(job_id=job.id, manager_id=int(m)))
+
+        db.session.commit()
+
+        #logging.info('Parsing job to create tasks')
         TaskApi.create_tasks(job)
-        logging.info('Refresh list of available workers')
-        TaskApi.dispatch_tasks(job.id)
+        #logging.info('Refresh list of available workers')
+        #TaskApi.dispatch_tasks()
         return job, 201
 
 
 class JobApi(Resource):
-    @marshal_with(job_fields)
     def get(self, job_id):
-        job = Job.query.get_or_404(job_id)
-        return job
+        job=Job.query.get(job_id)
+        job_info=jobInfo.get(job)
+        return jsonify(job_info)
 
     @marshal_with(job_fields)
     def put(self, job_id):
@@ -292,11 +381,13 @@ class JobApi(Resource):
             TaskApi.delete_tasks(job.id)
             TaskApi.create_tasks(job)
 
+            #Security check
+            insecure_names=[None, "", "/", "\\", ".", ".."]
             path = os.path.join(job.project.render_path_server, str(job.id))
-            if os.path.exists(path):
-                rmtree(path)
+            if job.project.render_path_server not in insecure_names and str(job.id) not in insecure_names:
+                if os.path.exists(path):
+                    rmtree(path)
             logging.info('Job {0} reset end ready'.format(job_id))
-
 
 class JobDeleteApi(Resource):
     def post(self):
@@ -309,9 +400,13 @@ class JobDeleteApi(Resource):
             job = Job.query.get(j)
             if job:
                 path = os.path.join(job.project.render_path_server, str(j))
-                if exists(path):
-                    rmtree(path)
+                #Security check
+                #insecure_names=[None, "", "/", "\\", ".", ".."]
+                #if job.project.render_path_server not in insecure_names and str(j) not in insecure_names:
+                #    if exists(path):
+                #        rmtree(path)
 
+                db.session.query(JobManagers).filter(JobManagers.job_id == job.id).delete()
                 db.session.delete(job)
                 db.session.commit()
                 print "[info] Deleted job %d" % j
@@ -320,3 +415,54 @@ class JobDeleteApi(Resource):
                 return '', 404
 
         return '', 204
+
+
+class JobThumbnailListApi(Resource):
+    """Thumbnail list interface for the Server
+    """
+    def allowed_file(self, filename):
+        """Filter extensions acording to THUMBNAIL_EXTENSIONS configuration.
+        """
+        return '.' in filename and \
+               filename.rsplit('.', 1)[1] in app.config['THUMBNAIL_EXTENSIONS']
+
+    def post(self):
+        """Accepts a thumbnail file and a task_id and stores it.
+        """
+        args = parser_thumbnail.parse_args()
+        task = Task.query.get(args['task_id'])
+        if not task:
+            return
+        thumbnail_filename = "thumbnail_%s.png" % task.job_id
+
+        file = request.files['file']
+        if file and self.allowed_file(file.filename):
+            filepath=os.path.join( app.config['TMP_FOLDER'] , thumbnail_filename)
+            filepath_last=os.path.join( app.config['TMP_FOLDER'] , 'thumbnail_0.png')
+            file.save(filepath)
+            shutil.copy2(filepath, filepath_last)
+
+
+class JobThumbnailApi(Resource):
+    """Thumbnail interface for the Server
+    """
+    def get(self, job_id):
+        """Returns the last thumbnail for the Job, or a blank
+        image if none. If job_id is 0 return the global last
+        thumbnail.
+        """
+        def generate():
+            filename='thumbnail_%s.png' % job_id
+            file_path = os.path.join(app.config['TMP_FOLDER'],filename)
+            if os.path.isfile(file_path):
+                thumb_file = open(str(file_path), 'r')
+                return thumb_file.read()
+            else:
+                with app.open_resource('static/missing_thumbnail.png') as thumb_file:
+                    return thumb_file.read()
+            return False
+        bin = generate()
+        if bin:
+            return Response(bin, mimetype='image/png')
+        else:
+            return '',404

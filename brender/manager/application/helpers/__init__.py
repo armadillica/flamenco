@@ -22,20 +22,20 @@ def http_request(ip_address, command, method, params=None):
         r = requests.patch('http://' + ip_address + command, data=params)
 
     if r.status_code == 404:
-        return abort(404)
+        return '', 404
 
     # Only for debug
     if r.status_code == 400:
         for chunk in r.iter_content(50):
             print chunk
-        return abort(404)
+        return '', 404
 
     if r.status_code == 204:
         return '', 204
 
     if r.status_code >= 500:
         logging.debug("STATUS CODE: %d" % r.status_code)
-        return abort(500)
+        return '', 500
 
     return r.json()
 
@@ -51,7 +51,7 @@ def pretty_date(time=False):
     if type(time) is int:
         diff = now - datetime.fromtimestamp(time)
     elif isinstance(time,datetime):
-        diff = now - time 
+        diff = now - time
     elif not time:
         diff = now - now
     second_diff = diff.seconds

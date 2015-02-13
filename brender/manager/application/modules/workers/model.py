@@ -1,5 +1,9 @@
+import requests
+import logging
+from requests.exceptions import Timeout
+from requests.exceptions import ConnectionError
+from requests.exceptions import HTTPError
 from application import db
-from urllib import urlopen
 from sqlalchemy import UniqueConstraint
 
 class Worker(db.Model):
@@ -10,6 +14,10 @@ class Worker(db.Model):
     status = db.Column(db.String(20))
     connection = db.Column(db.String(20))
     system = db.Column(db.String(20))
+    current_task = db.Column(db.String(20))
+    activity = db.Column(db.String(64))
+    log = db.Column(db.Text())
+    time_cost = db.Column(db.Integer())
 
     __table_args__ = (UniqueConstraint('ip_address', 'port', name='connection_uix'),)
 
@@ -20,10 +28,26 @@ class Worker(db.Model):
     @property
     def is_connected(self):
         try:
-            urlopen("http://" + self.host)
+            r = requests.get("http://" + self.host + '/info', timeout=0.5)
+            r.raise_for_status()
+            info = r.json()
+            self.status = info['status']
+            self.activity = info['activity']
+            self.log = info['log']
+            self.time_cost = info['time_cost']
+            #print info['status']
+            db.session.commit()
             return True
-        except:
-            print "[Warning] Worker %s is not online" % self.host
+        except Timeout:
+            logging.warning("Worker {0} is not online (Timeout)".format(self.host))
+            return False
+        except ConnectionError:
+            logging.warning("Worker {0} is not online (Connection Error)".format(self.host))
+            self.connection = 'offline'
+            db.session.commit()
+            return False
+        except HTTPError:
+            logging.warning("Worker {0} is not online (HTTP Error)".format(self.host))
             return False
 
     def __repr__(self):

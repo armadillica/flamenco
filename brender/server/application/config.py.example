@@ -1,16 +1,9 @@
 import os
+
 class Config(object):
-    DEBUG=False
-
-    BRENDER_SERVER='localhost:9999'
-
-from application.modules.managers.model import Manager
-class Server(Config):
-    DATABASE=os.path.join(os.path.dirname(__file__), 'server', 'brender.sqlite')
+    SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite')
     DEBUG=True
     PORT=9999
-    HOST='localhost'
-    SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite')
-    MANAGERS = [ \
-        Manager(name='debian', ip_address='127.0.0.1', port=5000, total_workers=1) \
-    ]
+    HOST='0.0.0.0' # or 'localhost'
+    TMP_FOLDER = '/tmp/'
+    THUMBNAIL_EXTENSIONS = set(['png'])

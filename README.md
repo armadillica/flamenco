@@ -36,6 +36,10 @@ Now you can just enter the following command to get Flask activated in your virt
 
 ## Core dependencies
 
+The project has been developped for `python2.7`.
+
+On Unix systems, to install python dependencies, you may need to install `python-dev` package.
+
 On OSX, in order to prevent some warnings, you should first run:
 
 ```
@@ -48,6 +52,8 @@ Then we just install all the packages required (run this on all systems)
 $ pip install -r requirements.txt
 ```
 
+Databases are managed by `SQLite3`.
+
 Psutil is needed for gathering system usage/performance stats on the worker. Ideally psutil is needed only on the workers.
 
 Congratulations, brender and its dependencies should be correctly installed and ready to run. As a final step we should add a couple of hostnames into the `/etc/hosts` file:
@@ -55,28 +61,40 @@ Congratulations, brender and its dependencies should be correctly installed and 
 ```
 127.0.0.1	brender-server
 127.0.0.1	brender-dashboard
+127.0.0.1   brender-manager
+```
+
+## Initialize brender
+First you need to initialize the server and manager's databases:
+
+```
+$ cd server; ./manage.py db upgrade
+$ cd manager; ./manage.py db upgrade
+
 ```
 
 ## Running brender
-It's pretty simple. Move into the brender folder and run - in three different terminals:
+It's pretty simple. Move into each node folder and run - in four different terminals:
 
 ```
-$ python brender.py server  		# will start the server
-$ python brender.py worker			# will start the worker
-$ python brender.py dashboard		# will start the dashboard
+$ ./manage.py runserver  		# will start the node (dashoard, server, manager or worker according to the current folder)
 ```
 
 If you now visit `http://brender-dashboard:8888` with your web browser you should see the dashboard!
+
+It is also possible to configure the different applications. You may find a `config.py.example`, so you can rename
+it to `config.py` and edit it before run the application.
 
 ## Architecture
 At the moment the content of the `brender` folder is quite messy due to refactoring. The important subfolders are:
 
 * `server` containing the server files
 * `worker` containing the worker files (render nodes)
+* `manager` containing the manager files (manage clusters)
 * `dashboard` containing the dashboard (web interface to talk to the server)
 
 This structure explains also the naming conventions adopted to distinguish the different parts of brender.
-Each folder contains an individual Flask application. Server and Worker exchange JSON formatted messages between each other via HTTP, using GET or POST methods.
+Each folder contains an individual Flask application. Server, Manager and Worker exchange JSON formatted messages between each other via a Rest API.
 Dashboard connects to the Server only and accepts connections from clients (Browsers).
 
 At the moment we have the following addresses:
@@ -84,6 +102,7 @@ At the moment we have the following addresses:
 * http://brender-server:9999
 * http://localhost:5000
 * http://brender-dashboard:8888
+* http://brender-manager:7777
 
 
 ### About the web interface
@@ -102,6 +121,8 @@ The documentation is made with Sphinx and uses the readthedocs.org theme, so mak
 
 The `_build` contains the locally compiled documentation, which does not need to be committed to the branch.
 
+We are using sphinxcontrib-httpdomain for the API docs, so make sure you do:
 
-
-
+```
+pip install sphinxcontrib-httpdomain
+```

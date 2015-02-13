@@ -4,8 +4,8 @@ class TaskType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40), unique=True, nullable=False)
     url = db.Column(db.String(128), nullable=False)
-    pre_command = db.Column(db.String())
-    post_command = db.Column(db.String())
+    pre_command = db.Column(db.String(256))
+    post_command = db.Column(db.String(256))
 
 
 class Task(db.Model):
