@@ -20,7 +20,7 @@ class task_compiler():
          setting_render_settings = app.config['SETTINGS_PATH_WIN']
          file_path = settings['file_path_win']
          output_path = settings['output_path_win']
-      else 'Linux' in worker.system:
+      elif 'Linux' in worker.system:
          setting_blender_path = app.config['BLENDER_PATH_LINUX']
          setting_render_settings = app.config['SETTINGS_PATH_LINUX']
          file_path = settings['file_path_linux']
