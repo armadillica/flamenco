@@ -20,7 +20,7 @@ class task_compiler():
          setting_render_settings = app.config['SETTINGS_PATH_WIN']
          file_path = settings['file_path_win']
          output_path = settings['output_path_win']
-      else:
+      elif 'Linux' in worker.system:
          setting_blender_path = app.config['BLENDER_PATH_LINUX']
          setting_render_settings = app.config['SETTINGS_PATH_LINUX']
          file_path = settings['file_path_linux']
@@ -28,11 +28,13 @@ class task_compiler():
 
       if setting_blender_path is None:
          logging.info('[Debug] blender path is not set')
+         return None
 
       blender_path = setting_blender_path
 
       if setting_render_settings is None:
          logging.warning("Render settings path not set!")
+         return None
 
       tile_output_path= os.path.join( output_path, "tiled_{0}_".format(settings['tile']) )
 
@@ -68,7 +70,7 @@ tiles={1}
       f.close()
 
       task_command = [
-      str( app.config['BLENDER_PATH_LINUX'] ),
+      str( blender_path ),
       '--background',
       str( file_path ),
       '--render-output',

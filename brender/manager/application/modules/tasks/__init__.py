@@ -78,6 +78,10 @@ def schedule(task):
 
     task_command = task_compiler.compile(worker, task)
 
+    if not task_command:
+        logging.error('Cant compile {0}'.format(task['type']))
+        return
+
     options = {
         'task_id' : task['task_id'],
         'task_parser' : task['parser'],

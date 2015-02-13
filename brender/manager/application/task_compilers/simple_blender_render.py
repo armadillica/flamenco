@@ -20,32 +20,33 @@ class task_compiler():
          setting_render_settings = app.config['SETTINGS_PATH_WIN']
          file_path = settings['file_path_win']
          output_path = settings['output_path_win']
-      else:
+      elif 'Linux' in worker.system:
          setting_blender_path = app.config['BLENDER_PATH_LINUX']
          setting_render_settings = app.config['SETTINGS_PATH_LINUX']
          file_path = settings['file_path_linux']
          output_path = settings['output_path_linux']
 
       if setting_blender_path is None:
-         logging.info('[Debug] blender path is not set')
+         logging.info('[Debug] blender path is not set'i)
+         return None
 
       blender_path = setting_blender_path
 
       if setting_render_settings is None:
          logging.warning("Render settings path not set!")
 
-      
+
 
       setting_render_settings = app.config['SETTINGS_PATH_LINUX']
       render_settings = os.path.join(
          setting_render_settings,
           settings['render_settings'])
-      
+
 
       #TODO the command will be in the database,
       #and not generated in the fly
       task_command = [
-      str( app.config['BLENDER_PATH_LINUX'] ),
+      str( blender_path ),
       '--background',
       str( file_path ),
       '--render-output',
