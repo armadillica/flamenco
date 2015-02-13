@@ -27,7 +27,7 @@ class task_compiler():
          output_path = settings['output_path_linux']
 
       if setting_blender_path is None:
-         logging.info('[Debug] blender path is not set'i)
+         logging.info('[Debug] blender path is not set')
          return None
 
       blender_path = setting_blender_path
