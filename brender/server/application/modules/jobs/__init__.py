@@ -73,77 +73,80 @@ job_fields = {
     'priority' : fields.String
 }
 
+class jobInfo():
+    @staticmethod
+    def get(job):
+        tasksforjob = Task.query.filter(Task.job_id == job.id).count()
+        taskscompleteforjob = Task.query.filter(Task.job_id == job.id, Task.status == 'finished').count()
+
+        percentage_done = 0
+
+        if tasksforjob and taskscompleteforjob:
+            percentage_done = round(float(taskscompleteforjob) / float(tasksforjob) * 100.0, 1)
+
+        remaining_time=None
+        average_time=None
+        total_time=0
+        job_time=0
+        finished_time=0
+        finished_tasks=0
+        running_tasks=0
+        frames_rendering=""
+        frame_remaining=None
+        activity=""
+        tasks=Task.query.filter(Task.job_id == job.id).all()
+        for task in tasks:
+            try:
+                task_activity=json.loads(task.activity)
+            except:
+                task_activity=None
+
+            if task.status=='finished':
+                if task.time_cost:
+                    finished_time=finished_time+task.time_cost
+                finished_tasks+=1
+            if task.status=='running':
+                running_tasks+=1
+                if task_activity and task_activity.get('current_frame'):
+                    frames_rendering="{0} {1}".format(frames_rendering, task_activity.get('current_frame'))
+                    if task_activity.get('remaining'):
+                        frames_rendering="{0} ({1}sec)".format(frames_rendering, task_activity.get('remaining'))
+
+
+            if task.time_cost:
+                total_time+=task.time_cost
+
+        if job.status=='running':
+            if finished_tasks>0:
+                average_time=finished_time/finished_tasks
+            if finished_tasks>0:
+                remaining_time=(average_time*len(tasks))-total_time
+            if remaining_time and running_tasks>0:
+                remaining_time=remaining_time/running_tasks
+            activity="Rendering: {0}.".format(frames_rendering)
+
+        if running_tasks>0:
+            job_time=total_time/running_tasks
+
+        job_info = {"job_name" : job.name,
+            "project_id" : job.project_id,
+            "status" : job.status,
+            "settings" : job.settings,
+            "activity" : activity,
+            "remaining_time" : remaining_time,
+            "average_time" : average_time,
+            "total_time" : total_time,
+            "job_time" : job_time,
+            "type" : job.type,
+            "priority" : job.priority,
+            "percentage_done" : percentage_done }
+        return job_info
+
 class JobListApi(Resource):
     def get(self):
         jobs = {}
         for job in Job.query.all():
-
-            tasksforjob = Task.query.filter(Task.job_id == job.id).count()
-            taskscompleteforjob = Task.query.filter(Task.job_id == job.id, Task.status == 'finished').count()
-
-            percentage_done = 0
-
-            if tasksforjob and taskscompleteforjob:
-                percentage_done = round(float(taskscompleteforjob) / float(tasksforjob) * 100.0, 1)
-
-            remaining_time=None
-            average_time=None
-            total_time=0
-            job_time=0
-            finished_time=0
-            finished_tasks=0
-            running_tasks=0
-            frames_rendering=""
-            frame_remaining=None
-            activity=""
-            tasks=Task.query.filter(Task.job_id == job.id).all()
-            for task in tasks:
-                #tasks.append( {'name':task.name, 'status':task.status, 'type':task.type, 'settings':task.settings, 'log':task.log, 'activity':task.activity} )
-                try:
-                    task_activity=json.loads(task.activity)
-                except:
-                    task_activity=None
-
-
-                if task.status=='finished':
-                    if task.time_cost:
-                        finished_time=finished_time+task.time_cost
-                    finished_tasks+=1
-                if task.status=='running':
-                    running_tasks+=1
-                    if task_activity and task_activity.get('current_frame'):
-                        frames_rendering="{0} {1}".format(frames_rendering, task_activity.get('current_frame'))
-                        if task_activity.get('remaining'):
-                            frames_rendering="{0} ({1}sec)".format(frames_rendering, task_activity.get('remaining'))
-
-
-                if task.time_cost:
-                    total_time+=task.time_cost
-
-            if job.status=='running':
-                if finished_tasks>0:
-                    average_time=finished_time/finished_tasks
-                if finished_tasks>0:
-                    remaining_time=(average_time*len(tasks))-total_time
-                if remaining_time and running_tasks>0:
-                    remaining_time=remaining_time/running_tasks
-                activity="Rendering: {0}.".format(frames_rendering)
-
-            if running_tasks>0:
-                job_time=total_time/running_tasks
-
-            jobs[job.id] = {"job_name" : job.name,
-                            "project_id" : job.project_id,
-                            "status" : job.status,
-                            "settings" : job.settings,
-                            "activity" : activity,
-                            "remaining_time" : remaining_time,
-                            "average_time" : average_time,
-                            "total_time" : total_time,
-                            "job_time" : job_time,
-                            "type" : job.type,
-                            "priority" : job.priority,
-                            "percentage_done" : percentage_done }
+            jobs[job.id]=jobInfo.get(job)
 
         return jsonify(jobs)
 
@@ -285,10 +288,10 @@ class JobListApi(Resource):
 
 
 class JobApi(Resource):
-    @marshal_with(job_fields)
     def get(self, job_id):
-        job = Job.query.get_or_404(job_id)
-        return job
+        job=Job.query.get(job_id)
+        job_info=jobInfo.get(job)
+        return jsonify(job_info)
 
     @marshal_with(job_fields)
     def put(self, job_id):
