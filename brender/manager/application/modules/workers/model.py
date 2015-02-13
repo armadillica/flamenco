@@ -43,6 +43,8 @@ class Worker(db.Model):
             return False
         except ConnectionError:
             logging.warning("Worker {0} is not online (Connection Error)".format(self.host))
+            self.connection = 'offline'
+            db.session.commit()
             return False
         except HTTPError:
             logging.warning("Worker {0} is not online (HTTP Error)".format(self.host))
