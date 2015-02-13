@@ -20,6 +20,7 @@ from flask import url_for
 from flask import send_file
 from flask import make_response
 from flask import Blueprint
+from flask import jsonify
 
 from application import app
 from application import list_integers_string
@@ -76,6 +77,8 @@ def index():
             "7" : average_time,
             "8" : total_time,
             "9" : val['activity'],
+            "10" : 'asd',
+            "11" : 'asd'
             })
 
     jobs_list = sorted(jobs_list, key=lambda x: x['1'])
@@ -83,7 +86,7 @@ def index():
 
     return render_template('jobs/index.html', entries=entries, title='jobs')
 
-@jobs.route('/<job_id>')
+@jobs.route('/<int:job_id>')
 def job(job_id):
     print '[Debug] job_id is %s' % job_id
     #job = http_server_request('get', '/jobs/' + job_id)
@@ -104,6 +107,12 @@ def job(job_id):
     #     job['render'] = '#'
 
     return render_template('jobs/view.html', job=job)
+
+
+@jobs.route('/<int:job_id>.json')
+def view_json(job_id):
+    job = http_server_request('get', '/jobs/{0}'.format(job_id))
+    return jsonify(job)
 
 
 @jobs.route('/browse/', defaults={'path': ''})
