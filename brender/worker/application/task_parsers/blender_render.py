@@ -1,7 +1,13 @@
 import os
+import logging
 import subprocess
 import re
 import json
+try:
+    from PIL import Image, ImageOps
+except ImportError:
+    #raise RuntimeError('Image module of PIL needs to be installed')
+    loggin.warning("Image module of PIL needs to be installed")
 
 from application import app
 from common.blender_parser import *
@@ -10,16 +16,16 @@ class task_parser():
     @staticmethod
     def parse(output, options, activity):
 
-    	if activity:
-    		activity=json.loads(activity)
+        if activity:
+            activity=json.loads(activity)
         settings=json.loads(options['settings'])
 
         if not activity:
             activity={
-	            'process' : "",
-	            'remaining' : None,
-	            'thumbnail' : None,
-	            'current_frame' : None,}
+                'process' : "",
+                'remaining' : None,
+                'thumbnail' : None,
+                'current_frame' : None,}
 
         current_frame=blender_parser.current_frame(output)
         if current_frame:
@@ -36,12 +42,27 @@ class task_parser():
             activity['process']=process
 
         saved_file=blender_parser.saved_file(output)
-        if saved_file:
+        if saved_file and Image:
             file_name = "thumbnail_%s.png" % options['task_id']
             output_path = os.path.join(app.config['TMP_FOLDER'], file_name)
-            subprocess.call(["convert", "-identify", saved_file, "-colorspace", "RGB", output_path ])
-            activity['thumbnail']=output_path
+            print('Saving {0} to {1}'.format(file_name, output_path))
+            tmberror=False
+            try:
+                im=Image.open(saved_file)
+                im.save(output_path, 'PNG')
+            except IOError, e:
+                tmberror=True
+                logging.error("PIP error reading or writing the Thumbnail: {0}".format(e))
+            if tmberror:
+                try:
+                    tmberror=False
+                    subprocess.call(["convert", "-identify", saved_file, "-set", "colorspace", "sRGB", "-colorspace", "RGB",  output_path ])
+                except:
+                    tmberror=True
+                    logging.error("Error running convert (Imagemagick)")
+            if not tmberror:
+                activity['thumbnail']=output_path
         else:
-        	activity['thumbnail']=None
+            activity['thumbnail']=None
 
         return json.dumps(activity)
