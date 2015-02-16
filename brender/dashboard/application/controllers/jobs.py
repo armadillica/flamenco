@@ -1,31 +1,16 @@
-import glob
 import json
 import os
-import time
-import urllib
 import datetime
 
-from os import listdir
-from os.path import isfile
-from os.path import join
-from os.path import abspath
-from os.path import exists
-
-from glob import iglob
-from flask import flash
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
-from flask import send_file
-from flask import make_response
 from flask import Blueprint
 from flask import jsonify
 
 from application import app
-from application import list_integers_string
 from application import http_server_request
-# from server import RENDER_PATH
 
 # TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
@@ -89,22 +74,11 @@ def index():
 @jobs.route('/<int:job_id>')
 def job(job_id):
     print '[Debug] job_id is %s' % job_id
-    #job = http_server_request('get', '/jobs/' + job_id)
-    jobs = http_server_request('get', '/jobs')
-    job = jobs[job_id]
+    job = http_server_request('get', '/jobs/{0}'.format(job_id))
     job['settings']=json.loads(job['settings'])
 
     #Tasks
-    task_activity=''
     job['thumbnail']='http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, job_id)
-
-    #job['thumb'] = last_thumbnail(job['id'])
-    # render_dir = RENDER_PATH + "/" + str(job['id']) +  '/'
-    # if exists(render_dir):
-    #     job['render'] = map(lambda s : join("/" + render_dir, s), \
-    #                     filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
-    # else:
-    #     job['render'] = '#'
 
     return render_template('jobs/view.html', job=job)
 
