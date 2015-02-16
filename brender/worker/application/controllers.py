@@ -151,8 +151,8 @@ def _interactiveReadProcess(process, options):
     try:
         module_loader = __import__(module_name, globals(), locals(), ['task_parser'], 0)
         task_parser = module_loader.task_parser
-    except:
-        print('Cant find module {0}'.format(module_name))
+    except ImportError, e:
+        print('Cant find module {0}: {1}'.format(module_name, e))
 
     if not LOG:
         LOG=""

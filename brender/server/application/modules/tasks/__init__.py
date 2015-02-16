@@ -63,8 +63,8 @@ class TaskApi(Resource):
         try:
             module_loader = __import__(module_name, globals(), locals(), ['job_compiler'], 0)
             job_compiler = module_loader.job_compiler
-        except:
-            print('Cant find module {0}'.format(module_name))
+        except ImportError, e:
+            print('Cant find module {0}: {1}'.format(module_name, e))
             return
 
         project = Project.query.filter_by(id = job.project_id).first()

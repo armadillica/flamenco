@@ -3,8 +3,6 @@ from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
-from flask import jsonify
-from flask import abort
 from flask import request
 
 from werkzeug import secure_filename
@@ -12,7 +10,6 @@ from werkzeug import secure_filename
 from application import http_request
 from application import db
 from application import app
-#from application.modules.tasks.model import Task
 from application.modules.workers.model import Worker
 
 import os
@@ -72,8 +69,8 @@ def schedule(task):
     try:
         module_loader = __import__(module_name, globals(), locals(), ['task_compiler'], 0)
         task_compiler = module_loader.task_compiler
-    except:
-        print('Cant find module {0}'.format(module_name))
+    except ImportError, e:
+        print('Error loading module {0}, {1}'.format(module_name, e))
         return
 
     task_command = task_compiler.compile(worker, task)
