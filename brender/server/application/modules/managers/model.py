@@ -9,7 +9,7 @@ from requests.exceptions import ConnectionError
 
 class Manager(db.Model):
     """Model for the managers connected to the server. When a manager
-    connects, we veryfy that it has connected before, by checking its 
+    connects, we veryfy that it has connected before, by checking its
     ip_address and port fields (which are unique keys).
 
     This will be updated to support a UUID, which will be stored in the
@@ -38,10 +38,10 @@ class Manager(db.Model):
                 if not info[worker_hostname]['current_task'] and info[worker_hostname]['connection']=='online':
                     return True
         except Timeout:
-            logging.warning("Manager {0} is not online".format(self.host))
+            logging.warning("Manager {0} is offline".format(self.host))
             return False
         except ConnectionError:
-            logging.warning("Manager {0} is not online".format(self.host))
+            logging.warning("Manager {0} is offline".format(self.host))
             return False
 
     @property
@@ -50,7 +50,7 @@ class Manager(db.Model):
             urlopen("http://" + self.host)
             return True
         except:
-            print "[Warning] Manager %s is not online" % self.name
+            logging.warning("Manager %s is offline" % self.name)
             return False
 
 

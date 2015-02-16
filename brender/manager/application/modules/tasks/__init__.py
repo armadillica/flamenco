@@ -91,6 +91,7 @@ def schedule(task):
     worker.current_task = task['task_id']
     db.session.add(worker)
     db.session.commit()
+    return True
 
 class TaskManagementApi(Resource):
     @marshal_with(task_fields)
@@ -104,7 +105,19 @@ class TaskManagementApi(Resource):
             'parser' : args['parser'],
             }
 
-        schedule(task)
+        if not schedule(task):
+            # Reject Task
+            params = {
+                'id': task['task_id'],
+                'status':'ready',
+                'time_cost':None,
+                'log':None,
+                'activity':None
+            }
+            request_thread = Thread(target=http_request, args=(app.config['BRENDER_SERVER'], '/tasks', 'post'), kwargs= {'params':params})
+            request_thread.start()
+            return '', 500
+
 
         return task, 202
 

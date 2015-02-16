@@ -161,20 +161,47 @@ def worker_loop_function():
         # Count the currently available workers
         count_workers = 0
         for worker in Worker.query.all():
-            if worker.is_connected:
+            conn = worker.is_connected
+            if conn:
+                worker.connection = 'online'
+                db.session.add(worker)
+                db.session.commit()
+                # If is rendering, send info to server
                 if worker.current_task and worker.status == 'rendering':
-                    params = { 
-                        'id' : worker.current_task,
-                        'status': 'running',
-                        'log' : worker.log,
-                        'activity' : worker.activity,
-                        'time_cost' : worker.time_cost }
+                    params = {
+                        'id':worker.current_task,
+                        'status':'running',
+                        'log':worker.log,
+                        'activity':worker.activity,
+                        'time_cost':worker.time_cost }
+                    try:
+                        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
+                    except:
+                        logging.warning('Error connecting to Server (Task not found?)')
+                if worker.status in ['enabled', 'rendering'] and not worker.nimby:
+                    count_workers += 1
+
+            if not conn or worker.nimby:
+                if worker.current_task:
+                    # TODO remove log and time_cost
+                    params = {
+                        'id':worker.current_task,
+                        'status':'failed',
+                        'log':worker.log,
+                        'activity':worker.activity,
+                        'time_cost':worker.time_cost,
+                    }
+
+                    worker.connection = 'offline'
+                    worker.task = None
+                    worker.status = 'enabled'
+                    db.session.add(worker)
+                    db.session.commit()
+
                     try:
                         http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
                     except:
                         logging('Error connecting to Server (Task not found?)')
-                if worker.status in ['enabled', 'rendering']:
-                    count_workers += 1
 
         if total_workers != count_workers:
             total_workers = count_workers
@@ -196,6 +223,7 @@ def worker_loop():
     try:
         worker_loop_function()
     except:
+        logging.error('Exception in Worker Loop')
         pass
     worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
     worker_thread.start()
