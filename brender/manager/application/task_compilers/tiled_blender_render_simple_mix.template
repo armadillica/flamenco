@@ -191,7 +191,7 @@ while switching:
         
         pass_name=translation.get(out.name)
 
-        if pass_name in ['Image']:
+        if pass_name in ['Combined']:
             new_out=switch_image(pass_name, prefix, tiles_path, layers_node, tiles, 'IMAGE+ALPHA')
             relink(out, new_out)
         
