@@ -127,7 +127,8 @@ class TaskApi(Resource):
         worker = Worker.query.filter_by(current_task = task_id).first()
         if worker:
             http_request(worker.host, '/kill', 'delete')
-            worker.status = 'enabled'
+            if worker.status != 'disabled':
+                worker.status = 'enabled'
             worker.current_task = None
             db.session.add(worker)
             db.session.commit()
@@ -138,7 +139,8 @@ class TaskApi(Resource):
         args = status_parser.parse_args()
         worker = Worker.query.filter_by(current_task = task_id).first()
         if worker:
-            worker.status = 'enabled'
+            if worker.status != 'disabled':
+                worker.status = 'enabled'
             worker.current_task = None
             db.session.add(worker)
             db.session.commit()

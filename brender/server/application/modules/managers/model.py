@@ -35,7 +35,7 @@ class Manager(db.Model):
             r = requests.get("http://" + self.host + '/workers')
             info = r.json()
             for worker_hostname in info:
-                if not info[worker_hostname]['current_task'] and info[worker_hostname]['connection']=='online':
+                if not info[worker_hostname]['current_task'] and info[worker_hostname]['connection']=='online' and info[worker_hostname]['status']=='enabled':
                     return True
         except Timeout:
             logging.warning("Manager {0} is offline".format(self.host))

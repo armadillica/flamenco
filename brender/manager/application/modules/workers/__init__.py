@@ -5,13 +5,9 @@ from flask import request
 
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
-from flask import Flask, request, redirect, url_for
-
-from application import app
 from application import db
 
 from application.modules.workers.model import Worker
-from application.modules.settings.model import Setting
 from application.helpers import http_request
 
 parser = reqparse.RequestParser()
@@ -21,7 +17,12 @@ parser.add_argument('system', type=str)
 
 status_parser = reqparse.RequestParser()
 status_parser.add_argument("status", type=str)
-status_parser.add_argument("activity", type=str)
+
+worker_parser = reqparse.RequestParser()
+worker_parser.add_argument("status", type=str)
+worker_parser.add_argument("activity", type=str)
+worker_parser.add_argument("log", type=str)
+worker_parser.add_argument("time_cost", type=int)
 
 class WorkerListApi(Resource):
     def post(self):
@@ -54,31 +55,44 @@ class WorkerListApi(Resource):
         workers_db = Worker.query.all()
         for worker in workers_db:
 
-            workers[worker.hostname] = {"id": worker.id,
-                                        "hostname": worker.hostname,
-                                        "status": worker.status,
-                                        "activity": worker.activity,
-                                        "log": worker.log,
-                                        "time_cost": worker.time_cost,
-                                        "connection": worker.connection,
-                                        "system": worker.system,
-                                        "port" : worker.port,
-                                        "ip_address": worker.ip_address,
-                                        "current_task": worker.current_task}
+            workers[worker.hostname] = {"id":worker.id,
+                                        "hostname":worker.hostname,
+                                        "status":worker.status,
+                                        "activity":worker.activity,
+                                        "log":worker.log,
+                                        "time_cost":worker.time_cost,
+                                        "connection":worker.connection,
+                                        "system":worker.system,
+                                        "port":worker.port,
+                                        "ip_address":worker.ip_address,
+                                        "current_task":worker.current_task,
+                                        "nimby":worker.nimby}
         db.session.commit()
         return jsonify(workers)
 
 
-class WorkerApi(Resource):
-    def patch(self, worker_id):
+class WorkerStatusApi(Resource):
+    def patch(self,worker_id):
         args = status_parser.parse_args()
         worker = Worker.query.get_or_404(worker_id)
         worker.status = args['status']
-        worker.activity = args['activity']
-        worker.log = args['log']
-        worker.time_cost = args['time_cost']
         db.session.add(worker)
         db.session.commit()
+
+        return jsonify(dict(status=worker.status))
+
+
+class WorkerApi(Resource):
+    def patch(self, worker_id):
+        args = worker_parser.parse_args()
+        worker = Worker.query.get_or_404(worker_id)
+        if worker.status != 'disabled':
+            worker.status = args['status']
+            worker.activity = args['activity']
+            worker.log = args['log']
+            worker.time_cost = args['time_cost']
+            db.session.add(worker)
+            db.session.commit()
         return jsonify(dict(status=worker.status))
 
     def get(self, worker_id):

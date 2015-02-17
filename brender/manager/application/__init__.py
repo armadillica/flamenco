@@ -1,4 +1,5 @@
 import os
+import sys
 import tempfile
 import logging
 import requests
@@ -18,6 +19,7 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 from helpers import http_request
+from application.modules.settings.model import Setting
 
 try:
     from application import config
@@ -95,8 +97,10 @@ api.add_resource(TaskThumbnailListApi, '/tasks/thumbnails')
 
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
+from modules.workers import WorkerStatusApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
+api.add_resource(WorkerStatusApi, '/workers/status/<int:worker_id>')
 
 from modules.settings import SettingsListApi
 from modules.settings import SettingApi
@@ -136,9 +140,8 @@ def register_manager(port, name, has_virtual_workers):
     # returned by the server
 
 
-from application.modules.workers.model import Worker
-from application.modules.settings.model import Setting
 
+from application.modules.workers.model import Worker
 import threading
 
 POOL_TIME = 5 #Seconds
@@ -150,10 +153,7 @@ def worker_loop_interrupt():
     global worker_thread
     worker_thread.cancel()
 
-
 def worker_loop_function():
-    global commonDataStruct
-    global worker_thread
     global worker_lock
     global total_workers
 
@@ -162,7 +162,7 @@ def worker_loop_function():
         count_workers = 0
         for worker in Worker.query.all():
             conn = worker.is_connected
-            if conn:
+            if conn and worker.status != 'disabled':
                 worker.connection = 'online'
                 db.session.add(worker)
                 db.session.commit()
@@ -178,10 +178,10 @@ def worker_loop_function():
                         http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
                     except:
                         logging.warning('Error connecting to Server (Task not found?)')
-                if worker.status in ['enabled', 'rendering'] and not worker.nimby:
+                if worker.status in ['enabled', 'rendering']:
                     count_workers += 1
 
-            if not conn or worker.nimby:
+            if not conn or worker.status == 'disabled':
                 if worker.current_task:
                     # TODO remove log and time_cost
                     params = {
@@ -191,17 +191,24 @@ def worker_loop_function():
                         'activity':worker.activity,
                         'time_cost':worker.time_cost,
                     }
-
-                    worker.connection = 'offline'
+                    task = worker.task
+                    if not conn:
+                        worker.connection = 'offline'
                     worker.task = None
-                    worker.status = 'enabled'
+                    if worker.status == 'rendering':
+                        worker.status = 'enabled'
                     db.session.add(worker)
                     db.session.commit()
 
                     try:
                         http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
                     except:
-                        logging('Error connecting to Server (Task not found?)')
+                        logging.error('Error connecting to Server (Task not found?)')
+                    if worker.status == 'disabled' and task!=None:
+                        try:
+                            http_request(app.config['BRENDER_SERVER'], '/task/{0}'.format(), 'delete', params=params)
+                        except:
+                            logging.error('Error connecting to Server (Task not found?)')
 
         if total_workers != count_workers:
             total_workers = count_workers
@@ -217,17 +224,16 @@ def worker_loop_function():
                 'patch',
                 params=params)
 
-
 def worker_loop():
     global worker_thread
     try:
         worker_loop_function()
     except:
-        logging.error('Exception in Worker Loop')
+        e = sys.exc_info()[1]
+        logging.error('Exception in Worker Loop: {0}'.format(e))
         pass
     worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
     worker_thread.start()
-
 
 @app.errorhandler(404)
 def not_found(error):

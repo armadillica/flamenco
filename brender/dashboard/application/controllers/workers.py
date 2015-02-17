@@ -1,16 +1,11 @@
 import json
-import urllib
-from flask import (flash,
-                   jsonify,
-                   redirect,
+from flask import (redirect,
                    render_template,
                    request,
                    url_for,
-                   make_response,
                    Blueprint)
 
 from application import app
-from application import list_integers_string
 from application import http_server_request
 
 BRENDER_SERVER = app.config['BRENDER_SERVER']
@@ -25,7 +20,7 @@ def index():
     workers_list = []
 
     for key, val in workers.iteritems():
-        val['checkbox'] = '<input type="checkbox" value="' + str(val['id']) + '"/>'
+        val['checkbox'] = '<input type="checkbox" value="' + str(val['id']) + ';' + str(val['manager_id']) + '"/>'
         workers_list.append({
             "DT_RowId": "worker_" + str(val['id']),
             "0": val['checkbox'],
@@ -36,6 +31,8 @@ def index():
             "5": val['status'],
             "6": val['id'],
             "7": val['activity'],
+            "8": val['nimby'],
+            "9": val['manager_id'],
         })
 
     entries = json.dumps(workers_list)

@@ -33,7 +33,8 @@ class Worker(db.Model):
             r = requests.get("http://" + self.host + '/info', timeout=0.5)
             r.raise_for_status()
             info = r.json()
-            self.status = info['status']
+            if self.status != 'disabled':
+                self.status = info['status']
             self.activity = info['activity']
             self.log = info['log']
             self.time_cost = info['time_cost']
