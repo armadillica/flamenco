@@ -107,9 +107,13 @@ def _checkProcessOutputWin(process, q):
     return full_buffer
 
 def send_thumbnail(manager_url, file_path, params):
-            thumbnail_file = open(file_path, 'r')
-            requests.post(manager_url, files={'file': thumbnail_file}, data=params)
-            thumbnail_file.close()
+    try:
+        thumbnail_file = open(file_path, 'r')
+    except IOError, e:
+        logging.error('Cant open thumbnail: {0}'.format(e))
+        return
+    requests.post(manager_url, files={'file': thumbnail_file}, data=params)
+    thumbnail_file.close()
 
 def _parse_output(tmp_buffer, options):
     global ACTIVITY
