@@ -7,7 +7,7 @@ try:
     from PIL import Image, ImageOps
 except ImportError:
     #raise RuntimeError('Image module of PIL needs to be installed')
-    loggin.warning("Image module of PIL needs to be installed")
+    logging.warning("Image module of PIL needs to be installed")
 
 from application import app
 from common.blender_parser import *
