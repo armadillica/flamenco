@@ -42,7 +42,8 @@ class task_parser():
             activity['process']=process
 
         saved_file=blender_parser.saved_file(output)
-        if saved_file and Image:
+
+        if saved_file:
             file_name = "thumbnail_%s.png" % options['task_id']
             output_path = os.path.join(app.config['TMP_FOLDER'], file_name)
             print('Saving {0} to {1}'.format(file_name, output_path))
