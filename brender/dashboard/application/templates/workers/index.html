@@ -29,8 +29,6 @@
                         <th width="20%">Activity</th>
                         <th width="20%">Connection</th>
                         <th width="20%">Status</th>
-                        <th width="20%">NIMBY</th>
-                        <th width="20%">Manager</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -45,8 +43,6 @@
                         <th>Activity</th>
                         <th>Connection</th>
                         <th>Status</th>
-                        <th>NIMBY</th>
-                        <th>Manager</th>
                     </tr>
                 </tfoot>
             </table>
@@ -67,8 +63,6 @@
             "aaData": data,
             "aoColumns": [
                  { "bSortable": false },
-                 null,
-                 null,
                  null,
                  null,
                  null,
@@ -100,10 +94,6 @@
                 $('td:eq(6)', nRow).html(worker_status_label);
 
                 $('td:eq(1)', nRow).html('<a href="/workers/view/' + aData[6] + '"> ' + aData[1] + ' </a>');
-
-                $('td:eq(7)', nRow).html( aData[8] );
-
-                $('td:eq(8)', nRow).html( aData[9] );
             }
 
         });

@@ -68,8 +68,7 @@ class WorkerListApi(Resource):
                                         "system":worker.system,
                                         "port":worker.port,
                                         "ip_address":worker.ip_address,
-                                        "current_task":worker.current_task,
-                                        "nimby":worker.nimby}
+                                        "current_task":worker.current_task}
         db.session.commit()
         return jsonify(workers)
 

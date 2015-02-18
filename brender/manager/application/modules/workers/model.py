@@ -19,7 +19,6 @@ class Worker(db.Model):
     activity = db.Column(db.String(64))
     log = db.Column(db.Text())
     time_cost = db.Column(db.Integer())
-    nimby = db.Column(db.Boolean())
 
     __table_args__ = (UniqueConstraint('ip_address', 'port', name='connection_uix'),)
 
