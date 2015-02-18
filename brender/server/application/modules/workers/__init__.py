@@ -37,7 +37,10 @@ class WorkerListApi(Resource):
 
         for worker_id,manager_id in workers:
             manager = Manager.query.get(manager_id)
-            http_rest_request(manager.host, '/workers/status/{0}'.format(worker_id), 'patch', dict(status=args['status']))
+            r = http_rest_request(manager.host, '/workers/status/{0}'.format(worker_id), 'patch', dict(status=args['status']))
+            if r['task_id']!=None:
+                task_id = r['task_id']
+                http_rest_request(manager.host, '/tasks/{0}'.format(task_id), 'delete')
 
         return '', 204
 

@@ -132,7 +132,7 @@ class TaskApi(Resource):
         #Sort task by priority and then by amount of possible manager
         tasks = db.session.query(Task, func.count(JobManagers.manager_id).label('mgr'))\
                     .join(JobManagers, Task.job_id == JobManagers.job_id)\
-                    .filter(Task.status == 'ready')\
+                    .filter(db.or_(Task.status == 'ready', Task.status == 'aborted'))\
                     .group_by(Task)\
                     .order_by(Task.priority, 'mgr')\
                     .all()

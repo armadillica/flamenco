@@ -1,4 +1,5 @@
 import logging
+from threading import Thread
 
 from flask import jsonify
 from flask import request
@@ -6,9 +7,11 @@ from flask import request
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from application import db
+from application import app
 
 from application.modules.workers.model import Worker
 from application.helpers import http_request
+from application.modules.settings.model import Setting
 
 parser = reqparse.RequestParser()
 parser.add_argument('port', type=int)
@@ -79,7 +82,7 @@ class WorkerStatusApi(Resource):
         db.session.add(worker)
         db.session.commit()
 
-        return jsonify(dict(status=worker.status))
+        return jsonify(dict(task_id = worker.current_task))
 
 
 class WorkerApi(Resource):
@@ -98,3 +101,82 @@ class WorkerApi(Resource):
     def get(self, worker_id):
         worker = Worker.query.get_or_404(worker_id)
         return http_request(worker.host, '/run_info', 'get')
+
+class WorkerLoopApi(Resource):
+    def get(self):
+
+        workers_query=Setting.query.filter_by(name='total_workers').first()
+        if not workers_query:
+            workers_query=Setting(
+                name='total_workers',
+                value=0)
+            db.session.add(workers_query)
+            db.session.commit()
+            total_workers = 0
+        else:
+            total_workers = int(workers_query.value)
+
+        count_workers = 0
+        for worker in Worker.query.all():
+            conn = worker.is_connected
+            if conn and worker.status != 'disabled':
+                worker.connection = 'online'
+                db.session.add(worker)
+                db.session.commit()
+                # If is rendering, send info to server
+                if worker.current_task and worker.status == 'rendering':
+                    params = {
+                        'id':worker.current_task,
+                        'status':'running',
+                        'log':worker.log,
+                        'activity':worker.activity,
+                        'time_cost':worker.time_cost }
+                    try:
+                        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
+                    except:
+                        logging.warning('Error connecting to Server (Task not found?)')
+                if worker.status in ['enabled', 'rendering']:
+                    count_workers += 1
+
+            if not conn or worker.status == 'disabled':
+                if worker.current_task:
+                    params = {
+                        'id':worker.current_task,
+                        'status':'failed',
+                        'log':worker.log,
+                        'activity':worker.activity,
+                        'time_cost':worker.time_cost,
+                    }
+                    task = worker.current_task
+                    if not conn:
+                        worker.connection = 'offline'
+                    worker.task = None
+                    if worker.status == 'rendering':
+                        worker.status = 'enabled'
+                    db.session.add(worker)
+                    db.session.commit()
+
+                    try:
+                        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
+                    except:
+                        logging.error('Error connecting to Server (Task not found?)')
+                    if worker.status == 'disabled' and task!=None:
+                        try:
+                            http_request(app.config['BRENDER_SERVER'], '/task/{0}'.format(), 'delete', params=params)
+                        except:
+                            logging.error('Error connecting to Server (Task not found?)')
+
+        if total_workers != count_workers:
+            total_workers = count_workers
+            workers_query = Setting.query.filter_by(name='total_workers').first()
+            workers_query.value = total_workers
+            db.session.commit()
+
+            uuid = Setting.query.filter_by(name='uuid').one()
+
+            params = {'total_workers' : total_workers}
+
+            # Update the resource on the server
+            args = (app.config['BRENDER_SERVER'], '/managers/{0}'.format(uuid.value), 'patch')
+            thread =Thread(target=http_request, args=args, kwargs={'params':params})
+            thread.start()

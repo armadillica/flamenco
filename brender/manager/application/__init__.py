@@ -98,9 +98,11 @@ api.add_resource(TaskThumbnailListApi, '/tasks/thumbnails')
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
 from modules.workers import WorkerStatusApi
+from modules.workers import WorkerLoopApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
 api.add_resource(WorkerStatusApi, '/workers/status/<int:worker_id>')
+api.add_resource(WorkerLoopApi, '/workers/loop')
 
 from modules.settings import SettingsListApi
 from modules.settings import SettingApi
@@ -138,102 +140,6 @@ def register_manager(port, name, has_virtual_workers):
         db.session.commit()
     # TODO: manage update if uuid already exists and does not match with the one
     # returned by the server
-
-
-
-from application.modules.workers.model import Worker
-import threading
-
-POOL_TIME = 5 #Seconds
-worker_lock = threading.Lock()
-worker_thread = threading.Thread()
-total_workers = 0
-
-def worker_loop_interrupt():
-    global worker_thread
-    worker_thread.cancel()
-
-def worker_loop_function():
-    global worker_lock
-    global total_workers
-
-    with worker_lock:
-        # Count the currently available workers
-        count_workers = 0
-        for worker in Worker.query.all():
-            conn = worker.is_connected
-            if conn and worker.status != 'disabled':
-                worker.connection = 'online'
-                db.session.add(worker)
-                db.session.commit()
-                # If is rendering, send info to server
-                if worker.current_task and worker.status == 'rendering':
-                    params = {
-                        'id':worker.current_task,
-                        'status':'running',
-                        'log':worker.log,
-                        'activity':worker.activity,
-                        'time_cost':worker.time_cost }
-                    try:
-                        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
-                    except:
-                        logging.warning('Error connecting to Server (Task not found?)')
-                if worker.status in ['enabled', 'rendering']:
-                    count_workers += 1
-
-            if not conn or worker.status == 'disabled':
-                if worker.current_task:
-                    # TODO remove log and time_cost
-                    params = {
-                        'id':worker.current_task,
-                        'status':'failed',
-                        'log':worker.log,
-                        'activity':worker.activity,
-                        'time_cost':worker.time_cost,
-                    }
-                    task = worker.task
-                    if not conn:
-                        worker.connection = 'offline'
-                    worker.task = None
-                    if worker.status == 'rendering':
-                        worker.status = 'enabled'
-                    db.session.add(worker)
-                    db.session.commit()
-
-                    try:
-                        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
-                    except:
-                        logging.error('Error connecting to Server (Task not found?)')
-                    if worker.status == 'disabled' and task!=None:
-                        try:
-                            http_request(app.config['BRENDER_SERVER'], '/task/{0}'.format(), 'delete', params=params)
-                        except:
-                            logging.error('Error connecting to Server (Task not found?)')
-
-        if total_workers != count_workers:
-            total_workers = count_workers
-            # Get the manager uuid
-            uuid = Setting.query.filter_by(name='uuid').one()
-
-            params = {'total_workers' : total_workers}
-
-            # Update the resource on the server
-            http_request(
-                app.config['BRENDER_SERVER'],
-                '/managers/{0}'.format(uuid.value),
-                'patch',
-                params=params)
-
-def worker_loop():
-    global worker_thread
-    try:
-        worker_loop_function()
-    except:
-        e = sys.exc_info()[1]
-        logging.error('Exception in Worker Loop: {0}'.format(e))
-        pass
-    worker_thread = threading.Timer(POOL_TIME, worker_loop, ())
-    worker_thread.start()
 
 @app.errorhandler(404)
 def not_found(error):
