@@ -55,7 +55,7 @@ class task_parser():
                 tmberror=True
                 logging.error("PIP error reading or writing the Thumbnail: {0}".format(e))
             except NameError, e:
-                tmbrror = True
+                tmberror = True
                 logging.error("PIP lib not loaded: {0}".format(e))
             if tmberror:
                 try:
