@@ -22,6 +22,8 @@ def manager_loop(HOST):
         requests.get(HOST, timeout=5)
     except ConnectionError, e:
         print(e)
+    except Timeout, e:
+        print (e)
     loop_thread = Timer(10, manager_loop, args = {HOST})
     loop_thread.start()
 
