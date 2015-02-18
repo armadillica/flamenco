@@ -19,10 +19,10 @@ manager.add_command('db', MigrateCommand)
 
 def manager_loop(HOST):
     try:
-        requests.get(HOST)
+        requests.get(HOST, timeout=5)
     except ConnectionError, e:
         print(e)
-    loop_thread = Timer(5, manager_loop, args = {HOST})
+    loop_thread = Timer(10, manager_loop, args = {HOST})
     loop_thread.start()
 
 
