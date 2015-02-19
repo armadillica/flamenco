@@ -109,7 +109,7 @@
       "aaData": {{ entries | safe }},
       "columnDefs": [
           {
-              "targets": [1],
+              "targets": [1, 8],
               "visible": false
           },
           {
@@ -126,7 +126,6 @@
         $('td:eq(4)', nRow).html(aData[6]);
         $('td:eq(5)', nRow).html(aData[7]);
         $('td:eq(6)', nRow).html(aData[8]);
-        $('td:eq(7)', nRow).html(aData[9]);
 
         var job_status_label = '';
         if (aData[4] === 'completed') {
@@ -136,8 +135,8 @@
         } else {
           job_status_label = '<span class="label label-default">' + aData[4] + '</label>';
         }
-        $('td:eq(8)', nRow).html(job_status_label);
-        $('td:eq(9)', nRow).html('<span class="btn btn-default btn-xs job-details" job_id="' + aData[1] + '">Details</span>');
+        $('td:eq(7)', nRow).html(job_status_label);
+        $('td:eq(8)', nRow).html('<span class="btn btn-default btn-xs job-details" job_id="' + aData[1] + '">Details</span>');
         }
     });
 
