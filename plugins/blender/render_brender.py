@@ -30,8 +30,17 @@ bl_info = {
 
 import bpy
 import os
+import json
+import requests
 import subprocess
 from time import strftime
+
+from bpy.props import IntProperty
+from bpy.props import BoolProperty
+from bpy.props import StringProperty
+from bpy.props import EnumProperty
+
+from requests.exceptions import ConnectionError
 
 
 class bamToRenderfarm (bpy.types.Operator):
@@ -43,9 +52,51 @@ class bamToRenderfarm (bpy.types.Operator):
         C = context
         D = bpy.data
         scn = C.scene
+        wm = bpy.context.window_manager
 
-        project_folder = '/render/brender/gooseberry'
-        
+        if not D.filepath:
+            self.report( {'ERROR'}, "Save your Blendfile first")
+            return {'CANCELLED'}
+
+        if wm.brender_JobName == "":
+            self.report( {'ERROR'}, "Name your Job")
+            return {'CANCELLED'}
+
+        serverurl = "http://localhost:9999/jobs"
+
+        filepath = D.filepath
+
+        args = None
+
+        job_settings = {
+            'frame_start' : scn.frame_start,
+            'frame_end' : scn.frame_end,
+            'chunk_size' : 5,
+            'filepath' : "",
+            'render_settings' : "",
+            'format' : "PNG",
+            }
+
+        job_properties = {
+            'project_id':wm.brender_project,
+            'settings':json.dumps(job_settings),
+            'name':wm.brender_jobName,
+            'status':"",
+            'type':wm.brender_jobType,
+            'managers':wm.brender_managers,
+            'priority':wm.brender_priority
+        }
+
+        print (job_properties)
+
+        render_file = [('jobfile', ('jobfile.zip', open(filepath, 'rb'), 'application/zip'))]
+        try:
+            r = requests.post(serverurl, files = render_file , data = job_properties)
+        except ConnectionError:
+            print ("Connection Error: {0}".format(serverurl))
+
+        """project_folder = '/render/brender/gooseberry'
+
         if not D.filepath:
             self.report( {'ERROR'}, "Save your Blendfile first")
             return {'CANCELLED'}
@@ -65,7 +116,7 @@ class bamToRenderfarm (bpy.types.Operator):
         scn.render.use_simplify = tmp_simplify
 
         blendpath = os.path.split(D.filepath)[0]
-        
+
         zipname = "{0}_{1}".format(strftime("%Y-%m-%d_%H-%M-%S"), os.path.split(D.filepath)[1][:-6])
 
         zippath = os.path.join(blendpath, "%s.zip" % zipname)
@@ -81,7 +132,7 @@ class bamToRenderfarm (bpy.types.Operator):
             subprocess.call([ "unzip", zippath, '-d', renderfarmpath ])
         except:
             self.report( {'ERROR'}, "Error running unzip or deleting zip")
-            return {'CANCELLED'}
+            return {'CANCELLED'}"""
 
         return {'FINISHED'}
 
@@ -92,9 +143,38 @@ class MovPanelControl(bpy.types.Panel):
     bl_category = "Brender"
 
     def draw(self,context):
-        self.layout.operator("brender.send_job")
+        wm = bpy.context.window_manager
+        layout = self.layout
+
+        col = layout.column()
+        col.prop(wm, 'brender_project')
+        col.prop(wm, 'brender_jobName')
+        col.prop(wm, 'brender_jobType')
+        col.prop(wm, 'brender_managers')
+        col.prop(wm, 'brender_priority')
+        col.operator("brender.send_job")
+
+
+project_list = [
+    ('1', 'TestProject', '', 1),
+    ]
+
+jobType_list = [
+    ('simple_blender_render', 'Simple', '', 1),
+    ('tiled_blender_render', 'Tiled', '', 2),
+    ]
+
+manager_list = [
+    ('1', 'Manager Dell', '', 1),
+    ]
 
 def register():
+    wm = bpy.types.WindowManager
+    wm.brender_project = EnumProperty(items = project_list, name="Projects", description="Brender Projects")
+    wm.brender_jobName = StringProperty(name="Job Name", default="", options={'HIDDEN', 'SKIP_SAVE'})
+    wm.brender_jobType = EnumProperty(items = jobType_list, name="Job type", description="Brender Projects")
+    wm.brender_managers = EnumProperty(items = manager_list, name="Managers", description="Brender Managers")
+    wm.brender_priority = IntProperty(options={'HIDDEN', 'SKIP_SAVE'})
     bpy.utils.register_module(__name__)
 
 def unregister():

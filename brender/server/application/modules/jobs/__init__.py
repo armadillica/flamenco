@@ -43,13 +43,14 @@ job_parser.add_argument('frame_end', type=int)
 job_parser.add_argument('chunk_size', type=int)
 job_parser.add_argument('current_frame', type=int)
 job_parser.add_argument('filepath', type=str)
-job_parser.add_argument('job_name', type=str)
+job_parser.add_argument('name', type=str)
 job_parser.add_argument('render_settings', type=str)
 job_parser.add_argument('format', type=str)
 job_parser.add_argument('status', type=str)
 job_parser.add_argument('priority', type=int)
 job_parser.add_argument('managers', type=int, action='append')
-job_parser.add_argument('job_type', type=str)
+job_parser.add_argument('type', type=str)
+job_parser.add_argument('settings', type=str)
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
@@ -59,18 +60,12 @@ parser_thumbnail.add_argument("task_id", type=int)
 
 
 job_fields = {
-    'id' : fields.Integer,
     'project_id' : fields.Integer,
-    'frame_start' : fields.Integer,
-    'frame_end' : fields.Integer,
-    'chunk_size' : fields.Integer,
-    'current_frame' : fields.Integer,
-    'filepath' : fields.String,
-    'job_name' : fields.String,
-    'render_settings' : fields.String,
-    'format' : fields.String,
+    'settings' : fields.String,
+    'name' : fields.String,
     'status' : fields.String,
-    'priority' : fields.String
+    'type' : fields.String,
+    'priority' : fields.String,
 }
 
 class jobInfo():
@@ -249,25 +244,25 @@ class JobListApi(Resource):
         args['status'] = 'running'
         return args, 200
 
-    @marshal_with(job_fields)
+    #@marshal_with(job_fields)
     def post(self):
         args = job_parser.parse_args()
 
-        job_settings = {
+        """job_settings = {
             'frame_start' : args['frame_start'],
             'frame_end' : args['frame_end'],
             'chunk_size' : args['chunk_size'],
             'filepath' : args['filepath'],
             'render_settings' : args['render_settings'],
             'format' : args['format'],
-            }
-
+            }"""
+        print (args)
         job = Job(
            project_id=args['project_id'],
-           settings=json.dumps(job_settings),
-           name=args['job_name'],
+           settings=args['settings'],
+           name=args['name'],
            status=args['status'],
-           type=args['job_type'],
+           type=args['type'],
            priority=args['priority'])
 
         db.session.add(job)
