@@ -6,6 +6,7 @@ import requests
 from threading import Thread
 from threading import Timer
 from requests.exceptions import ConnectionError
+from requests.exceptions import Timeout
 
 from flask.ext.script import Manager
 from flask.ext.migrate import MigrateCommand
@@ -75,7 +76,8 @@ def runserver():
     app.run(
         port=PORT,
         debug=DEBUG,
-        host=HOST)
+        host=HOST,
+        threaded=True)
 
 
 if __name__ == "__main__":
