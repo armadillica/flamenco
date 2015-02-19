@@ -17,8 +17,10 @@ from application import register_manager
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
+loop_thread = None
 
 def manager_loop(HOST):
+    global loop_thread
     try:
         requests.get(HOST, timeout=5)
     except ConnectionError, e:
@@ -70,8 +72,7 @@ def runserver():
         register_thread.setDaemon(False)
         register_thread.start()
 
-        if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-            manager_loop ("http://{0}:{1}/workers/loop".format(HOST,PORT))
+        manager_loop ("http://{0}:{1}/workers/loop".format(HOST,PORT))
 
     app.run(
         port=PORT,
@@ -79,6 +80,10 @@ def runserver():
         host=HOST,
         threaded=True)
 
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        global loop_thread
+        if loop_thread:
+            loop_thread.cancel()
 
 if __name__ == "__main__":
     manager.run()

@@ -176,6 +176,4 @@ class WorkerLoopApi(Resource):
             params = {'total_workers' : total_workers}
 
             # Update the resource on the server
-            args = (app.config['BRENDER_SERVER'], '/managers/{0}'.format(uuid.value), 'patch')
-            thread =Thread(target=http_request, args=args, kwargs={'params':params})
-            thread.start()
+            http_request( app.config['BRENDER_SERVER'], '/managers/{0}'.format(uuid.value), 'patch', params=params)
