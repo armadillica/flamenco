@@ -33,8 +33,8 @@ from application.modules.managers.model import Manager
 id_list = reqparse.RequestParser()
 id_list.add_argument('id', type=str)
 
-status_parser = id_list.copy()
-status_parser.add_argument('status', type=str)
+list_command_parser = id_list.copy()
+list_command_parser.add_argument('command', type=str)
 
 job_parser = reqparse.RequestParser()
 job_parser.add_argument('project_id', type=int)
@@ -227,22 +227,37 @@ class JobListApi(Resource):
 
 
     def put(self):
-        args = status_parser.parse_args()
+        """Run a command against a list of jobs.
+        """
+        args = list_command_parser.parse_args()
+        # Parse the string list of job IDs into a real integers list
+        args['id'] = list_integers_string(args['id'])
         fun = None
-        if args['status'] == "start":
+        # Set a status variable, for returning a status to display in the UI
+        status = None
+        if args['command'] == "start":
             fun = self.start
-        elif args['status'] == "stop":
+            status = "running"
+        elif args['command'] == "stop":
             fun = self.stop
-        elif args['status'] == "reset":
+            status = "stopped"
+        elif args['command'] == "reset":
             fun = self.reset
-        elif args['status'] == "respawn":
+            status = "reset"
+        elif args['command'] == "respawn":
             fun = self.respawn
+            status = "respawned"
         else:
-            print "command not found"
+            logging.error("command not found")
             return args, 400
 
         try:
-            map(fun, list_integers_string(args['id']))
+            # Run the right function (according to the command specified) against
+            # a list of job IDs
+            map(fun, args['id'])
+            # Return a dictionary with the IDs list, the command that was run agains them
+            # and the status they have after such command has been executed
+            return dict(id=args['id'], command=args['command'], status=status), 200
         except KeyError:
             return args, 404
 

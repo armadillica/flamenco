@@ -178,33 +178,41 @@
     $(document).on(
       "click",
       "#job-start, #job-stop, #job-respawn, #job-pause, #job-reset",
+      function(){
+        var jobs = new Array();
 
-      function() {
+        var checkbox_list = $( "tbody input:checked" );
+        for (var i = checkbox_list.length - 1; i >= 0; i--) {
+          var checkbox = checkbox_list[i];
+          jobs.push($(checkbox).val());
+        };
 
-      var jobs = new Array();
+        if (jobs.length == 0) {
+          $.growl("Please select one or more jobs", {
+            type: "warning"
+          });
+          return false;
+        };
 
-      var checkbox_list = $( "tbody input:checked" );
-      for (var i = checkbox_list.length - 1; i >= 0; i--) {
-        var checkbox = checkbox_list[i];
-        jobs.push($(checkbox).val());
-      };
+        //console.log(jobs);
+        job_ids = jobs.join();
 
-      if (jobs.length == 0) {
-        alert("Please select one or more jobs");
-        return false;
-      };
+        command = $(this).attr('command');
+        params = { 'id' : job_ids, 'command' : command}
 
-      //console.log(jobs);
-      job_ids = jobs.join();
+        $.post("/jobs/update", params)
+          .done(function(data) {
+            //console.log('Job ' + job_ids + ' update: ' + command);
+            var table = $('#jobs').DataTable();
+            for (var i = 0; i < data['id'].length; i++) {
+              var row = table.row('#job_' + data['id'][i]);
+              row.data()[4] = data['status'];
+            };
 
-      command = $(this).attr('command');
-      params = { 'id' : job_ids, 'command' : command}
+            table.draw();
 
-      $.post("/jobs/update", params)
-        .done(function(data) {
-        console.log('Job ' + job_ids + ' update: ' + command);
-      });
-
+            $.growl('Job ' + job_ids + ' ' + data['status']);
+        });
     });
 
     $(document).on("click", ".check-all", function(){
