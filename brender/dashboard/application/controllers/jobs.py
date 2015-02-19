@@ -51,19 +51,18 @@ def index():
 
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
-            "DT_RowId": "job_" + str(key),
-            "0": val['checkbox'],
-            "1": key,
-            "2": val['job_name'],
-            "3": val['percentage_done'],
-            "4": val['status'],
-            "5" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key),
-            "6" : remaining_time,
+            "DT_RowId" : "job_" + str(key),
+            "0" : val['checkbox'],
+            "1" : key,
+            "2" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key),
+            "3" : val['job_name'],
+            "4" : val['percentage_done'],
+            "5" : remaining_time,
+            "6" : total_time,
             "7" : average_time,
-            "8" : total_time,
-            "9" : val['activity'],
-            "10" : 'asd',
-            "11" : 'asd'
+            "8" : val['activity'],
+            "9" : val['status'],
+            "10" : None
             })
 
     jobs_list = sorted(jobs_list, key=lambda x: x['1'])
