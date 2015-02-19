@@ -107,13 +107,14 @@
       "bProcessing": true,
       "iDisplayLength": 25,
       "aaData": {{ entries | safe }},
+      "order": [[ 3, "desc" ]],
       "columnDefs": [
           {
               "targets": [1, 8],
               "visible": false
           },
           {
-              "targets": [10],
+              "targets": [0, 10],
               "sortable": false
           }
       ],
