@@ -22,7 +22,7 @@ bl_info = {
     "version": (0,3),
     "blender": (2, 73, 0),
     "location": "View3D > Tool Shelf > Brender",
-    "description": "Bamzip current file and send it to the Brender Renderfarm",
+    "description": "BAM pack current file and send it to the Brender Renderfarm",
     "warning": "Warning!",
     "wiki_url": "",
     "tracker_url": "",
@@ -38,52 +38,51 @@ class bamToRenderfarm (bpy.types.Operator):
     """Save current file and send it to the Renderfarm using BAM pack"""
     bl_idname = "brender.send_job"
     bl_label = "Save and send"
-        
+
     def execute(self,context):
         C = context
         D = bpy.data
         scn = C.scene
-        
+
         project_folder = '/render/brender/gooseberry'
         
         if not D.filepath:
-            self.report( {'ERROR'}, "Save your Blend first")
+            self.report( {'ERROR'}, "Save your Blendfile first")
             return {'CANCELLED'}
-        
-        amaranth_addon=False
+
+        amaranth_addon = False
         try:
             scn.use_unsimplify_render
-            amaranth_addon=True
+            amaranth_addon = True
         except:
             pass
-        
-        tmp_simplify=scn.render.use_simplify
+
+        tmp_simplify = scn.render.use_simplify
         if amaranth_addon and scn.use_unsimplify_render:
-            scn.render.use_simplify=False
-        
+            scn.render.use_simplify = False
+
         bpy.ops.wm.save_mainfile()
-        scn.render.use_simplify=tmp_simplify
-        
+        scn.render.use_simplify = tmp_simplify
+
         blendpath = os.path.split(D.filepath)[0]
         
-        zipname = "%s_%s" % (os.path.split(D.filepath)[1][:-6], strftime("%Y-%m-%d_%H-%M-%S") )
-        
+        zipname = "{0}_{1}".format(strftime("%Y-%m-%d_%H-%M-%S"), os.path.split(D.filepath)[1][:-6])
+
         zippath = os.path.join(blendpath, "%s.zip" % zipname)
         renderfarmpath = os.path.join(project_folder, zipname)
-        
+
         try:
             subprocess.call([ "bam", "pack", D.filepath, '-o', zippath ])
         except:
-            self.report( {'ERROR'}, "Error running BAM")
+            self.report( {'ERROR'}, "Error running BAM, is it installed?")
             return {'CANCELLED'}
 
         try:
             subprocess.call([ "unzip", zippath, '-d', renderfarmpath ])
-            
         except:
             self.report( {'ERROR'}, "Error running unzip or deleting zip")
             return {'CANCELLED'}
-        
+
         return {'FINISHED'}
 
 class MovPanelControl(bpy.types.Panel):
@@ -100,7 +99,7 @@ def register():
 
 def unregister():
     bpy.utils.unregister_module(__name__)
-    
+
 if __name__ == "__main__":
     register()
 
