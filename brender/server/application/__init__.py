@@ -66,7 +66,7 @@ api.add_resource(JobListApi, '/jobs')
 api.add_resource(JobApi, '/jobs/<int:job_id>')
 api.add_resource(JobDeleteApi, '/jobs/delete')
 api.add_resource(JobThumbnailListApi, '/jobs/thumbnails')
-api.add_resource(JobThumbnailApi, '/jobs/thumbnails/<int:job_id>')
+api.add_resource(JobThumbnailApi, '/jobs/thumbnails/<job_id>')
 
 from modules.tasks import TaskApi
 from modules.tasks import TaskFileApi

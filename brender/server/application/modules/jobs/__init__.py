@@ -3,6 +3,8 @@ import os
 import json
 import shutil
 import requests
+from PIL import Image
+import os
 from os import listdir
 from os.path import join
 from os.path import exists
@@ -463,16 +465,39 @@ class JobThumbnailListApi(Resource):
 class JobThumbnailApi(Resource):
     """Thumbnail interface for the Server
     """
-    def get(self, job_id):
-        """Returns the last thumbnail for the Job, or a blank
-        image if none. If job_id is 0 return the global last
-        thumbnail.
+    def get(self, job_id, size=None):
+        """Returns the last thumbnail for the Job, or a blank image if none.
+        If job_id is 0 return the global last thumbnail. It is possible to
+        add a suffix to the id (this is why job_id is not strictly an int).
+        So, we check if the following suffixes are attached to the image:
+        - s
+        - m
+        - l
+        if no suffix is added, we use the original image.
         """
+
         def generate():
-            filename='thumbnail_%s.png' % job_id
-            file_path = os.path.join(app.config['TMP_FOLDER'],filename)
-            if os.path.isfile(file_path):
-                thumb_file = open(str(file_path), 'r')
+            is_thumbnail = False
+            if job_id[-1:].isalpha():
+                real_job_id = job_id[:-1]
+                is_thumbnail = True
+            else:
+                real_job_id = job_id
+            filename = 'thumbnail_{0}.png'.format(real_job_id)
+            file_path_original_thumbnail = os.path.join(app.config['TMP_FOLDER'], filename)
+            if os.path.isfile(file_path_original_thumbnail):
+                if is_thumbnail:
+                    size = 128, 128
+                    file_path_resized_thumbnail = os.path.join(app.config['TMP_FOLDER'], filename + ".thumbnail.png")
+                    if not os.path.isfile(file_path_resized_thumbnail):
+                        filename, ext = os.path.splitext(filename)
+                        im = Image.open(file_path_original_thumbnail)
+                        im.thumbnail(size)
+                        im.save(file_path_resized_thumbnail)
+                    thumb_file = open(file_path_resized_thumbnail, 'r')
+                else:
+                    thumb_file = open(str(file_path_original_thumbnail), 'r')
+
                 return thumb_file.read()
             else:
                 with app.open_resource('static/missing_thumbnail.png') as thumb_file:
@@ -482,4 +507,4 @@ class JobThumbnailApi(Resource):
         if bin:
             return Response(bin, mimetype='image/png')
         else:
-            return '',404
+            return '', 404
