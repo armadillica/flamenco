@@ -54,7 +54,7 @@ def index():
             "DT_RowId" : "job_" + str(key),
             "0" : val['checkbox'],
             "1" : key,
-            "2" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key),
+            "2" : 'http://{0}/jobs/thumbnails/{1}s'.format(BRENDER_SERVER, key),
             "3" : val['job_name'],
             "4" : val['percentage_done'],
             "5" : remaining_time,
