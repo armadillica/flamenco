@@ -10,6 +10,7 @@ from flask import abort
 from flask import jsonify
 from flask import render_template
 from flask import request
+from flask import send_from_directory
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 
@@ -307,3 +308,18 @@ class TaskApi(Resource):
             TaskApi.dispatch_tasks()
 
         return '', 204
+
+class TaskFileApi(Resource):
+    def get(self, task_id):
+        """Given a task_id returns the zip file
+        """
+        serverstorage = app.config['SERVER_STORAGE']
+
+        task = Task.query.get(task_id)
+        job = Job.query.get(task.job_id)
+
+        projectpath = os.path.join(serverstorage, str(job.project_id))
+        jobpath = os.path.join(projectpath, str(job.id))
+
+        return send_from_directory(jobpath, 'jobfile_{0}.zip'.format(job.id))
+

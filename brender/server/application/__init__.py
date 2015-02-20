@@ -20,12 +20,14 @@ try:
     app.config['SQLALCHEMY_DATABASE_URI'] = config.Config.SQLALCHEMY_DATABASE_URI
     app.config['TMP_FOLDER']= config.Config.TMP_FOLDER
     app.config['THUMBNAIL_EXTENSIONS']= config.Config.THUMBNAIL_EXTENSIONS
+    app.config['SERVER_STORAGE'] = config.Config.SERVER_STORAGE
 except ImportError:
     from modules.managers.model import Manager
     app.config.update(
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite'),
         TMP_FOLDER=tempfile.gettempdir(),
-        THUMBNAIL_EXTENSIONS=set(['png'])
+        THUMBNAIL_EXTENSIONS=set(['png']),
+        SERVER_STORAGE = tempfile.gettempdir()
     )
 
 api = Api(app)
@@ -67,7 +69,9 @@ api.add_resource(JobThumbnailListApi, '/jobs/thumbnails')
 api.add_resource(JobThumbnailApi, '/jobs/thumbnails/<int:job_id>')
 
 from modules.tasks import TaskApi
+from modules.tasks import TaskFileApi
 api.add_resource(TaskApi, '/tasks')
+api.add_resource(TaskFileApi, '/task/file/<int:task_id>')
 
 from modules.main import main
 from modules.stats import stats

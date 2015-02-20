@@ -58,7 +58,7 @@ class bamToRenderfarm (bpy.types.Operator):
             self.report( {'ERROR'}, "Save your Blendfile first")
             return {'CANCELLED'}
 
-        if wm.brender_JobName == "":
+        if wm.brender_jobName == "":
             self.report( {'ERROR'}, "Name your Job")
             return {'CANCELLED'}
 
@@ -81,7 +81,6 @@ class bamToRenderfarm (bpy.types.Operator):
             'project_id':wm.brender_project,
             'settings':json.dumps(job_settings),
             'name':wm.brender_jobName,
-            'status':"",
             'type':wm.brender_jobType,
             'managers':wm.brender_managers,
             'priority':wm.brender_priority
@@ -89,9 +88,19 @@ class bamToRenderfarm (bpy.types.Operator):
 
         print (job_properties)
 
-        render_file = [('jobfile', ('jobfile.zip', open(filepath, 'rb'), 'application/zip'))]
+        tmppath = C.user_preferences.filepaths.temporary_directory
+        zipname = "job"
+        zippath = os.path.join(tmppath, "%s.zip" % zipname)
+
         try:
-            r = requests.post(serverurl, files = render_file , data = job_properties)
+            subprocess.call([ "bam", "pack", D.filepath, '-o', zippath ])
+        except:
+            self.report( {'ERROR'}, "Error running BAM, is it installed?")
+            return {'CANCELLED'}
+
+        render_file = [('jobfile', ('jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
+        try:
+            requests.post(serverurl, files = render_file , data = job_properties)
         except ConnectionError:
             print ("Connection Error: {0}".format(serverurl))
 
@@ -143,8 +152,12 @@ class MovPanelControl(bpy.types.Panel):
     bl_category = "Brender"
 
     def draw(self,context):
+        D = bpy.data
         wm = bpy.context.window_manager
         layout = self.layout
+
+        if wm.brender_jobName == "" and D.filepath != "":
+            wm.brender_jobName = os.path.split(D.filepath)[1]
 
         col = layout.column()
         col.prop(wm, 'brender_project')

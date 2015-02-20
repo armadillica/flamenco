@@ -18,6 +18,8 @@ from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
+from werkzeug.datastructures import FileStorage
+
 from application import db
 from application import app
 from application.utils import list_integers_string
@@ -38,19 +40,12 @@ list_command_parser.add_argument('command', type=str)
 
 job_parser = reqparse.RequestParser()
 job_parser.add_argument('project_id', type=int)
-job_parser.add_argument('frame_start', type=int)
-job_parser.add_argument('frame_end', type=int)
-job_parser.add_argument('chunk_size', type=int)
-job_parser.add_argument('current_frame', type=int)
-job_parser.add_argument('filepath', type=str)
 job_parser.add_argument('name', type=str)
-job_parser.add_argument('render_settings', type=str)
-job_parser.add_argument('format', type=str)
-job_parser.add_argument('status', type=str)
 job_parser.add_argument('priority', type=int)
 job_parser.add_argument('managers', type=int, action='append')
 job_parser.add_argument('type', type=str)
 job_parser.add_argument('settings', type=str)
+job_parser.add_argument('jobfile', type = FileStorage, location = 'files')
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
@@ -63,9 +58,8 @@ job_fields = {
     'project_id' : fields.Integer,
     'settings' : fields.String,
     'name' : fields.String,
-    'status' : fields.String,
     'type' : fields.String,
-    'priority' : fields.String,
+    'priority' : fields.Integer,
 }
 
 class jobInfo():
@@ -259,7 +253,7 @@ class JobListApi(Resource):
         args['status'] = 'running'
         return args, 200
 
-    #@marshal_with(job_fields)
+    @marshal_with(job_fields)
     def post(self):
         args = job_parser.parse_args()
 
@@ -271,17 +265,34 @@ class JobListApi(Resource):
             'render_settings' : args['render_settings'],
             'format' : args['format'],
             }"""
-        print (args)
+
         job = Job(
            project_id=args['project_id'],
            settings=args['settings'],
            name=args['name'],
-           status=args['status'],
+           status="stopped",
            type=args['type'],
            priority=args['priority'])
 
         db.session.add(job)
         db.session.commit()
+
+        serverstorage = app.config['SERVER_STORAGE']
+        projectpath = join(serverstorage, str(job.project_id))
+
+        try:
+            os.mkdir(projectpath)
+        except:
+            pass
+
+        if args['jobfile']:
+            jobpath = join(projectpath, str(job.id))
+            try:
+                os.mkdir(jobpath)
+            except:
+                pass
+            args['jobfile'].save( join(jobpath, 'jobfile_{0}.zip'.format(job.id)) )
+
 
         allowed_managers = args['managers']
         for m in allowed_managers:
@@ -289,11 +300,7 @@ class JobListApi(Resource):
             db.session.add(JobManagers(job_id=job.id, manager_id=int(m)))
 
         db.session.commit()
-
-        #logging.info('Parsing job to create tasks')
         TaskApi.create_tasks(job)
-        #logging.info('Refresh list of available workers')
-        #TaskApi.dispatch_tasks()
         return job, 201
 
 
