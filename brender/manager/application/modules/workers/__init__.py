@@ -1,8 +1,9 @@
 import logging
 from threading import Thread
-
+from requests.exceptions import ConnectionError
 from flask import jsonify
 from flask import request
+from flask import abort
 
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
@@ -57,18 +58,18 @@ class WorkerListApi(Resource):
         workers={}
         workers_db = Worker.query.all()
         for worker in workers_db:
-
-            workers[worker.hostname] = {"id":worker.id,
-                                        "hostname":worker.hostname,
-                                        "status":worker.status,
-                                        "activity":worker.activity,
-                                        "log":worker.log,
-                                        "time_cost":worker.time_cost,
-                                        "connection":worker.connection,
-                                        "system":worker.system,
-                                        "port":worker.port,
-                                        "ip_address":worker.ip_address,
-                                        "current_task":worker.current_task}
+            workers[worker.hostname] = {
+                "id" : worker.id,
+                "hostname" : worker.hostname,
+                "status" : worker.status,
+                "activity" : worker.activity,
+                "log" : worker.log,
+                "time_cost" : worker.time_cost,
+                "connection" : worker.connection,
+                "system" : worker.system,
+                "port" : worker.port,
+                "ip_address" : worker.ip_address,
+                "current_task" : worker.current_task}
         db.session.commit()
         return jsonify(workers)
 
@@ -99,7 +100,11 @@ class WorkerApi(Resource):
 
     def get(self, worker_id):
         worker = Worker.query.get_or_404(worker_id)
-        return http_request(worker.host, '/run_info', 'get')
+        try:
+            worker_info = http_request(worker.host, '/run_info', 'get')
+        except ConnectionError:
+            worker_info = {'connection' : 'offline'}
+        return worker_info
 
 class WorkerLoopApi(Resource):
     def get(self):
@@ -131,7 +136,8 @@ class WorkerLoopApi(Resource):
                         'activity':worker.activity,
                         'time_cost':worker.time_cost }
                     try:
-                        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
+                        http_request(app.config['BRENDER_SERVER'],
+                            '/tasks', 'post', params=params)
                     except:
                         logging.warning('Error connecting to Server (Task not found?)')
                 if worker.status in ['enabled', 'rendering']:
@@ -156,12 +162,14 @@ class WorkerLoopApi(Resource):
                     db.session.commit()
 
                     try:
-                        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params)
+                        http_request(app.config['BRENDER_SERVER'],
+                            '/tasks', 'post', params=params)
                     except:
                         logging.error('Error connecting to Server (Task not found?)')
                     if worker.status == 'disabled' and task!=None:
                         try:
-                            http_request(app.config['BRENDER_SERVER'], '/task/{0}'.format(), 'delete', params=params)
+                            http_request(app.config['BRENDER_SERVER'],
+                                '/task/{0}'.format(), 'delete', params=params)
                         except:
                             logging.error('Error connecting to Server (Task not found?)')
 
@@ -176,4 +184,5 @@ class WorkerLoopApi(Resource):
             params = {'total_workers' : total_workers}
 
             # Update the resource on the server
-            http_request( app.config['BRENDER_SERVER'], '/managers/{0}'.format(uuid.value), 'patch', params=params)
+            http_request( app.config['BRENDER_SERVER'],
+                '/managers/{0}'.format(uuid.value), 'patch', params=params)
