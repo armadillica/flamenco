@@ -87,6 +87,13 @@ def schedule(task):
 
     #logging.info("send task %d" % task.server_id)
     pid = http_request(worker.host, '/execute_task', 'post', options)
+
+    try:
+        if pid[1]==500:
+            return False
+    except:
+        pass
+
     worker.status = 'rendering'
     worker.current_task = task['task_id']
     db.session.add(worker)
