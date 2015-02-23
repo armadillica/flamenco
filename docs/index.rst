@@ -9,11 +9,9 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
-   :glob:
 
-   user_manual/*
-   developer_manual/*
-   
+   source/user_manual/index.rst
+   source/developer_manual/index.rst
 
 
 Indices and tables
