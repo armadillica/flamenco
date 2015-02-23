@@ -95,18 +95,17 @@ def jobs_browse(path):
         path = os.path.join('/browse', path)
     else:
         path = "/browse"
-    print path
     path_data = http_server_request('get', path)
+    path_data_sorted = sorted(path_data['items_list'], key=lambda p: p[0])
     return render_template('browse_modal.html',
         # items=path_data['items'],
-        items_list=path_data['items_list'],
+        items_list=path_data_sorted,
         parent_folder=path_data['parent_path'])
 
 
 @jobs.route('/delete', methods=['POST'])
 def jobs_delete():
     job_ids = request.form['id']
-    print(job_ids)
     params = {'id': job_ids}
     jobs = http_server_request('post', '/jobs/delete', params)
     return 'done'
