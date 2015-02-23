@@ -5,7 +5,7 @@
 Development Roadmap
 *******************
 
-Here we try to define a roadmap for implementing the missing features 
+Here we try to define a roadmap for implementing the missing features
 of brender.
 
 General
