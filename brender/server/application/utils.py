@@ -14,11 +14,11 @@ def http_request(ip_address, command, post_params=None):
     print('message sent, reply follows:')
     print(f.read())
 
-def http_rest_request(ip_address, command, method, params=None):
+def http_rest_request(ip_address, command, method, params=None, files=None):
     if method == 'delete':
         r = requests.delete('http://' + ip_address + command)
     elif method == 'post':
-        r = requests.post('http://' + ip_address + command, data=params)
+        r = requests.post('http://' + ip_address + command, data=params, files=files)
     elif method == 'get':
         r = requests.get('http://' + ip_address + command)
     elif method == 'put':

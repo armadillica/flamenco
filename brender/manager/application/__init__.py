@@ -25,6 +25,7 @@ try:
     from application import config
     app.config['TMP_FOLDER']= config.Config.TMP_FOLDER
     app.config['THUMBNAIL_EXTENSIONS']= config.Config.THUMBNAIL_EXTENSIONS
+    app.config['MANAGER_STORAGE'] = config.Config.MANAGER_STORAGE
     app.config.update(
         BRENDER_SERVER=config.Config.BRENDER_SERVER,
         SQLALCHEMY_DATABASE_URI= config.Config.SQLALCHEMY_DATABASE_URI,
@@ -67,6 +68,7 @@ except ImportError:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite')
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
     app.config['THUMBNAIL_EXTENSIONS'] = set(['png'])
+    app.config['MANAGER_STORAGE'] = tempfile.gettempdir()
 
     try:
         server_settings = http_request(app.config['BRENDER_SERVER'], '/settings', 'get')
@@ -88,9 +90,11 @@ except ImportError:
 
 api = Api(app)
 
+from modules.tasks import TaskFileApi
 from modules.tasks import TaskManagementApi
 from modules.tasks import TaskApi
 from modules.tasks import TaskThumbnailListApi
+api.add_resource(TaskFileApi, '/tasks/file/<int:job_id>')
 api.add_resource(TaskManagementApi, '/tasks')
 api.add_resource(TaskApi, '/tasks/<int:task_id>')
 api.add_resource(TaskThumbnailListApi, '/tasks/thumbnails')

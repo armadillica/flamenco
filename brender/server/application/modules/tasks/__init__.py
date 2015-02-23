@@ -27,6 +27,8 @@ from application.modules.projects.model import Project
 from application.modules.settings.model import Setting
 from application.modules.jobs.model import JobManagers
 
+from requests.exceptions import ConnectionError
+
 parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
 parser.add_argument('status', type=str)
@@ -82,9 +84,28 @@ class TaskApi(Resource):
             'type':task.type,
             'parser':task.parser,
             'task_id':task.id,
+            'job_id':task.job_id,
             'settings':task.settings}
 
-        Thread(target=http_rest_request, args=[manager.host, '/tasks', 'post', params]).start()
+
+        r = http_rest_request(manager.host, '/tasks/file/{0}'.format(task.job_id), 'get')
+        print ('testing file')
+        print (r)
+        if not r['file']:
+            job = Job.query.get(task.job_id)
+            serverstorage = app.config['SERVER_STORAGE']
+            projectpath = os.path.join(serverstorage, str(job.project_id))
+            jobpath = os.path.join(projectpath, str(job.id))
+            zippath = os.path.join(jobpath, "jobfile_{0}.zip".format(job.id))
+            jobfile = [('jobfile', ('jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
+            try:
+                # requests.post(serverurl, files = render_file , data = job_properties)
+                http_rest_request(manager.host, '/tasks', 'post', params, files=jobfile)
+            except ConnectionError:
+                print ("Connection Error: {0}".format(serverurl))
+
+        else:
+            Thread(target=http_rest_request, args=[manager.host, '/tasks', 'post', params]).start()
         task.status = 'running'
         task.manager_id = manager.id
         db.session.add(task)

@@ -5,6 +5,8 @@ from flask.ext.restful import fields
 
 from flask import request
 
+from werkzeug.datastructures import FileStorage
+
 from werkzeug import secure_filename
 
 from application import http_request
@@ -23,8 +25,10 @@ parser = reqparse.RequestParser()
 parser.add_argument('priority', type=int)
 parser.add_argument('type', type=str)
 parser.add_argument('task_id', type=int, required=True)
+parser.add_argument('job_id', type=int)
 parser.add_argument('settings', type=str)
 parser.add_argument('parser', type=str)
+parser.add_argument('jobfile', type = FileStorage, location = 'files')
 
 status_parser = reqparse.RequestParser()
 status_parser.add_argument('status', type=str, required=True)
@@ -45,6 +49,15 @@ task_fields = {
     'status' : fields.String,
     'format' : fields.String
 }
+
+class TaskFileApi(Resource):
+    def get(self, job_id):
+        """Check if the Manager already have the file
+        """
+        managerstorage = app.config['MANAGER_STORAGE']
+        jobpath = os.path.join(managerstorage, str(job_id))
+        filepath = os.path.join(jobpath, "jobfile_{0}.zip".format(job_id))
+        return {'file':os.path.isfile(filepath)}, 200
 
 def get_availabe_worker():
     worker = Worker.query.filter_by(status='enabled', connection='online').first()
@@ -101,9 +114,21 @@ class TaskManagementApi(Resource):
             'priority' : args['priority'],
             'settings' : args['settings'],
             'task_id' : args['task_id'],
+            'job_id':args['job_id'],
             'type' : args['type'],
             'parser' : args['parser'],
             }
+
+        if args['jobfile']:
+            # print('FILEEEEEEEEEEEEEEE')
+            # print(args['jobfile'])
+            managerstorage = app.config['MANAGER_STORAGE']
+            jobpath = os.path.join(managerstorage, str(task['job_id']))
+            try:
+                os.mkdir(jobpath)
+            except:
+                pass
+            args['jobfile'].save( os.path.join(jobpath, 'jobfile_{0}.zip'.format(task['job_id'])) )
 
         if not schedule(task):
             # Reject Task
