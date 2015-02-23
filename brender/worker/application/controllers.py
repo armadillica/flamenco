@@ -234,8 +234,18 @@ def run_blender_in_thread(options):
     jobpath = os.path.join(
         workerstorage, str(options['job_id']), str(options['job_id']), "")
 
+    outputpath = os.path.join(
+        workerstorage,
+        str(options['job_id']),
+        'render',
+        str(options['task_id'])
+    )
+
     for cmd, val in enumerate(render_command):
-        render_command[cmd] = render_command[cmd].replace("==jobpath==",jobpath)
+        render_command[cmd] = render_command[cmd].replace(
+            "==jobpath==",jobpath)
+        render_command[cmd] = render_command[cmd].replace(
+            "==outputpath==",outputpath)
 
     logging.info( "Running %s" % render_command)
 

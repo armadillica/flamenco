@@ -44,6 +44,7 @@ class task_compiler():
           settings['render_settings'])
 
       file_path = os.path.split(settings['file_path_linux'])[1]
+      output_path = os.path.join("==outputpath==", "####")
 
 
       #TODO the command will be in the database,
