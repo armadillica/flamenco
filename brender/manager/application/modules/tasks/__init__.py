@@ -21,6 +21,8 @@ import requests
 import logging
 from threading import Thread
 
+from requests.exceptions import ConnectionError
+
 parser = reqparse.RequestParser()
 parser.add_argument('priority', type=int)
 parser.add_argument('type', type=str)
@@ -28,7 +30,7 @@ parser.add_argument('task_id', type=int, required=True)
 parser.add_argument('job_id', type=int)
 parser.add_argument('settings', type=str)
 parser.add_argument('parser', type=str)
-parser.add_argument('jobfile', type = FileStorage, location = 'files')
+parser.add_argument('jobfile', type=FileStorage, location='files')
 
 status_parser = reqparse.RequestParser()
 status_parser.add_argument('status', type=str, required=True)
@@ -40,15 +42,16 @@ parser_thumbnail = reqparse.RequestParser()
 parser_thumbnail.add_argument("task_id", type=int)
 
 task_fields = {
-    'id' : fields.Integer,
-    'worker_id' : fields.Integer,
-    'priority' : fields.Integer,
-    'frame_start' : fields.Integer,
-    'frame_end' : fields.Integer,
-    'frame_current' : fields.Integer,
-    'status' : fields.String,
-    'format' : fields.String
+    'id': fields.Integer,
+    'worker_id': fields.Integer,
+    'priority': fields.Integer,
+    'frame_start': fields.Integer,
+    'frame_end': fields.Integer,
+    'frame_current': fields.Integer,
+    'status': fields.String,
+    'format': fields.String
 }
+
 
 class TaskFileApi(Resource):
     def get(self, job_id):
@@ -57,10 +60,12 @@ class TaskFileApi(Resource):
         managerstorage = app.config['MANAGER_STORAGE']
         jobpath = os.path.join(managerstorage, str(job_id))
         filepath = os.path.join(jobpath, "jobfile_{0}.zip".format(job_id))
-        return {'file':os.path.isfile(filepath)}, 200
+        return {'file': os.path.isfile(filepath)}, 200
+
 
 def get_availabe_worker():
-    worker = Worker.query.filter_by(status='enabled', connection='online').first()
+    worker = Worker.query.filter_by(
+        status='enabled', connection='online').first()
     if worker is None:
         return None
     elif not worker.is_connected:
@@ -69,6 +74,7 @@ def get_availabe_worker():
     db.session.add(worker)
     db.session.commit()
     return worker if worker.connection == 'online' else get_availabe_worker()
+
 
 def schedule(task):
     logging.info("Scheduling")
@@ -80,7 +86,8 @@ def schedule(task):
     module_name = 'application.task_compilers.{0}'.format(task['type'])
     task_compiler = None
     try:
-        module_loader = __import__(module_name, globals(), locals(), ['task_compiler'], 0)
+        module_loader = __import__(
+            module_name, globals(), locals(), ['task_compiler'], 0)
         task_compiler = module_loader.task_compiler
     except ImportError, e:
         print('Error loading module {0}, {1}'.format(module_name, e))
@@ -93,13 +100,38 @@ def schedule(task):
         return
 
     options = {
-        'task_id' : task['task_id'],
-        'task_parser' : task['parser'],
-        'settings' : task['settings'],
-        'task_command' : json.dumps(task_command)}
+        'task_id': task['task_id'],
+        'job_id': task['job_id'],
+        'task_parser': task['parser'],
+        'settings': task['settings'],
+        'task_command': json.dumps(task_command)}
 
-    #logging.info("send task %d" % task.server_id)
-    pid = http_request(worker.host, '/execute_task', 'post', options)
+    r = http_request(
+        worker.host, '/tasks/file/{0}'.format(task['job_id']), 'get')
+    print ('testing file')
+    print (r)
+    if not r['file']:
+        managerstorage = app.config['MANAGER_STORAGE']
+        jobpath = os.path.join(managerstorage, str(task['job_id']))
+        zippath = os.path.join(
+            jobpath, "jobfile_{0}.zip".format(task['job_id']))
+        jobfile = [
+            ('jobfile', (
+                'jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
+        try:
+            # requests.post(
+            #    serverurl, files = render_file , data = job_properties)
+            pid = http_request(
+                worker.host, '/execute_task', 'post', options, files=jobfile)
+        except ConnectionError, e:
+            print ("Connection Error: {0}".format(e))
+    else:
+        #logging.info("send task %d" % task.server_id)
+        pid = http_request(worker.host, '/execute_task', 'post', options)
+
+    if pid[1]!=200:
+        return False
+
     worker.status = 'rendering'
     worker.current_task = task['task_id']
     db.session.add(worker)
@@ -120,8 +152,6 @@ class TaskManagementApi(Resource):
             }
 
         if args['jobfile']:
-            # print('FILEEEEEEEEEEEEEEE')
-            # print(args['jobfile'])
             managerstorage = app.config['MANAGER_STORAGE']
             jobpath = os.path.join(managerstorage, str(task['job_id']))
             try:

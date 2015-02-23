@@ -9,6 +9,7 @@ import json
 import select
 import requests
 import logging
+from zipfile import ZipFile
 import gocept.cache.method
 from threading import Thread
 from threading import Lock
@@ -22,6 +23,7 @@ from flask import Blueprint
 from uuid import getnode as get_mac_address
 
 from application import app
+from requests.exceptions import ConnectionError
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
@@ -298,10 +300,28 @@ def execute_task():
 
     options = {
         'task_id': request.form['task_id'],
+        'job_id': request.form['job_id'],
         'task_parser': request.form['task_parser'],
         'settings': request.form['settings'],
         'task_command': request.form['task_command'],
     }
+
+    if request.files['jobfile']:
+        workerstorage = app.config['TMP_FOLDER']
+        taskpath = os.path.join(workerstorage, str(options['job_id']))
+        try:
+            os.mkdir(taskpath)
+        except:
+            logging.error("Error creatig folder:{0}".format(taskpath))
+            pass
+        taskfile = os.path.join(
+            taskpath, 'taskfile_{0}.zip'.format(options['job_id']))
+        request.files['jobfile'].save( taskfile )
+
+        zippath = os.path.join(taskpath, str(options['job_id']))
+
+        with ZipFile(taskfile, 'r') as jobzip:
+            jobzip.extractall(path=zippath)
 
     LOCK.acquire()
     PROCESS = None
@@ -434,3 +454,14 @@ def run_info():
                    update_frequent=get_system_load_frequent(),
                    update_less_frequent=get_system_load_less_frequent()
                    )
+
+
+@app.route('/tasks/file/<int:job_id>')
+def check_file(job_id):
+    """Check if the Workers already have the file
+    """
+    workerstorage = app.config['TMP_FOLDER']
+    jobpath = os.path.join(workerstorage, str(job_id))
+    filepath = os.path.join(jobpath, "jobfile_{0}.zip".format(job_id))
+    r = json.dumps({'file': os.path.isfile(filepath)})
+    return r, 200

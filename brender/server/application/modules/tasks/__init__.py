@@ -89,15 +89,18 @@ class TaskApi(Resource):
 
 
         r = http_rest_request(manager.host, '/tasks/file/{0}'.format(task.job_id), 'get')
-        print ('testing file')
-        print (r)
+        # print ('testing file')
+        # print (r)
         if not r['file']:
             job = Job.query.get(task.job_id)
             serverstorage = app.config['SERVER_STORAGE']
             projectpath = os.path.join(serverstorage, str(job.project_id))
             jobpath = os.path.join(projectpath, str(job.id))
             zippath = os.path.join(jobpath, "jobfile_{0}.zip".format(job.id))
-            jobfile = [('jobfile', ('jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
+            try:
+                jobfile = [('jobfile', ('jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
+            except IOError, e:
+                logging.error(e)
             try:
                 # requests.post(serverurl, files = render_file , data = job_properties)
                 http_rest_request(manager.host, '/tasks', 'post', params, files=jobfile)
