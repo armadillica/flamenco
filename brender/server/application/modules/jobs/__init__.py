@@ -484,16 +484,22 @@ class JobThumbnailApi(Resource):
             filename = 'thumbnail_{0}.png'.format(real_job_id)
             file_path_original_thumbnail = os.path.join(app.config['TMP_FOLDER'], filename)
             if os.path.isfile(file_path_original_thumbnail):
+                thumb_file = None
                 if is_thumbnail:
                     size = 128, 128
                     file_path_resized_thumbnail = os.path.join(app.config['TMP_FOLDER'], filename + ".thumbnail.png")
                     if not os.path.isfile(file_path_resized_thumbnail):
                         filename, ext = os.path.splitext(filename)
                         im = Image.open(file_path_original_thumbnail)
-                        im.thumbnail(size)
-                        im.save(file_path_resized_thumbnail)
-                    thumb_file = open(file_path_resized_thumbnail, 'r')
-                else:
+                        try:
+                            im.thumbnail(size)
+                            im.save(file_path_resized_thumbnail)
+                        except IOError, e:
+                            logging.error(' making the thumbnail: {0}'.format(e))
+                        else:
+                            thumb_file = open(file_path_resized_thumbnail, 'r')
+
+                if not thumb_file:
                     thumb_file = open(str(file_path_original_thumbnail), 'r')
 
                 return thumb_file.read()
