@@ -72,7 +72,7 @@ class bamToRenderfarm (bpy.types.Operator):
             'frame_start' : scn.frame_start,
             'frame_end' : scn.frame_end,
             'chunk_size' : 5,
-            'filepath' : "",
+            'filepath' : os.path.split(D.filepath)[1],
             'render_settings' : "",
             'format' : "PNG",
             }

@@ -43,6 +43,8 @@ class task_compiler():
          setting_render_settings,
           settings['render_settings'])
 
+      file_path = os.path.split(settings['file_path_linux'])[1]
+
 
       #TODO the command will be in the database,
       #and not generated in the fly

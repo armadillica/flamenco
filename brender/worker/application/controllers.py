@@ -230,6 +230,13 @@ def run_blender_in_thread(options):
 
     render_command = json.loads(options['task_command'])
 
+    workerstorage = app.config['TMP_FOLDER']
+    jobpath = os.path.join(
+        workerstorage, str(options['job_id']), str(options['job_id']), "")
+
+    for cmd, val in enumerate(render_command):
+        render_command[cmd] = render_command[cmd].replace("==jobpath==",jobpath)
+
     logging.info( "Running %s" % render_command)
 
     TIME_INIT = int(time.time())
@@ -306,22 +313,27 @@ def execute_task():
         'task_command': request.form['task_command'],
     }
 
+    workerstorage = app.config['TMP_FOLDER']
+    taskpath = os.path.join(workerstorage, str(options['job_id']))
     if request.files['jobfile']:
-        workerstorage = app.config['TMP_FOLDER']
-        taskpath = os.path.join(workerstorage, str(options['job_id']))
         try:
             os.mkdir(taskpath)
         except:
             logging.error("Error creatig folder:{0}".format(taskpath))
-            pass
         taskfile = os.path.join(
             taskpath, 'taskfile_{0}.zip'.format(options['job_id']))
         request.files['jobfile'].save( taskfile )
 
         zippath = os.path.join(taskpath, str(options['job_id']))
+        try:
+            os.mkdir(zippath)
+        except:
+            logging.error("Error creatig folder:{0}".format(zippath))
 
         with ZipFile(taskfile, 'r') as jobzip:
             jobzip.extractall(path=zippath)
+
+    options['jobpath'] = taskpath
 
     LOCK.acquire()
     PROCESS = None
