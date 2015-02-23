@@ -110,6 +110,7 @@ def schedule(task):
         worker.host, '/tasks/file/{0}'.format(task['job_id']), 'get')
     print ('testing file')
     print (r)
+    pid = None
     if not r['file']:
         managerstorage = app.config['MANAGER_STORAGE']
         jobpath = os.path.join(managerstorage, str(task['job_id']))
@@ -129,8 +130,11 @@ def schedule(task):
         #logging.info("send task %d" % task.server_id)
         pid = http_request(worker.host, '/execute_task', 'post', options)
 
-    if pid[1]!=200:
-        return False
+    try:
+        if pid[1]==500:
+            return False
+    except:
+        pass
 
     worker.status = 'rendering'
     worker.current_task = task['task_id']

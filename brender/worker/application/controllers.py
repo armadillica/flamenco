@@ -283,7 +283,10 @@ def run_blender_in_thread(options):
 
     logging.debug(status)
 
-    time_cost=int(time.time())-time_init
+    if time_init:
+        time_cost=int(time.time())-time_init
+    else:
+        logging.error("time_init is None")
 
     params={
         'status': status,
