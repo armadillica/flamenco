@@ -19,10 +19,11 @@
 bl_info = {
     "name": "Brender Integration",
     "author": "Eibriel",
-    "version": (0,3),
+    "version": (0, 4),
     "blender": (2, 73, 0),
     "location": "View3D > Tool Shelf > Brender",
-    "description": "BAM pack current file and send it to the Brender Renderfarm",
+    "description": "BAM pack current file \
+        and send it to the Brender Renderfarm",
     "warning": "Warning!",
     "wiki_url": "",
     "tracker_url": "",
@@ -33,14 +34,54 @@ import os
 import json
 import requests
 import subprocess
-from time import strftime
+# from time import strftime
 
 from bpy.props import IntProperty
-from bpy.props import BoolProperty
+# from bpy.props import BoolProperty
 from bpy.props import StringProperty
 from bpy.props import EnumProperty
+from bpy.props import CollectionProperty
 
 from requests.exceptions import ConnectionError
+
+
+class brenderUpdate (bpy.types.Operator):
+    """Update information about Brender Server"""
+    bl_idname = "brender.update"
+    bl_label = "Update Brender info"
+
+    def execute(self, context):
+        serverurl = "http://localhost:9999"
+        wm = bpy.context.window_manager
+
+        try:
+            projects = requests.get('{0}/projects'.format(serverurl))
+            settings = requests.get('{0}/settings/render'.format(serverurl))
+            managers = requests.get('{0}/managers'.format(serverurl))
+        except ConnectionError:
+            print ("Connection Error: {0}".format(serverurl))
+
+
+        wm.brender_projectCache = projects.text
+
+
+        managers = managers.json()
+
+        # print ("Projects")
+        # print (projects.json())
+        # print ("Settings")
+        # print (settings.json())
+        # print ("Managers")
+        # print (managers)
+
+        wm.brender_managersIndex = 0
+        wm.brender_managers.clear()
+        for manager in managers:
+            man_item = wm.brender_managers.add()
+            man_item.name = managers[manager].get('name')
+            man_item.id = managers[manager].get('id')
+
+        return {'FINISHED'}
 
 
 class bamToRenderfarm (bpy.types.Operator):
@@ -48,42 +89,42 @@ class bamToRenderfarm (bpy.types.Operator):
     bl_idname = "brender.send_job"
     bl_label = "Save and send"
 
-    def execute(self,context):
+    def execute(self, context):
         C = context
         D = bpy.data
         scn = C.scene
         wm = bpy.context.window_manager
 
         if not D.filepath:
-            self.report( {'ERROR'}, "Save your Blendfile first")
+            self.report({'ERROR'}, "Save your Blendfile first")
             return {'CANCELLED'}
 
         if wm.brender_jobName == "":
-            self.report( {'ERROR'}, "Name your Job")
+            self.report({'ERROR'}, "Name your Job")
             return {'CANCELLED'}
 
         serverurl = "http://localhost:9999/jobs"
 
-        filepath = D.filepath
+        # filepath = D.filepath
 
-        args = None
+        # args = None
 
         job_settings = {
-            'frame_start' : scn.frame_start,
-            'frame_end' : scn.frame_end,
-            'chunk_size' : 5,
-            'filepath' : os.path.split(D.filepath)[1],
-            'render_settings' : "",
-            'format' : "PNG",
+            'frame_start': scn.frame_start,
+            'frame_end': scn.frame_end,
+            'chunk_size': 5,
+            'filepath': os.path.split(D.filepath)[1],
+            'render_settings': "",
+            'format': "PNG",
             }
 
         job_properties = {
-            'project_id':wm.brender_project,
-            'settings':json.dumps(job_settings),
-            'name':wm.brender_jobName,
-            'type':wm.brender_jobType,
-            'managers':wm.brender_managers,
-            'priority':wm.brender_priority
+            'project_id': wm.brender_project,
+            'settings': json.dumps(job_settings),
+            'name': wm.brender_jobName,
+            'type': wm.brender_jobType,
+            'managers': wm.brender_managers,
+            'priority': wm.brender_priority
         }
 
         print (job_properties)
@@ -93,14 +134,17 @@ class bamToRenderfarm (bpy.types.Operator):
         zippath = os.path.join(tmppath, "%s.zip" % zipname)
 
         try:
-            subprocess.call([ "bam", "pack", D.filepath, '-o', zippath ])
+            subprocess.call(["bam", "pack", D.filepath, '-o', zippath])
         except:
-            self.report( {'ERROR'}, "Error running BAM, is it installed?")
+            self.report({'ERROR'}, "Error running BAM, is it installed?")
             return {'CANCELLED'}
 
-        render_file = [('jobfile', ('jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
+        render_file = [('jobfile',
+                        ('jobfile.zip', open(zippath, 'rb'),
+                         'application/zip'))]
         try:
-            requests.post(serverurl, files = render_file , data = job_properties)
+            requests.post(
+                serverurl, files=render_file, data=job_properties)
         except ConnectionError:
             print ("Connection Error: {0}".format(serverurl))
 
@@ -126,7 +170,8 @@ class bamToRenderfarm (bpy.types.Operator):
 
         blendpath = os.path.split(D.filepath)[0]
 
-        zipname = "{0}_{1}".format(strftime("%Y-%m-%d_%H-%M-%S"), os.path.split(D.filepath)[1][:-6])
+        zipname = "{0}_{1}".format(
+            strftime("%Y-%m-%d_%H-%M-%S"), os.path.split(D.filepath)[1][:-6])
 
         zippath = os.path.join(blendpath, "%s.zip" % zipname)
         renderfarmpath = os.path.join(project_folder, zipname)
@@ -145,13 +190,14 @@ class bamToRenderfarm (bpy.types.Operator):
 
         return {'FINISHED'}
 
+
 class MovPanelControl(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_label = "Renderfarm"
     bl_category = "Brender"
 
-    def draw(self,context):
+    def draw(self, context):
         D = bpy.data
         wm = bpy.context.window_manager
         layout = self.layout
@@ -163,14 +209,18 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'brender_project')
         col.prop(wm, 'brender_jobName')
         col.prop(wm, 'brender_jobType')
-        col.prop(wm, 'brender_managers')
+        # col.prop(wm, 'brender_managers')
+        col.template_list(
+            "UI_UL_list",
+            "ui_lib_list_prop",
+            wm,
+            "brender_managers",
+            wm,
+            "brender_managersIndex",
+            rows=5)
         col.prop(wm, 'brender_priority')
         col.operator("brender.send_job")
 
-
-project_list = [
-    ('1', 'TestProject', '', 1),
-    ]
 
 jobType_list = [
     ('simple_blender_render', 'Simple', '', 1),
@@ -181,18 +231,51 @@ manager_list = [
     ('1', 'Manager Dell', '', 1),
     ]
 
+
+class brenderManagers(bpy.types.PropertyGroup):
+    name = StringProperty(
+        name="Name", default="", options={'HIDDEN', 'SKIP_SAVE'})
+    id = IntProperty(
+        name="ID", default=0, options={'HIDDEN', 'SKIP_SAVE'})
+
+
+def project_list(self, context):
+    wm = context.window_manager
+
+    try:
+        project_cache = json.loads(wm.brender_projectCache)
+    except:
+        return []
+
+    project_list = []
+    for project in project_cache:
+        project_list.append((project, project_cache[project].get('name'), ''))
+
+    return project_list
+
+
 def register():
-    wm = bpy.types.WindowManager
-    wm.brender_project = EnumProperty(items = project_list, name="Projects", description="Brender Projects")
-    wm.brender_jobName = StringProperty(name="Job Name", default="", options={'HIDDEN', 'SKIP_SAVE'})
-    wm.brender_jobType = EnumProperty(items = jobType_list, name="Job type", description="Brender Projects")
-    wm.brender_managers = EnumProperty(items = manager_list, name="Managers", description="Brender Managers")
-    wm.brender_priority = IntProperty(options={'HIDDEN', 'SKIP_SAVE'})
     bpy.utils.register_module(__name__)
+    wm = bpy.types.WindowManager
+
+    wm.brender_project = EnumProperty(
+        items=project_list, name="Projects", description="Brender Projects")
+    wm.brender_projectCache = StringProperty(
+        name="Project list cache", default="", options={'HIDDEN', 'SKIP_SAVE'})
+    wm.brender_jobName = StringProperty(
+        name="Job Name", default="", options={'HIDDEN', 'SKIP_SAVE'})
+    wm.brender_jobType = EnumProperty(
+        items=jobType_list, name="Job type", description="Brender Projects")
+    wm.brender_managers = CollectionProperty(
+        type=brenderManagers, name="Managers", description="Brender Managers")
+    wm.brender_managersIndex = IntProperty(
+        name="Manager Index", description="Currently selected Brender Manager")
+    wm.brender_priority = IntProperty(
+        options={'HIDDEN', 'SKIP_SAVE'})
+
 
 def unregister():
     bpy.utils.unregister_module(__name__)
 
 if __name__ == "__main__":
     register()
-
