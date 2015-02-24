@@ -62,16 +62,20 @@ from modules.jobs import JobApi
 from modules.jobs import JobDeleteApi
 from modules.jobs import JobThumbnailListApi
 from modules.jobs import JobThumbnailApi
+from modules.jobs import JobFileApi
+from modules.jobs import JobFileOutputApi
 api.add_resource(JobListApi, '/jobs')
 api.add_resource(JobApi, '/jobs/<int:job_id>')
 api.add_resource(JobDeleteApi, '/jobs/delete')
 api.add_resource(JobThumbnailListApi, '/jobs/thumbnails')
 api.add_resource(JobThumbnailApi, '/jobs/thumbnails/<job_id>')
+api.add_resource(JobFileApi, '/jobs/file/<int:job_id>')
+api.add_resource(JobFileOutputApi, '/jobs/file/output/<int:job_id>')
 
 from modules.tasks import TaskApi
-from modules.tasks import TaskFileApi
+from modules.tasks import TaskFileOutputApi
 api.add_resource(TaskApi, '/tasks')
-api.add_resource(TaskFileApi, '/task/file/<int:task_id>')
+api.add_resource(TaskFileOutputApi, '/task/file/output/<int:task_id>')
 
 from modules.main import main
 from modules.stats import stats

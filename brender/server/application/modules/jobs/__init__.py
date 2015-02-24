@@ -10,10 +10,12 @@ from os.path import join
 from os.path import exists
 from shutil import rmtree
 from functools import partial
+from zipfile import ZipFile
 
 from flask import jsonify
 from flask import Response
 from flask import request
+from flask import send_from_directory
 
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
@@ -514,3 +516,36 @@ class JobThumbnailApi(Resource):
             return Response(bin, mimetype='image/png')
         else:
             return '', 404
+
+
+class JobFileApi(Resource):
+    def get(self, job_id):
+        """Given a job_id returns the jobzip file
+        """
+        job = Job.query.get(job_id)
+        serverstorage = app.config['SERVER_STORAGE']
+        projectpath = os.path.join(serverstorage, str(job.project_id))
+        jobpath = os.path.join(projectpath, str(job_id))
+        return send_from_directory(jobpath, 'jobfile_{0}.zip'.format(job_id))
+
+
+class JobFileOutputApi(Resource):
+    def get(self, job_id):
+        """Given a task_id returns the output zip file
+        """
+        serverstorage = app.config['SERVER_STORAGE']
+        job = Job.query.get(job_id)
+        projectpath = os.path.join(serverstorage, str(job.project_id))
+        jobpath = os.path.join(projectpath, str(job_id))
+        zippath = os.path.join(jobpath, 'output')
+        zname = 'jobfileout_{0}.zip'.format(job_id)
+        jobfile = os.path.join(jobpath, zname)
+
+        with ZipFile(jobfile, 'w') as jobzip:
+            f = []
+            for dirpath, dirnames, filenames in os.walk(zippath):
+                for fname in filenames:
+                    filepath = os.path.join(dirpath, fname)
+                    jobzip.write(filepath, fname)
+
+        return send_from_directory(jobpath, zname, as_attachment=True)

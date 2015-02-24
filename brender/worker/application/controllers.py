@@ -220,6 +220,7 @@ def info():
                    time_cost=time_cost,
                    status=status)
 
+
 def run_blender_in_thread(options):
     """We take the command and run it
     """
@@ -296,19 +297,53 @@ def run_blender_in_thread(options):
     if time_init:
         time_cost=int(time.time())-time_init
     else:
+        time_cost = 0
         logging.error("time_init is None")
 
-    params={
+    workerstorage = app.config['TMP_FOLDER']
+    taskpath = os.path.join(
+        workerstorage,
+        str(options['job_id']),
+    )
+    taskfile = os.path.join(
+        taskpath,
+        'taskfileout_{0}_{1}.zip'.format(options['job_id'], options['task_id'])
+    )
+    zippath = os.path.join(
+        taskpath,
+        'output',
+        str(options['task_id']),
+    )
+
+    with ZipFile(taskfile, 'w') as taskzip:
+        f = []
+        for dirpath, dirnames, filenames in os.walk(zippath):
+            for fname in filenames:
+                filepath = os.path.join(dirpath, fname)
+                taskzip.write(filepath, fname)
+
+    tfiles = [
+        ('taskfile', (
+            'taskfile.zip', open(taskfile, 'rb'), 'application/zip'))]
+
+    params = {
         'status': status,
-        'log' : log,
+        'log': log,
         'activity': activity,
-        'time_cost': time_cost
+        'time_cost': time_cost,
+        'job_id': options['job_id'],
         }
 
     try:
-        requests.patch('http://' + BRENDER_MANAGER  + '/tasks/' + options['task_id'], data=params)
+        requests.patch(
+            'http://'+BRENDER_MANAGER+'/tasks/'+options['task_id'],
+            data=params,
+            files=tfiles,
+        )
     except ConnectionError:
-        logging.error( 'Cant connect with the Manager {0}'.format(BRENDER_MANAGER) )
+        logging.error(
+            'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
+
 
 @app.route('/execute_task', methods=['POST'])
 def execute_task():

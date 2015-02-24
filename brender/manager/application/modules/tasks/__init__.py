@@ -37,6 +37,8 @@ status_parser.add_argument('status', type=str, required=True)
 status_parser.add_argument('log', type=str)
 status_parser.add_argument('activity', type=str)
 status_parser.add_argument('time_cost', type=int)
+status_parser.add_argument('job_id', type=int)
+status_parser.add_argument('taskfile', type=FileStorage, location='files')
 
 parser_thumbnail = reqparse.RequestParser()
 parser_thumbnail.add_argument("task_id", type=int)
@@ -90,7 +92,7 @@ def schedule(task):
             module_name, globals(), locals(), ['task_compiler'], 0)
         task_compiler = module_loader.task_compiler
     except ImportError, e:
-        print('Error loading module {0}, {1}'.format(module_name, e))
+        logging.error(' loading module {0}, {1}'.format(module_name, e))
         return
 
     task_command = task_compiler.compile(worker, task)
@@ -108,8 +110,6 @@ def schedule(task):
 
     r = http_request(
         worker.host, '/tasks/file/{0}'.format(task['job_id']), 'get')
-    print ('testing file')
-    print (r)
     pid = None
     if not r['file']:
         managerstorage = app.config['MANAGER_STORAGE']
@@ -120,14 +120,11 @@ def schedule(task):
             ('jobfile', (
                 'jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
         try:
-            # requests.post(
-            #    serverurl, files = render_file , data = job_properties)
             pid = http_request(
                 worker.host, '/execute_task', 'post', options, files=jobfile)
         except ConnectionError, e:
-            print ("Connection Error: {0}".format(e))
+            logging.error ("Connection Error: {0}".format(e))
     else:
-        #logging.info("send task %d" % task.server_id)
         pid = http_request(worker.host, '/execute_task', 'post', options)
 
     try:
@@ -196,6 +193,20 @@ class TaskApi(Resource):
 
     def patch(self, task_id):
         args = status_parser.parse_args()
+        print ('TASKFILE')
+        print (args['taskfile'])
+        if args['taskfile']:
+            managerstorage = app.config['MANAGER_STORAGE']
+            jobpath = os.path.join(managerstorage, str(args['job_id']))
+            try:
+                os.mkdir(jobpath)
+            except:
+                pass
+            zippath = os.path.join(
+                    jobpath,
+                    'taskfileout_{0}_{1}.zip'.format(args['job_id'], task_id))
+            args['taskfile'].save(zippath)
+
         worker = Worker.query.filter_by(current_task = task_id).first()
         if worker:
             if worker.status != 'disabled':
@@ -203,8 +214,14 @@ class TaskApi(Resource):
             worker.current_task = None
             db.session.add(worker)
             db.session.commit()
+
+        if args['taskfile']:
+            jobfile = [
+                ('taskfile', (
+                    'taskfile.zip', open(zippath, 'rb'), 'application/zip'))]
+
         params = { 'id' : task_id, 'status': args['status'], 'time_cost' : args['time_cost'], 'log' : args['log'], 'activity' : args['activity'] }
-        request_thread = Thread(target=http_request, args=(app.config['BRENDER_SERVER'], '/tasks', 'post'), kwargs= {'params':params})
+        request_thread = Thread(target=http_request, args=(app.config['BRENDER_SERVER'], '/tasks', 'post'), kwargs= {'params':params, 'files':jobfile})
         request_thread.start()
 
         return '', 204

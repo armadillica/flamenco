@@ -29,12 +29,16 @@ from application.modules.jobs.model import JobManagers
 
 from requests.exceptions import ConnectionError
 
+
+from werkzeug.datastructures import FileStorage
+
 parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
 parser.add_argument('status', type=str)
 parser.add_argument('log', type=str)
 parser.add_argument('time_cost', type=int)
 parser.add_argument('activity', type=str)
+parser.add_argument('taskfile', type=FileStorage, location='files')
 
 
 class TaskApi(Resource):
@@ -303,7 +307,34 @@ class TaskApi(Resource):
         activity = args['activity']
         task = Task.query.get(task_id)
         if task is None:
-                return '', 404
+            return '', 404
+
+        job = Job.query.get(task.job_id)
+        if job is None:
+            return '', 404
+
+        serverstorage = app.config['SERVER_STORAGE']
+        projectpath = os.path.join(serverstorage, str(job.project_id))
+
+        try:
+            os.mkdir(projectpath)
+        except:
+            pass
+
+        if args['taskfile']:
+            jobpath = os.path.join(projectpath, str(job.id))
+            try:
+                os.mkdir(jobpath)
+            except:
+                pass
+            try:
+                os.mkdir(os.path.join(jobpath, 'output'))
+            except:
+                pass
+            args['taskfile'].save(
+                os.path.join(
+                    jobpath, 'output', 'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
+            )
 
         status_old = task.status
         task.status = status
@@ -333,17 +364,14 @@ class TaskApi(Resource):
 
         return '', 204
 
-class TaskFileApi(Resource):
+
+class TaskFileOutputApi(Resource):
     def get(self, task_id):
-        """Given a task_id returns the zip file
+        """Given a task_id returns the output zip file
         """
         serverstorage = app.config['SERVER_STORAGE']
-
         task = Task.query.get(task_id)
         job = Job.query.get(task.job_id)
-
         projectpath = os.path.join(serverstorage, str(job.project_id))
-        jobpath = os.path.join(projectpath, str(job.id))
-
-        return send_from_directory(jobpath, 'jobfile_{0}.zip'.format(job.id))
-
+        jobpath = os.path.join(projectpath, str(job.id), 'output')
+        return send_from_directory(jobpath, 'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
