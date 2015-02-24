@@ -6,12 +6,12 @@ System Architecture
 *******************
 
 
-Brender architecture is is based on the following scheme. 
+flamenco architecture is is based on the following scheme. 
 We have one server, one or more manager, controlling one or more workers,
 and one dashboard.
 
 
-.. image:: ../_static/brender_diagram.png
+.. image:: ../_static/architecture_diagram.png
 
 With this configuration it's possible to have a very generic and simple 
 API on the server, and develop/maintain different type of front-ends for it.
@@ -42,7 +42,7 @@ this procedure (assuming that the manager is up and running):
 Render workflow
 ===============
 
-The render workflow is based on jobs. Once a jobs is added to brender, we 
+The render workflow is based on jobs. Once a jobs is added to flamenco, we 
 automatically create tasks (collection of commands) to send to any available
 worker. 
 When all tasks are completed, the job is marked as finished.
@@ -51,7 +51,7 @@ When all tasks are completed, the job is marked as finished.
 Frames
 ======
 
-We need to get the frames framework set. Every frame rendered in brender 
+We need to get the frames framework set. Every frame rendered in flamenco 
 gets saved in the database with the relative stats, frame address and 
 a preview (the thumbnail).
 
@@ -76,7 +76,7 @@ Frame model:
 Thumbnail generation
 ====================
 
-Thumbnails of each rendered frame are automatically generated in brender 
+Thumbnails of each rendered frame are automatically generated in flamenco 
 and are used for both static and animated previews of a shot.
 
 As soon as a frame is saved on the shared storage controlled by the server,
