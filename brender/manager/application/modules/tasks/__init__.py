@@ -3,8 +3,6 @@ from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
-from flask import jsonify
-from flask import abort
 from flask import request
 
 from werkzeug import secure_filename
@@ -12,7 +10,6 @@ from werkzeug import secure_filename
 from application import http_request
 from application import db
 from application import app
-#from application.modules.tasks.model import Task
 from application.modules.workers.model import Worker
 
 import os
@@ -72,8 +69,8 @@ def schedule(task):
     try:
         module_loader = __import__(module_name, globals(), locals(), ['task_compiler'], 0)
         task_compiler = module_loader.task_compiler
-    except:
-        print('Cant find module {0}'.format(module_name))
+    except ImportError, e:
+        print('Error loading module {0}, {1}'.format(module_name, e))
         return
 
     task_command = task_compiler.compile(worker, task)
@@ -90,10 +87,18 @@ def schedule(task):
 
     #logging.info("send task %d" % task.server_id)
     pid = http_request(worker.host, '/execute_task', 'post', options)
+
+    try:
+        if pid[1]==500:
+            return False
+    except:
+        pass
+
     worker.status = 'rendering'
     worker.current_task = task['task_id']
     db.session.add(worker)
     db.session.commit()
+    return True
 
 class TaskManagementApi(Resource):
     @marshal_with(task_fields)
@@ -107,7 +112,19 @@ class TaskManagementApi(Resource):
             'parser' : args['parser'],
             }
 
-        schedule(task)
+        if not schedule(task):
+            # Reject Task
+            params = {
+                'id': task['task_id'],
+                'status':'ready',
+                'time_cost':None,
+                'log':None,
+                'activity':None
+            }
+            request_thread = Thread(target=http_request, args=(app.config['BRENDER_SERVER'], '/tasks', 'post'), kwargs= {'params':params})
+            request_thread.start()
+            return '', 500
+
 
         return task, 202
 
@@ -117,7 +134,8 @@ class TaskApi(Resource):
         worker = Worker.query.filter_by(current_task = task_id).first()
         if worker:
             http_request(worker.host, '/kill', 'delete')
-            worker.status = 'enabled'
+            if worker.status != 'disabled':
+                worker.status = 'enabled'
             worker.current_task = None
             db.session.add(worker)
             db.session.commit()
@@ -128,7 +146,8 @@ class TaskApi(Resource):
         args = status_parser.parse_args()
         worker = Worker.query.filter_by(current_task = task_id).first()
         if worker:
-            worker.status = 'enabled'
+            if worker.status != 'disabled':
+                worker.status = 'enabled'
             worker.current_task = None
             db.session.add(worker)
             db.session.commit()

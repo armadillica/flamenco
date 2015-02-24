@@ -1,31 +1,16 @@
-import glob
 import json
 import os
-import time
-import urllib
 import datetime
 
-from os import listdir
-from os.path import isfile
-from os.path import join
-from os.path import abspath
-from os.path import exists
-
-from glob import iglob
-from flask import flash
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
-from flask import send_file
-from flask import make_response
 from flask import Blueprint
 from flask import jsonify
 
 from application import app
-from application import list_integers_string
 from application import http_server_request
-# from server import RENDER_PATH
 
 # TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
@@ -66,19 +51,18 @@ def index():
 
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
-            "DT_RowId": "job_" + str(key),
-            "0": val['checkbox'],
-            "1": key,
-            "2": val['job_name'],
-            "3": val['percentage_done'],
-            "4": val['status'],
-            "5" : 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, key),
-            "6" : remaining_time,
+            "DT_RowId" : "job_" + str(key),
+            "0" : val['checkbox'],
+            "1" : key,
+            "2" : 'http://{0}/jobs/thumbnails/{1}s'.format(BRENDER_SERVER, key),
+            "3" : val['job_name'],
+            "4" : val['percentage_done'],
+            "5" : remaining_time,
+            "6" : total_time,
             "7" : average_time,
-            "8" : total_time,
-            "9" : val['activity'],
-            "10" : 'asd',
-            "11" : 'asd'
+            "8" : val['activity'],
+            "9" : val['status'],
+            "10" : None
             })
 
     jobs_list = sorted(jobs_list, key=lambda x: x['1'])
@@ -89,22 +73,11 @@ def index():
 @jobs.route('/<int:job_id>')
 def job(job_id):
     print '[Debug] job_id is %s' % job_id
-    #job = http_server_request('get', '/jobs/' + job_id)
-    jobs = http_server_request('get', '/jobs')
-    job = jobs[job_id]
+    job = http_server_request('get', '/jobs/{0}'.format(job_id))
     job['settings']=json.loads(job['settings'])
 
     #Tasks
-    task_activity=''
     job['thumbnail']='http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, job_id)
-
-    #job['thumb'] = last_thumbnail(job['id'])
-    # render_dir = RENDER_PATH + "/" + str(job['id']) +  '/'
-    # if exists(render_dir):
-    #     job['render'] = map(lambda s : join("/" + render_dir, s), \
-    #                     filter(lambda s : s.endswith(".thumb"), listdir(render_dir)))
-    # else:
-    #     job['render'] = '#'
 
     return render_template('jobs/view.html', job=job)
 
@@ -122,18 +95,17 @@ def jobs_browse(path):
         path = os.path.join('/browse', path)
     else:
         path = "/browse"
-    print path
     path_data = http_server_request('get', path)
+    path_data_sorted = sorted(path_data['items_list'], key=lambda p: p[0])
     return render_template('browse_modal.html',
         # items=path_data['items'],
-        items_list=path_data['items_list'],
+        items_list=path_data_sorted,
         parent_folder=path_data['parent_path'])
 
 
 @jobs.route('/delete', methods=['POST'])
 def jobs_delete():
     job_ids = request.form['id']
-    print(job_ids)
     params = {'id': job_ids}
     jobs = http_server_request('post', '/jobs/delete', params)
     return 'done'
@@ -144,11 +116,11 @@ def jobs_update():
     command = request.form['command'].lower()
     job_ids = request.form['id']
     params = {'id': job_ids,
-              'status' : command}
+              'command' : command}
     if command in ['start', 'stop', 'respawn', 'reset']:
         jobs = http_server_request('put',
             '/jobs', params)
-        return 'done'
+        return jsonify(jobs)
     else:
         return 'error', 400
 

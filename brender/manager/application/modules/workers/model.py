@@ -6,6 +6,7 @@ from requests.exceptions import HTTPError
 from application import db
 from sqlalchemy import UniqueConstraint
 
+
 class Worker(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ip_address = db.Column(db.String(15))
@@ -31,23 +32,27 @@ class Worker(db.Model):
             r = requests.get("http://" + self.host + '/info', timeout=0.5)
             r.raise_for_status()
             info = r.json()
-            self.status = info['status']
+            if self.status != 'disabled':
+                self.status = info['status']
             self.activity = info['activity']
             self.log = info['log']
             self.time_cost = info['time_cost']
-            #print info['status']
             db.session.commit()
             return True
         except Timeout:
-            logging.warning("Worker {0} is not online (Timeout)".format(self.host))
+            logging.warning("Worker {0} is offline (Timeout)".format(self.host))
+            self.connection = 'offline'
+            db.session.commit()
             return False
         except ConnectionError:
-            logging.warning("Worker {0} is not online (Connection Error)".format(self.host))
+            logging.warning("Worker {0} is offline (Connection Error)".format(self.host))
             self.connection = 'offline'
             db.session.commit()
             return False
         except HTTPError:
-            logging.warning("Worker {0} is not online (HTTP Error)".format(self.host))
+            logging.warning("Worker {0} is offline (HTTP Error)".format(self.host))
+            self.connection = 'offline'
+            db.session.commit()
             return False
 
     def __repr__(self):

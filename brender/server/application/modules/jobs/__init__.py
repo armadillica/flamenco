@@ -3,6 +3,8 @@ import os
 import json
 import shutil
 import requests
+from PIL import Image
+import os
 from os import listdir
 from os.path import join
 from os.path import exists
@@ -33,8 +35,8 @@ from application.modules.managers.model import Manager
 id_list = reqparse.RequestParser()
 id_list.add_argument('id', type=str)
 
-status_parser = id_list.copy()
-status_parser.add_argument('status', type=str)
+list_command_parser = id_list.copy()
+list_command_parser.add_argument('command', type=str)
 
 job_parser = reqparse.RequestParser()
 job_parser.add_argument('project_id', type=int)
@@ -227,22 +229,37 @@ class JobListApi(Resource):
 
 
     def put(self):
-        args = status_parser.parse_args()
+        """Run a command against a list of jobs.
+        """
+        args = list_command_parser.parse_args()
+        # Parse the string list of job IDs into a real integers list
+        args['id'] = list_integers_string(args['id'])
         fun = None
-        if args['status'] == "start":
+        # Set a status variable, for returning a status to display in the UI
+        status = None
+        if args['command'] == "start":
             fun = self.start
-        elif args['status'] == "stop":
+            status = "running"
+        elif args['command'] == "stop":
             fun = self.stop
-        elif args['status'] == "reset":
+            status = "stopped"
+        elif args['command'] == "reset":
             fun = self.reset
-        elif args['status'] == "respawn":
+            status = "reset"
+        elif args['command'] == "respawn":
             fun = self.respawn
+            status = "respawned"
         else:
-            print "command not found"
+            logging.error("command not found")
             return args, 400
 
         try:
-            map(fun, list_integers_string(args['id']))
+            # Run the right function (according to the command specified) against
+            # a list of job IDs
+            map(fun, args['id'])
+            # Return a dictionary with the IDs list, the command that was run agains them
+            # and the status they have after such command has been executed
+            return dict(id=args['id'], command=args['command'], status=status), 200
         except KeyError:
             return args, 404
 
@@ -446,16 +463,45 @@ class JobThumbnailListApi(Resource):
 class JobThumbnailApi(Resource):
     """Thumbnail interface for the Server
     """
-    def get(self, job_id):
-        """Returns the last thumbnail for the Job, or a blank
-        image if none. If job_id is 0 return the global last
-        thumbnail.
+    def get(self, job_id, size=None):
+        """Returns the last thumbnail for the Job, or a blank image if none.
+        If job_id is 0 return the global last thumbnail. It is possible to
+        add a suffix to the id (this is why job_id is not strictly an int).
+        So, we check if the following suffixes are attached to the image:
+        - s
+        - m
+        - l
+        if no suffix is added, we use the original image.
         """
+
         def generate():
-            filename='thumbnail_%s.png' % job_id
-            file_path = os.path.join(app.config['TMP_FOLDER'],filename)
-            if os.path.isfile(file_path):
-                thumb_file = open(str(file_path), 'r')
+            is_thumbnail = False
+            if job_id[-1:].isalpha():
+                real_job_id = job_id[:-1]
+                is_thumbnail = True
+            else:
+                real_job_id = job_id
+            filename = 'thumbnail_{0}.png'.format(real_job_id)
+            file_path_original_thumbnail = os.path.join(app.config['TMP_FOLDER'], filename)
+            if os.path.isfile(file_path_original_thumbnail):
+                thumb_file = None
+                if is_thumbnail:
+                    size = 128, 128
+                    file_path_resized_thumbnail = os.path.join(app.config['TMP_FOLDER'], filename + ".thumbnail.png")
+                    if not os.path.isfile(file_path_resized_thumbnail):
+                        filename, ext = os.path.splitext(filename)
+                        im = Image.open(file_path_original_thumbnail)
+                        try:
+                            im.thumbnail(size)
+                            im.save(file_path_resized_thumbnail)
+                        except IOError, e:
+                            logging.error(' making the thumbnail: {0}'.format(e))
+                        else:
+                            thumb_file = open(file_path_resized_thumbnail, 'r')
+
+                if not thumb_file:
+                    thumb_file = open(str(file_path_original_thumbnail), 'r')
+
                 return thumb_file.read()
             else:
                 with app.open_resource('static/missing_thumbnail.png') as thumb_file:
@@ -465,4 +511,4 @@ class JobThumbnailApi(Resource):
         if bin:
             return Response(bin, mimetype='image/png')
         else:
-            return '',404
+            return '', 404

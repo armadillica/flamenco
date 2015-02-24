@@ -10,14 +10,14 @@ Usage
 Workers
 =======
 
-Workers page
+TODO.
 
 .. _shots:
 
 Shots
 =====
 
-Shots management
+TODO.
 
 
 .. _jobs:
@@ -25,4 +25,4 @@ Shots management
 Jobs
 ====
 
-How to update, what is missing bla bla bla.
+TODO.

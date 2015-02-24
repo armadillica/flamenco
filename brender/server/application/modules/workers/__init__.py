@@ -1,31 +1,25 @@
-import os
-import json
 import requests
-from flask import Flask
 from flask import jsonify
-from flask import request
-from flask import redirect
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
-from werkzeug import secure_filename
-from application import db
-from application import app
 from application.utils import list_integers_string
 from application.utils import http_rest_request
 from application.modules.workers.model import Worker
 from application.modules.managers.model import Manager
-from application.modules.tasks.model import Task
 
 parser = reqparse.RequestParser()
 parser.add_argument("id", type=str)
 parser.add_argument("status", type=str)
 
+
 class WorkerListApi(Resource):
     def get(self):
-        workers={}
+        workers = {}
         for manager in Manager.query.all():
             try:
                 r = http_rest_request(manager.host, '/workers', 'get')
+                for worker in r.keys():
+                    r[worker]['manager_id'] = manager.id
                 workers = dict(workers.items() + r.items())
             except:
                 # TODO add proper exception handling!
@@ -35,12 +29,21 @@ class WorkerListApi(Resource):
     # FIXME How to get the manager from the worker
     def post(self):
         args = parser.parse_args()
-        for worker_id in list_integers_string(args['id']):
-            worker = Worker.query.get(worker_id)
-            worker.status = args['status']
-            http_rest_request(worker.manager.host, '/workers/' + worker_id, 'patch', dict(status=worker.status))
+        workers = []
+        pairs = args['id'].split(',')
+        for par in pairs:
+            int_list = par.split(';')
+            workers.append( map(int, int_list) )
+
+        for worker_id,manager_id in workers:
+            manager = Manager.query.get(manager_id)
+            r = http_rest_request(manager.host, '/workers/status/{0}'.format(worker_id), 'patch', dict(status=args['status']))
+            if r['task_id']!=None:
+                task_id = r['task_id']
+                http_rest_request(manager.host, '/tasks/{0}'.format(task_id), 'delete')
 
         return '', 204
+
 
 # FIXME this will probably be depreceated
 class WorkerApi(Resource):

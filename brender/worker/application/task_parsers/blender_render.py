@@ -7,7 +7,7 @@ try:
     from PIL import Image, ImageOps
 except ImportError:
     #raise RuntimeError('Image module of PIL needs to be installed')
-    loggin.warning("Image module of PIL needs to be installed")
+    logging.warning("Image module of PIL needs to be installed")
 
 from application import app
 from common.blender_parser import *
@@ -42,7 +42,8 @@ class task_parser():
             activity['process']=process
 
         saved_file=blender_parser.saved_file(output)
-        if saved_file and Image:
+
+        if saved_file:
             file_name = "thumbnail_%s.png" % options['task_id']
             output_path = os.path.join(app.config['TMP_FOLDER'], file_name)
             print('Saving {0} to {1}'.format(file_name, output_path))
@@ -53,6 +54,9 @@ class task_parser():
             except IOError, e:
                 tmberror=True
                 logging.error("PIP error reading or writing the Thumbnail: {0}".format(e))
+            except NameError, e:
+                tmberror = True
+                logging.error("PIP lib not loaded: {0}".format(e))
             if tmberror:
                 try:
                     tmberror=False

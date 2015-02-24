@@ -6,11 +6,12 @@ System Architecture
 *******************
 
 
-Brender architecture is is based on the following scheme. 
-We have one server, many workers and one dashboard.
+flamenco architecture is is based on the following scheme. 
+We have one server, one or more manager, controlling one or more workers,
+and one dashboard.
 
 
-.. image:: ../_static/brender_diagram.png
+.. image:: ../_static/architecture_diagram.png
 
 With this configuration it's possible to have a very generic and simple 
 API on the server, and develop/maintain different type of front-ends for it.
@@ -23,28 +24,26 @@ Having dashboard and server separate also allows greater level of network
 security, as well as more flexible maintainability (dashboard can go down
 for changes and the server can keep running).
 
-Also other implementation choices should go here.
 
+Manager double handshake
+========================
 
-Worker-server double handshake
-==============================
-
-Connection between workers and the server is entirely automatic and follows
-this procedure (assuming that the server is up and running):
+Connection between workers and the manager is entirely automatic and follows
+this procedure (assuming that the manager is up and running):
 
 * worker starts up
-* worker connects to the server and sends identification info
-* server checks identification and updates worker status or adds worker to the database
-* server confirms connection to the worker
-* worker notifies its availability to the server
-* server checks current jobs and eventually assigns one to the worker
+* worker connects to the manager and sends identification info
+* manager checks identification and updates worker status or adds worker to the database
+* manager confirms connection to the worker
+* worker notifies its availability to the manager
+* manager checks current jobs and eventually assigns one to the worker
 
 
 Render workflow
 ===============
 
-The render workflow is based on jobs. Once a jobs is added to brender, we 
-automatically create tasks (collection of instructions) to send to any available
+The render workflow is based on jobs. Once a jobs is added to flamenco, we 
+automatically create tasks (collection of commands) to send to any available
 worker. 
 When all tasks are completed, the job is marked as finished.
 
@@ -52,7 +51,7 @@ When all tasks are completed, the job is marked as finished.
 Frames
 ======
 
-We need to get the frames framework set. Every frame rendered in brender 
+We need to get the frames framework set. Every frame rendered in flamenco 
 gets saved in the database with the relative stats, frame address and 
 a preview (the thumbnail).
 
@@ -77,7 +76,7 @@ Frame model:
 Thumbnail generation
 ====================
 
-Thumbnails of each rendered frame are automatically generated in brender 
+Thumbnails of each rendered frame are automatically generated in flamenco 
 and are used for both static and animated previews of a shot.
 
 As soon as a frame is saved on the shared storage controlled by the server,
@@ -90,7 +89,6 @@ Used for:
 * shot preview (single image and animation)
 
 
-
 Thumbnail
 
-	shot_id/frame_name_thumbnail.jpg (or png for transparency)
+    shot_id/frame_name_thumbnail.jpg (or png for transparency)

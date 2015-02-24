@@ -1,11 +1,9 @@
 import socket
 import urllib
 import time
-import sys
 import subprocess
 import platform
 import psutil
-import flask
 import os
 import json
 import select
@@ -16,7 +14,6 @@ from threading import Thread
 from threading import Lock
 import Queue # for windows
 
-from flask import Flask
 from flask import redirect
 from flask import url_for
 from flask import request
@@ -58,7 +55,6 @@ def register_worker(port):
     """This is going to be an HTTP request to the server with all the info
     for registering the render node.
     """
-    import httplib
     while True:
         try:
             manager_url = "http://{0}/info".format(app.config['BRENDER_MANAGER'])
@@ -110,6 +106,49 @@ def _checkProcessOutputWin(process, q):
         full_buffer += buffer
     return full_buffer
 
+def send_thumbnail(manager_url, file_path, params):
+    try:
+        thumbnail_file = open(file_path, 'r')
+    except IOError, e:
+        logging.error('Cant open thumbnail: {0}'.format(e))
+        return
+    requests.post(manager_url, files={'file': thumbnail_file}, data=params)
+    thumbnail_file.close()
+
+def _parse_output(tmp_buffer, options):
+    global ACTIVITY
+    global LOG
+
+    task_id = options['task_id']
+    module_name = 'application.task_parsers.{0}'.format(options['task_parser'])
+    task_parser = None
+    try:
+        module_loader = __import__(module_name, globals(), locals(), ['task_parser'], 0)
+        task_parser = module_loader.task_parser
+    except ImportError, e:
+        print('Cant find module {0}: {1}'.format(module_name, e))
+
+    if not LOG:
+        LOG=""
+
+    if task_parser:
+        parser_output = task_parser.parse(tmp_buffer,options, ACTIVITY)
+        if parser_output:
+            ACTIVITY = parser_output
+            activity=json.loads(parser_output)
+
+        if activity.get('thumbnail'):
+            params = dict(task_id=task_id)
+            manager_url = "http://%s/tasks/thumbnails" % (app.config['BRENDER_MANAGER'])
+            request_thread = Thread(target=send_thumbnail, args=(manager_url, activity.get('thumbnail'), params))
+            request_thread.start()
+
+    LOG = "{0}{1}".format(LOG, tmp_buffer)
+    logpath = os.path.join(app.config['TMP_FOLDER'], "{0}.log".format(task_id))
+    f = open(logpath,"a")
+    f.write(tmp_buffer)
+    f.close()
+
 def _interactiveReadProcessWin(process, options):
     full_buffer = ''
     tmp_buffer = ''
@@ -121,71 +160,33 @@ def _interactiveReadProcessWin(process, options):
     t_err.start()
 
     while True:
-        tmp_buffer += _checkProcessOutputWin(process, q)
+        tmp_buffer = _checkProcessOutputWin(process, q)
         if tmp_buffer:
+            _parse_output(tmp_buffer, options)
             pass
-        full_buffer += tmp_buffer
+        # full_buffer += tmp_buffer
         if process.poll() is not None:
             break
 
     t_out.join()
     t_err.join()
-    full_buffer += _checkProcessOutputWin(process, q)
+    # full_buffer += _checkProcessOutputWin(process, q)
     return (process.returncode, full_buffer)
 
-import re
-#from application.task_parsers.blender_render import task_parser
-
-def send_thumbnail(manager_url, file_path, params):
-            thumbnail_file = open(file_path, 'r')
-            requests.post(manager_url, files={'file': thumbnail_file}, data=params)
-            thumbnail_file.close()
-
 def _interactiveReadProcess(process, options):
-    global ACTIVITY
-    global LOG
-
-    task_id=options['task_id']
-    module_name = 'application.task_parsers.{0}'.format(options['task_parser'])
-    task_parser = None
-    try:
-        module_loader = __import__(module_name, globals(), locals(), ['task_parser'], 0)
-        task_parser = module_loader.task_parser
-    except:
-        print('Cant find module {0}'.format(module_name))
-
-    if not LOG:
-        LOG=""
-
     full_buffer = ''
     tmp_buffer = ''
     while True:
         tmp_buffer = _checkProcessOutput(process)
 
         if tmp_buffer:
-            if task_parser:
-                parser_output = task_parser.parse(tmp_buffer,options, ACTIVITY)
-                if parser_output:
-                    ACTIVITY = parser_output
-                    activity=json.loads(parser_output)
-
-                if activity.get('thumbnail'):
-                    params = dict(task_id=task_id)
-                    manager_url = "http://%s/tasks/thumbnails" % (app.config['BRENDER_MANAGER'])
-                    request_thread = Thread(target=send_thumbnail, args=(manager_url, activity.get('thumbnail'), params))
-                    request_thread.start()
-
-            LOG = "{0}{1}".format(LOG, tmp_buffer)
-            logpath = os.path.join(app.config['TMP_FOLDER'], "{0}.log".format(task_id))
-            f = open(logpath,"a")
-            f.write(tmp_buffer)
-            f.close()
+            _parse_output(tmp_buffer, options)
             pass
         if process.poll() is not None:
             break
     # It might be some data hanging around in the buffers after
     # the process finished
-    #full_buffer += _checkProcessOutput(process)
+    # full_buffer += _checkProcessOutput(process)
 
     return (process.returncode, full_buffer)
 
@@ -273,7 +274,10 @@ def run_blender_in_thread(options):
 
     logging.debug(status)
 
-    time_cost=int(time.time())-time_init
+    if time_init:
+        time_cost=int(time.time())-time_init
+    else:
+        logging.error("time_init is None")
 
     params={
         'status': status,

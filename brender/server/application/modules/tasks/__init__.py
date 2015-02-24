@@ -63,8 +63,8 @@ class TaskApi(Resource):
         try:
             module_loader = __import__(module_name, globals(), locals(), ['job_compiler'], 0)
             job_compiler = module_loader.job_compiler
-        except:
-            print('Cant find module {0}'.format(module_name))
+        except ImportError, e:
+            print('Cant find module {0}: {1}'.format(module_name, e))
             return
 
         project = Project.query.filter_by(id = job.project_id).first()
@@ -132,7 +132,7 @@ class TaskApi(Resource):
         #Sort task by priority and then by amount of possible manager
         tasks = db.session.query(Task, func.count(JobManagers.manager_id).label('mgr'))\
                     .join(JobManagers, Task.job_id == JobManagers.job_id)\
-                    .filter(Task.status == 'ready')\
+                    .filter(db.or_(Task.status == 'ready', Task.status == 'aborted'))\
                     .group_by(Task)\
                     .order_by(Task.priority, 'mgr')\
                     .all()
