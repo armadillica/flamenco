@@ -4,9 +4,9 @@ from urllib import urlopen
 class Worker(db.Model):
     """Workers are the render nodes of the farm
 
-    The creation of a Worker in the database happens automatically a soon
+    The creation of a Worker in the database happens automatically as soon
     as it connects to the server and its MAC address does not match any
-    of the one alreay present in the database.
+    of the one already present in the database.
     """
     id = db.Column(db.Integer, primary_key=True)
     mac_address = db.Column(db.Integer())

@@ -9,7 +9,7 @@ from requests.exceptions import ConnectionError
 
 class Manager(db.Model):
     """Model for the managers connected to the server. When a manager
-    connects, we veryfy that it has connected before, by checking its
+    connects, we verify that it has connected before, by checking its
     ip_address and port fields (which are unique keys).
 
     This will be updated to support a UUID, which will be stored in the

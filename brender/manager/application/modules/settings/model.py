@@ -1,7 +1,7 @@
 from application import db
 
 class Setting(db.Model):
-    """General manager settings. Currently cointaining the UUID of the manager.
+    """General manager settings. Currently containing the UUID of the manager.
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128))
