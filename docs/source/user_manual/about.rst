@@ -17,7 +17,7 @@ Main features
 
 * Runs on Linux, OSX and Windows
 * Automatic detection of clients
-* Supports multiple Project
+* Supports multiple Projects
 * Stats on shot completions
 * Priority system
 

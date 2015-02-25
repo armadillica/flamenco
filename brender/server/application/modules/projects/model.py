@@ -6,8 +6,8 @@ from application.modules.settings.model import Setting
 class Project(db.Model):
     """Production project folders
 
-    This is a temporary table to get quickly up and running with projects
-    suport in brender. In the future, project definitions could come from
+    This is a temporary table to get quickly up and running with project
+    support in brender. In the future, project definitions could come from
     attract or it could be defined in another way.
     """
     id = db.Column(db.Integer, primary_key=True)

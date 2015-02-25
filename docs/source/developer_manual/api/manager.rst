@@ -33,7 +33,7 @@ Request
     "settings", "string", "Settings for the task, which will be interpreted by the compiler"
     "task_id", "integer", ""
     "type", "string", "The compiler to use"
-    "parser", "string", "The parser to use againt such task"
+    "parser", "string", "The parser to use against such task"
 
 
 Response
@@ -154,7 +154,7 @@ Request
     :widths: 20, 20, 30
 
     "hostname", "string", "The hostname of the worker"
-    "sysmte", "string", "The OS of the worker"
+    "system", "string", "The OS of the worker"
 
 
 
