@@ -123,7 +123,7 @@ class bamToRenderfarm (bpy.types.Operator):
             'settings': json.dumps(job_settings),
             'name': wm.brender_jobName,
             'type': wm.brender_jobType,
-            'managers': wm.brender_managers,
+            'managers': wm.brender_managers[wm.brender_managersIndex].id,
             'priority': wm.brender_priority
         }
 

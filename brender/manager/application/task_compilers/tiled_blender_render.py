@@ -4,85 +4,99 @@ import logging
 
 from application import app
 
+
 class task_compiler():
     @staticmethod
-    def compile(worker, task):
+    def compile(worker, task, add_file):
 
-      settings=json.loads(task['settings'])
+        settings = json.loads(task['settings'])
 
-      if 'Darwin' in worker.system:
-         setting_blender_path = app.config['BLENDER_PATH_OSX']
-         setting_render_settings = app.config['SETTINGS_PATH_OSX']
-         file_path = settings['file_path_osx']
-         output_path = settings['output_path_osx']
-      elif 'Windows' in worker.system:
-         setting_blender_path = app.config['BLENDER_PATH_WIN']
-         setting_render_settings = app.config['SETTINGS_PATH_WIN']
-         file_path = settings['file_path_win']
-         output_path = settings['output_path_win']
-      elif 'Linux' in worker.system:
-         setting_blender_path = app.config['BLENDER_PATH_LINUX']
-         setting_render_settings = app.config['SETTINGS_PATH_LINUX']
-         file_path = settings['file_path_linux']
-         output_path = settings['output_path_linux']
+        if 'Darwin' in worker.system:
+            setting_blender_path = app.config['BLENDER_PATH_OSX']
+            setting_render_settings = app.config['SETTINGS_PATH_OSX']
+            file_path = settings['file_path_osx']
+            output_path = settings['output_path_osx']
+        elif 'Windows' in worker.system:
+            setting_blender_path = app.config['BLENDER_PATH_WIN']
+            setting_render_settings = app.config['SETTINGS_PATH_WIN']
+            file_path = settings['file_path_win']
+            output_path = settings['output_path_win']
+        elif 'Linux' in worker.system:
+            setting_blender_path = app.config['BLENDER_PATH_LINUX']
+            setting_render_settings = app.config['SETTINGS_PATH_LINUX']
+            file_path = settings['file_path_linux']
+            output_path = settings['output_path_linux']
 
-      if setting_blender_path is None:
-         logging.info('[Debug] blender path is not set')
-         return None
+        if setting_blender_path is None:
+            logging.info('[Debug] blender path is not set')
+            return None
 
-      blender_path = setting_blender_path
+        blender_path = setting_blender_path
 
-      if setting_render_settings is None:
-         logging.warning("Render settings path not set!")
-         return None
+        # TODO
+        file_path = os.path.split(settings['file_path_linux'])[1]
+        file_path = os.path.join('==jobpath==', file_path)
+        output_path = "==outputpath=="
 
-      tile_output_path= os.path.join( output_path, "tiled_{0}_".format(settings['tile']) )
+        if setting_render_settings is None:
+            logging.warning("Render settings path not set!")
+            return None
 
-      setting_render_settings = app.config['SETTINGS_PATH_LINUX']
-      render_settings = os.path.join(
-         setting_render_settings,
-          settings['render_settings'])
+        tile_output_path = os.path.join(
+            output_path, "tiled_{0}_".format(settings['tile']))
 
-      script_path=os.path.join(output_path , 'tile_mix')
+        setting_render_settings = app.config['SETTINGS_PATH_LINUX']
+        # render_settings = os.path.join(
+        #     setting_render_settings,
+        #     settings['render_settings'])
 
-      dir = os.path.dirname(__file__)
-      template_path = os.path.join(dir, 'tiled_blender_render.template')
-      with open (template_path, "r") as f:
-         script=f.read()
-      f.close()
+        script_path = os.path.join(
+            '==jobpath==', 'tile_{0}.py'.format(settings['tile']))
 
-      data="""
+        dir = os.path.dirname(__file__)
+        template_path = os.path.join(dir, 'tiled_blender_render.template')
+        with open(template_path, "r") as f:
+            script = f.read()
+        f.close()
+
+        data = """
 tile={0}
 tiles={1}
-      """.format(settings['tile'], settings['tiles'])
+        """.format(settings['tile'], settings['tiles'])
 
-      script = script.replace("##VARS_INSERTED_HERE##",data)
+        script = script.replace("##VARS_INSERTED_HERE##", data)
 
-      script_path=os.path.join(output_path , 'tile_{0}'.format(settings['tile']))
+        # script_path=os.path.join(
+        #     output_path , 'tile_{0}'.format(settings['tile']))
 
-      try:
-         os.mkdir(output_path)
-      except:
-         pass
+        # try:
+        #    os.mkdir(output_path)
+        # except:
+        #    pass
 
-      f = open(script_path,"w")
-      f.write(script)
-      f.close()
+        # f = open(script_path,"w")
+        # f.write(script)
+        add_file(
+            script,
+            'tile_{0}.py'.format(settings['tile']),
+            task['job_id']
+        )
+        # f.close()
 
-      task_command = [
-      str( blender_path ),
-      '--background',
-      str( file_path ),
-      '--render-output',
-      str(tile_output_path),
-      '--python',
-      str(script_path),
-      '--frame-start' ,
-      str(settings['frame_start']),
-      '--frame-end',
-      str(settings['frame_end']),
-      '--render-anim',
-      '--enable-autoexec'
-      ]
+        task_command = [
+            str(blender_path),
+            '--background',
+            str(file_path),
+            '--render-output',
+            str(tile_output_path),
+            '--python',
+            str(script_path),
+            '--frame-start',
+            str(settings['frame_start']),
+            '--frame-end',
+            str(settings['frame_end']),
+            '--render-anim',
+            '--enable-autoexec'
+        ]
 
-      return task_command
+        return task_command

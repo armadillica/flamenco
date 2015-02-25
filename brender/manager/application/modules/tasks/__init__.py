@@ -6,8 +6,9 @@ from flask.ext.restful import fields
 from flask import request
 
 from werkzeug.datastructures import FileStorage
-
 from werkzeug import secure_filename
+
+from zipfile import ZipFile
 
 from application import http_request
 from application import db
@@ -65,6 +66,20 @@ class TaskFileApi(Resource):
         return {'file': os.path.isfile(filepath)}, 200
 
 
+def add_file(bindata, name, job_id):
+    managerstorage = app.config['MANAGER_STORAGE']
+    jobpath = os.path.join(managerstorage, str(job_id), 'addfiles')
+    if not os.path.exists(jobpath):
+        os.mkdir(jobpath)
+
+    file_path = os.path.join(jobpath, name)
+
+    f = open(file_path,"w")
+    f.write(bindata)
+    f.close()
+    return True
+
+
 def get_availabe_worker():
     worker = Worker.query.filter_by(
         status='enabled', connection='online').first()
@@ -95,7 +110,7 @@ def schedule(task):
         logging.error(' loading module {0}, {1}'.format(module_name, e))
         return
 
-    task_command = task_compiler.compile(worker, task)
+    task_command = task_compiler.compile(worker, task, add_file)
 
     if not task_command:
         logging.error('Cant compile {0}'.format(task['type']))
@@ -108,24 +123,72 @@ def schedule(task):
         'settings': task['settings'],
         'task_command': json.dumps(task_command)}
 
+    r = requests.get(
+        'http://{0}/jobs/file/output/{1}'.format(
+            app.config['BRENDER_SERVER'], task['job_id'])
+    )
+
+    # TODO make random name
+    tmpfile = os.path.join(
+        app.config['TMP_FOLDER'], 'tmp_dep_{0}.zip'.format(task['task_id']))
+
+    with open(tmpfile, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024):
+            if chunk: # filter out keep-alive new chunks
+                f.write(chunk)
+                f.flush()
+
+    jobfile = []
+    jobfile.append(
+        ('jobdepfile', (
+            'jobdepfile.zip',
+            open(tmpfile, 'rb'),
+            'application/zip')
+        )
+    )
+
     r = http_request(
         worker.host, '/tasks/file/{0}'.format(task['job_id']), 'get')
+
     pid = None
     if not r['file']:
         managerstorage = app.config['MANAGER_STORAGE']
         jobpath = os.path.join(managerstorage, str(task['job_id']))
         zippath = os.path.join(
             jobpath, "jobfile_{0}.zip".format(task['job_id']))
-        jobfile = [
+
+        zipsuppath = None
+        addpath = os.path.join(managerstorage, str(task['job_id']), 'addfiles')
+        if os.path.exists(addpath):
+            zipsuppath = os.path.join(
+                jobpath, "jobsupportfile_{0}.zip".format(task['job_id']))
+            with ZipFile(zipsuppath, 'w') as jobzip:
+                f = []
+                for dirpath, dirnames, filenames in os.walk(addpath):
+                    for fname in filenames:
+                        filepath = os.path.join(dirpath, fname)
+                        jobzip.write(filepath, fname)
+
+        jobfile.append(
             ('jobfile', (
-                'jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
-        try:
-            pid = http_request(
-                worker.host, '/execute_task', 'post', options, files=jobfile)
-        except ConnectionError, e:
-            logging.error ("Connection Error: {0}".format(e))
-    else:
-        pid = http_request(worker.host, '/execute_task', 'post', options)
+                'jobfile.zip',
+                open(zippath, 'rb'),
+                'application/zip')
+            )
+        )
+        if zipsuppath:
+            jobfile.append(
+                ('jobsupportfile', (
+                    'jobsupportfile.zip',
+                    open(zipsuppath, 'rb'),
+                    'application/zip')
+                ),
+            )
+    try:
+        pid = http_request(
+            worker.host, '/execute_task', 'post', options, files=jobfile)
+    except ConnectionError, e:
+        logging.error ("Connection Error: {0}".format(e))
 
     try:
         if pid[1]==500:

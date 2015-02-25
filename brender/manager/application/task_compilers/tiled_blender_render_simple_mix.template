@@ -1,5 +1,6 @@
 
 import bpy
+import os
 
 D=bpy.data
 C=bpy.context

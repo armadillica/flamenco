@@ -5,6 +5,7 @@ from PIL import Image
 from platform import system
 from threading import Thread
 from sqlalchemy import func
+from zipfile import ZipFile
 
 from flask import abort
 from flask import jsonify
@@ -331,10 +332,16 @@ class TaskApi(Resource):
                 os.mkdir(os.path.join(jobpath, 'output'))
             except:
                 pass
-            args['taskfile'].save(
-                os.path.join(
-                    jobpath, 'output', 'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
-            )
+            taskfile = os.path.join(
+                    app.config['TMP_FOLDER'], 'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
+            args['taskfile'].save( taskfile )
+
+            zippath = os.path.join(jobpath, 'output')
+
+            with ZipFile(taskfile, 'r') as jobzip:
+                jobzip.extractall(path=zippath)
+
+            os.remove(taskfile)
 
         status_old = task.status
         task.status = status

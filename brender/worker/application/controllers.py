@@ -220,6 +220,15 @@ def info():
                    time_cost=time_cost,
                    status=status)
 
+def clear_dir(cleardir):
+    if os.path.exists(cleardir):
+        for root, dirs, files in os.walk(cleardir, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+
+
 
 def run_blender_in_thread(options):
     """We take the command and run it
@@ -232,21 +241,35 @@ def run_blender_in_thread(options):
     render_command = json.loads(options['task_command'])
 
     workerstorage = app.config['TMP_FOLDER']
-    jobpath = os.path.join(
-        workerstorage, str(options['job_id']), str(options['job_id']), "")
+    tmppath = os.path.join(
+        workerstorage, str(options['job_id']))
+    outpath = os.path.join(tmppath, 'output')
+    clear_dir(outpath)
+    jobpath = os.path.join(tmppath, str(options['job_id']), "")
 
     outputpath = os.path.join(
         workerstorage,
         str(options['job_id']),
-        'render',
+        'output',
         str(options['task_id'])
     )
+
+    dependpath = os.path.join(
+        workerstorage,
+        str(options['job_id']),
+        'depend',
+    )
+
 
     for cmd, val in enumerate(render_command):
         render_command[cmd] = render_command[cmd].replace(
             "==jobpath==",jobpath)
         render_command[cmd] = render_command[cmd].replace(
             "==outputpath==",outputpath)
+
+    os.environ['WORKER_DEPENDPATH'] = dependpath
+    os.environ['WORKER_OUTPUTPATH'] = outputpath
+    os.environ['WORKER_JOBPATH'] = jobpath
 
     logging.info( "Running %s" % render_command)
 
@@ -345,6 +368,27 @@ def run_blender_in_thread(options):
             'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
 
 
+def extract_file(filename, taskpath, zippath, zipname):
+    if request.files[filename]:
+        try:
+            os.mkdir(taskpath)
+        except:
+            logging.error("Error creatig folder:{0}".format(taskpath))
+        taskfile = os.path.join(
+            taskpath, zipname)
+        request.files[filename].save( taskfile )
+
+        if not os.path.exists(zippath):
+            try:
+                os.mkdir(zippath)
+            except:
+                logging.error("Error creatig folder:{0}".format(zippath))
+
+        with ZipFile(taskfile, 'r') as jobzip:
+            jobzip.extractall(path=zippath)
+
+
+
 @app.route('/execute_task', methods=['POST'])
 def execute_task():
     global PROCESS
@@ -363,23 +407,30 @@ def execute_task():
 
     workerstorage = app.config['TMP_FOLDER']
     taskpath = os.path.join(workerstorage, str(options['job_id']))
-    if request.files['jobfile']:
-        try:
-            os.mkdir(taskpath)
-        except:
-            logging.error("Error creatig folder:{0}".format(taskpath))
-        taskfile = os.path.join(
-            taskpath, 'taskfile_{0}.zip'.format(options['job_id']))
-        request.files['jobfile'].save( taskfile )
+    zippath = os.path.join(taskpath, str(options['job_id']))
 
-        zippath = os.path.join(taskpath, str(options['job_id']))
-        try:
-            os.mkdir(zippath)
-        except:
-            logging.error("Error creatig folder:{0}".format(zippath))
+    extract_file (
+        'jobfile',
+        taskpath,
+        zippath,
+        'taskfile_{0}.zip'.format(options['job_id'])
+    )
 
-        with ZipFile(taskfile, 'r') as jobzip:
-            jobzip.extractall(path=zippath)
+    extract_file (
+        'jobsupportfile',
+        taskpath,
+        zippath,
+        'tasksupportfile_{0}.zip'.format(options['job_id'])
+    )
+
+    deppath = os.path.join(taskpath, 'depend')
+    clear_dir(deppath)
+    extract_file (
+        'jobdepfile',
+        taskpath,
+        deppath,
+        'taskdepfile_{0}.zip'.format(options['job_id'])
+    )
 
     options['jobpath'] = taskpath
 
