@@ -70,7 +70,7 @@ $ cd manager; ./manage.py db upgrade
 It's pretty simple. Move into each node folder and run - in four different terminals:
 
 ```
-$ ./manage.py runserver # will start the node (dashoard, server, manager or worker according to the current folder)
+$ ./manage.py runserver # will start the node (dashboard, server, manager or worker according to the current folder)
 ```
 
 If you now visit `http://localhost:8888` with your web browser you should see the dashboard!
