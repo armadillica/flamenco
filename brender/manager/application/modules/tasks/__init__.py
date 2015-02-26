@@ -19,6 +19,9 @@ import requests
 import logging
 from threading import Thread
 
+from requests.exceptions import ConnectionError
+
+
 parser = reqparse.RequestParser()
 parser.add_argument('priority', type=int)
 parser.add_argument('type', type=str)
@@ -86,7 +89,12 @@ def schedule(task):
         'task_command' : json.dumps(task_command)}
 
     #logging.info("send task %d" % task.server_id)
-    pid = http_request(worker.host, '/execute_task', 'post', options)
+    try:
+        pid = http_request(
+            worker.host, '/execute_task', 'post', options)
+    except ConnectionError, e:
+        logging.error ("Connection Error: {0}".format(e))
+        return False
 
     try:
         if pid[1]==500:
