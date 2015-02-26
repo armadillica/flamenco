@@ -189,6 +189,7 @@ def schedule(task):
             worker.host, '/execute_task', 'post', options, files=jobfile)
     except ConnectionError, e:
         logging.error ("Connection Error: {0}".format(e))
+        return False
 
     try:
         if pid[1]==500:
