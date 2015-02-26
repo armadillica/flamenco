@@ -32,12 +32,15 @@ class Worker(db.Model):
             r = requests.get("http://" + self.host + '/info', timeout=0.5)
             r.raise_for_status()
             info = r.json()
-            if self.status != 'disabled':
+            if self.status in ['disabled', 'error']:
                 self.status = info['status']
             self.activity = info['activity']
             self.log = info['log']
             self.time_cost = info['time_cost']
             db.session.commit()
+            if info['status'] == 'error':
+                self.connection == 'offline'
+                return False
             return True
         except Timeout:
             logging.warning("Worker {0} is offline (Timeout)".format(self.host))

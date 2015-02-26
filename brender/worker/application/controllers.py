@@ -33,6 +33,7 @@ LOCK = Lock()
 ACTIVITY = None
 LOG = None
 TIME_INIT = None
+CONNECTIVITY = False
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
@@ -46,25 +47,32 @@ BRENDER_MANAGER = app.config['BRENDER_MANAGER']
 controller_bp = Blueprint('controllers', __name__)
 
 def http_request(command, values):
+    global CONNECTIVITY
     params = urllib.urlencode(values)
     try:
         urllib.urlopen('http://' + BRENDER_MANAGER + '/' + command, params)
         #print(f.read())
     except IOError:
-        print("[Warning] Could not connect to server to register")
+        CONNECTIVITY = False
+        logging.error("Could not connect to manager to register")
 
 def register_worker(port):
     """This is going to be an HTTP request to the server with all the info
     for registering the render node.
     """
+    global CONNECTIVITY
+
     while True:
         try:
             manager_url = "http://{0}/info".format(app.config['BRENDER_MANAGER'])
             requests.get(manager_url)
+            CONNECTIVITY = True
             break
-        except socket.error:
+        except ConnectionError:
+            logging.error("Could not connect to manager to register")
+            CONNECTIVITY = False
             pass
-        time.sleep(0.1)
+        time.sleep(1)
 
     http_request('workers', {'port': port,
                                'hostname': HOSTNAME,
@@ -202,9 +210,12 @@ def info():
     global ACTIVITY
     global LOG
     global TIME_INIT
+    global CONNECTIVITY
 
     if PROCESS:
         status = 'rendering'
+    elif not CONNECTIVITY:
+        status = 'error'
     else:
         status = 'enabled'
 
@@ -237,6 +248,7 @@ def run_blender_in_thread(options):
     global ACTIVITY
     global LOG
     global TIME_INIT
+    global CONNECTIVITY
 
     render_command = json.loads(options['task_command'])
 
@@ -363,9 +375,11 @@ def run_blender_in_thread(options):
             data=params,
             files=tfiles,
         )
+        CONNECTIVITY = True
     except ConnectionError:
         logging.error(
             'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
+        CONNECTIVITY = False
 
 
 def extract_file(filename, taskpath, zippath, zipname):

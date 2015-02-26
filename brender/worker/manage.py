@@ -29,9 +29,7 @@ def runserver(port_number=None):
         PORT = int(port_number)
 
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-        register_thread = Thread(target=controllers.register_worker, args=(PORT,))
-        register_thread.setDaemon(False)
-        register_thread.start()
+        controllers.register_worker(PORT)
 
     app.run(port=PORT, debug=DEBUG, host=HOST)
 
