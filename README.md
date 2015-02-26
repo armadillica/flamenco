@@ -1,12 +1,12 @@
-# flamenco 2.0
+# Flamenco 2.0
 
-Development repo for flamenco 2.0 (originally known as brender). Flamenco is a Free and Open Source Job distribution system for render farms.
+Development repo for Flamenco 2.0 (originally known as brender). Flamenco is a Free and Open Source Job distribution system for render farms.
 
 Warning: we are going to stay in alpha stage until the end of February 2015.
 
 ## Developer installation
 
-In order to install flamenco, we recommend to set up a Python virtual environment.
+In order to install Flamenco, we recommend to set up a Python virtual environment.
 
 ```
 $ sudo easy_install virtualenv
@@ -18,10 +18,10 @@ On Linux this might work better:
 $ sudo apt-get install python-virtualenv
 ```
 
-Once you have virtualenv installed, just fire up a shell and create your own environment. You may want to create this folder inside of the flamenco folder:
+Once you have virtualenv installed, just fire up a shell and create your own environment. You may want to create this folder inside of the Flamenco folder:
 
 ```
-$ cd flamenco
+$ cd Flamenco
 $ virtualenv venv
 New python executable in venv/bin/python
 Installing distribute............done.
@@ -57,7 +57,7 @@ Databases are managed by `MySQL` or `SQLite`.
 
 Psutil is needed for gathering system usage/performance stats on the worker. Ideally psutil is needed only on the workers.
 
-## Initialize flamenco
+## Initialize Flamenco
 First you need to initialize the server and manager's databases:
 
 ```
@@ -66,11 +66,11 @@ $ cd manager; ./manage.py db upgrade
 
 ```
 
-## Running flamenco
+## Running Flamenco
 It's pretty simple. Move into each node folder and run - in four different terminals:
 
 ```
-$ ./manage.py runserver # will start the node (dashoard, server, manager or worker according to the current folder)
+$ ./manage.py runserver # will start the node (dashboard, server, manager or worker according to the current folder)
 ```
 
 If you now visit `http://localhost:8888` with your web browser you should see the dashboard!
@@ -86,7 +86,7 @@ At the moment we are still using the original `brender` folder, which will be re
 * `manager` containing the manager files (manage clusters)
 * `dashboard` containing the dashboard (web interface to talk to the server)
 
-This structure explains also the naming conventions adopted to distinguish the different parts of flamenco.
+This structure explains also the naming conventions adopted to distinguish the different parts of Flamenco.
 Each folder contains an individual Flask application. Server, Manager and Worker exchange JSON formatted messages between each other via a Rest API.
 Dashboard connects to the Server only and accepts connections from clients (Browsers).
 

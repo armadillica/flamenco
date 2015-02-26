@@ -10,7 +10,7 @@ Installing flamenco
 ===================
 
 Currently the only way to install blender is to get the files from GitHub,
-either by dowloading the an archived release package, or by cloning the git
+either by downloading an archived release package, or by cloning the git
 repo:
 
     git clone https://github.com/fsiddi/flamenco.git

@@ -24,6 +24,7 @@ from threading import Thread
 
 from requests.exceptions import ConnectionError
 
+
 parser = reqparse.RequestParser()
 parser.add_argument('priority', type=int)
 parser.add_argument('type', type=str)
