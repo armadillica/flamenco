@@ -29,18 +29,19 @@ class Worker(db.Model):
     @property
     def is_connected(self):
         try:
-            r = requests.get("http://" + self.host + '/info', timeout=0.5)
+            r = requests.get("http://" + self.host + '/info', timeout=1)
             r.raise_for_status()
             info = r.json()
-            if self.status not in ['disabled', 'error']:
+            if self.status == 'disabled' and info['status'] != 'error':
                 self.status = info['status']
             self.activity = info['activity']
             self.log = info['log']
             self.time_cost = info['time_cost']
-            db.session.commit()
             if info['status'] == 'error':
-                self.connection == 'offline'
+                self.connection = 'offline'
+                db.session.commit()
                 return False
+            db.session.commit()
             return True
         except Timeout:
             logging.warning("Worker {0} is offline (Timeout)".format(self.host))

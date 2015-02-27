@@ -41,6 +41,7 @@ class WorkerListApi(Resource):
                           ip_address=ip_address,
                           port=port,
                           status='enabled',
+                          current_task=None,
                           log=None,
                           time_cost=None,
                           activity=None,
@@ -48,6 +49,7 @@ class WorkerListApi(Resource):
                           system=args['system'])
         else:
             worker.connection = 'online'
+            worker.current_task = None
 
         db.session.add(worker)
         db.session.commit()

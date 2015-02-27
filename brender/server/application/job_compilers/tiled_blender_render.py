@@ -6,7 +6,7 @@ class job_compiler():
     @staticmethod
     def compile(job, project, create_task):
         parser='blender_render'
-        
+
         job_settings = json.loads(job.settings)
         task_settings={}
         task_settings['filepath'] = job_settings['filepath']
@@ -39,4 +39,4 @@ class job_compiler():
             name = 'Tile {0}'.format(tile)
             create_task(job.id, task_type, task_settings, name, mix_task_id, parser)
 
-        
+

@@ -1,16 +1,14 @@
 import json
-import logging
 
-from application import app
 
 class task_compiler():
     @staticmethod
-    def compile(worker, task):
+    def compile(worker, task, add_file):
 
-    	settings=json.loads(task['settings'])
+        settings = json.loads(task['settings'])
 
-    	task_command = [ 'echo',
-    		settings['text'],
-    	]
+        task_command = ['echo',
+                        settings['text'],
+                        ]
 
-    	return task_command
+        return task_command

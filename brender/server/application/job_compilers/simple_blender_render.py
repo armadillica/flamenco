@@ -16,6 +16,7 @@ class job_compiler():
 
         #project = Project.query.filter_by(id = job.project_id).first()
         filepath = task_settings['filepath']
+
         task_settings['file_path_linux'] = os.path.join(project.path_linux, filepath)
         task_settings['file_path_win'] = os.path.join(project.path_win, filepath)
         task_settings['file_path_osx'] = os.path.join(project.path_osx, filepath)
@@ -39,7 +40,7 @@ class job_compiler():
 
             for chunk in range(total_chunks):
                 logging.debug('Making chunk for job {0}'.format(job.id))
-                
+
                 name="{0}-{1}".format(task_settings['frame_start'], task_settings['frame_end'])
                 create_task(job.id, task_type, task_settings, name, None, parser)
 

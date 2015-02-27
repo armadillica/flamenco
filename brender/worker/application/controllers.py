@@ -214,10 +214,10 @@ def info():
 
     if PROCESS:
         status = 'rendering'
-    elif not CONNECTIVITY:
-        status = 'error'
     else:
         status = 'enabled'
+    if not CONNECTIVITY:
+        status = 'error'
 
     time_cost=None
     if TIME_INIT:
@@ -383,6 +383,9 @@ def run_blender_in_thread(options):
 
 
 def extract_file(filename, taskpath, zippath, zipname):
+    if not filename in request.files:
+        return
+
     if request.files[filename]:
         try:
             os.mkdir(taskpath)

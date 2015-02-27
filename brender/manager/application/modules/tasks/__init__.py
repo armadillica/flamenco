@@ -185,6 +185,13 @@ def schedule(task):
                     'application/zip')
                 ),
             )
+
+
+    worker.status = 'rendering'
+    worker.current_task = task['task_id']
+    db.session.add(worker)
+    db.session.commit()
+
     try:
         pid = http_request(
             worker.host, '/execute_task', 'post', options, files=jobfile)
@@ -192,16 +199,13 @@ def schedule(task):
         logging.error ("Connection Error: {0}".format(e))
         return False
 
-    try:
-        if pid[1]==500:
-            return False
-    except:
-        pass
+    if not u'pid' in pid:
+        worker.status = 'enabled'
+        worker.current_task = None
+        db.session.add(worker)
+        db.session.commit()
+        return False
 
-    worker.status = 'rendering'
-    worker.current_task = task['task_id']
-    db.session.add(worker)
-    db.session.commit()
     return True
 
 class TaskManagementApi(Resource):

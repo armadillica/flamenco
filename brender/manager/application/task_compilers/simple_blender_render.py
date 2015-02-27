@@ -6,7 +6,7 @@ from application import app
 
 class task_compiler():
     @staticmethod
-    def compile(worker, task):
+    def compile(worker, task, add_file):
 
         settings=json.loads(task['settings'])
 
