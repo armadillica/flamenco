@@ -60,7 +60,8 @@ def index():
             "7" : total_time,
             "8" : val['activity'],
             "9" : val['status'],
-            "10" : None
+            "10" : None,
+            "11" : val['creation_date']
             })
 
     jobs_list = sorted(jobs_list, key=lambda x: x['1'])
@@ -84,6 +85,7 @@ def view_json(job_id):
     """Light info to be retrieved via AJAX"""
     job = http_server_request('get', '/jobs/{0}'.format(job_id))
     job['total_time'] = seconds_to_time(job['total_time'])
+    job['average_time'] = seconds_to_time(job['average_time'])
     return jsonify(job)
 
 
