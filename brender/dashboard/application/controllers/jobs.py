@@ -11,6 +11,7 @@ from flask import jsonify
 
 from application import app
 from application import http_server_request
+from application.helpers import seconds_to_time
 
 # TODO: find a better way to fill/use this variable
 BRENDER_SERVER = app.config['BRENDER_SERVER']
@@ -25,29 +26,26 @@ def index():
     jobs = http_server_request('get', '/jobs')
     jobs_list = []
 
-    def seconds_to_time(seconds):
-        return str(datetime.timedelta(seconds=seconds))
-
     for key, val in jobs.iteritems():
 
         remaining_time = val['remaining_time']
         if not remaining_time:
-            remaining_time='-'
+            remaining_time = '-'
         else:
-            remaining_time=seconds_to_time(remaining_time)
+            remaining_time = seconds_to_time(remaining_time)
         average_time = val['average_time']
         if not average_time:
-            average_time='-'
+            average_time = '-'
         else:
-            average_time=seconds_to_time(average_time)
-        total_time=val['total_time']
+            average_time = seconds_to_time(average_time)
+        total_time = val['total_time']
         if not total_time:
-            total_time='-'
+            total_time = '-'
         else:
-            total_time=seconds_to_time(total_time)
-        job_time=val['job_time']
+            total_time = seconds_to_time(total_time)
+        job_time = val['job_time']
         if job_time:
-            total_time="{0} ({1})".format(total_time, seconds_to_time(job_time))
+            total_time = "{0} ({1})".format(total_time, seconds_to_time(job_time))
 
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
@@ -58,8 +56,8 @@ def index():
             "3" : val['job_name'],
             "4" : val['percentage_done'],
             "5" : remaining_time,
-            "6" : total_time,
-            "7" : average_time,
+            "6" : average_time,
+            "7" : total_time,
             "8" : val['activity'],
             "9" : val['status'],
             "10" : None
@@ -74,17 +72,18 @@ def index():
 def job(job_id):
     print '[Debug] job_id is %s' % job_id
     job = http_server_request('get', '/jobs/{0}'.format(job_id))
-    job['settings']=json.loads(job['settings'])
+    job['settings'] = json.loads(job['settings'])
 
     #Tasks
-    job['thumbnail']='http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, job_id)
-
+    job['thumbnail'] = 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, job_id)
     return render_template('jobs/view.html', job=job)
 
 
 @jobs.route('/<int:job_id>.json')
 def view_json(job_id):
+    """Light info to be retrieved via AJAX"""
     job = http_server_request('get', '/jobs/{0}'.format(job_id))
+    job['total_time'] = seconds_to_time(job['total_time'])
     return jsonify(job)
 
 
