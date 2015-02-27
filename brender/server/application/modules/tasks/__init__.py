@@ -93,6 +93,11 @@ class TaskApi(Resource):
             'settings':task.settings}
 
 
+        task.status = 'running'
+        task.manager_id = manager.id
+        db.session.add(task)
+        db.session.commit()
+
         r = http_rest_request(manager.host, '/tasks/file/{0}'.format(task.job_id), 'get')
         # print ('testing file')
         # print (r)
@@ -108,16 +113,18 @@ class TaskApi(Resource):
                 logging.error(e)
             try:
                 # requests.post(serverurl, files = render_file , data = job_properties)
-                http_rest_request(manager.host, '/tasks', 'post', params, files=jobfile)
+                r = http_rest_request(manager.host, '/tasks', 'post', params, files=jobfile)
             except ConnectionError:
                 print ("Connection Error: {0}".format(serverurl))
 
         else:
-            Thread(target=http_rest_request, args=[manager.host, '/tasks', 'post', params]).start()
-        task.status = 'running'
-        task.manager_id = manager.id
-        db.session.add(task)
-        db.session.commit()
+            r = http_rest_request(manager.host, '/tasks', 'post', params)
+
+        if not u'status' in r:
+            task.status = 'running'
+            task.manager_id = manager.id
+            db.session.add(task)
+            db.session.commit()
         # TODO  get a reply from the worker (running, error, etc)
 
     @staticmethod

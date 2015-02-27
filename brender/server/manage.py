@@ -38,7 +38,8 @@ def runserver():
     app.run(
         port=PORT,
         debug=DEBUG,
-        host=HOST)
+        host=HOST,
+        threaded=True)
 
 if __name__ == "__main__":
     manager.run()

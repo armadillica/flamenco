@@ -44,19 +44,22 @@ class Worker(db.Model):
             db.session.commit()
             return True
         except Timeout:
-            logging.warning("Worker {0} is offline (Timeout)".format(self.host))
-            self.connection = 'offline'
-            db.session.commit()
+            logging.warning("iWorker {0} is offline (Timeout)".format(self.host))
+            if self.status!='busy':
+                self.connection = 'offline'
+                db.session.commit()
             return False
         except ConnectionError:
             logging.warning("Worker {0} is offline (Connection Error)".format(self.host))
-            self.connection = 'offline'
-            db.session.commit()
+            if self.status!='busy':
+                self.connection = 'offline'
+                db.session.commit()
             return False
         except HTTPError:
             logging.warning("Worker {0} is offline (HTTP Error)".format(self.host))
-            self.connection = 'offline'
-            db.session.commit()
+            if self.status!='busy':
+                self.connection = 'offline'
+                db.session.commit()
             return False
 
     def __repr__(self):

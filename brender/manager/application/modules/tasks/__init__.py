@@ -187,7 +187,7 @@ def schedule(task):
             )
 
 
-    worker.status = 'rendering'
+    worker.status = 'busy'
     worker.current_task = task['task_id']
     db.session.add(worker)
     db.session.commit()
@@ -197,6 +197,10 @@ def schedule(task):
             worker.host, '/execute_task', 'post', options, files=jobfile)
     except ConnectionError, e:
         logging.error ("Connection Error: {0}".format(e))
+        worker.status = 'enabled'
+        worker.current_task = None
+        db.session.add(worker)
+        db.session.commit()
         return False
 
     if not u'pid' in pid:
@@ -239,8 +243,6 @@ class TaskManagementApi(Resource):
                 'log':None,
                 'activity':None
             }
-            request_thread = Thread(target=http_request, args=(app.config['BRENDER_SERVER'], '/tasks', 'post'), kwargs= {'params':params})
-            request_thread.start()
             return '', 500
 
 

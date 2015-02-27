@@ -145,7 +145,7 @@ class WorkerLoopApi(Resource):
                 if worker.status in ['enabled', 'rendering']:
                     count_workers += 1
 
-            if not conn or worker.status == 'disabled':
+            if (not conn and worker.status != 'busy') or worker.status == 'disabled':
                 if worker.current_task:
                     params = {
                         'id':worker.current_task,
