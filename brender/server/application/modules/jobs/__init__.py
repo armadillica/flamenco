@@ -166,10 +166,10 @@ class JobListApi(Resource):
         job = Job.query.get(job_id)
         if job:
             if job.status not in ['stopped', 'completed', 'failed']:
-                TaskApi.stop_tasks(job.id)
                 job.status = 'stopped'
                 db.session.add(job)
                 db.session.commit()
+                TaskApi.stop_tasks(job.id)
         else:
             print('[error] Job %d not found' % job_id)
             raise KeyError

@@ -153,6 +153,12 @@ def _parse_output(tmp_buffer, options):
             request_thread = Thread(target=send_thumbnail, args=(manager_url, activity.get('thumbnail'), params))
             request_thread.start()
 
+        if activity.get('path_not_found'):
+            # kill process
+            # update()
+            pass
+
+
     LOG = "{0}{1}".format(LOG, tmp_buffer)
     logpath = os.path.join(app.config['TMP_FOLDER'], "{0}.log".format(task_id))
     f = open(logpath,"a")
@@ -283,7 +289,7 @@ def run_blender_in_thread(options):
     os.environ['WORKER_OUTPUTPATH'] = outputpath
     os.environ['WORKER_JOBPATH'] = jobpath
 
-    logging.info( "Running %s" % render_command)
+    print ( "Running %s" % render_command)
 
     TIME_INIT = int(time.time())
     PROCESS = subprocess.Popen(render_command,

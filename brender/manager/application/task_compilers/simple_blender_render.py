@@ -44,11 +44,28 @@ class task_compiler():
         # TODO
         file_path = os.path.split(settings['file_path_linux'])[1]
         file_path = os.path.join('==jobpath==', file_path)
+        output_path = "==outputpath=="
+
+
+        dir = os.path.dirname(__file__)
+        template_path = os.path.join(dir, 'simple_blender_render.template')
+        with open(template_path, "r") as f:
+            script = f.read()
+        f.close()
+
+
+        add_file(
+            script,
+            'pre_render.py',
+            task['job_id']
+        )
+
+
+        script_path = os.path.join(
+            "==jobpath==", "pre_render.py")
+
         output_path = os.path.join("==outputpath==", "####")
 
-
-        #TODO the command will be in the database,
-        #and not generated in the fly
         task_command = [
         str( blender_path ),
         '--background',
@@ -56,7 +73,7 @@ class task_compiler():
         '--render-output',
         str(output_path),
         '--python',
-        str(render_settings),
+        str(script_path),
         '--frame-start' ,
         str(settings['frame_start']),
         '--frame-end',

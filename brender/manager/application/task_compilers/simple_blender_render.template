@@ -1,0 +1,3 @@
+import bpy
+
+bpy.ops.file.report_missing_files()

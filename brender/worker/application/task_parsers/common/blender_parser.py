@@ -7,6 +7,19 @@ from application import app
 class blender_parser():
 
     @staticmethod
+    def path_not_found(output):
+        #Get missing paths
+        # Warning: Path 'path' not found
+        re_path = re.compile(
+            r"Warning: Path '.*' not found"
+        )
+        not_found = False
+        match = re_path.findall(output)
+        if len(match):
+            not_found = True
+        return not_found
+
+    @staticmethod
     def current_frame(output):
         #Get Activity
         # | Activity

@@ -25,7 +25,13 @@ class task_parser():
                 'process' : "",
                 'remaining' : None,
                 'thumbnail' : None,
-                'current_frame' : None,}
+                'current_frame' : None,
+                'path_not_found': None,
+            }
+
+        path_not_found=blender_parser.path_not_found(output)
+        if path_not_found:
+            activity['path_not_found'] = path_not_found
 
         current_frame=blender_parser.current_frame(output)
         if current_frame:
