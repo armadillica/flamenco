@@ -44,7 +44,7 @@ class Worker(db.Model):
             db.session.commit()
             return True
         except Timeout:
-            logging.warning("iWorker {0} is offline (Timeout)".format(self.host))
+            logging.warning("Worker {0} is offline (Timeout)".format(self.host))
             if self.status!='busy':
                 self.connection = 'offline'
                 db.session.commit()

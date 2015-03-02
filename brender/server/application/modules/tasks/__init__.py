@@ -374,7 +374,8 @@ class TaskApi(Resource):
                 db.session.add(job)
                 db.session.commit()
 
-            TaskApi.dispatch_tasks()
+            render_thread = Thread(target=TaskApi.dispatch_tasks())
+            render_thread.start()
 
         return '', 204
 

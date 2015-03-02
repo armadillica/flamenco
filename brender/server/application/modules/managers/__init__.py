@@ -82,7 +82,12 @@ class ManagerApi(Resource):
         from application.modules.tasks import TaskApi
 
         args = parser.parse_args()
-        manager = Manager.query.filter_by(uuid=manager_uuid).one()
+        try:
+            manager = Manager.query.filter_by(uuid=manager_uuid).one()
+        except NoResultFound:
+            logging.warning("No manager found in Database")
+            return '', 404
+
         # TODO add try except statement to safely handle .one() query
         manager.total_workers = args['total_workers']
         db.session.add(manager)

@@ -86,11 +86,6 @@ def get_availabe_worker():
         status='enabled', connection='online').first()
     if worker is None:
         return None
-    elif not worker.is_connected:
-        worker.connection = 'offline'
-
-    db.session.add(worker)
-    db.session.commit()
     return worker if worker.connection == 'online' else get_availabe_worker()
 
 
@@ -114,7 +109,7 @@ def schedule(task):
     task_command = task_compiler.compile(worker, task, add_file)
 
     if not task_command:
-        logging.error('Cant compile {0}'.format(task['type']))
+        logging.error("Can't compile {0}".format(task['type']))
         return
 
     options = {
@@ -210,6 +205,10 @@ def schedule(task):
         db.session.commit()
         return False
 
+    worker.status = 'rendering'
+    db.session.add(worker)
+    db.session.commit()
+
     return True
 
 class TaskManagementApi(Resource):
@@ -244,7 +243,6 @@ class TaskManagementApi(Resource):
                 'activity':None
             }
             return '', 500
-
 
         return task, 202
 
