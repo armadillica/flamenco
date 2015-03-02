@@ -43,6 +43,7 @@ from bpy.props import EnumProperty
 from bpy.props import CollectionProperty
 
 from requests.exceptions import ConnectionError
+from requests.exceptions import Timeout
 
 from bpy.types import AddonPreferences
 
@@ -72,12 +73,14 @@ class flamencoUpdate (bpy.types.Operator):
         wm = bpy.context.window_manager
 
         try:
-            projects = requests.get('{0}/projects'.format(serverurl))
-            settings = requests.get('{0}/settings/render'.format(serverurl))
-            managers = requests.get('{0}/managers'.format(serverurl))
+            projects = requests.get('{0}/projects'.format(serverurl), timeout=1)
+            settings = requests.get('{0}/settings/render'.format(serverurl), timeout=1)
+            managers = requests.get('{0}/managers'.format(serverurl), timeout=1)
         except ConnectionError:
-            print ("Connection Error: {0}".format(serverurl))
-            self.report( {'ERROR'}, "Cant connect to server on {0}".format(serverurl) )
+            self.report( {'ERROR'}, "Can't connect to server on {0}".format(serverurl) )
+            return {'CANCELLED'}
+        except Timeout:
+            self.report( {'ERROR'}, "Timeout connecting to server on {0}".format(serverurl) )
             return {'CANCELLED'}
 
 
@@ -113,16 +116,18 @@ class bamToRenderfarm (bpy.types.Operator):
         D = bpy.data
         scn = C.scene
         wm = bpy.context.window_manager
+        user_preferences = context.user_preferences
+        addon_prefs = user_preferences.addons[__name__].preferences
+        serverurl = addon_prefs.flamenco_server
 
         if not D.filepath:
-            self.report({'ERROR'}, "Save your Blendfile first")
+            self.report({'ERROR'}, "Save your blend file first")
             return {'CANCELLED'}
 
         if wm.flamenco_jobName == "":
             self.report({'ERROR'}, "Name your Job")
             return {'CANCELLED'}
 
-        serverurl = addon_prefs.flamenco_server
 
         # filepath = D.filepath
 
@@ -138,7 +143,7 @@ class bamToRenderfarm (bpy.types.Operator):
             }
 
         job_properties = {
-            'project_id': wm.flamenco_project,
+            'project_id': int(wm.flamenco_project),
             'settings': json.dumps(job_settings),
             'name': wm.flamenco_jobName,
             'type': wm.flamenco_jobType,
@@ -161,11 +166,14 @@ class bamToRenderfarm (bpy.types.Operator):
         render_file = [('jobfile',
                         ('jobfile.zip', open(zippath, 'rb'),
                         'application/zip'))]
+
+        postserverurl = "{0}/jobs".format(serverurl)
+
         try:
             requests.post(
-                serverurl, files=render_file, data=job_properties)
+                postserverurl, files=render_file, data=job_properties)
         except ConnectionError:
-            print ("Connection Error: {0}".format(serverurl))
+            print ("Connection Error: {0}".format(postserverurl))
 
         """project_folder = '/render/brender/gooseberry'
 
