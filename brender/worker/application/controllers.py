@@ -126,7 +126,7 @@ def send_thumbnail(manager_url, file_path, params):
     try:
         requests.post(manager_url, files={'file': thumbnail_file}, data=params)
     except ConnectionError:
-        logging.error("Can't send Thumbnail to manager: {0}".format(manager_url)
+        logging.error("Can't send Thumbnail to manager: {0}".format(manager_url))
     thumbnail_file.close()
 
 def _parse_output(tmp_buffer, options):
