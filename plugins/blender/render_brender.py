@@ -17,13 +17,13 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-    "name": "Brender Integration",
+    "name": "Flamenco Integration",
     "author": "Eibriel",
-    "version": (0, 4),
+    "version": (0, 5),
     "blender": (2, 73, 0),
-    "location": "View3D > Tool Shelf > Brender",
+    "location": "View3D > Tool Shelf > Flamenco",
     "description": "BAM pack current file \
-        and send it to the Brender Renderfarm",
+        and send it to the Flamenco Renderfarm",
     "warning": "Warning!",
     "wiki_url": "",
     "tracker_url": "",
@@ -46,12 +46,12 @@ from requests.exceptions import ConnectionError
 
 
 class brenderUpdate (bpy.types.Operator):
-    """Update information about Brender Server"""
+    """Update information about Flamenco Server"""
     bl_idname = "brender.update"
     bl_label = "Update Brender info"
 
     def execute(self, context):
-        serverurl = "http://localhost:9999"
+        serverurl = "http://192.168.3.106:9999"
         wm = bpy.context.window_manager
 
         try:
@@ -103,7 +103,7 @@ class bamToRenderfarm (bpy.types.Operator):
             self.report({'ERROR'}, "Name your Job")
             return {'CANCELLED'}
 
-        serverurl = "http://localhost:9999/jobs"
+        serverurl = "http://192.168.3.106:9999/jobs"
 
         # filepath = D.filepath
 
@@ -194,8 +194,8 @@ class bamToRenderfarm (bpy.types.Operator):
 class MovPanelControl(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
-    bl_label = "Renderfarm"
-    bl_category = "Brender"
+    bl_label = "Send Job"
+    bl_category = "Flamenco"
 
     def draw(self, context):
         D = bpy.data
@@ -220,6 +220,7 @@ class MovPanelControl(bpy.types.Panel):
             rows=5)
         col.prop(wm, 'brender_priority')
         col.operator("brender.send_job")
+        col.operator("brender.update")
 
 
 jobType_list = [
