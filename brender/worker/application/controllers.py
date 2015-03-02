@@ -408,11 +408,11 @@ def extract_file(filename, taskpath, zippath, zipname):
             except:
                 logging.error("Error creatig folder:{0}".format(zippath))
 
-        with ZipFile(taskfile, 'r') as jobzip:
-            try:
-                jobzip.extractall(path=zippath)
-            except BadZipfile, e:
-                logging.error("File is not zip {0}".format(e))
+        try:
+            with ZipFile(taskfile, 'r') as jobzip:
+                    jobzip.extractall(path=zippath)
+        except BadZipfile, e:
+            logging.error("File is not zip {0}".format(e))
 
 
 @app.route('/execute_task', methods=['POST'])
