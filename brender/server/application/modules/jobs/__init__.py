@@ -69,59 +69,63 @@ job_fields = {
 class jobInfo():
     @staticmethod
     def get(job):
-        tasksforjob = Task.query.filter(Task.job_id == job.id).count()
-        taskscompleteforjob = Task.query.filter(Task.job_id == job.id, Task.status == 'finished').count()
+        tasks = Task.query.filter(Task.job_id == job.id).all()
+        tasks_completed = Task.query.filter_by(job_id=job.id, status='finished').count()
 
         percentage_done = 0
 
-        if tasksforjob and taskscompleteforjob:
-            percentage_done = round(float(taskscompleteforjob) / float(tasksforjob) * 100.0, 1)
+        if tasks and tasks_completed:
+            percentage_done = round(float(tasks_completed) / float(len(tasks)) * 100.0, 1)
 
-        remaining_time=None
-        average_time=None
-        total_time=0
-        job_time=0
-        finished_time=0
-        finished_tasks=0
-        running_tasks=0
-        frames_rendering=""
-        frame_remaining=None
-        activity=""
-        tasks=Task.query.filter(Task.job_id == job.id).all()
+        remaining_time = None
+        average_time = None
+        total_time = 0
+        job_time = 0
+        finished_time = 0
+        finished_tasks = 0
+        running_tasks = 0
+        frames_rendering = ""
+        frame_remaining = None
+        activity = ""
+
         for task in tasks:
             try:
-                task_activity=json.loads(task.activity)
+                task_activity = json.loads(task.activity)
             except:
-                task_activity=None
+                task_activity = None
 
-            if task.status=='finished':
+            if task.status == 'finished':
                 if task.time_cost:
-                    finished_time=finished_time+task.time_cost
-                finished_tasks+=1
-            if task.status=='running':
-                running_tasks+=1
+                    finished_time = finished_time + task.time_cost
+                finished_tasks += 1
+            if task.status == 'running':
+                running_tasks += 1
                 if task_activity and task_activity.get('current_frame'):
-                    frames_rendering="{0} {1}".format(frames_rendering, task_activity.get('current_frame'))
+                    frames_rendering = "{0} {1}".format(frames_rendering, task_activity.get('current_frame'))
                     if task_activity.get('remaining'):
-                        frames_rendering="{0} ({1}sec)".format(frames_rendering, task_activity.get('remaining'))
+                        frames_rendering = "{0} ({1}sec)".format(frames_rendering, task_activity.get('remaining'))
 
 
             if task.time_cost:
-                total_time+=task.time_cost
+                total_time += task.time_cost
 
-        if job.status=='running':
-            if finished_tasks>0:
-                average_time=finished_time/finished_tasks
-            if finished_tasks>0:
-                remaining_time=(average_time*len(tasks))-total_time
-            if remaining_time and running_tasks>0:
-                remaining_time=remaining_time/running_tasks
-            activity="Rendering: {0}.".format(frames_rendering)
+        if job.status == 'running':
+            if finished_tasks > 0:
+                average_time = finished_time/finished_tasks
+            if finished_tasks > 0:
+                remaining_time = (average_time*len(tasks))-total_time
+            if remaining_time and running_tasks > 0:
+                remaining_time = remaining_time/running_tasks
+            activity = "Rendering: {0}.".format(frames_rendering)
+        elif job.status == 'completed':
+            average_time = finished_time/finished_tasks
 
-        if running_tasks>0:
-            job_time=total_time/running_tasks
 
-        job_info = {"job_name" : job.name,
+        if running_tasks > 0:
+            job_time = total_time/running_tasks
+
+        job_info = {
+            "job_name" : job.name,
             "project_id" : job.project_id,
             "status" : job.status,
             "settings" : job.settings,
@@ -132,7 +136,8 @@ class jobInfo():
             "job_time" : job_time,
             "type" : job.type,
             "priority" : job.priority,
-            "percentage_done" : percentage_done }
+            "percentage_done" : percentage_done,
+            "creation_date" : job.creation_date}
         return job_info
 
 class JobListApi(Resource):

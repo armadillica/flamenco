@@ -1,3 +1,4 @@
+import datetime
 from application import db
 
 from application.modules.managers.model import Manager
@@ -17,6 +18,7 @@ class Job(db.Model):
     status = db.Column(db.String(64))
     priority = db.Column(db.Integer())
     settings = db.Column(db.Text())
+    creation_date = db.Column(db.DateTime(), default=datetime.datetime.now)
     type = db.Column(db.String(64))
 
     def __repr__(self):
