@@ -44,14 +44,31 @@ from bpy.props import CollectionProperty
 
 from requests.exceptions import ConnectionError
 
+from bpy.types import AddonPreferences
 
-class brenderUpdate (bpy.types.Operator):
+
+class flamencoPreferences(AddonPreferences):
+    bl_idname = __name__
+
+    flamenco_server = StringProperty(
+        name="Flamenco Server URL",
+        default="http://127.0.0.1:9999",
+        options={'HIDDEN', 'SKIP_SAVE'})
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "flamenco_server")
+
+
+class flamencoUpdate (bpy.types.Operator):
     """Update information about Flamenco Server"""
-    bl_idname = "brender.update"
-    bl_label = "Update Brender info"
+    bl_idname = "flamenco.update"
+    bl_label = "Update Flamenco info"
 
     def execute(self, context):
-        serverurl = "http://192.168.3.106:9999"
+        user_preferences = context.user_preferences
+        addon_prefs = user_preferences.addons[__name__].preferences
+        serverurl = addon_prefs.flamenco_server
         wm = bpy.context.window_manager
 
         try:
@@ -60,9 +77,11 @@ class brenderUpdate (bpy.types.Operator):
             managers = requests.get('{0}/managers'.format(serverurl))
         except ConnectionError:
             print ("Connection Error: {0}".format(serverurl))
+            self.report( {'ERROR'}, "Cant connect to server on {0}".format(serverurl) )
+            return {'CANCELLED'}
 
 
-        wm.brender_projectCache = projects.text
+        wm.flamenco_projectCache = projects.text
 
 
         managers = managers.json()
@@ -74,10 +93,10 @@ class brenderUpdate (bpy.types.Operator):
         # print ("Managers")
         # print (managers)
 
-        wm.brender_managersIndex = 0
-        wm.brender_managers.clear()
+        wm.flamenco_managersIndex = 0
+        wm.flamenco_managers.clear()
         for manager in managers:
-            man_item = wm.brender_managers.add()
+            man_item = wm.flamenco_managers.add()
             man_item.name = managers[manager].get('name')
             man_item.id = managers[manager].get('id')
 
@@ -86,7 +105,7 @@ class brenderUpdate (bpy.types.Operator):
 
 class bamToRenderfarm (bpy.types.Operator):
     """Save current file and send it to the Renderfarm using BAM pack"""
-    bl_idname = "brender.send_job"
+    bl_idname = "flamenco.send_job"
     bl_label = "Save and send"
 
     def execute(self, context):
@@ -99,11 +118,11 @@ class bamToRenderfarm (bpy.types.Operator):
             self.report({'ERROR'}, "Save your Blendfile first")
             return {'CANCELLED'}
 
-        if wm.brender_jobName == "":
+        if wm.flamenco_jobName == "":
             self.report({'ERROR'}, "Name your Job")
             return {'CANCELLED'}
 
-        serverurl = "http://192.168.3.106:9999/jobs"
+        serverurl = addon_prefs.flamenco_server
 
         # filepath = D.filepath
 
@@ -119,12 +138,12 @@ class bamToRenderfarm (bpy.types.Operator):
             }
 
         job_properties = {
-            'project_id': wm.brender_project,
+            'project_id': wm.flamenco_project,
             'settings': json.dumps(job_settings),
-            'name': wm.brender_jobName,
-            'type': wm.brender_jobType,
-            'managers': wm.brender_managers[wm.brender_managersIndex].id,
-            'priority': wm.brender_priority
+            'name': wm.flamenco_jobName,
+            'type': wm.flamenco_jobType,
+            'managers': wm.flamenco_managers[wm.flamenco_managersIndex].id,
+            'priority': wm.flamenco_priority
         }
 
         print (job_properties)
@@ -141,7 +160,7 @@ class bamToRenderfarm (bpy.types.Operator):
 
         render_file = [('jobfile',
                         ('jobfile.zip', open(zippath, 'rb'),
-                         'application/zip'))]
+                        'application/zip'))]
         try:
             requests.post(
                 serverurl, files=render_file, data=job_properties)
@@ -200,27 +219,36 @@ class MovPanelControl(bpy.types.Panel):
     def draw(self, context):
         D = bpy.data
         wm = bpy.context.window_manager
+
         layout = self.layout
-
-        if wm.brender_jobName == "" and D.filepath != "":
-            wm.brender_jobName = os.path.split(D.filepath)[1]
-
         col = layout.column()
-        col.prop(wm, 'brender_project')
-        col.prop(wm, 'brender_jobName')
-        col.prop(wm, 'brender_jobType')
-        # col.prop(wm, 'brender_managers')
+        col.operator("flamenco.update")
+
+        #print(wm.flamenco_project)
+        #print(wm.flamenco_managers)
+
+        if len(project_list(self, context))==0:
+            return
+        if len(wm.flamenco_managers)==0:
+            return
+
+        if wm.flamenco_jobName == "" and D.filepath != "":
+            wm.flamenco_jobName = os.path.split(D.filepath)[1]
+
+        col.prop(wm, 'flamenco_project')
+        col.prop(wm, 'flamenco_jobName')
+        col.prop(wm, 'flamenco_jobType')
+        # col.prop(wm, 'flamenco_managers')
         col.template_list(
             "UI_UL_list",
             "ui_lib_list_prop",
             wm,
-            "brender_managers",
+            "flamenco_managers",
             wm,
-            "brender_managersIndex",
+            "flamenco_managersIndex",
             rows=5)
-        col.prop(wm, 'brender_priority')
-        col.operator("brender.send_job")
-        col.operator("brender.update")
+        col.prop(wm, 'flamenco_priority')
+        col.operator("flamenco.send_job")
 
 
 jobType_list = [
@@ -233,7 +261,7 @@ manager_list = [
     ]
 
 
-class brenderManagers(bpy.types.PropertyGroup):
+class flamencoManagers(bpy.types.PropertyGroup):
     name = StringProperty(
         name="Name", default="", options={'HIDDEN', 'SKIP_SAVE'})
     id = IntProperty(
@@ -244,7 +272,7 @@ def project_list(self, context):
     wm = context.window_manager
 
     try:
-        project_cache = json.loads(wm.brender_projectCache)
+        project_cache = json.loads(wm.flamenco_projectCache)
     except:
         return []
 
@@ -259,19 +287,19 @@ def register():
     bpy.utils.register_module(__name__)
     wm = bpy.types.WindowManager
 
-    wm.brender_project = EnumProperty(
-        items=project_list, name="Projects", description="Brender Projects")
-    wm.brender_projectCache = StringProperty(
+    wm.flamenco_project = EnumProperty(
+        items=project_list, name="Projects", description="Flamenco Projects")
+    wm.flamenco_projectCache = StringProperty(
         name="Project list cache", default="", options={'HIDDEN', 'SKIP_SAVE'})
-    wm.brender_jobName = StringProperty(
+    wm.flamenco_jobName = StringProperty(
         name="Job Name", default="", options={'HIDDEN', 'SKIP_SAVE'})
-    wm.brender_jobType = EnumProperty(
-        items=jobType_list, name="Job type", description="Brender Projects")
-    wm.brender_managers = CollectionProperty(
-        type=brenderManagers, name="Managers", description="Brender Managers")
-    wm.brender_managersIndex = IntProperty(
-        name="Manager Index", description="Currently selected Brender Manager")
-    wm.brender_priority = IntProperty(
+    wm.flamenco_jobType = EnumProperty(
+        items=jobType_list, name="Job type", description="Flamenco Projects")
+    wm.flamenco_managers = CollectionProperty(
+        type=flamencoManagers, name="Managers", description="Flamenco Managers")
+    wm.flamenco_managersIndex = IntProperty(
+        name="Manager Index", description="Currently selected Flamenco Manager")
+    wm.flamenco_priority = IntProperty(
         options={'HIDDEN', 'SKIP_SAVE'})
 
 
