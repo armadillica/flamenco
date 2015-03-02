@@ -316,11 +316,6 @@ def run_blender_in_thread(options):
     activity = ACTIVITY
     time_init = TIME_INIT
 
-    logging.debug( 'Return code: {0}'.format(retcode) )
-    PROCESS = None
-    ACTIVITY = None
-    LOG = None
-    TIME_INIT = None
 
     #flask.g.blender_process = None
     #print(full_output)
@@ -390,6 +385,13 @@ def run_blender_in_thread(options):
         logging.error(
             'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
         CONNECTIVITY = False
+
+    logging.debug( 'Return code: {0}'.format(retcode) )
+
+    PROCESS = None
+    ACTIVITY = None
+    LOG = None
+    TIME_INIT = None
 
 
 def extract_file(filename, taskpath, zippath, zipname):
