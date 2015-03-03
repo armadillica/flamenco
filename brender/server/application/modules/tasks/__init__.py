@@ -261,11 +261,16 @@ class TaskApi(Resource):
         map(lambda t : TaskApi.stop_task(t.id), tasks)
         #TaskApi.delete_tasks(job_id)
 
+
     def get(self):
+        from sqlalchemy import or_
         from decimal import Decimal
         tasks = {}
         percentage_done = 0
-        for task in Task.query.filter_by(status='ready'):
+        for task in Task.query.filter(or_(Task.status == 'ready', Task.status=='failed')):
+            job = Job.query.filter_by(id=task.job_id, status='running').count()
+            if not job>0:
+                continue
 
             frame_count = 1
             current_frame = 0

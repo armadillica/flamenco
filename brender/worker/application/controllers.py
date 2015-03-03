@@ -95,7 +95,10 @@ def worker_loop():
     tjson = tasks.json()
 
     for task in tjson:
-        tjson[task]['task_id'] = int(task)
+        try:
+            tjson[task]['task_id'] = int(task)
+        except:
+            continue
         manager_url = "http://{0}/tasks/compiled/{1}".format(
             app.config['BRENDER_MANAGER'], task)
         ctask = requests.get(manager_url)
