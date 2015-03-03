@@ -29,7 +29,7 @@ class Manager(db.Model):
     def host(self):
         return self.ip_address + ':' + str(self.port)
 
-    def is_available(self):
+    """def is_available(self):
         #return self.has_virtual_workers == 1 or self.total_workers - self.running_tasks > 0
         try:
             r = requests.get("http://" + self.host + '/workers')
@@ -51,7 +51,7 @@ class Manager(db.Model):
             return True
         except:
             logging.warning("Manager %s is offline" % self.name)
-            return False
+            return False"""
 
 
     def __repr__(self):

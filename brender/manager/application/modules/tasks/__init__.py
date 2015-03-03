@@ -4,6 +4,7 @@ from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
 from flask import request
+from flask import g
 
 from werkzeug.datastructures import FileStorage
 from werkzeug import secure_filename
@@ -56,7 +57,6 @@ task_fields = {
     'format': fields.String
 }
 
-
 class TaskFileApi(Resource):
     def get(self, job_id):
         """Check if the Manager already have the file
@@ -88,128 +88,159 @@ def get_availabe_worker():
         return None
     return worker if worker.connection == 'online' else get_availabe_worker()
 
+# /tasks/compiled/id
+class TaskCompiledApi(Resource):
+    def get(self, task_id):
+        logging.info("Scheduling")
+        #worker = get_availabe_worker()
+        #if worker is None:
+        #    logging.debug("No worker available")
+        #    return
 
-def schedule(task):
-    logging.info("Scheduling")
-    worker = get_availabe_worker()
-    if worker is None:
-        logging.debug("No worker available")
-        return
+        #task = g.get("tasks", None)
+        #print (task)
 
-    module_name = 'application.task_compilers.{0}'.format(task['type'])
-    task_compiler = None
-    try:
-        module_loader = __import__(
-            module_name, globals(), locals(), ['task_compiler'], 0)
-        task_compiler = module_loader.task_compiler
-    except ImportError, e:
-        logging.error(' loading module {0}, {1}'.format(module_name, e))
-        return
+        #print ("TASKS")
+        #tasks = http_request(app.config['BRENDER_SERVER'], '/tasks', 'get')
 
-    task_command = task_compiler.compile(worker, task, add_file)
+        tasks = TaskManagementApi().get()
+        #print (tasks[0])
+        print ("LALALALALA")
+        task = tasks[0]
+        for t in task:
+            task = task[t]
+            task['task_id'] = t
+            break
+        #for t in tasks:
+        #    task = tasks[t]
+        #    break
+        #print (task)
+        #for t in tasks:
+        #    print (t)
+        #task = tasks[task_id]
+        #print (tasks[task_id])
 
-    if not task_command:
-        logging.error("Can't compile {0}".format(task['type']))
-        return
+        module_name = 'application.task_compilers.{0}'.format(task['type'])
+        task_compiler = None
+        try:
+            module_loader = __import__(
+                module_name, globals(), locals(), ['task_compiler'], 0)
+            task_compiler = module_loader.task_compiler
+        except ImportError, e:
+            logging.error(' loading module {0}, {1}'.format(module_name, e))
+            return
 
-    options = {
-        'task_id': task['task_id'],
-        'job_id': task['job_id'],
-        'task_parser': task['parser'],
-        'settings': task['settings'],
-        'task_command': json.dumps(task_command)}
+        worker = Worker.query.first()
+        task_command = task_compiler.compile(worker, task, add_file)
 
-    r = requests.get(
-        'http://{0}/jobs/file/output/{1}'.format(
-            app.config['BRENDER_SERVER'], task['job_id'])
-    )
+        if not task_command:
+            logging.error("Can't compile {0}".format(task['type']))
+            return
 
-    # TODO make random name
-    tmpfile = os.path.join(
-        app.config['TMP_FOLDER'], 'tmp_dep_{0}.zip'.format(task['task_id']))
+        options = {
+            'task_id': task['task_id'],
+            'job_id': task['job_id'],
+            'task_parser': task['parser'],
+            'settings': task['settings'],
+            'task_command': json.dumps(task_command)}
 
-    with open(tmpfile, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024):
-            if chunk: # filter out keep-alive new chunks
-                f.write(chunk)
-                f.flush()
-
-    jobfile = []
-    jobfile.append(
-        ('jobdepfile', (
-            'jobdepfile.zip',
-            open(tmpfile, 'rb'),
-            'application/zip')
+        r = requests.get(
+            'http://{0}/jobs/file/output/{1}'.format(
+                app.config['BRENDER_SERVER'], task['job_id'])
         )
-    )
 
-    r = http_request(
-        worker.host, '/tasks/file/{0}'.format(task['job_id']), 'get')
+        # TODO make random name
+        tmpfile = os.path.join(
+            app.config['TMP_FOLDER'], 'tmp_dep_{0}.zip'.format(task['task_id']))
 
-    pid = None
-    if not r['file']:
-        managerstorage = app.config['MANAGER_STORAGE']
-        jobpath = os.path.join(managerstorage, str(task['job_id']))
-        zippath = os.path.join(
-            jobpath, "jobfile_{0}.zip".format(task['job_id']))
+        with open(tmpfile, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk: # filter out keep-alive new chunks
+                    f.write(chunk)
+                    f.flush()
 
-        zipsuppath = None
-        addpath = os.path.join(managerstorage, str(task['job_id']), 'addfiles')
-        if os.path.exists(addpath):
-            zipsuppath = os.path.join(
-                jobpath, "jobsupportfile_{0}.zip".format(task['job_id']))
-            with ZipFile(zipsuppath, 'w') as jobzip:
-                f = []
-                for dirpath, dirnames, filenames in os.walk(addpath):
-                    for fname in filenames:
-                        filepath = os.path.join(dirpath, fname)
-                        jobzip.write(filepath, fname)
-
+        jobfile = []
         jobfile.append(
-            ('jobfile', (
-                'jobfile.zip',
-                open(zippath, 'rb'),
+            ('jobdepfile', (
+                'jobdepfile.zip',
+                open(tmpfile, 'rb'),
                 'application/zip')
             )
         )
-        if zipsuppath:
+
+        #r = http_request(
+        #    worker.host, '/tasks/file/{0}'.format(task['job_id']), 'get')
+
+        pid = None
+        if 1:
+            managerstorage = app.config['MANAGER_STORAGE']
+            jobpath = os.path.join(managerstorage, str(task['job_id']))
+            zippath = os.path.join(
+                jobpath, "jobfile_{0}.zip".format(task['job_id']))
+
+            zipsuppath = None
+            addpath = os.path.join(managerstorage, str(task['job_id']), 'addfiles')
+            if os.path.exists(addpath):
+                zipsuppath = os.path.join(
+                    jobpath, "jobsupportfile_{0}.zip".format(task['job_id']))
+                with ZipFile(zipsuppath, 'w') as jobzip:
+                    f = []
+                    for dirpath, dirnames, filenames in os.walk(addpath):
+                        for fname in filenames:
+                            filepath = os.path.join(dirpath, fname)
+                            jobzip.write(filepath, fname)
+
             jobfile.append(
-                ('jobsupportfile', (
-                    'jobsupportfile.zip',
-                    open(zipsuppath, 'rb'),
+                ('jobfile', (
+                    'jobfile.zip',
+                    open(zippath, 'rb'),
                     'application/zip')
-                ),
+                )
             )
+            if zipsuppath:
+                jobfile.append(
+                    ('jobsupportfile', (
+                        'jobsupportfile.zip',
+                        open(zipsuppath, 'rb'),
+                        'application/zip')
+                    ),
+                )
 
+        jflist = []
+        for jf in jobfile:
+            jflist.append([jf[0],jf[1][0]])
 
-    worker.status = 'busy'
-    worker.current_task = task['task_id']
-    db.session.add(worker)
-    db.session.commit()
+        return {"options": options, "files": {"jobfiles":jflist}}, 200
 
-    try:
-        pid = http_request(
-            worker.host, '/execute_task', 'post', options, files=jobfile)
-    except ConnectionError, e:
-        logging.error ("Connection Error: {0}".format(e))
-        worker.status = 'enabled'
-        worker.current_task = None
+        """worker.status = 'busy'
+        worker.current_task = task['task_id']
         db.session.add(worker)
         db.session.commit()
-        return False
 
-    if not u'pid' in pid:
-        worker.status = 'enabled'
-        worker.current_task = None
+        try:
+            pid = http_request(
+                worker.host, '/execute_task', 'post', options, files=jobfile)
+        except ConnectionError, e:
+            logging.error ("Connection Error: {0}".format(e))
+            worker.status = 'enabled'
+            worker.current_task = None
+            db.session.add(worker)
+            db.session.commit()
+            return False
+
+        if not u'pid' in pid:
+
+            worker.status = 'enabled'
+            worker.current_task = None
+            db.session.add(worker)
+            db.session.commit()
+            return False
+
+        worker.status = 'rendering'
         db.session.add(worker)
-        db.session.commit()
-        return False
+        db.session.commit()"""
 
-    worker.status = 'rendering'
-    db.session.add(worker)
-    db.session.commit()
-
-    return True
+        return True
 
 class TaskManagementApi(Resource):
     @marshal_with(task_fields)
@@ -233,7 +264,7 @@ class TaskManagementApi(Resource):
                 pass
             args['jobfile'].save( os.path.join(jobpath, 'jobfile_{0}.zip'.format(task['job_id'])) )
 
-        if not schedule(task):
+        """if not schedule(task):
             # Reject Task
             params = {
                 'id': task['task_id'],
@@ -242,9 +273,14 @@ class TaskManagementApi(Resource):
                 'log':None,
                 'activity':None
             }
-            return '', 500
+            return '', 500"""
 
         return task, 202
+
+    def get(self):
+        r = http_request(app.config['BRENDER_SERVER'], '/tasks', 'get')
+        g.tasks = r
+        return r, 200
 
 class TaskApi(Resource):
     @marshal_with(task_fields)
@@ -284,6 +320,7 @@ class TaskApi(Resource):
             db.session.add(worker)
             db.session.commit()
 
+        jobfile=None
         if args['taskfile']:
             jobfile = [
                 ('taskfile', (

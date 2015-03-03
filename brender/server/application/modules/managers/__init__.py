@@ -65,14 +65,14 @@ class ManagerListApi(Resource):
         managers={}
         for manager in Manager.query.all():
             # We check if the manager is connected by actually attempting a connection
-            manager.connection = 'online' if manager.is_connected else 'offline'
+            #manager.connection = 'online' if manager.is_connected else 'offline'
             # TODO: possibly update count of total_workers
             managers[manager.name] = {
                 "id" : manager.id,
                 "name" : manager.name,
                 "ip_address" : manager.ip_address,
                 "port" : manager.port,
-                "connection" : manager.connection
+                "connection" : 'online'
             }
         return jsonify(managers)
 

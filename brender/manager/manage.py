@@ -72,7 +72,7 @@ def runserver():
         register_thread.setDaemon(False)
         register_thread.start()
 
-        manager_loop ("http://{0}:{1}/workers/loop".format(HOST,PORT))
+        #manager_loop ("http://{0}:{1}/workers/loop".format(HOST,PORT))
 
     app.run(
         port=PORT,

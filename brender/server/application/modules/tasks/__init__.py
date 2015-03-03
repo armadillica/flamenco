@@ -265,19 +265,30 @@ class TaskApi(Resource):
         from decimal import Decimal
         tasks = {}
         percentage_done = 0
-        for task in Task.query.all():
+        for task in Task.query.filter_by(status='ready'):
 
             frame_count = 1
             current_frame = 0
             percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
             percentage_done = round(percentage_done, 1)
             tasks[task.id] = {"job_id": task.job_id,
-                            "chunk_start": 0,
-                            "chunk_end": 0,
-                            "current_frame": 0,
-                            "status": task.status,
-                            "percentage_done": percentage_done,
-                            "priority": task.priority}
+                              "name": task.name,
+                              "status": task.status,
+                              "type": task.type,
+                              "settings": task.settings,
+                              "log": task.log,
+                              "activity": task.activity,
+                              "manager_id": task.manager_id,
+                              "priority": task.priority,
+                              "child_id": task.child_id,
+                              "parser": task.parser,
+                              "time_cost": task.time_cost,
+
+                              "chunk_start": 0,
+                              "chunk_end": 0,
+                              "current_frame": 0,
+                              "status": task.status,
+                              "percentage_done": percentage_done}
         return jsonify(tasks)
 
     @staticmethod
@@ -358,7 +369,7 @@ class TaskApi(Resource):
         db.session.add(task)
         db.session.commit()
 
-        if status != status_old:
+        """if status != status_old:
             job = Job.query.get(task.job_id)
             manager = Manager.query.get(task.manager_id)
             logging.info('Task {0} changed from {1} to {2}'.format(task_id, status_old, status))
@@ -375,7 +386,7 @@ class TaskApi(Resource):
                 db.session.commit()
 
             render_thread = Thread(target=TaskApi.dispatch_tasks())
-            render_thread.start()
+            render_thread.start()"""
 
         return '', 204
 

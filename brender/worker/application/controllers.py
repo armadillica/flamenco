@@ -14,6 +14,7 @@ from zipfile import BadZipfile
 import gocept.cache.method
 from threading import Thread
 from threading import Lock
+from threading import Timer
 import Queue # for windows
 
 from flask import redirect
@@ -78,6 +79,54 @@ def register_worker(port):
     http_request('workers', {'port': port,
                                'hostname': HOSTNAME,
                                'system': SYSTEM})
+
+
+def get_task():
+    manager_url = "http://{0}/tasks".format(app.config['BRENDER_MANAGER'])
+    return requests.get(manager_url)
+
+
+global LOOP_THREAD
+def worker_loop():
+    print ("Worker Loop")
+    from application import config
+    register_worker(config.Config.PORT)
+    tasks = get_task()
+    tjson = tasks.json()
+
+    for task in tjson:
+        tjson[task]['task_id'] = int(task)
+        manager_url = "http://{0}/tasks/compiled/{1}".format(
+            app.config['BRENDER_MANAGER'], task)
+        ctask = requests.get(manager_url)
+
+        #print (ctask.url)
+        print (ctask.json()['options'])
+
+        params = {
+            'status': 'running',
+            'log': None,
+            'activity': None,
+            'time_cost': 0,
+            'job_id': tjson[task]['job_id'],
+            }
+        try:
+            requests.patch(
+                'http://'+app.config['BRENDER_MANAGER']+'/tasks/'+str(tjson[task]['task_id']),
+            data = params
+            )
+            CONNECTIVITY = True
+        except ConnectionError:
+            logging.error(
+                'Cant connect with the Manager {0}'.format(app.config['BRENDER_MANAGER']))
+            CONNECTIVITY = False
+
+        execute_task(ctask.json()['options'], ctask.json()['files'])
+        break
+
+
+    LOOP_THREAD = Timer(5, worker_loop)
+    LOOP_THREAD.start()
 
 def _checkProcessOutput(process):
     ready = select.select([process.stdout.fileno(),
@@ -395,10 +444,11 @@ def run_blender_in_thread(options):
 
 
 def extract_file(filename, taskpath, zippath, zipname):
-    if not filename in request.files:
-        return
+    #if not filename in request.files:
+    #    return
 
-    if request.files[filename]:
+    #if request.files[filename]:
+    if 0:
         try:
             os.mkdir(taskpath)
         except:
@@ -420,8 +470,8 @@ def extract_file(filename, taskpath, zippath, zipname):
             logging.error("File is not zip {0}".format(e))
 
 
-@app.route('/execute_task', methods=['POST'])
-def execute_task():
+#@app.route('/execute_task', methods=['POST'])
+def execute_task(task, files):
     global PROCESS
     global LOCK
 
@@ -429,11 +479,11 @@ def execute_task():
         return '{error:Processus failed}', 500
 
     options = {
-        'task_id': request.form['task_id'],
-        'job_id': request.form['job_id'],
-        'task_parser': request.form['task_parser'],
-        'settings': request.form['settings'],
-        'task_command': request.form['task_command'],
+        'task_id': task['task_id'],
+        'job_id': task['job_id'],
+        'task_parser': task['task_parser'],
+        'settings': task['settings'],
+        'task_command': task['task_command'],
     }
 
     workerstorage = app.config['TMP_FOLDER']
@@ -473,8 +523,9 @@ def execute_task():
 
     render_thread = Thread(target=run_blender_in_thread, args=(options,))
     render_thread.start()
+    render_thread.join()
     LOCK.release()
-    return jsonify(dict(pid=0))
+    return json.dumps(dict(pid=0))
 
 @app.route('/pid')
 def get_pid():
@@ -607,3 +658,4 @@ def check_file(job_id):
     filepath = os.path.join(jobpath, "jobfile_{0}.zip".format(job_id))
     r = json.dumps({'file': os.path.isfile(filepath)})
     return r, 200
+

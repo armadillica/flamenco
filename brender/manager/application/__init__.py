@@ -94,19 +94,21 @@ from modules.tasks import TaskFileApi
 from modules.tasks import TaskManagementApi
 from modules.tasks import TaskApi
 from modules.tasks import TaskThumbnailListApi
+from modules.tasks import TaskCompiledApi
 api.add_resource(TaskFileApi, '/tasks/file/<int:job_id>')
 api.add_resource(TaskManagementApi, '/tasks')
 api.add_resource(TaskApi, '/tasks/<int:task_id>')
 api.add_resource(TaskThumbnailListApi, '/tasks/thumbnails')
+api.add_resource(TaskCompiledApi, '/tasks/compiled/<int:task_id>')
 
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
 from modules.workers import WorkerStatusApi
-from modules.workers import WorkerLoopApi
+#from modules.workers import WorkerLoopApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
 api.add_resource(WorkerStatusApi, '/workers/status/<int:worker_id>')
-api.add_resource(WorkerLoopApi, '/workers/loop')
+#api.add_resource(WorkerLoopApi, '/workers/loop')
 
 from modules.settings import SettingsListApi
 from modules.settings import SettingApi

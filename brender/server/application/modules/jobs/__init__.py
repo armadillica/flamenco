@@ -159,8 +159,8 @@ class JobListApi(Resource):
                         .filter(Task.status == 'aborted')\
                         .update({'status' : 'ready'})
                 db.session.commit()
-                print ('[debug] Dispatching tasks')
-            TaskApi.dispatch_tasks()
+                #print ('[debug] Dispatching tasks')
+            #TaskApi.dispatch_tasks()
         else:
             print('[error] Job %d not found' % job_id)
             raise KeyError
@@ -373,14 +373,14 @@ class JobApi(Resource):
         else:
             pass
             # TODO (fsiddi): proper error message if jobs is already running
-        TaskApi.dispatch_tasks()
+        #TaskApi.dispatch_tasks()
 
     @staticmethod
     def stop(job_id):
         logging.info('Stopping job {0}'.format(job_id))
         job = Job.query.get(job_id)
         if job.status != 'stopped':
-            TaskApi.stop_tasks(job.id)
+            #TaskApi.stop_tasks(job.id)
             job.status = 'stopped'
             db.session.add(job)
             db.session.commit()

@@ -108,7 +108,7 @@ class WorkerApi(Resource):
             worker_info = {'connection' : 'offline'}
         return worker_info
 
-class WorkerLoopApi(Resource):
+"""class WorkerLoopApi(Resource):
     def get(self):
 
         workers_query=Setting.query.filter_by(name='total_workers').first()
@@ -138,8 +138,10 @@ class WorkerLoopApi(Resource):
                         'activity':worker.activity,
                         'time_cost':worker.time_cost }
                     try:
+                        print ("Connecting to Server A")
                         http_request(app.config['BRENDER_SERVER'],
                             '/tasks', 'post', params=params)
+                        print ("Clossing connection A")
                     except:
                         logging.warning('Error connecting to Server (Task not found?)')
                 if worker.status in ['enabled', 'rendering']:
@@ -164,14 +166,18 @@ class WorkerLoopApi(Resource):
                     db.session.commit()
 
                     try:
+                        print ("Connecting to Server B")
                         http_request(app.config['BRENDER_SERVER'],
                             '/tasks', 'post', params=params)
+                        print ("Clossing connection B")
                     except:
                         logging.error('Error connecting to Server (Task not found?)')
                     if worker.status == 'disabled' and task!=None:
                         try:
+                            print ("Connecting to Server C")
                             http_request(app.config['BRENDER_SERVER'],
                                 '/task/{0}'.format(), 'delete', params=params)
+                            print ("Clossing connection C")
                         except:
                             logging.error('Error connecting to Server (Task not found?)')
 
@@ -186,5 +192,7 @@ class WorkerLoopApi(Resource):
             params = {'total_workers' : total_workers}
 
             # Update the resource on the server
+            print ("Connecting to Server D")
             http_request( app.config['BRENDER_SERVER'],
                 '/managers/{0}'.format(uuid.value), 'patch', params=params)
+            print ("Clossing connection D")"""
