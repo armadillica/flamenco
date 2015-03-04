@@ -244,7 +244,7 @@ def _parse_output(tmp_buffer, options):
             request_thread.start()
 
         params = {
-            'status': 'rendering',
+            'status': 'running',
             'log': "",
             'activity': "",
             'time_cost': 0,
