@@ -134,10 +134,10 @@ def worker_loop():
             os.mkdir(jobpath)
 
         # Get job file
-        r = requests.get(
-            'http://{0}/tasks/zip/{1}'.format(
+        url = "http://{0}/static/storage/{1}/jobfile_{1}.zip".format(
                 app.config['BRENDER_MANAGER'], task['job_id'])
-        )
+        r = requests.get(url)
+
         tmpfile = os.path.join(
             jobpath, 'taskfile_{0}.zip'.format(task['job_id']))
 
@@ -151,10 +151,16 @@ def worker_loop():
         if not os.path.exists(zippath):
             os.mkdir(zippath)
         print (tmpfile)
-        with ZipFile(tmpfile, 'r') as jobzip:
+        unzipok = True
+        try:
+            with ZipFile(tmpfile, 'r') as jobzip:
                 jobzip.extractall(path=zippath)
+        except BadZipfile:
+            unzipok = False
+            logging.error('Not a ZipFile')
 
-        execute_task(task, files)
+        if unzipok:
+            execute_task(task, files)
 
     LOOP_THREAD = Timer(5, worker_loop)
     LOOP_THREAD.start()

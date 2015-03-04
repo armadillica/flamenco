@@ -337,7 +337,7 @@ class TaskApi(Resource):
         if worker.status=='disabled':
             return 'Worker is Disabled', 403
         if worker:
-            worker.status = args['status']
+            #worker.status = args['status']
             if args['status'] == 'enabled':
                 worker.current_task = None
             elif args['status'] == 'rendering':
