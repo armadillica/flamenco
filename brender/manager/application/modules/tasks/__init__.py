@@ -5,6 +5,7 @@ from flask.ext.restful import fields
 
 from flask import request
 from flask import g
+from flask import send_from_directory
 
 from werkzeug.datastructures import FileStorage
 from werkzeug import secure_filename
@@ -41,6 +42,7 @@ status_parser.add_argument('log', type=str)
 status_parser.add_argument('activity', type=str)
 status_parser.add_argument('time_cost', type=int)
 status_parser.add_argument('job_id', type=int)
+status_parser.add_argument('task_id', type=int)
 status_parser.add_argument('taskfile', type=FileStorage, location='files')
 
 parser_thumbnail = reqparse.RequestParser()
@@ -103,7 +105,16 @@ class TaskCompiledApi(Resource):
         #print ("TASKS")
         #tasks = http_request(app.config['BRENDER_SERVER'], '/tasks', 'get')
 
+        ip_address = request.remote_addr
+        worker = Worker.query.filter_by(ip_address=ip_address).one()
+        if worker.status == "disabled":
+            return '', 403
+
         tasks = TaskManagementApi().get()
+        print ('TASKS')
+        print (tasks)
+        if not len(tasks[0]):
+            return '', 400
         #print (tasks[0])
         print ("LALALALALA")
         task = tasks[0]
@@ -119,6 +130,27 @@ class TaskCompiledApi(Resource):
         #    print (t)
         #task = tasks[task_id]
         #print (tasks[task_id])
+
+        managerstorage = app.config['MANAGER_STORAGE']
+        jobpath = os.path.join(managerstorage, str(task['job_id']))
+        if not os.path.exists(jobpath):
+            os.mkdir(jobpath)
+
+        r = requests.get(
+            'http://{0}/jobs/file/{1}'.format(
+                app.config['BRENDER_SERVER'], task['job_id'])
+        )
+
+        # TODO make random name
+        tmpfile = os.path.join(
+            jobpath, 'jobfile_{0}.zip'.format(task['job_id']))
+
+        with open(tmpfile, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk: # filter out keep-alive new chunks
+                    f.write(chunk)
+                    f.flush()
+
 
         module_name = 'application.task_compilers.{0}'.format(task['type'])
         task_compiler = None
@@ -298,8 +330,28 @@ class TaskApi(Resource):
 
     def patch(self, task_id):
         args = status_parser.parse_args()
-        print ('TASKFILE')
-        print (args['taskfile'])
+        ip_address = request.remote_addr
+        worker = Worker.query.filter_by(ip_address=ip_address).first()
+        if not worker:
+            return 'Worker is not registered', 403
+        if worker.status=='disabled':
+            return 'Worker is Disabled', 403
+        if worker:
+            worker.status = args['status']
+            if args['status'] == 'enabled':
+                worker.current_task = None
+            elif args['status'] == 'rendering':
+                worker.current_task = args['task_id']
+            db.session.add(worker)
+            db.session.commit()
+
+        """if args['task_id']:
+            task = Task.query.filter_by(id=args['task_id']).first()
+            if not task:
+                return 'Task is cancelled', 403"""
+
+        #print ('TASKFILE')
+        #print (args['taskfile'])
         if args['taskfile']:
             managerstorage = app.config['MANAGER_STORAGE']
             jobpath = os.path.join(managerstorage, str(args['job_id']))
@@ -312,14 +364,6 @@ class TaskApi(Resource):
                     'taskfileout_{0}_{1}.zip'.format(args['job_id'], task_id))
             args['taskfile'].save(zippath)
 
-        worker = Worker.query.filter_by(current_task = task_id).first()
-        if worker:
-            if worker.status != 'disabled':
-                worker.status = 'enabled'
-            worker.current_task = None
-            db.session.add(worker)
-            db.session.commit()
-
         jobfile=None
         if args['taskfile']:
             jobfile = [
@@ -327,8 +371,7 @@ class TaskApi(Resource):
                     'taskfile.zip', open(zippath, 'rb'), 'application/zip'))]
 
         params = { 'id' : task_id, 'status': args['status'], 'time_cost' : args['time_cost'], 'log' : args['log'], 'activity' : args['activity'] }
-        request_thread = Thread(target=http_request, args=(app.config['BRENDER_SERVER'], '/tasks', 'post'), kwargs= {'params':params, 'files':jobfile})
-        request_thread.start()
+        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params, files=jobfile)
 
         return '', 204
 
@@ -365,3 +408,34 @@ class TaskThumbnailListApi(Resource):
 
         request_thread = Thread(target=self.send_thumbnail, args=(server_url, full_path, params))
         request_thread.start()
+
+
+
+class TaskZipApi(Resource):
+    def get(self, job_id):
+        """Given a job_id returns the task file
+        """
+        managerstorage = app.config['MANAGER_STORAGE']
+        jobpath = os.path.join(managerstorage, str(job_id))
+        return send_from_directory(
+            jobpath, 'jobfile_{0}.zip'.format(job_id))
+
+
+class TaskSupZipApi(Resource):
+    def get(self, job_id):
+        """Given a job_id returns the support file
+        """
+        managerstorage = app.config['MANAGER_STORAGE']
+        jobpath = os.path.join(managerstorage, str(job_id))
+        return send_from_directory(
+            jobpath, 'jobsupportfile_{0}.zip'.format(job_id))
+
+
+class TaskDepZipApi(Resource):
+    def get(self, job_id):
+        """Given a job_id returns the dep file
+        """
+        managerstorage = app.config['MANAGER_STORAGE']
+        jobpath = os.path.join(managerstorage, str(job_id))
+        return send_from_directory(
+            jobpath, 'jobdepfile_{0}.zip'.format(job_id))

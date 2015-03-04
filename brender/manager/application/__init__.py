@@ -95,11 +95,17 @@ from modules.tasks import TaskManagementApi
 from modules.tasks import TaskApi
 from modules.tasks import TaskThumbnailListApi
 from modules.tasks import TaskCompiledApi
+from modules.tasks import TaskZipApi
+from modules.tasks import TaskSupZipApi
+from modules.tasks import TaskDepZipApi
 api.add_resource(TaskFileApi, '/tasks/file/<int:job_id>')
 api.add_resource(TaskManagementApi, '/tasks')
 api.add_resource(TaskApi, '/tasks/<int:task_id>')
 api.add_resource(TaskThumbnailListApi, '/tasks/thumbnails')
 api.add_resource(TaskCompiledApi, '/tasks/compiled/<int:task_id>')
+api.add_resource(TaskZipApi, '/tasks/zip/<int:job_id>')
+api.add_resource(TaskSupZipApi, '/tasks/zip/sup/<int:job_id>')
+api.add_resource(TaskDepZipApi, '/tasks/zip/dep/<int:job_id>')
 
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi

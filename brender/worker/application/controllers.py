@@ -90,32 +90,34 @@ global LOOP_THREAD
 def worker_loop():
     print ("Worker Loop")
     from application import config
+    print ("Registering")
     register_worker(config.Config.PORT)
-    tasks = get_task()
-    tjson = tasks.json()
+    print ("Get a new task")
+    #tasks = get_task()
+    manager_url = "http://{0}/tasks/compiled/0".format(
+        app.config['BRENDER_MANAGER'])
+    rtask = requests.get(manager_url)
 
-    for task in tjson:
+
+    if rtask.status_code==200:
         try:
-            tjson[task]['task_id'] = int(task)
+            print (rtask.json().keys())
+            files = rtask.json()['files']
+            task = rtask.json()['options']
         except:
-            continue
-        manager_url = "http://{0}/tasks/compiled/{1}".format(
-            app.config['BRENDER_MANAGER'], task)
-        ctask = requests.get(manager_url)
-
-        #print (ctask.url)
-        print (ctask.json()['options'])
+            raise
+            pass
 
         params = {
             'status': 'running',
             'log': None,
             'activity': None,
             'time_cost': 0,
-            'job_id': tjson[task]['job_id'],
+            'job_id': task['job_id'],
             }
         try:
             requests.patch(
-                'http://'+app.config['BRENDER_MANAGER']+'/tasks/'+str(tjson[task]['task_id']),
+                'http://'+app.config['BRENDER_MANAGER']+'/tasks/'+str(task['task_id']),
             data = params
             )
             CONNECTIVITY = True
@@ -124,9 +126,35 @@ def worker_loop():
                 'Cant connect with the Manager {0}'.format(app.config['BRENDER_MANAGER']))
             CONNECTIVITY = False
 
-        execute_task(ctask.json()['options'], ctask.json()['files'])
-        break
+        print (files)
 
+        jobpath = os.path.join(app.config['TMP_FOLDER'], str(task['job_id']))
+        print (jobpath)
+        if not os.path.exists(jobpath):
+            os.mkdir(jobpath)
+
+        # Get job file
+        r = requests.get(
+            'http://{0}/tasks/zip/{1}'.format(
+                app.config['BRENDER_MANAGER'], task['job_id'])
+        )
+        tmpfile = os.path.join(
+            jobpath, 'taskfile_{0}.zip'.format(task['job_id']))
+
+        with open(tmpfile, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk: # filter out keep-alive new chunks
+                    f.write(chunk)
+                    f.flush()
+
+        zippath = os.path.join(jobpath, str(task['job_id']))
+        if not os.path.exists(zippath):
+            os.mkdir(zippath)
+        print (tmpfile)
+        with ZipFile(tmpfile, 'r') as jobzip:
+                jobzip.extractall(path=zippath)
+
+        execute_task(task, files)
 
     LOOP_THREAD = Timer(5, worker_loop)
     LOOP_THREAD.start()
@@ -208,6 +236,25 @@ def _parse_output(tmp_buffer, options):
             manager_url = "http://%s/tasks/thumbnails" % (app.config['BRENDER_MANAGER'])
             request_thread = Thread(target=send_thumbnail, args=(manager_url, activity.get('thumbnail'), params))
             request_thread.start()
+
+        params = {
+            'status': 'rendering',
+            'log': "",
+            'activity': "",
+            'time_cost': 0,
+            'job_id': options['job_id'],
+            'task_id': options['task_id'],
+            }
+        try:
+            requests.patch(
+                'http://'+app.config['BRENDER_MANAGER']+'/tasks/'+task_id,
+                data=params,
+            )
+            CONNECTIVITY = True
+        except ConnectionError:
+            logging.error(
+                'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
+            CONNECTIVITY = False
 
         if activity.get('path_not_found'):
             # kill process
