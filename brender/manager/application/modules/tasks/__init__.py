@@ -167,7 +167,6 @@ class TaskCompiledApi(Resource):
             logging.error(' loading module {0}, {1}'.format(module_name, e))
             return
 
-        worker = Worker.query.first()
         task_command = task_compiler.compile(worker, task, add_file)
 
         if not task_command:
