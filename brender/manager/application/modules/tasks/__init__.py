@@ -123,6 +123,10 @@ class TaskCompiledApi(Resource):
         #    print (t)
         #task = tasks[task_id]
 
+        worker.current_task = task['task_id']
+        db.session.add(worker)
+        db.session.commit()
+
         managerstorage = app.config['MANAGER_STORAGE']
         jobpath = os.path.join(managerstorage, str(task['job_id']))
         if not os.path.exists(jobpath):
@@ -244,9 +248,6 @@ class TaskCompiledApi(Resource):
             jflist.append([jf[0],jf[1][0]])
 
 
-        worker.current_task = task['task_id']
-        db.session.add(worker)
-        db.session.commit()
 
         return {"options": options, "files": {"jobfiles":jflist}}, 200
 
