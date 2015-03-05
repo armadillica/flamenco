@@ -96,6 +96,8 @@ class WorkerApi(Resource):
             worker.activity = args['activity']
             worker.log = args['log']
             worker.time_cost = args['time_cost']
+            if args['status'] == 'disabled':
+                worker.current_task = None
             db.session.add(worker)
             db.session.commit()
         return jsonify(dict(status=worker.status))

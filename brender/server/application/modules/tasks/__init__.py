@@ -46,12 +46,16 @@ class TaskApi(Resource):
     @staticmethod
     def create_task(job_id, task_type, task_settings, name, child_id, parser):
         # TODO attribution of the best manager
+
+        manager = JobManagers.query.filter_by(job_id=job_id).first()
+
         task = Task(job_id=job_id,
             name=name,
             type=task_type,
             settings=json.dumps(task_settings),
             status='ready',
             priority=50,
+            manager_id = manager.manager_id,
             log=None,
             time_cost=None,
             activity=None,
@@ -235,6 +239,7 @@ class TaskApi(Resource):
         print ('Stoping task %s' % task_id)
         task = Task.query.get(task_id)
         manager = Manager.query.filter_by(id = task.manager_id).first()
+        delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
         try:
             delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
         except:

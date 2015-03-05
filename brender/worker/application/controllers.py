@@ -92,22 +92,26 @@ def worker_loop():
     from application import config
     print ("Registering")
     register_worker(config.Config.PORT)
-    print ("Get a new task")
+    print ("Quering for a new task")
     #tasks = get_task()
     manager_url = "http://{0}/tasks/compiled/0".format(
         app.config['BRENDER_MANAGER'])
-    rtask = requests.get(manager_url)
+    try:
+        rtask = requests.get(manager_url)
+    except KeyboardInterrupt:
+        return
 
 
     if rtask.status_code==200:
         try:
-            print (rtask.json().keys())
+            #print (rtask.json().keys())
             files = rtask.json()['files']
             task = rtask.json()['options']
         except:
             raise
             pass
 
+        print ("New Task Found {0}, job {1}".format(task['task_id'], task['job_id']))
         params = {
             'status': 'running',
             'log': None,
@@ -126,49 +130,64 @@ def worker_loop():
                 'Cant connect with the Manager {0}'.format(app.config['BRENDER_MANAGER']))
             CONNECTIVITY = False
 
-        print (files)
+        #print (files)
 
         jobpath = os.path.join(app.config['TMP_FOLDER'], str(task['job_id']))
-        print (jobpath)
         if not os.path.exists(jobpath):
             os.mkdir(jobpath)
 
         # Get job file
-        url = "http://{0}/static/storage/{1}/jobfile_{1}.zip".format(
-                app.config['BRENDER_MANAGER'], task['job_id'])
-        r = requests.get(url)
-
         tmpfile = os.path.join(
             jobpath, 'taskfile_{0}.zip'.format(task['job_id']))
+        if not os.path.exists(tmpfile):
+            print ("Fetching job file {0}".format(task['job_id']))
+            url = "http://{0}/static/storage/{1}/jobfile_{1}.zip".format(
+                    app.config['BRENDER_MANAGER'], task['job_id'])
+            try:
+                r = requests.get(url)
+            except KeyboardInterrupt:
+                return
 
-        with open(tmpfile, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk: # filter out keep-alive new chunks
-                    f.write(chunk)
-                    f.flush()
+            with open(tmpfile, 'wb') as f:
+                try:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        if chunk: # filter out keep-alive new chunks
+                            f.write(chunk)
+                            f.flush()
+                except KeyboardInterrupt:
+                    return
 
         zippath = os.path.join(jobpath, str(task['job_id']))
         if not os.path.exists(zippath):
             os.mkdir(zippath)
-        print (tmpfile)
+        print ( "Extracting {0}".format(tmpfile))
         unzipok = True
         try:
             with ZipFile(tmpfile, 'r') as jobzip:
-                jobzip.extractall(path=zippath)
+                try:
+                    jobzip.extractall(path=zippath)
+                except KeyboardInterrupt:
+                    return
         except BadZipfile:
             unzipok = False
+            print ("Removing bad zipfile {0}".format(tmpfile))
+            os.remove(tmpfile)
             logging.error('Not a ZipFile')
 
         if unzipok:
             execute_task(task, files)
 
-    LOOP_THREAD = Timer(5, worker_loop)
-    LOOP_THREAD.start()
+    #LOOP_THREAD = Timer(5, worker_loop)
+    #LOOP_THREAD.start()
 
 def _checkProcessOutput(process):
-    ready = select.select([process.stdout.fileno(),
-                           process.stderr.fileno()],
-                          [], [])
+    try:
+        ready = select.select([process.stdout.fileno(),
+                            process.stderr.fileno()],
+                            [], [])
+    except KeyboardInterrupt:
+        raise
+        return
     full_buffer = ''
     for fd in ready[0]:
         while True:
@@ -219,6 +238,8 @@ def _parse_output(tmp_buffer, options):
     global ACTIVITY
     global LOG
 
+    action = []
+
     task_id = options['task_id']
     module_name = 'application.task_parsers.{0}'.format(options['task_parser'])
     task_parser = None
@@ -251,8 +272,9 @@ def _parse_output(tmp_buffer, options):
             'job_id': options['job_id'],
             'task_id': options['task_id'],
             }
+        r = None
         try:
-            requests.patch(
+            r = requests.patch(
                 'http://'+app.config['BRENDER_MANAGER']+'/tasks/'+task_id,
                 data=params,
             )
@@ -262,17 +284,21 @@ def _parse_output(tmp_buffer, options):
                 'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
             CONNECTIVITY = False
 
-        if activity.get('path_not_found'):
-            # kill process
-            # update()
-            pass
+        if r.status_code != 204:
+            print ("Stopping Task: {0}".format(r.status_code))
+            action.append('stop')
 
+        #if activity.get('path_not_found'):
+        #    print ("Path not Found")
+        #    # action.append('stop')
 
     LOG = "{0}{1}".format(LOG, tmp_buffer)
     logpath = os.path.join(app.config['TMP_FOLDER'], "{0}.log".format(task_id))
     f = open(logpath,"a")
     f.write(tmp_buffer)
     f.close()
+    #print (action)
+    return action
 
 def _interactiveReadProcessWin(process, options):
     full_buffer = ''
@@ -287,9 +313,10 @@ def _interactiveReadProcessWin(process, options):
     while True:
         tmp_buffer = _checkProcessOutputWin(process, q)
         if tmp_buffer:
-            _parse_output(tmp_buffer, options)
+            actions = _parse_output(tmp_buffer, options)
+            if 'stop' in actions:
+                update()
             pass
-        # full_buffer += tmp_buffer
         if process.poll() is not None:
             break
 
@@ -305,7 +332,11 @@ def _interactiveReadProcess(process, options):
         tmp_buffer = _checkProcessOutput(process)
 
         if tmp_buffer:
-            _parse_output(tmp_buffer, options)
+            actions = _parse_output(tmp_buffer, options)
+            print (actions)
+            if 'stop' in actions:
+                print ("UPDATE")
+                update()
             pass
         if process.poll() is not None:
             break
@@ -398,7 +429,9 @@ def run_blender_in_thread(options):
     os.environ['WORKER_OUTPUTPATH'] = outputpath
     os.environ['WORKER_JOBPATH'] = jobpath
 
-    print ( "Running %s" % render_command)
+    print ( "Running:")
+    for cmd in render_command:
+        print (cmd)
 
     TIME_INIT = int(time.time())
     PROCESS = subprocess.Popen(render_command,
@@ -529,7 +562,7 @@ def extract_file(filename, taskpath, zippath, zipname):
 #@app.route('/execute_task', methods=['POST'])
 def execute_task(task, files):
     global PROCESS
-    global LOCK
+    #global LOCK
 
     if PROCESS:
         return '{error:Processus failed}', 500
@@ -571,16 +604,17 @@ def execute_task(task, files):
 
     options['jobpath'] = taskpath
 
-    LOCK.acquire()
+    #LOCK.acquire()
     PROCESS = None
     LOG = None
     TIME_INIT = None
     ACTIVITY = None
 
-    render_thread = Thread(target=run_blender_in_thread, args=(options,))
-    render_thread.start()
-    render_thread.join()
-    LOCK.release()
+    #render_thread = Thread(target=run_blender_in_thread, args=(options,))
+    #render_thread.start()
+    #render_thread.join()
+    run_blender_in_thread(options)
+    #LOCK.release()
     return json.dumps(dict(pid=0))
 
 @app.route('/pid')
@@ -599,17 +633,18 @@ def update():
     global PROCESS
     global LOCK
     if not PROCESS:
+        print ("No PROCESS")
         return '',204
 
-    logging.info('killing {0}'.format(PROCESS.pid))
+    print ('killing {0}'.format(PROCESS.pid))
     if platform.system() is 'Windows':
         os.kill(PROCESS.pid, CTRL_C_EVENT)
     else:
         os.kill(PROCESS.pid, SIGKILL)
 
-    LOCK.acquire()
-    PROCESS = None
-    LOCK.release()
+    #LOCK.acquire()
+    #PROCESS = None
+    #LOCK.release()
     return '', 204
 
 def online_stats(system_stat):

@@ -100,9 +100,7 @@ class TaskCompiledApi(Resource):
         #    return
 
         #task = g.get("tasks", None)
-        #print (task)
 
-        #print ("TASKS")
         #tasks = http_request(app.config['BRENDER_SERVER'], '/tasks', 'get')
 
         ip_address = request.remote_addr
@@ -111,12 +109,8 @@ class TaskCompiledApi(Resource):
             return '', 403
 
         tasks = TaskManagementApi().get()
-        print ('TASKS')
-        print (tasks)
         if not len(tasks[0]):
             return '', 400
-        #print (tasks[0])
-        print ("LALALALALA")
         task = tasks[0]
         for t in task:
             task = task[t]
@@ -125,31 +119,42 @@ class TaskCompiledApi(Resource):
         #for t in tasks:
         #    task = tasks[t]
         #    break
-        #print (task)
         #for t in tasks:
         #    print (t)
         #task = tasks[task_id]
-        #print (tasks[task_id])
 
         managerstorage = app.config['MANAGER_STORAGE']
         jobpath = os.path.join(managerstorage, str(task['job_id']))
         if not os.path.exists(jobpath):
             os.mkdir(jobpath)
 
-        r = requests.get(
-            'http://{0}/jobs/file/{1}'.format(
-                app.config['BRENDER_SERVER'], task['job_id'])
-        )
 
         # TODO make random name
         tmpfile = os.path.join(
             jobpath, 'jobfile_{0}.zip'.format(task['job_id']))
 
-        with open(tmpfile, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk: # filter out keep-alive new chunks
-                    f.write(chunk)
-                    f.flush()
+        lockfile = os.path.join(
+            jobpath, 'jobfile_{0}.lock'.format(task['job_id']))
+
+        if os.path.exists(lockfile):
+            return '', 400
+
+        if not os.path.exists(tmpfile):
+            with open(lockfile, 'w') as f:
+                f.write("locked")
+
+            r = requests.get(
+                'http://{0}/jobs/file/{1}'.format(
+                    app.config['BRENDER_SERVER'], task['job_id'])
+            )
+
+            with open(tmpfile, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk: # filter out keep-alive new chunks
+                        f.write(chunk)
+                        f.flush()
+
+            os.remove(lockfile)
 
 
         module_name = 'application.task_compilers.{0}'.format(task['type'])
@@ -200,9 +205,6 @@ class TaskCompiledApi(Resource):
             )
         )
 
-        #r = http_request(
-        #    worker.host, '/tasks/file/{0}'.format(task['job_id']), 'get')
-
         pid = None
         if 1:
             managerstorage = app.config['MANAGER_STORAGE']
@@ -241,6 +243,11 @@ class TaskCompiledApi(Resource):
         jflist = []
         for jf in jobfile:
             jflist.append([jf[0],jf[1][0]])
+
+
+        worker.current_task = task['task_id']
+        db.session.add(worker)
+        db.session.commit()
 
         return {"options": options, "files": {"jobfiles":jflist}}, 200
 
@@ -319,7 +326,6 @@ class TaskApi(Resource):
     def delete(self, task_id):
         worker = Worker.query.filter_by(current_task = task_id).first()
         if worker:
-            http_request(worker.host, '/kill', 'delete')
             if worker.status != 'disabled':
                 worker.status = 'enabled'
             worker.current_task = None
@@ -336,8 +342,9 @@ class TaskApi(Resource):
             return 'Worker is not registered', 403
         if worker.status=='disabled':
             return 'Worker is Disabled', 403
+        if not worker.current_task:
+            return 'Task Cancelled', 403
         if worker:
-            #worker.status = args['status']
             if args['status'] == 'enabled':
                 worker.current_task = None
             elif args['status'] == 'rendering':
@@ -350,8 +357,6 @@ class TaskApi(Resource):
             if not task:
                 return 'Task is cancelled', 403"""
 
-        #print ('TASKFILE')
-        #print (args['taskfile'])
         if args['taskfile']:
             managerstorage = app.config['MANAGER_STORAGE']
             jobpath = os.path.join(managerstorage, str(args['job_id']))
