@@ -11,6 +11,7 @@ import requests
 import logging
 from zipfile import ZipFile
 from zipfile import BadZipfile
+from zipfile import zlib
 import gocept.cache.method
 from threading import Thread
 from threading import Lock
@@ -164,7 +165,7 @@ def worker_loop():
                     jobzip.extractall(path=zippath)
                 except KeyboardInterrupt:
                     return
-        except BadZipfile:
+        except BadZipfile, zlib.error:
             unzipok = False
             print ("Removing bad zipfile {0}".format(tmpfile))
             os.remove(tmpfile)
