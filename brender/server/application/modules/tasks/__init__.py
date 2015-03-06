@@ -300,7 +300,9 @@ class TaskApi(Resource):
                               "status": task.status,
                               "percentage_done": percentage_done}"""
 
-        tasks = Task.query.filter(or_(Task.status == 'ready', Task.status=='failed'))
+        tasks = Task.query.filter(
+            or_(Task.status == 'ready',
+                Task.status=='failed')).with_for_update()
         task = None
         for t in tasks:
             job = Job.query.filter_by(id=t.job_id, status='running').count()
@@ -309,10 +311,6 @@ class TaskApi(Resource):
             task = t
 
         if not task:
-            return '', 500
-
-        task = Task.query.get(task.id)
-        if task.status == "running":
             return '', 500
 
         task.status = "running"
