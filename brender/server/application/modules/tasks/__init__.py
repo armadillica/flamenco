@@ -311,6 +311,14 @@ class TaskApi(Resource):
         if not task:
             return '', 500
 
+        task = Task.query.get(task.id)
+        if task.status == "running":
+            return '', 500
+
+        task.status = "running"
+        db.session.add(task)
+        db.session.commit()
+
         tasks = {}
         frame_count = 1
         current_frame = 0
@@ -335,9 +343,6 @@ class TaskApi(Resource):
                             "status": task.status,
                             "percentage_done": percentage_done}
 
-        task.status = "running"
-        db.session.add(task)
-        db.session.commit()
 
         return jsonify(tasks)
 
