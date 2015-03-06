@@ -350,12 +350,16 @@ class TaskApi(Resource):
 
         # If other workers are rendering the same task kill them
         others = Worker.query.filter(
-            Worker.id!=worker.id, Worker.current_task==worker.current_task)
+            Worker.id!=worker.id,
+            Worker.current_task==worker.current_task).count()
 
-        for other in others:
+        if others > 0:
+            return 'Duplicated Task', 403
+
+        """for other in others:
             other.current_task = None
             db.session.add(other)
-            db.session.commit()
+            db.session.commit()"""
 
         if args['status'] == 'enabled':
             worker.current_task = None
@@ -386,6 +390,8 @@ class TaskApi(Resource):
             jobfile = [
                 ('taskfile', (
                     'taskfile.zip', open(zippath, 'rb'), 'application/zip'))]
+
+
 
         params = { 'id' : task_id, 'status': args['status'], 'time_cost' : args['time_cost'], 'log' : args['log'], 'activity' : args['activity'] }
         http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params, files=jobfile)
