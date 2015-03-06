@@ -165,8 +165,12 @@ def worker_loop():
                     jobzip.extractall(path=zippath)
                 except KeyboardInterrupt:
                     return
+                except zlib.error:
+                    unzipok = False
         except BadZipfile, zlib.error:
             unzipok = False
+
+        if not unzipok:
             print ("Removing bad zipfile {0}".format(tmpfile))
             os.remove(tmpfile)
             logging.error('Not a ZipFile')

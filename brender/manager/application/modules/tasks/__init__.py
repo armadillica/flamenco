@@ -145,7 +145,14 @@ class TaskCompiledApi(Resource):
         if os.path.isfile(lockfile):
             return '', 400
 
-        if not os.path.isfile(tmpfile):
+        zipok = True
+        try:
+            with ZipFile(tmpfile, 'r') as jobzip:
+                jobzip.namelist()
+        except:
+            zipok = False
+
+        if not os.path.isfile(tmpfile) or not zipok:
             with open(lockfile, 'w') as f:
                 f.write("locked")
 
