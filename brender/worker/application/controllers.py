@@ -93,7 +93,6 @@ def worker_loop():
     print ("Registering")
     register_worker(config.Config.PORT)
     print ("Quering for a new task")
-    #tasks = get_task()
     manager_url = "http://{0}/tasks/compiled/0".format(
         app.config['BRENDER_MANAGER'])
     try:
@@ -104,7 +103,6 @@ def worker_loop():
 
     if rtask.status_code==200:
         try:
-            #print (rtask.json().keys())
             files = rtask.json()['files']
             task = rtask.json()['options']
         except:
@@ -129,8 +127,6 @@ def worker_loop():
             logging.error(
                 'Cant connect with the Manager {0}'.format(app.config['BRENDER_MANAGER']))
             CONNECTIVITY = False
-
-        #print (files)
 
         jobpath = os.path.join(app.config['TMP_FOLDER'], str(task['job_id']))
         if not os.path.exists(jobpath):
@@ -284,7 +280,7 @@ def _parse_output(tmp_buffer, options):
                 'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
             CONNECTIVITY = False
 
-        if r.status_code != 204:
+        if r != None and r.status_code != 204:
             print ("Stopping Task: {0}".format(r.status_code))
             action.append('stop')
 
@@ -297,7 +293,6 @@ def _parse_output(tmp_buffer, options):
     f = open(logpath,"a")
     f.write(tmp_buffer)
     f.close()
-    #print (action)
     return action
 
 def _interactiveReadProcessWin(process, options):

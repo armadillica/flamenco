@@ -109,7 +109,9 @@ class TaskCompiledApi(Resource):
             return '', 403
 
         tasks = TaskManagementApi().get()
-        if not len(tasks[0]):
+        if tasks[0] == ('', 500):
+            return '', 400
+        if not len(tasks) or not len(tasks[0]):
             return '', 400
         task = tasks[0]
         for t in task:
@@ -140,10 +142,10 @@ class TaskCompiledApi(Resource):
         lockfile = os.path.join(
             jobpath, 'jobfile_{0}.lock'.format(task['job_id']))
 
-        if os.path.exists(lockfile):
+        if os.path.isfile(lockfile):
             return '', 400
 
-        if not os.path.exists(tmpfile):
+        if not os.path.isfile(tmpfile):
             with open(lockfile, 'w') as f:
                 f.write("locked")
 
@@ -184,7 +186,9 @@ class TaskCompiledApi(Resource):
             'settings': task['settings'],
             'task_command': json.dumps(task_command)}
 
-        r = requests.get(
+        jobfile = []
+
+        """r = requests.get(
             'http://{0}/jobs/file/output/{1}'.format(
                 app.config['BRENDER_SERVER'], task['job_id'])
         )
@@ -199,14 +203,13 @@ class TaskCompiledApi(Resource):
                     f.write(chunk)
                     f.flush()
 
-        jobfile = []
         jobfile.append(
             ('jobdepfile', (
                 'jobdepfile.zip',
                 open(tmpfile, 'rb'),
                 'application/zip')
             )
-        )
+        )"""
 
         pid = None
         if 1:
