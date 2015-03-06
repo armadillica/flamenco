@@ -406,8 +406,12 @@ class TaskApi(Resource):
 
             zippath = os.path.join(jobpath, 'output')
 
-            with ZipFile(taskfile, 'r') as jobzip:
-                jobzip.extractall(path=zippath)
+            try:
+                with ZipFile(taskfile, 'r') as jobzip:
+                    jobzip.extractall(path=zippath)
+            except:
+                os.remove(zippath)
+                return '', 404
 
             os.remove(taskfile)
 

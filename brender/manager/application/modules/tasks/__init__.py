@@ -347,13 +347,22 @@ class TaskApi(Resource):
             return 'Worker is Disabled', 403
         if not worker.current_task:
             return 'Task Cancelled', 403
-        if worker:
-            if args['status'] == 'enabled':
-                worker.current_task = None
-            elif args['status'] == 'rendering':
-                worker.current_task = args['task_id']
-            db.session.add(worker)
+
+        # If other workers are rendering the same task kill them
+        others = Worker.query.filter(
+            Worker.id!=worker.id, Worker.current_task==worker.current_task)
+
+        for other in others:
+            other.current_task = None
+            db.session.add(other)
             db.session.commit()
+
+        if args['status'] == 'enabled':
+            worker.current_task = None
+        elif args['status'] == 'rendering':
+            worker.current_task = args['task_id']
+        db.session.add(worker)
+        db.session.commit()
 
         """if args['task_id']:
             task = Task.query.filter_by(id=args['task_id']).first()
