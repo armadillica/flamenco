@@ -110,11 +110,9 @@ api.add_resource(TaskDepZipApi, '/tasks/zip/dep/<int:job_id>')
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi
 from modules.workers import WorkerStatusApi
-#from modules.workers import WorkerLoopApi
 api.add_resource(WorkerListApi, '/workers')
 api.add_resource(WorkerApi, '/workers/<int:worker_id>')
 api.add_resource(WorkerStatusApi, '/workers/status/<int:worker_id>')
-#api.add_resource(WorkerLoopApi, '/workers/loop')
 
 from modules.settings import SettingsListApi
 from modules.settings import SettingApi

@@ -4,7 +4,6 @@ from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
 from flask import request
-from flask import g
 from flask import send_from_directory
 
 from werkzeug.datastructures import FileStorage
@@ -90,18 +89,10 @@ def get_availabe_worker():
         return None
     return worker if worker.connection == 'online' else get_availabe_worker()
 
-# /tasks/compiled/id
+
 class TaskCompiledApi(Resource):
     def get(self, task_id):
         logging.info("Scheduling")
-        #worker = get_availabe_worker()
-        #if worker is None:
-        #    logging.debug("No worker available")
-        #    return
-
-        #task = g.get("tasks", None)
-
-        #tasks = http_request(app.config['BRENDER_SERVER'], '/tasks', 'get')
 
         ip_address = request.remote_addr
         worker = Worker.query.filter_by(ip_address=ip_address).one()
@@ -118,12 +109,6 @@ class TaskCompiledApi(Resource):
             task = task[t]
             task['task_id'] = t
             break
-        #for t in tasks:
-        #    task = tasks[t]
-        #    break
-        #for t in tasks:
-        #    print (t)
-        #task = tasks[task_id]
 
         worker.current_task = task['task_id']
         db.session.add(worker)
@@ -195,29 +180,6 @@ class TaskCompiledApi(Resource):
 
         jobfile = []
 
-        """r = requests.get(
-            'http://{0}/jobs/file/output/{1}'.format(
-                app.config['BRENDER_SERVER'], task['job_id'])
-        )
-
-        # TODO make random name
-        tmpfile = os.path.join(
-            app.config['TMP_FOLDER'], 'tmp_dep_{0}.zip'.format(task['task_id']))
-
-        with open(tmpfile, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk: # filter out keep-alive new chunks
-                    f.write(chunk)
-                    f.flush()
-
-        jobfile.append(
-            ('jobdepfile', (
-                'jobdepfile.zip',
-                open(tmpfile, 'rb'),
-                'application/zip')
-            )
-        )"""
-
         pid = None
         if 1:
             managerstorage = app.config['MANAGER_STORAGE']
@@ -261,35 +223,6 @@ class TaskCompiledApi(Resource):
 
         return {"options": options, "files": {"jobfiles":jflist}}, 200
 
-        """worker.status = 'busy'
-        worker.current_task = task['task_id']
-        db.session.add(worker)
-        db.session.commit()
-
-        try:
-            pid = http_request(
-                worker.host, '/execute_task', 'post', options, files=jobfile)
-        except ConnectionError, e:
-            logging.error ("Connection Error: {0}".format(e))
-            worker.status = 'enabled'
-            worker.current_task = None
-            db.session.add(worker)
-            db.session.commit()
-            return False
-
-        if not u'pid' in pid:
-
-            worker.status = 'enabled'
-            worker.current_task = None
-            db.session.add(worker)
-            db.session.commit()
-            return False
-
-        worker.status = 'rendering'
-        db.session.add(worker)
-        db.session.commit()"""
-
-        return True
 
 class TaskManagementApi(Resource):
     @marshal_with(task_fields)
@@ -328,7 +261,6 @@ class TaskManagementApi(Resource):
 
     def get(self):
         r = http_request(app.config['BRENDER_SERVER'], '/tasks', 'get')
-        g.tasks = r
         return r, 200
 
 class TaskApi(Resource):

@@ -4,9 +4,6 @@ import logging
 import socket
 import requests
 from threading import Thread
-from threading import Timer
-from requests.exceptions import ConnectionError
-from requests.exceptions import Timeout
 
 from flask.ext.script import Manager
 from flask.ext.migrate import MigrateCommand
@@ -16,19 +13,6 @@ from application import register_manager
 
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
-
-loop_thread = None
-
-def manager_loop(HOST):
-    global loop_thread
-    try:
-        requests.get(HOST, timeout=5)
-    except ConnectionError, e:
-        print(e)
-    except Timeout, e:
-        print (e)
-    loop_thread = Timer(10, manager_loop, args = {HOST})
-    loop_thread.start()
 
 
 @manager.command
@@ -71,8 +55,6 @@ def runserver():
             args=(PORT, HOSTNAME, has_virtual_worker))
         register_thread.setDaemon(False)
         register_thread.start()
-
-        #manager_loop ("http://{0}:{1}/workers/loop".format(HOST,PORT))
 
     app.run(
         port=PORT,

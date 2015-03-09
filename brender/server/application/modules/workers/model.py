@@ -18,14 +18,5 @@ class Worker(db.Model):
     ip_address = db.Column(db.String(32), unique=True)
     connection = db.Column(db.String(64))
 
-    """@property
-    def is_connected(self):
-        try:
-            urlopen("http://" + self.ip_address)
-            return True
-        except:
-            print "[Warning] Worker %s is not online" % self.hostname
-            return False"""
-
     def __repr__(self):
         return '<Worker %r>' % self.hostname

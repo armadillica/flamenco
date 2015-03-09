@@ -159,8 +159,6 @@ class JobListApi(Resource):
                         .filter(Task.status == 'aborted')\
                         .update({'status' : 'ready'})
                 db.session.commit()
-                #print ('[debug] Dispatching tasks')
-            #TaskApi.dispatch_tasks()
         else:
             print('[error] Job %d not found' % job_id)
             raise KeyError
@@ -193,7 +191,8 @@ class JobListApi(Resource):
                 TaskApi.delete_tasks(job.id)
                 TaskApi.create_tasks(job)
 
-                path = os.path.join(job.project.render_path_server, str(job.id))
+                path = os.path.join(
+                    job.project.render_path_server, str(job.id))
                 if os.path.exists(path):
                     rmtree(path)
         else:
@@ -206,11 +205,14 @@ class JobListApi(Resource):
             if job.status == 'running':
                 self.stop(job_id)
 
-            tasks = db.session.query(Task).filter(Task.job_id == job_id, Task.status.notin_(['finished','failed'])).all()
-            best_managers = db.session.query(Manager).join(JobManagers, Manager.id == JobManagers.manager_id)\
-                                                    .filter(JobManagers.job_id == job_id)\
-                                                    .filter(Manager.has_virtual_workers == 1)\
-                                                    .first()
+            tasks = db.session.query(Task).filter(
+                Task.job_id == job_id, Task.status.notin_(
+                    ['finished','failed'])).all()
+            best_managers = db.session.query(Manager).join(
+                JobManagers, Manager.id == JobManagers.manager_id)\
+                    .filter(JobManagers.job_id == job_id)\
+                    .filter(Manager.has_virtual_workers == 1)\
+                    .first()
 
             if best_managers:
                 fun = partial(TaskApi.start_task, best_managers)
@@ -380,7 +382,6 @@ class JobApi(Resource):
         logging.info('Stopping job {0}'.format(job_id))
         job = Job.query.get(job_id)
         if job.status != 'stopped':
-            #TaskApi.stop_tasks(job.id)
             job.status = 'stopped'
             db.session.add(job)
             db.session.commit()
