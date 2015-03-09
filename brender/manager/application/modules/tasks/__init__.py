@@ -372,7 +372,8 @@ class TaskApi(Resource):
             worker.current_task = None
             worker.status = 'enabled'
         elif args['status'] == 'running':
-            worker.current_task = args['task_id']
+            if args['task_id']:
+                worker.current_task = args['task_id']
             worker.time_cost = args['time_cost']
             worker.log = args['log']
             worker.activity = args['activity']
