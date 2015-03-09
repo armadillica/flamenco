@@ -111,6 +111,7 @@ class TaskCompiledApi(Resource):
             break
 
         worker.current_task = task['task_id']
+        worker.child_task = task['child_id']
         db.session.add(worker)
         db.session.commit()
 
@@ -330,21 +331,23 @@ class TaskApi(Resource):
                     'taskfileout_{0}_{1}.zip'.format(args['job_id'], task_id))
             args['taskfile'].save(zippath)
 
-            deppath = os.path.join(jobpath, 'dependencies')
-            if not os.path.exists(deppath):
-                os.mkdir(deppath)
-
             # Store dependencies
-            with ZipFile(zippath, 'r') as jobzip:
-                jobzip.extractall(path=deppath)
+            if worker.child_task:
+                deppath = os.path.join(
+                    jobpath, 'dependencies_{0}'.format(worker.child_task))
+                if not os.path.exists(deppath):
+                    os.mkdir(deppath)
+                with ZipFile(zippath, 'r') as jobzip:
+                    jobzip.extractall(path=deppath)
 
-            depzippath = os.path.join(jobpath, 'dependencies.zip')
-            with ZipFile(depzippath, 'w') as depzip:
-                f = []
-                for dirpath, dirnames, filenames in os.walk(deppath):
-                    for fname in filenames:
-                        filepath = os.path.join(dirpath, fname)
-                        depzip.write(filepath, fname)
+                depzippath = os.path.join(
+                    jobpath, 'dependencies_{0}.zip'.format(worker.child_task))
+                with ZipFile(depzippath, 'w') as depzip:
+                    f = []
+                    for dirpath, dirnames, filenames in os.walk(deppath):
+                        for fname in filenames:
+                            filepath = os.path.join(dirpath, fname)
+                            depzip.write(filepath, fname)
 
             # Send to server
             jobfile = [

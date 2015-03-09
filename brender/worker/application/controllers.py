@@ -191,12 +191,12 @@ def worker_loop():
         unzipok = getZipFile(url, tmpfile, zippath)
 
         # Get depend file
-        print ("Fetching deppend file {0}".format(task['job_id']))
         zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
             jobpath, 'dependencies.zip'.format(task['job_id']))
-        url = "http://{0}/static/storage/{1}/dependencies.zip".format(
-                app.config['BRENDER_MANAGER'], task['job_id'])
+        url = "http://{0}/static/storage/{1}/dependencies_{2}.zip".format(
+                app.config['BRENDER_MANAGER'], task['job_id'], task['task_id'])
+        print ("Fetching deppend file {0}".format(url))
         unzipdepok = getZipFile(url, tmpfile, zippath)
 
         if unzipok:

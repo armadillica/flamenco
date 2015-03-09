@@ -16,6 +16,7 @@ class Worker(db.Model):
     connection = db.Column(db.String(20))
     system = db.Column(db.String(20))
     current_task = db.Column(db.String(20))
+    child_task = db.Column(db.String(20))
     activity = db.Column(db.String(64))
     log = db.Column(db.Text())
     time_cost = db.Column(db.Integer())
