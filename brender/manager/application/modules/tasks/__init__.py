@@ -370,8 +370,13 @@ class TaskApi(Resource):
 
         if args['status'] == 'enabled':
             worker.current_task = None
-        elif args['status'] == 'rendering':
+            worker.status = 'enabled'
+        elif args['status'] == 'running':
             worker.current_task = args['task_id']
+            worker.time_cost = args['time_cost']
+            worker.log = args['log']
+            worker.activity = args['activity']
+            worker.status = 'rendering'
         db.session.add(worker)
         db.session.commit()
 

@@ -238,6 +238,7 @@ def send_thumbnail(manager_url, file_path, params):
 def _parse_output(tmp_buffer, options):
     global ACTIVITY
     global LOG
+    global TIME_INIT
 
     action = []
 
@@ -265,33 +266,41 @@ def _parse_output(tmp_buffer, options):
             request_thread = Thread(target=send_thumbnail, args=(manager_url, activity.get('thumbnail'), params))
             request_thread.start()
 
-        params = {
-            'status': 'running',
-            'log': "",
-            'activity': "",
-            'time_cost': 0,
-            'job_id': options['job_id'],
-            'task_id': options['task_id'],
-            }
-        r = None
-        try:
-            r = requests.patch(
-                'http://'+app.config['BRENDER_MANAGER']+'/tasks/'+task_id,
-                data=params,
-            )
-            CONNECTIVITY = True
-        except ConnectionError:
-            logging.error(
-                'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
-            CONNECTIVITY = False
+    time_init = TIME_INIT
+    if time_init:
+        time_cost=int(time.time())-time_init
 
-        if r != None and r.status_code != 204:
-            print ("Stopping Task: {0}".format(r.status_code))
-            action.append('stop')
+    else:
+        logging.error("time_init is None")
+        time_cost = None
 
-        #if activity.get('path_not_found'):
-        #    print ("Path not Found")
-        #    # action.append('stop')
+    params = {
+        'status': 'running',
+        'log': LOG,
+        'activity': ACTIVITY,
+        'time_cost': time_cost,
+        'job_id': options['job_id'],
+        'task_id': options['task_id'],
+        }
+    r = None
+    try:
+        r = requests.patch(
+            'http://'+app.config['BRENDER_MANAGER']+'/tasks/'+task_id,
+            data=params,
+        )
+        CONNECTIVITY = True
+    except ConnectionError:
+        logging.error(
+            'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
+        CONNECTIVITY = False
+
+    if r != None and r.status_code != 204:
+        print ("Stopping Task: {0}".format(r.status_code))
+        action.append('stop')
+
+    #if activity.get('path_not_found'):
+    #    print ("Path not Found")
+    #    # action.append('stop')
 
     LOG = "{0}{1}".format(LOG, tmp_buffer)
     logpath = os.path.join(app.config['TMP_FOLDER'], "{0}.log".format(task_id))
