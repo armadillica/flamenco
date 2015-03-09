@@ -57,7 +57,7 @@ class task_compiler():
         data = """
 tiles_path = '{0}'
 tiles={1}
-tiles_path = os.path.join(os.environ['WORKER_DEPENDPATH'], '{0}')
+tiles_path = os.path.join(os.environ['WORKER_JOBPATH'], '{0}')
         """.format(tiles_path, settings['tiles'])
 
         script = script.replace("##VARS_INSERTED_HERE##", data)

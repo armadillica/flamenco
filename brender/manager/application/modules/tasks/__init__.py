@@ -181,44 +181,43 @@ class TaskCompiledApi(Resource):
         jobfile = []
 
         pid = None
-        if 1:
-            managerstorage = app.config['MANAGER_STORAGE']
-            jobpath = os.path.join(managerstorage, str(task['job_id']))
-            zippath = os.path.join(
-                jobpath, "jobfile_{0}.zip".format(task['job_id']))
+        managerstorage = app.config['MANAGER_STORAGE']
+        jobpath = os.path.join(managerstorage, str(task['job_id']))
+        zippath = os.path.join(
+            jobpath, "jobfile_{0}.zip".format(task['job_id']))
 
-            zipsuppath = None
-            addpath = os.path.join(managerstorage, str(task['job_id']), 'addfiles')
-            if os.path.exists(addpath):
-                zipsuppath = os.path.join(
-                    jobpath, "jobsupportfile_{0}.zip".format(task['job_id']))
-                with ZipFile(zipsuppath, 'w') as jobzip:
-                    f = []
-                    for dirpath, dirnames, filenames in os.walk(addpath):
-                        for fname in filenames:
-                            filepath = os.path.join(dirpath, fname)
-                            jobzip.write(filepath, fname)
-
-            jobfile.append(
-                ('jobfile', (
-                    'jobfile.zip',
-                    open(zippath, 'rb'),
-                    'application/zip')
-                )
+        jobfile.append(
+            ('jobfile', (
+                'jobfile.zip',
+                open(zippath, 'rb'),
+                'application/zip')
             )
-            if zipsuppath:
-                jobfile.append(
-                    ('jobsupportfile', (
-                        'jobsupportfile.zip',
-                        open(zipsuppath, 'rb'),
-                        'application/zip')
-                    ),
-                )
+        )
+
+        zipsuppath = None
+        addpath = os.path.join(managerstorage, str(task['job_id']), 'addfiles')
+        if os.path.exists(addpath):
+            zipsuppath = os.path.join(
+                jobpath, "jobsupportfile_{0}.zip".format(task['job_id']))
+            with ZipFile(zipsuppath, 'w') as jobzip:
+                f = []
+                for dirpath, dirnames, filenames in os.walk(addpath):
+                    for fname in filenames:
+                        filepath = os.path.join(dirpath, fname)
+                        jobzip.write(filepath, fname)
+
+        if zipsuppath:
+            jobfile.append(
+                ('jobsupportfile', (
+                    'jobsupportfile.zip',
+                    open(zipsuppath, 'rb'),
+                    'application/zip')
+                ),
+            )
 
         jflist = []
         for jf in jobfile:
             jflist.append([jf[0],jf[1][0]])
-
 
 
         return {"options": options, "files": {"jobfiles":jflist}}, 200
@@ -318,6 +317,7 @@ class TaskApi(Resource):
             if not task:
                 return 'Task is cancelled', 403"""
 
+        jobfile=None
         if args['taskfile']:
             managerstorage = app.config['MANAGER_STORAGE']
             jobpath = os.path.join(managerstorage, str(args['job_id']))
@@ -330,11 +330,27 @@ class TaskApi(Resource):
                     'taskfileout_{0}_{1}.zip'.format(args['job_id'], task_id))
             args['taskfile'].save(zippath)
 
-        jobfile=None
-        if args['taskfile']:
+            deppath = os.path.join(jobpath, 'dependencies')
+            if not os.path.exists(deppath):
+                os.mkdir(deppath)
+
+            # Store dependencies
+            with ZipFile(zippath, 'r') as jobzip:
+                jobzip.extractall(path=deppath)
+
+            depzippath = os.path.join(jobpath, 'dependencies.zip')
+            with ZipFile(depzippath, 'w') as depzip:
+                f = []
+                for dirpath, dirnames, filenames in os.walk(deppath):
+                    for fname in filenames:
+                        filepath = os.path.join(dirpath, fname)
+                        depzip.write(filepath, fname)
+
+            # Send to server
             jobfile = [
                 ('taskfile', (
                     'taskfile.zip', open(zippath, 'rb'), 'application/zip'))]
+
 
 
 

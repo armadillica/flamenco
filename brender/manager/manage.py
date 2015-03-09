@@ -62,10 +62,6 @@ def runserver():
         host=HOST,
         threaded=True)
 
-    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-        global loop_thread
-        if loop_thread:
-            loop_thread.cancel()
 
 if __name__ == "__main__":
     manager.run()

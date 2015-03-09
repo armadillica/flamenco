@@ -87,6 +87,45 @@ def get_task():
     return requests.get(manager_url)
 
 
+def getZipFile(url, tmpfile, zippath):
+    if not os.path.exists(tmpfile):
+        try:
+            r = requests.get(url)
+        except KeyboardInterrupt:
+            return
+
+        with open(tmpfile, 'wb') as f:
+            try:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk: # filter out keep-alive new chunks
+                        f.write(chunk)
+                        f.flush()
+            except KeyboardInterrupt:
+                return
+
+    if not os.path.exists(zippath):
+        os.mkdir(zippath)
+    print ( "Extracting {0}".format(tmpfile))
+    unzipok = True
+    try:
+        with ZipFile(tmpfile, 'r') as jobzip:
+            try:
+                jobzip.extractall(path=zippath)
+            except KeyboardInterrupt:
+                return
+            except zlib.error:
+                unzipok = False
+    except BadZipfile, zlib.error:
+        unzipok = False
+
+    if not unzipok:
+        print ("Removing bad zipfile {0}".format(tmpfile))
+        os.remove(tmpfile)
+        logging.error('Not a ZipFile')
+
+    return unzipok
+
+
 global LOOP_THREAD
 def worker_loop():
     print ("Worker Loop")
@@ -134,46 +173,31 @@ def worker_loop():
             os.mkdir(jobpath)
 
         # Get job file
+        print ("Fetching job file {0}".format(task['job_id']))
+        zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
             jobpath, 'taskfile_{0}.zip'.format(task['job_id']))
-        if not os.path.exists(tmpfile):
-            print ("Fetching job file {0}".format(task['job_id']))
-            url = "http://{0}/static/storage/{1}/jobfile_{1}.zip".format(
-                    app.config['BRENDER_MANAGER'], task['job_id'])
-            try:
-                r = requests.get(url)
-            except KeyboardInterrupt:
-                return
+        url = "http://{0}/static/storage/{1}/jobfile_{1}.zip".format(
+                app.config['BRENDER_MANAGER'], task['job_id'])
+        unzipok = getZipFile(url, tmpfile, zippath)
 
-            with open(tmpfile, 'wb') as f:
-                try:
-                    for chunk in r.iter_content(chunk_size=1024):
-                        if chunk: # filter out keep-alive new chunks
-                            f.write(chunk)
-                            f.flush()
-                except KeyboardInterrupt:
-                    return
-
+        # Get suport file
+        print ("Fetching support file {0}".format(task['job_id']))
         zippath = os.path.join(jobpath, str(task['job_id']))
-        if not os.path.exists(zippath):
-            os.mkdir(zippath)
-        print ( "Extracting {0}".format(tmpfile))
-        unzipok = True
-        try:
-            with ZipFile(tmpfile, 'r') as jobzip:
-                try:
-                    jobzip.extractall(path=zippath)
-                except KeyboardInterrupt:
-                    return
-                except zlib.error:
-                    unzipok = False
-        except BadZipfile, zlib.error:
-            unzipok = False
+        tmpfile = os.path.join(
+            jobpath, 'tasksupportfile_{0}.zip'.format(task['job_id']))
+        url = "http://{0}/static/storage/{1}/jobsupportfile_{1}.zip".format(
+                app.config['BRENDER_MANAGER'], task['job_id'])
+        unzipok = getZipFile(url, tmpfile, zippath)
 
-        if not unzipok:
-            print ("Removing bad zipfile {0}".format(tmpfile))
-            os.remove(tmpfile)
-            logging.error('Not a ZipFile')
+        # Get depend file
+        print ("Fetching deppend file {0}".format(task['job_id']))
+        zippath = os.path.join(jobpath, str(task['job_id']))
+        tmpfile = os.path.join(
+            jobpath, 'dependencies.zip'.format(task['job_id']))
+        url = "http://{0}/static/storage/{1}/dependencies.zip".format(
+                app.config['BRENDER_MANAGER'], task['job_id'])
+        unzipdepok = getZipFile(url, tmpfile, zippath)
 
         if unzipok:
             execute_task(task, files)
@@ -588,7 +612,7 @@ def execute_task(task, files):
     taskpath = os.path.join(workerstorage, str(options['job_id']))
     zippath = os.path.join(taskpath, str(options['job_id']))
 
-    extract_file (
+    """extract_file (
         'jobfile',
         taskpath,
         zippath,
@@ -609,7 +633,7 @@ def execute_task(task, files):
         taskpath,
         deppath,
         'taskdepfile_{0}.zip'.format(options['job_id'])
-    )
+    )"""
 
     options['jobpath'] = taskpath
 
