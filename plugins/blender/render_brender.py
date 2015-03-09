@@ -152,7 +152,21 @@ class bamToRenderfarm (bpy.types.Operator):
         }
 
         print (job_properties)
+        
+        amaranth_addon = False
+        try:
+            scn.use_unsimplify_render
+            amaranth_addon = True
+        except:
+            pass
 
+        tmp_simplify = scn.render.use_simplify
+        if amaranth_addon and scn.use_unsimplify_render:
+            scn.render.use_simplify = False
+
+        bpy.ops.wm.save_mainfile()
+        scn.render.use_simplify = tmp_simplify
+        
         tmppath = C.user_preferences.filepaths.temporary_directory
         zipname = "job"
         zippath = os.path.join(tmppath, "%s.zip" % zipname)
@@ -180,20 +194,6 @@ class bamToRenderfarm (bpy.types.Operator):
         if not D.filepath:
             self.report( {'ERROR'}, "Save your Blendfile first")
             return {'CANCELLED'}
-
-        amaranth_addon = False
-        try:
-            scn.use_unsimplify_render
-            amaranth_addon = True
-        except:
-            pass
-
-        tmp_simplify = scn.render.use_simplify
-        if amaranth_addon and scn.use_unsimplify_render:
-            scn.render.use_simplify = False
-
-        bpy.ops.wm.save_mainfile()
-        scn.render.use_simplify = tmp_simplify
 
         blendpath = os.path.split(D.filepath)[0]
 
