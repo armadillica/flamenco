@@ -87,8 +87,8 @@ def get_task():
     return requests.get(manager_url)
 
 
-def getZipFile(url, tmpfile, zippath):
-    if not os.path.exists(tmpfile):
+def getZipFile(url, tmpfile, zippath, force=False):
+    if not os.path.exists(tmpfile) or force:
         try:
             r = requests.get(url)
         except KeyboardInterrupt:
@@ -188,7 +188,7 @@ def worker_loop():
             jobpath, 'tasksupportfile_{0}.zip'.format(task['job_id']))
         url = "http://{0}/static/storage/{1}/jobsupportfile_{1}.zip".format(
                 app.config['BRENDER_MANAGER'], task['job_id'])
-        unzipok = getZipFile(url, tmpfile, zippath)
+        unzipok = getZipFile(url, tmpfile, zippath, True)
 
         # Get depend file
         zippath = os.path.join(jobpath, str(task['job_id']))
