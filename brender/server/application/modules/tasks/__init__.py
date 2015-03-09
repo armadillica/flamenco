@@ -426,7 +426,7 @@ class TaskApi(Resource):
         db.session.add(task)
         db.session.commit()
 
-        """if status != status_old:
+        if status != status_old:
             job = Job.query.get(task.job_id)
             manager = Manager.query.get(task.manager_id)
             logging.info('Task {0} changed from {1} to {2}'.format(task_id, status_old, status))
@@ -442,8 +442,8 @@ class TaskApi(Resource):
                 db.session.add(job)
                 db.session.commit()
 
-            render_thread = Thread(target=TaskApi.dispatch_tasks())
-            render_thread.start()"""
+            # render_thread = Thread(target=TaskApi.dispatch_tasks())
+            # render_thread.start()
 
         return '', 204
 
