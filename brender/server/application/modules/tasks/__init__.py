@@ -281,6 +281,10 @@ class TaskApi(Resource):
             job = Job.query.filter_by(id=t.job_id, status='running').count()
             if not job>0:
                 continue
+            unfinished_parents = Task.query.filter(
+                Task.child_id==t.id, Task.status!='finished').count()
+            if unfinished_parents>0:
+                continue
             task = t
 
         if not task:
