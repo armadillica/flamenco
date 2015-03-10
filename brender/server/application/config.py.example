@@ -7,3 +7,4 @@ class Config(object):
     HOST='0.0.0.0' # or 'localhost'
     TMP_FOLDER = '/tmp/'
     THUMBNAIL_EXTENSIONS = set(['png'])
+    SERVER_STORAGE = '/path/to/server_storage'

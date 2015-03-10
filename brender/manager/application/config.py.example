@@ -22,3 +22,4 @@ class Config(object):
     SETTINGS_PATH_WIN = ""
     TMP_FOLDER = '/tmp/'
     THUMBNAIL_EXTENSIONS = set(['png'])
+    MANAGER_STORAGE = '/path/to/brender/manager/application/static/storage'
