@@ -47,6 +47,9 @@ status_parser.add_argument('taskfile', type=FileStorage, location='files')
 parser_thumbnail = reqparse.RequestParser()
 parser_thumbnail.add_argument("task_id", type=int)
 
+parser_delete = reqparse.RequestParser()
+parser_delete.add_argument("tasks", type=list, required=True)
+
 task_fields = {
     'id': fields.Integer,
     'worker_id': fields.Integer,
@@ -263,9 +266,9 @@ class TaskManagementApi(Resource):
         r = http_request(app.config['BRENDER_SERVER'], '/tasks', 'get')
         return r, 200
 
-class TaskApi(Resource):
     @marshal_with(task_fields)
-    def delete(self, task_id):
+    def delete(self):
+
         worker = Worker.query.filter_by(current_task = task_id).first()
         if worker:
             if worker.status != 'disabled':
@@ -275,6 +278,8 @@ class TaskApi(Resource):
             db.session.commit()
 
         return task_id, 202
+
+class TaskApi(Resource):
 
     def patch(self, task_id):
         args = status_parser.parse_args()

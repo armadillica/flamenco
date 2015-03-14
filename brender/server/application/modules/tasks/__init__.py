@@ -131,8 +131,8 @@ class TaskApi(Resource):
             db.session.commit()
         # TODO  get a reply from the worker (running, error, etc)
 
-    @staticmethod
-    def dispatch_tasks():
+        """@staticmethod
+        def dispatch_tasks():"""
         """
         We want to assign a task according to its priority and its assignability
         to the less requested available compatible limited manager. If it does not exist,
@@ -160,7 +160,7 @@ class TaskApi(Resource):
             - assign task to compatible unlimited manager
             - if no compatible manager is unlimited, do not assign task (it will wait the next call of dispatch_tasks)
         """
-        logging.info('Dispatch tasks')
+        """logging.info('Dispatch tasks')
 
         tasks = None
 
@@ -211,7 +211,7 @@ class TaskApi(Resource):
 
             else:
                 print ('Managers available')
-                TaskApi.start_task(managers_available[0][0], t[0])
+                TaskApi.start_task(managers_available[0][0], t[0])"""
 
     @staticmethod
     def delete_task(task_id):
@@ -233,22 +233,33 @@ class TaskApi(Resource):
         logging.info("All tasks deleted for job {0}".format(job_id))
 
     @staticmethod
-    def stop_task(task_id):
+    def stop_task(task_ids):
         """Stop a single task
         """
-        print ('Stoping task %s' % task_id)
-        task = Task.query.get(task_id)
-        manager = Manager.query.filter_by(id = task.manager_id).first()
-        delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
-        try:
-            delete_task = http_rest_request(manager.host, '/tasks/' + str(task.id), 'delete')
-        except:
-            logging.info("Error deleting task from Manager")
-            return
-            pass
-        task.status = 'ready'
-        db.session.add(task)
-        db.session.commit()
+        print ('Stoping task %s' % task_ids)
+        managers = {}
+        for task_id in task_ids:
+            task = Task.query.get(task_id)
+            manager = Manager.query.filter_by(id = task.manager_id).first()
+            if not manager.id in managers:
+                managers[manager.id] = []
+            managers[manager.id].append(task_id)
+
+        for manager in managers:
+            params = {'tasks': managers[manager]}
+            try:
+                delete_task = http_rest_request(
+                    manager.host,
+                    '/tasks',
+                    'delete',
+                    params=params)
+            except:
+                logging.info("Error deleting task from Manager")
+                return
+                pass
+            task.status = 'ready'
+            db.session.add(task)
+            db.session.commit()
         print "Task %d stopped" % task_id
 
     @staticmethod
