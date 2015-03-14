@@ -284,9 +284,13 @@ class TaskApi(Resource):
         tasks = {}
         percentage_done = 0
 
+        ip_address = request.remote_addr
+        manager = Manager.query.filter_by(ip_address=ip_address).first()
+
         tasks = Task.query.filter(
             or_(Task.status == 'ready',
-                Task.status=='failed')).with_for_update()
+                Task.status=='failed'),
+            Task.manager_id==manager.id).with_for_update()
         task = None
         for t in tasks:
             job = Job.query.filter_by(id=t.job_id, status='running').count()
