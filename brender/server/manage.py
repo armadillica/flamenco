@@ -4,6 +4,10 @@ import logging
 
 from flask.ext.script import Manager
 from flask.ext.migrate import MigrateCommand
+from flask.ext.migrate import current
+from flask.ext.migrate import upgrade
+from sqlalchemy import create_engine
+from alembic.migration import MigrationContext
 
 from application import app
 from application import db
@@ -17,14 +21,16 @@ def runserver():
     """This command is meant for development. If no configuration is found,
     we start the app listening from all hosts, from port 9999."""
 
-    #Testing Database
-    from application.modules.settings.model import Setting
-    from sqlalchemy.exc import OperationalError
-    try:
-        Setting.query.first()
-    except OperationalError:
-        logging.error("Please run \"python manager.py db upgrade\" to initialize the database")
-        exit(3)
+    # Testig Alembic
+    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
+    context = MigrationContext.configure(conn)
+    current_ver = context.get_current_revision()
+    if not current_ver:
+        print("Automatic DB Upgrade")
+        print("Press Ctrl+C when finished")
+        upgrade()
+        print("Upgrade completed")
 
     try:
         from application import config

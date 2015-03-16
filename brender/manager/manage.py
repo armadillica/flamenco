@@ -7,6 +7,10 @@ from threading import Thread
 
 from flask.ext.script import Manager
 from flask.ext.migrate import MigrateCommand
+from flask.ext.migrate import upgrade
+
+from sqlalchemy import create_engine
+from alembic.migration import MigrationContext
 
 from application import app
 from application import register_manager
@@ -19,14 +23,16 @@ manager.add_command('db', MigrateCommand)
 def runserver():
     """This command is meant for development. If no configuration is found,
     we start the app listening from all hosts, from port 7777."""
-    #Testing Database
-    from application.modules.settings.model import Setting
-    from sqlalchemy.exc import OperationalError
-    try:
-        Setting.query.first()
-    except OperationalError:
-        logging.error("Please run \"python manager.py db upgrade\" to initialize the database")
-        exit(3)
+    # Testig Alembic
+    engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    conn = engine.connect()
+    context = MigrationContext.configure(conn)
+    current_ver = context.get_current_revision()
+    if not current_ver:
+        print("Automatic DB Upgrade")
+        print("Press Ctrl+C when finished")
+        upgrade()
+        print("Upgrade completed")
 
     try:
         from application import config
@@ -43,18 +49,13 @@ def runserver():
         HOSTNAME = socket.gethostname()
 
 
-    # Use multiprocessing to register the manager to the server
-    # while the manager app starts up
+    # Register the manager to the server
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         if VIRTUAL_WORKERS:
             has_virtual_worker = 1
         else:
             has_virtual_worker = 0
-        register_thread = Thread(
-            target=register_manager,
-            args=(PORT, HOSTNAME, has_virtual_worker))
-        register_thread.setDaemon(False)
-        register_thread.start()
+        register_manager(PORT, HOSTNAME, has_virtual_worker)
 
     app.run(
         port=PORT,

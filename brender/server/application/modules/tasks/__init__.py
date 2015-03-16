@@ -247,7 +247,6 @@ class TaskApi(Resource):
 
         for man in managers:
             params = {'tasks': managers[man]}
-            #print (params)
             try:
                 delete_task = http_rest_request(
                     manager.host,
@@ -256,7 +255,6 @@ class TaskApi(Resource):
                     params=params)
             except:
                 logging.info("Error deleting task from Manager")
-                #raise
                 return
                 pass
             task.status = 'ready'
@@ -278,9 +276,7 @@ class TaskApi(Resource):
         for t in tasks:
             print t
             tasklist.append(t.id)
-        #map(lambda t : TaskApi.stop_task(t.id), tasks)
         TaskApi.stop_task(tasklist)
-        #TaskApi.delete_tasks(job_id)
 
 
     def get(self):
@@ -291,6 +287,9 @@ class TaskApi(Resource):
 
         ip_address = request.remote_addr
         manager = Manager.query.filter_by(ip_address=ip_address).first()
+
+        if not manager:
+            return '', 404
 
         tasks = Task.query.filter(
             or_(Task.status == 'ready',
@@ -315,6 +314,8 @@ class TaskApi(Resource):
         db.session.add(task)
         db.session.commit()
 
+        job = Job.query.get(task.job_id)
+
         tasks = {}
         frame_count = 1
         current_frame = 0
@@ -332,6 +333,7 @@ class TaskApi(Resource):
                             "child_id": task.child_id,
                             "parser": task.parser,
                             "time_cost": task.time_cost,
+                            "project_id": job.project_id,
 
                             "chunk_start": 0,
                             "chunk_end": 0,

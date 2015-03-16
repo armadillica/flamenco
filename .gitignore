@@ -8,8 +8,9 @@
 /temp/*
 venv/
 *.log
-.ropeproject/*
+*.ropeproject*
 config.py
 /brender/config.py
 /brender/server/render
-/brender/manager/application/static/storage
+/brender/manager/application/static/storage/*
+/brender/server/application/static/storage/*

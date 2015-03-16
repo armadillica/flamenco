@@ -15,15 +15,21 @@ class job_compiler():
         task_settings['format'] = job_settings['format']
 
         #project = Project.query.filter_by(id = job.project_id).first()
-        filepath = task_settings['filepath']
+        #filepath = task_settings['filepath']
 
-        task_settings['file_path_linux'] = os.path.join(project.path_linux, filepath)
+        """task_settings['file_path_linux'] = os.path.join(project.path_linux, filepath)
         task_settings['file_path_win'] = os.path.join(project.path_win, filepath)
-        task_settings['file_path_osx'] = os.path.join(project.path_osx, filepath)
+        task_settings['file_path_osx'] = os.path.join(project.path_osx, filepath)"""
+        task_settings['file_path_linux'] = ""
+        task_settings['file_path_win'] = ""
+        task_settings['file_path_osx'] = ""
         #task_settings['settings'] = task.settings
-        task_settings['output_path_linux'] = os.path.join(project.render_path_linux, str(job.id), '#####')
+        """task_settings['output_path_linux'] = os.path.join(project.render_path_linux, str(job.id), '#####')
         task_settings['output_path_win'] = os.path.join(project.render_path_win, str(job.id), '#####')
-        task_settings['output_path_osx'] = os.path.join(project.render_path_osx, str(job.id), '#####')
+        task_settings['output_path_osx'] = os.path.join(project.render_path_osx, str(job.id), '#####')"""
+        task_settings['output_path_linux'] = '#####'
+        task_settings['output_path_win'] = '#####'
+        task_settings['output_path_osx'] = '#####'
         task_settings['priority'] = job.priority
 
         #Chunk Generation

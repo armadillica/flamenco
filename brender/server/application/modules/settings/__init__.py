@@ -46,7 +46,7 @@ class SettingsListApi(Resource):
 
 class RenderSettingsApi(Resource):
     def get(self):
-        name = ''
+        """name = ''
         if system() == 'Linux':
             name = 'render_settings_path_linux'
         elif system() == 'Windows':
@@ -56,4 +56,5 @@ class RenderSettingsApi(Resource):
         path = Setting.query.filter_by(name=name).first()
         onlyfiles = [f for f in listdir(path.value) if isfile(join(path.value, f))]
         settings_files = dict(settings_files=onlyfiles)
-        return jsonify(settings_files)
+        return jsonify(settings_files)"""
+        return {'':''}

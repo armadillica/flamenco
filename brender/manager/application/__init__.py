@@ -32,7 +32,7 @@ try:
     )
 
     if not config.Config.IS_PRIVATE_MANAGER:
-        try:
+        """try:
             server_settings = http_request(app.config['BRENDER_SERVER'], '/settings', 'get')
             app.config.update(
                 BLENDER_PATH_LINUX=server_settings['blender_path_linux'],
@@ -47,7 +47,7 @@ try:
             exit(3)
         except KeyError:
             logging.error("Please, configure Brender Paths browsing Dashboard->Server->Settings")
-            exit(3)
+            exit(3)"""
     else:
         app.config.update(
             BLENDER_PATH_LINUX=config.Config.BLENDER_PATH_LINUX,
@@ -68,9 +68,10 @@ except ImportError:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite')
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
     app.config['THUMBNAIL_EXTENSIONS'] = set(['png'])
-    app.config['MANAGER_STORAGE'] = tempfile.gettempdir()
+    app.config['MANAGER_STORAGE'] = '{0}/static/storage'.format(
+        os.path.join(os.path.dirname(__file__)))
 
-    try:
+    """try:
         server_settings = http_request(app.config['BRENDER_SERVER'], '/settings', 'get')
         app.config.update(
             BLENDER_PATH_LINUX=server_settings['blender_path_linux'],
@@ -85,7 +86,7 @@ except ImportError:
         exit(3)
     except KeyError:
         logging.error("Please, configure Brender Paths browsing Dashboard->Server->Settings")
-        exit(3)
+        exit(3)"""
 
 
 api = Api(app)
@@ -124,14 +125,16 @@ def register_manager(port, name, has_virtual_workers):
     registering the render node. This is called by the runserver script.
     """
     import httplib
+    import socket
+    import time
     while True:
         try:
             connection = httplib.HTTPConnection(app.config['BRENDER_SERVER'])
             connection.request("GET", "/managers")
             break
         except socket.error:
-            pass
-        time.sleep(0.1)
+            print ("Cant connect with Server, retrying...")
+        time.sleep(1)
 
     params = {
         'port' : port,

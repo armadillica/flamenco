@@ -458,6 +458,8 @@ def run_blender_in_thread(options):
             "==jobpath==",jobpath)
         render_command[cmd] = render_command[cmd].replace(
             "==outputpath==",outputpath)
+        render_command[cmd] = render_command[cmd].replace(
+            "==blenderpath==", "/shared/software/blender/blender_farm_latest/blender")
 
     os.environ['WORKER_DEPENDPATH'] = dependpath
     os.environ['WORKER_OUTPUTPATH'] = outputpath

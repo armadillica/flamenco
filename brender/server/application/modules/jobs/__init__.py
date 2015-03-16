@@ -426,7 +426,7 @@ class JobDeleteApi(Resource):
             TaskApi.delete_tasks(j)
             job = Job.query.get(j)
             if job:
-                path = os.path.join(job.project.render_path_server, str(j))
+                #path = os.path.join(job.project.render_path_server, str(j))
                 #Security check
                 #insecure_names=[None, "", "/", "\\", ".", ".."]
                 #if job.project.render_path_server not in insecure_names and str(j) not in insecure_names:

@@ -161,8 +161,9 @@ class TaskCompiledApi(Resource):
                 f.write("locked")
 
             r = requests.get(
-                'http://{0}/jobs/file/{1}'.format(
-                    app.config['BRENDER_SERVER'], task['job_id'])
+                #'http://{0}/jobs/file/{1}'.format(
+                'http://{0}/static/storage/{1}/{2}/jobfile_{2}.zip'.format(
+                    app.config['BRENDER_SERVER'], task['project_id'], task['job_id'])
             )
 
             with open(tmpfile, 'wb') as f:

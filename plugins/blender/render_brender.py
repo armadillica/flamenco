@@ -74,7 +74,7 @@ class flamencoUpdate (bpy.types.Operator):
 
         try:
             projects = requests.get('{0}/projects'.format(serverurl), timeout=1)
-            settings = requests.get('{0}/settings/render'.format(serverurl), timeout=1)
+            #settings = requests.get('{0}/settings/render'.format(serverurl), timeout=1)
             managers = requests.get('{0}/managers'.format(serverurl), timeout=1)
         except ConnectionError:
             self.report( {'ERROR'}, "Can't connect to server on {0}".format(serverurl) )
@@ -152,7 +152,7 @@ class bamToRenderfarm (bpy.types.Operator):
         }
 
         print (job_properties)
-        
+
         amaranth_addon = False
         try:
             scn.use_unsimplify_render
@@ -166,7 +166,7 @@ class bamToRenderfarm (bpy.types.Operator):
 
         bpy.ops.wm.save_mainfile()
         scn.render.use_simplify = tmp_simplify
-        
+
         tmppath = C.user_preferences.filepaths.temporary_directory
         zipname = "job"
         zippath = os.path.join(tmppath, "%s.zip" % zipname)

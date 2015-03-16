@@ -41,32 +41,38 @@ project_fields = {
 class ProjectListApi(Resource):
     def get(self):
         projects = {}
+        count = Project.query.count()
+        if count == 0:
+            project = Project(name="Default Project")
+            db.session.add(project)
+            db.session.commit()
+
         for project in Project.query.all():
             projects[project.id] = dict(
-                name=project.name,
-                path_server=project.path_server,
-                path_linux=project.path_linux,
-                path_win=project.path_win,
-                path_osx=project.path_osx,
-                render_path_server=project.render_path_server,
-                render_path_linux=project.render_path_linux,
-                render_path_win=project.render_path_win,
-                render_path_osx=project.render_path_osx)
+                name=project.name)
+        """path_server=project.path_server,
+        path_linux=project.path_linux,
+        path_win=project.path_win,
+        path_osx=project.path_osx,
+        render_path_server=project.render_path_server,
+        render_path_linux=project.render_path_linux,
+        render_path_win=project.render_path_win,
+        render_path_osx=project.render_path_osx)"""
         return jsonify(projects)
 
     @marshal_with(project_fields)
     def post(self):
         args = parser.parse_args()
         project = Project(
-            name=args['name'],
-            path_server=args['path_server'],
-            path_linux=args['path_linux'],
-            path_win=args['path_win'],
-            path_osx=args['path_osx'],
-            render_path_server=args['render_path_server'],
-            render_path_linux=args['render_path_linux'],
-            render_path_win=args['render_path_win'],
-            render_path_osx=args['render_path_osx'])
+            name=args['name'])
+        """path_server=args['path_server'],
+        path_linux=args['path_linux'],
+        path_win=args['path_win'],
+        path_osx=args['path_osx'],
+        render_path_server=args['render_path_server'],
+        render_path_linux=args['render_path_linux'],
+        render_path_win=args['render_path_win'],
+        render_path_osx=args['render_path_osx'])"""
         db.session.add(project)
         db.session.commit()
 

@@ -1,8 +1,8 @@
 import os
 import json
-import logging
+#import logging
 
-from application import app
+#from application import app
 
 class task_compiler():
     @staticmethod
@@ -10,7 +10,7 @@ class task_compiler():
 
         settings=json.loads(task['settings'])
 
-        if 'Darwin' in worker.system:
+        """if 'Darwin' in worker.system:
             setting_blender_path = app.config['BLENDER_PATH_OSX']
             setting_render_settings = app.config['SETTINGS_PATH_OSX']
             file_path = settings['file_path_osx']
@@ -30,8 +30,6 @@ class task_compiler():
             logging.info('[Debug] blender path is not set')
             return None
 
-        blender_path = setting_blender_path
-
         if setting_render_settings is None:
             logging.warning("Render settings path not set!")
             return None
@@ -39,13 +37,14 @@ class task_compiler():
         setting_render_settings = app.config['SETTINGS_PATH_LINUX']
         render_settings = os.path.join(
             setting_render_settings,
-            settings['render_settings'])
+            settings['render_settings'])"""
 
         # TODO
         file_path = os.path.split(settings['file_path_linux'])[1]
         file_path = os.path.join('==jobpath==', file_path)
         output_path = "==outputpath=="
 
+        blender_path = "==blenderpath=="
 
         dir = os.path.dirname(__file__)
         template_path = os.path.join(dir, 'simple_blender_render.template')
