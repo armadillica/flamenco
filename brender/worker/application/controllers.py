@@ -207,6 +207,7 @@ def worker_loop():
 
 def _checkProcessOutput(process):
     try:
+        # If the PROCESS halts, will halt here
         ready = select.select([process.stdout.fileno(),
                             process.stderr.fileno()],
                             [], [])

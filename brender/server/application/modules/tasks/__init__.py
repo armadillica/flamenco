@@ -236,7 +236,7 @@ class TaskApi(Resource):
     def stop_task(task_ids):
         """Stop a single task
         """
-        print ('Stoping task %s' % task_ids)
+        print ('Stoping tasks %s' % task_ids)
         managers = {}
         for task_id in task_ids:
             task = Task.query.get(task_id)
@@ -245,8 +245,9 @@ class TaskApi(Resource):
                 managers[manager.id] = []
             managers[manager.id].append(task_id)
 
-        for manager in managers:
-            params = {'tasks': managers[manager]}
+        for man in managers:
+            params = {'tasks': managers[man]}
+            #print (params)
             try:
                 delete_task = http_rest_request(
                     manager.host,
@@ -255,6 +256,7 @@ class TaskApi(Resource):
                     params=params)
             except:
                 logging.info("Error deleting task from Manager")
+                #raise
                 return
                 pass
             task.status = 'ready'
@@ -272,9 +274,12 @@ class TaskApi(Resource):
             all()
 
         print tasks
+        tasklist = []
         for t in tasks:
             print t
-        map(lambda t : TaskApi.stop_task(t.id), tasks)
+            tasklist.append(t.id)
+        #map(lambda t : TaskApi.stop_task(t.id), tasks)
+        TaskApi.stop_task(tasklist)
         #TaskApi.delete_tasks(job_id)
 
 

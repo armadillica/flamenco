@@ -14,6 +14,9 @@ from application.modules.workers.model import Worker
 from application.helpers import http_request
 from application.modules.settings.model import Setting
 
+from datetime import datetime
+from datetime import timedelta
+
 parser = reqparse.RequestParser()
 parser.add_argument('port', type=int)
 parser.add_argument('hostname', type=str)
@@ -60,19 +63,27 @@ class WorkerListApi(Resource):
         workers={}
         workers_db = Worker.query.all()
         for worker in workers_db:
+            timediff = None
+            if worker.last_activity:
+                timediff = datetime.now()-worker.last_activity
+            if not timediff or timediff > timedelta(seconds=300):
+                worker.connection = "offline"
+                db.session.add(worker)
+                db.session.commit()
             workers[worker.hostname] = {
                 "id" : worker.id,
                 "hostname" : worker.hostname,
                 "status" : worker.status,
                 "activity" : worker.activity,
-                "log" : worker.log,
+                #"log" : worker.log,
+                'log' : "",
                 "time_cost" : worker.time_cost,
                 "connection" : worker.connection,
                 "system" : worker.system,
                 "port" : worker.port,
                 "ip_address" : worker.ip_address,
                 "current_task" : worker.current_task}
-        db.session.commit()
+        #db.session.commit()
         return jsonify(workers)
 
 

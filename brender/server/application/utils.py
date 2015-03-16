@@ -16,7 +16,7 @@ def http_request(ip_address, command, post_params=None):
 
 def http_rest_request(ip_address, command, method, params=None, files=None):
     if method == 'delete':
-        r = requests.delete('http://' + ip_address + command)
+        r = requests.delete('http://' + ip_address + command, data=params)
     elif method == 'post':
         r = requests.post('http://' + ip_address + command, data=params, files=files)
     elif method == 'get':

@@ -23,6 +23,8 @@ import requests
 import logging
 from threading import Thread
 
+from datetime import datetime
+
 from requests.exceptions import ConnectionError
 
 
@@ -48,7 +50,7 @@ parser_thumbnail = reqparse.RequestParser()
 parser_thumbnail.add_argument("task_id", type=int)
 
 parser_delete = reqparse.RequestParser()
-parser_delete.add_argument("tasks", type=list, required=True)
+parser_delete.add_argument("tasks", type=str, action="append", required=True)
 
 task_fields = {
     'id': fields.Integer,
@@ -99,8 +101,21 @@ class TaskCompiledApi(Resource):
 
         ip_address = request.remote_addr
         worker = Worker.query.filter_by(ip_address=ip_address).one()
+        if not worker:
+            return '', 500
+        worker.last_activity = datetime.now()
+        db.session.add(worker)
+        db.session.commit()
+        if not worker:
+            return 'Worker is not registered', 403
+        db.session.add(worker)
+        db.session.commit()
         if worker.status == "disabled":
             return '', 403
+        worker.current_task = None
+        worker.status = 'enabled'
+        db.session.add(worker)
+        db.session.commit()
 
         tasks = TaskManagementApi().get()
         if tasks[0] == ('', 500):
@@ -266,16 +281,17 @@ class TaskManagementApi(Resource):
         r = http_request(app.config['BRENDER_SERVER'], '/tasks', 'get')
         return r, 200
 
-    @marshal_with(task_fields)
+    #@marshal_with(task_fields)
     def delete(self):
-
-        worker = Worker.query.filter_by(current_task = task_id).first()
-        if worker:
-            if worker.status != 'disabled':
-                worker.status = 'enabled'
-            worker.current_task = None
-            db.session.add(worker)
-            db.session.commit()
+        args = parser_delete.parse_args()
+        for task_id in args['tasks']:
+            worker = Worker.query.filter_by(current_task=task_id).first()
+            if worker:
+                if worker.status != 'disabled':
+                    worker.status = 'enabled'
+                worker.current_task = None
+                db.session.add(worker)
+                db.session.commit()
 
         return task_id, 202
 
@@ -287,6 +303,9 @@ class TaskApi(Resource):
         worker = Worker.query.filter_by(ip_address=ip_address).first()
         if not worker:
             return 'Worker is not registered', 403
+        worker.last_activity = datetime.now()
+        db.session.add(worker)
+        db.session.commit()
         if worker.status=='disabled':
             return 'Worker is Disabled', 403
         if not worker.current_task:
@@ -305,16 +324,16 @@ class TaskApi(Resource):
             db.session.add(other)
             db.session.commit()"""
 
-        if args['status'] == 'enabled':
-            worker.current_task = None
-            worker.status = 'enabled'
-        elif args['status'] == 'running':
+        if args['status'] == 'running':
             if args['task_id']:
                 worker.current_task = args['task_id']
             worker.time_cost = args['time_cost']
             worker.log = args['log']
             worker.activity = args['activity']
             worker.status = 'rendering'
+        else:
+            worker.current_task = None
+            worker.status = 'enabled'
         db.session.add(worker)
         db.session.commit()
 
