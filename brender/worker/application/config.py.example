@@ -1,5 +1,5 @@
 class Config(object):
-    DEBUG = True
+    DEBUG = False
     BRENDER_MANAGER = 'localhost:7777'
     HOST = '0.0.0.0' # or localhost
     PORT = 5000
