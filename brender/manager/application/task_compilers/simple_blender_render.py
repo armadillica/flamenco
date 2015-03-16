@@ -69,6 +69,7 @@ class task_compiler():
         task_command = [
         str( blender_path ),
         '--background',
+        '-noaudio',
         str( file_path ),
         '--render-output',
         str(output_path),

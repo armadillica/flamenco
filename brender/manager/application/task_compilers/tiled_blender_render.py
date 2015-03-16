@@ -86,6 +86,7 @@ tiles={1}
         task_command = [
             str(blender_path),
             '--background',
+            '-noaudio',
             str(file_path),
             '--render-output',
             str(tile_output_path),

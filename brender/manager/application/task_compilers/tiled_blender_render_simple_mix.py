@@ -76,6 +76,7 @@ tiles_path = os.path.join(os.environ['WORKER_JOBPATH'], '{0}')
         task_command = [
             str(blender_path),
             '--background',
+            '-noaudio',
             str(file_path),
             '--render-output',
             str(os.path.join(output_path, "")),
