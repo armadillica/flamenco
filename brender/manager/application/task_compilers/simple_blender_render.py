@@ -40,8 +40,8 @@ class task_compiler():
             settings['render_settings'])"""
 
         # TODO
-        file_path = os.path.split(settings['file_path_linux'])[1]
-        file_path = os.path.join('==jobpath==', file_path)
+        #file_path = os.path.split(settings['file_path_linux'])[1]
+        file_path = os.path.join('==jobpath==', settings['file_path'])
         output_path = "==outputpath=="
 
         blender_path = "==blenderpath=="
