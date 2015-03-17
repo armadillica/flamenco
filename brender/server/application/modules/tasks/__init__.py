@@ -295,7 +295,7 @@ class TaskApi(Resource):
             or_(Task.status == 'ready',
                 Task.status=='failed'),
             Task.manager_id==manager.id).with_for_update().\
-            order_by(Task.priority.asc())
+            order_by(Task.priority.desc())
         task = None
         for t in tasks:
             job = Job.query.filter_by(id=t.job_id, status='running').count()
@@ -306,6 +306,7 @@ class TaskApi(Resource):
             if unfinished_parents>0:
                 continue
             task = t
+            break
 
         if not task:
             return '', 500
