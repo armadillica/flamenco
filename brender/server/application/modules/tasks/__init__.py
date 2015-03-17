@@ -316,33 +316,34 @@ class TaskApi(Resource):
 
         job = Job.query.get(task.job_id)
 
-        tasks = {}
+        #tasks = {}
         frame_count = 1
         current_frame = 0
         percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
         percentage_done = round(percentage_done, 1)
-        tasks[task.id] = {"job_id": task.job_id,
-                            "name": task.name,
-                            "status": task.status,
-                            "type": task.type,
-                            "settings": task.settings,
-                            "log": task.log,
-                            "activity": task.activity,
-                            "manager_id": task.manager_id,
-                            "priority": task.priority,
-                            "child_id": task.child_id,
-                            "parser": task.parser,
-                            "time_cost": task.time_cost,
-                            "project_id": job.project_id,
+        rtask = {"id": task.id,
+                "job_id": task.job_id,
+                "name": task.name,
+                "status": task.status,
+                "type": task.type,
+                "settings": task.settings,
+                "log": task.log,
+                "activity": task.activity,
+                "manager_id": task.manager_id,
+                "priority": task.priority,
+                "child_id": task.child_id,
+                "parser": task.parser,
+                "time_cost": task.time_cost,
+                "project_id": job.project_id,
 
-                            "chunk_start": 0,
-                            "chunk_end": 0,
-                            "current_frame": 0,
-                            "status": task.status,
-                            "percentage_done": percentage_done}
+                "chunk_start": 0,
+                "chunk_end": 0,
+                "current_frame": 0,
+                "status": task.status,
+                "percentage_done": percentage_done}
 
 
-        return jsonify(tasks)
+        return jsonify(rtask)
 
     @staticmethod
     def generate_thumbnails(job, start, end):
