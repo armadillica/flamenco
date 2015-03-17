@@ -326,7 +326,7 @@ class TaskApi(Resource):
                 "name": task.name,
                 "status": task.status,
                 "type": task.type,
-                "settings": task.settings,
+                "settings": json.loads(task.settings),
                 "log": task.log,
                 "activity": task.activity,
                 "manager_id": task.manager_id,
