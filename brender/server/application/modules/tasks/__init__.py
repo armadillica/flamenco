@@ -306,6 +306,7 @@ class TaskApi(Resource):
             if unfinished_parents>0:
                 continue
             task = t
+            break
 
         if not task:
             return '', 500
