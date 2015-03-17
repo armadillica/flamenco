@@ -128,7 +128,7 @@ class jobInfo():
             "job_name" : job.name,
             "project_id" : job.project_id,
             "status" : job.status,
-            "settings" : job.settings,
+            "settings" : json.loads(job.settings),
             "activity" : activity,
             "remaining_time" : remaining_time,
             "average_time" : average_time,
