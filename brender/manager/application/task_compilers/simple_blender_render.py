@@ -41,7 +41,7 @@ class task_compiler():
 
         # TODO
         #file_path = os.path.split(settings['file_path_linux'])[1]
-        file_path = os.path.join('==jobpath==', settings['file_path'])
+        file_path = os.path.join('==jobpath==', settings['filepath'])
         output_path = "==outputpath=="
 
         blender_path = "==blenderpath=="
