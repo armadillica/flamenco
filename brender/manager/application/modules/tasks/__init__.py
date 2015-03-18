@@ -118,17 +118,14 @@ class TaskCompiledApi(Resource):
         db.session.commit()
 
         tasks = TaskManagementApi().get()
+        print (tasks)
         if tasks[0] == ('', 500):
             return '', 400
         if not len(tasks) or not len(tasks[0]):
             return '', 400
         task = tasks[0]
-        for t in task:
-            task = task[t]
-            task['task_id'] = t
-            break
 
-        worker.current_task = task['task_id']
+        worker.current_task = task['id']
         worker.child_task = task['child_id']
         db.session.add(worker)
         db.session.commit()
@@ -192,10 +189,11 @@ class TaskCompiledApi(Resource):
             return
 
         options = {
-            'task_id': task['task_id'],
+            'task_id': task['id'],
             'job_id': task['job_id'],
             'task_parser': task['parser'],
             'settings': task['settings'],
+            'type': task['type'],
             'task_command': json.dumps(task_command)}
 
         jobfile = []
@@ -378,9 +376,6 @@ class TaskApi(Resource):
             jobfile = [
                 ('taskfile', (
                     'taskfile.zip', open(zippath, 'rb'), 'application/zip'))]
-
-
-
 
         params = { 'id' : task_id, 'status': args['status'], 'time_cost' : args['time_cost'], 'log' : args['log'], 'activity' : args['activity'] }
         http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params, files=jobfile)

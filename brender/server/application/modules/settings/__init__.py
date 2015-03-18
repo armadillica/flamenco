@@ -1,4 +1,5 @@
 import logging
+import requests
 from platform import system
 from os.path import isfile
 from os.path import join
@@ -12,6 +13,9 @@ from flask.ext.restful import reqparse
 
 from application import db
 from application.modules.settings.model import Setting
+from application.modules.managers.model import Manager
+
+from requests.exceptions import ConnectionError
 
 parser = reqparse.RequestParser()
 parser.add_argument('blender_path_linux', type=str)
@@ -22,13 +26,20 @@ parser.add_argument('render_settings_path_win', type=str)
 parser.add_argument('render_settings_path_osx', type=str)
 parser.add_argument('active_project', type=str)
 
+parser_settings = reqparse.RequestParser()
+parser_settings.add_argument('value', type=str)
+
 class SettingsListApi(Resource):
     def get(self):
         settings = {}
+        settings['settings'] = []
         for setting in Setting.query.all():
-            settings[setting.name] = setting.value
+            settings['settings'].append( {
+                'name': setting.name,
+                'value': setting.value
+            })
 
-        return jsonify(settings)
+        return jsonify(**settings)
 
     def post(self):
         args = parser.parse_args()
@@ -44,17 +55,35 @@ class SettingsListApi(Resource):
         db.session.commit()
         return '', 204
 
-class RenderSettingsApi(Resource):
+class ManagersSettingsApi(Resource):
     def get(self):
-        """name = ''
-        if system() == 'Linux':
-            name = 'render_settings_path_linux'
-        elif system() == 'Windows':
-            name = 'render_settings_path_win'
-        else:
-            name = 'render_settings_path_osx'
-        path = Setting.query.filter_by(name=name).first()
-        onlyfiles = [f for f in listdir(path.value) if isfile(join(path.value, f))]
-        settings_files = dict(settings_files=onlyfiles)
-        return jsonify(settings_files)"""
-        return {'':''}
+        managers = Manager.query.all()
+        managers_settings = {}
+        for manager in managers:
+            r = None
+            url = 'http://{0}:{1}/settings'.format(
+                manager.ip_address, manager.port)
+            try:
+                r = requests.get(url)
+            except ConnectionError:
+                logging.error(
+                    'Cant connect with the Manager {0}'.format(
+                        manager.ip_address))
+            if r:
+                print (r.json())
+                managers_settings[manager.id] = r.json()
+                managers_settings[manager.id]['manager_name']=manager.name
+
+        return jsonify(managers_settings)
+
+class ManagerSettingApi(Resource):
+    def post(self, manager_id, setting_name):
+        args = parser_settings.parse_args()
+        print ("Updating {0} in {1}".format(setting_name, manager_id))
+        manager = Manager.query.get(manager_id)
+        url = 'http://{0}:{1}/settings/{2}'.format(
+            manager.ip_address, manager.port, setting_name)
+        data = {'value': args['value']}
+        requests.patch(url, data=data, timeout=20)
+
+        return '', 200

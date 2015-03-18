@@ -44,7 +44,7 @@ class task_compiler():
         file_path = os.path.join('==jobpath==', settings['filepath'])
         output_path = "==outputpath=="
 
-        blender_path = "==blenderpath=="
+        blender_path = "==command=="
 
         dir = os.path.dirname(__file__)
         template_path = os.path.join(dir, 'simple_blender_render.template')

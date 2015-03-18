@@ -11,7 +11,7 @@ class task_compiler():
 
         settings = json.loads(task['settings'])
 
-        if 'Darwin' in worker.system:
+        """if 'Darwin' in worker.system:
             setting_blender_path = app.config['BLENDER_PATH_OSX']
             setting_render_settings = app.config['SETTINGS_PATH_OSX']
             file_path = settings['file_path_osx']
@@ -29,23 +29,23 @@ class task_compiler():
 
         if setting_blender_path is None:
             logging.info('[Debug] blender path is not set')
-            return None
+            return None"""
 
-        blender_path = setting_blender_path
 
         # TODO
-        file_path = os.path.split(settings['file_path_linux'])[1]
-        file_path = os.path.join('==jobpath==', file_path)
+        #file_path = os.path.split(settings['file_path_linux'])[1]
+        file_path = os.path.join('==jobpath==', settings['filepath'])
         output_path = "==outputpath=="
+        blender_path = "==command=="
 
-        if setting_render_settings is None:
+        """if setting_render_settings is None:
             logging.warning("Render settings path not set!")
-            return None
+            return None"""
 
         tile_output_path = os.path.join(
             output_path, "tiled_{0}_".format(settings['tile']))
 
-        setting_render_settings = app.config['SETTINGS_PATH_LINUX']
+        #setting_render_settings = app.config['SETTINGS_PATH_LINUX']
         # render_settings = os.path.join(
         #     setting_render_settings,
         #     settings['render_settings'])

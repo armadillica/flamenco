@@ -37,7 +37,7 @@ import subprocess
 # from time import strftime
 
 from bpy.props import IntProperty
-# from bpy.props import BoolProperty
+from bpy.props import BoolProperty
 from bpy.props import StringProperty
 from bpy.props import EnumProperty
 from bpy.props import CollectionProperty
@@ -74,7 +74,9 @@ class flamencoUpdate (bpy.types.Operator):
 
         try:
             projects = requests.get('{0}/projects'.format(serverurl), timeout=1)
-            #settings = requests.get('{0}/settings/render'.format(serverurl), timeout=1)
+            settings_server = requests.get('{0}/settings'.format(serverurl), timeout=1)
+            settings_managers = requests.get(
+                '{0}/settings/managers'.format(serverurl), timeout=1)
             managers = requests.get('{0}/managers'.format(serverurl), timeout=1)
         except ConnectionError:
             self.report( {'ERROR'}, "Can't connect to server on {0}".format(serverurl) )
@@ -83,19 +85,33 @@ class flamencoUpdate (bpy.types.Operator):
             self.report( {'ERROR'}, "Timeout connecting to server on {0}".format(serverurl) )
             return {'CANCELLED'}
 
-
         wm.flamenco_projectCache = projects.text
 
 
+        settings_server = settings_server.json()
+        wm.flamenco_settingsServerIndex = 0
+        wm.flamenco_settingsServer.clear()
+        for setting in settings_server['settings']:
+            sett_item = wm.flamenco_settingsServer.add()
+            sett_item.name = str(setting['name'])
+            sett_item.value = str(setting['value'])
+
+        settings_managers = settings_managers.json()
+        wm.flamenco_settingsManagerIndex = 0
+        wm.flamenco_settingsManagers.clear()
+        for manager in settings_managers:
+            for setting in settings_managers[manager]:
+                if setting == 'manager_name':
+                    continue
+                sett_item = wm.flamenco_settingsManagers.add()
+                sett_item.manager = str(manager)
+                sett_item.name = str(setting)
+                sett_item.value = str(settings_managers[manager][setting])
+                sett_item.new = False
+                sett_item.manager_name = str(
+                    settings_managers[manager]['manager_name'])
+
         managers = managers.json()
-
-        # print ("Projects")
-        # print (projects.json())
-        # print ("Settings")
-        # print (settings.json())
-        # print ("Managers")
-        # print (managers)
-
         wm.flamenco_managersIndex = 0
         wm.flamenco_managers.clear()
         for manager in managers:
@@ -103,6 +119,52 @@ class flamencoUpdate (bpy.types.Operator):
             man_item.name = managers[manager].get('name')
             man_item.id = managers[manager].get('id')
 
+        return {'FINISHED'}
+
+class saveManagerSetting (bpy.types.Operator):
+    """Save Manager Setting"""
+    bl_idname = "flamenco.save_manager_setting"
+    bl_label = "Save Preferences"
+
+    def execute(self, context):
+        user_preferences = context.user_preferences
+        addon_prefs = user_preferences.addons[__name__].preferences
+        serverurl = addon_prefs.flamenco_server
+        wm = context.window_manager
+        selected_setting = wm.flamenco_settingsManagers[
+            wm.flamenco_settingsManagerIndex]
+
+        if selected_setting.name=="":
+            return {'FINISHED'}
+
+        url = "{0}/settings/managers/{1}/{2}".format(
+            serverurl, selected_setting.manager, selected_setting.name)
+
+        data = {'value': selected_setting.value}
+        r = requests.post(url, data=data, timeout=20)
+
+        selected_setting.new = False
+
+        return {'FINISHED'}
+
+
+class addManagerSetting (bpy.types.Operator):
+    """Add a Manager Setting"""
+    bl_idname = "flamenco.add_manager_setting"
+    bl_label = "Add Manager Setting"
+    def execute(self,context):
+        wm = context.window_manager
+        settings_collection = wm.flamenco_settingsManagers
+
+        selected_setting = settings_collection[wm.flamenco_settingsManagerIndex]
+        manager = wm.flamenco_managers[wm.flamenco_managersIndex]
+
+        setting = settings_collection.add()
+        setting.manager = str(manager.id)
+        setting.manager_name = manager.name
+        setting.name = ""
+        setting.valur = ""
+        wm.flamenco_settingsManagerIndex = len(settings_collection)-1
         return {'FINISHED'}
 
 
@@ -151,8 +213,6 @@ class bamToRenderfarm (bpy.types.Operator):
             'priority': wm.flamenco_priority
         }
 
-        print (job_properties)
-
         amaranth_addon = False
         try:
             scn.use_unsimplify_render
@@ -189,32 +249,6 @@ class bamToRenderfarm (bpy.types.Operator):
         except ConnectionError:
             print ("Connection Error: {0}".format(postserverurl))
 
-        """project_folder = '/render/brender/gooseberry'
-
-        if not D.filepath:
-            self.report( {'ERROR'}, "Save your Blendfile first")
-            return {'CANCELLED'}
-
-        blendpath = os.path.split(D.filepath)[0]
-
-        zipname = "{0}_{1}".format(
-            strftime("%Y-%m-%d_%H-%M-%S"), os.path.split(D.filepath)[1][:-6])
-
-        zippath = os.path.join(blendpath, "%s.zip" % zipname)
-        renderfarmpath = os.path.join(project_folder, zipname)
-
-        try:
-            subprocess.call([ "bam", "pack", D.filepath, '-o', zippath ])
-        except:
-            self.report( {'ERROR'}, "Error running BAM, is it installed?")
-            return {'CANCELLED'}
-
-        try:
-            subprocess.call([ "unzip", zippath, '-d', renderfarmpath ])
-        except:
-            self.report( {'ERROR'}, "Error running unzip or deleting zip")
-            return {'CANCELLED'}"""
-
         return {'FINISHED'}
 
 
@@ -231,9 +265,6 @@ class MovPanelControl(bpy.types.Panel):
         layout = self.layout
         col = layout.column()
         col.operator("flamenco.update")
-
-        #print(wm.flamenco_project)
-        #print(wm.flamenco_managers)
 
         if len(project_list(self, context))==0:
             return
@@ -258,6 +289,43 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'flamenco_priority')
         col.operator("flamenco.send_job")
 
+        col.label(text="Server Settings")
+        col.template_list(
+            "UI_UL_list",
+            "ui_lib_list_propp",
+            wm,
+            "flamenco_settingsServer",
+            wm,
+            "flamenco_settingsServerIndex",
+            rows=5,
+        )
+        if len(wm.flamenco_settingsServer) > 0:
+            setting = wm.flamenco_settingsServer[
+                wm.flamenco_settingsServerIndex]
+            col.prop(setting, "value")
+
+        col.label(text="Manager Settings")
+        col.template_list(
+            "UI_UL_list",
+            "ui_lib_list_proppp",
+            wm,
+            "flamenco_settingsManagers",
+            wm,
+            "flamenco_settingsManagerIndex",
+            rows=5,
+        )
+
+        col.operator("flamenco.add_manager_setting")
+
+        if len(wm.flamenco_settingsManagers) > 0:
+            setting = wm.flamenco_settingsManagers[
+                wm.flamenco_settingsManagerIndex]
+            col.label(text=setting.manager_name)
+            if setting.new:
+                col.prop(setting, "name")
+            col.prop(setting, "value")
+            col.operator("flamenco.save_manager_setting")
+
 
 jobType_list = [
     ('simple_blender_render', 'Simple', '', 1),
@@ -271,10 +339,42 @@ manager_list = [
 
 class flamencoManagers(bpy.types.PropertyGroup):
     name = StringProperty(
-        name="Name", default="", options={'HIDDEN', 'SKIP_SAVE'})
+        name="Name",
+        default="",
+        options={'HIDDEN', 'SKIP_SAVE'})
     id = IntProperty(
-        name="ID", default=0, options={'HIDDEN', 'SKIP_SAVE'})
+        name="ID",
+        default=0,
+        options={'HIDDEN', 'SKIP_SAVE'})
 
+class flamencoSettingsServer(bpy.types.PropertyGroup):
+    name = StringProperty(
+        name="Name",
+        default="",
+        options={'SKIP_SAVE'})
+    value = StringProperty(
+        name="Value",
+        default="",
+        options={'SKIP_SAVE'})
+
+class flamencoSettingsManagers(bpy.types.PropertyGroup):
+    manager = StringProperty(
+        name="Manager",
+        default="",
+        options={'HIDDEN', 'SKIP_SAVE'})
+    manager_name = StringProperty(
+        name="Manager Name",
+        default="",
+        options={'HIDDEN', 'SKIP_SAVE'})
+    name = StringProperty(
+        name="Name",
+        default="",
+        options={'HIDDEN', 'SKIP_SAVE'})
+    value = StringProperty(
+        name="Value",
+        default="",
+        options={'HIDDEN', 'SKIP_SAVE'})
+    new = BoolProperty(default=True, options={'HIDDEN', 'SKIP_SAVE'})
 
 def project_list(self, context):
     wm = context.window_manager
@@ -309,6 +409,20 @@ def register():
         name="Manager Index", description="Currently selected Flamenco Manager")
     wm.flamenco_priority = IntProperty(
         options={'HIDDEN', 'SKIP_SAVE'})
+    wm.flamenco_settingsServer = CollectionProperty(
+        type=flamencoSettingsServer,
+        name="Server Settings",
+        description="Server Settings")
+    wm.flamenco_settingsServerIndex = IntProperty(
+        name="Server Setting Index",
+        description="Currently selected Flamenco Server Setting")
+    wm.flamenco_settingsManagers = CollectionProperty(
+        type=flamencoSettingsManagers,
+        name="Managers Settings",
+        description="Managers Settings")
+    wm.flamenco_settingsManagerIndex = IntProperty(
+        name="Manager Setting Index",
+        description="Currently selected Flamenco Manager Setting")
 
 
 def unregister():

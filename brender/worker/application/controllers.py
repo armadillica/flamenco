@@ -199,6 +199,22 @@ def worker_loop():
         print ("Fetching deppend file {0}".format(url))
         unzipdepok = getZipFile(url, tmpfile, zippath)
 
+        # Get Compiler Settings
+        r = None
+        url = 'http://'+app.config['BRENDER_MANAGER']+'/settings/'
+        try:
+            r = requests.get(
+                url + task['type'],
+            )
+        except ConnectionError:
+            logging.error(
+                'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
+
+        task['compiler_settings'] = {}
+        print (r.status_code)
+        if r != None and r.status_code == 200:
+            task['compiler_settings'] = r.json()
+
         if unzipok:
             execute_task(task, files)
 
@@ -310,7 +326,8 @@ def _parse_output(tmp_buffer, options):
     r = None
     try:
         r = requests.patch(
-            'http://'+app.config['BRENDER_MANAGER']+'/tasks/'+task_id,
+            'http://{0}/tasks/{1}'.format(
+                app.config['BRENDER_MANAGER'], task_id),
             data=params,
         )
         CONNECTIVITY = True
@@ -459,7 +476,8 @@ def run_blender_in_thread(options):
         render_command[cmd] = render_command[cmd].replace(
             "==outputpath==",outputpath)
         render_command[cmd] = render_command[cmd].replace(
-            "==blenderpath==", "/shared/software/blender/blender_farm_latest/blender")
+            "==command==",
+            options['compiler_settings']['commands']['linux'])
 
     os.environ['WORKER_DEPENDPATH'] = dependpath
     os.environ['WORKER_OUTPUTPATH'] = outputpath
@@ -550,7 +568,8 @@ def run_blender_in_thread(options):
 
     try:
         requests.patch(
-            'http://'+BRENDER_MANAGER+'/tasks/'+options['task_id'],
+            'http://{0}/tasks/{1}'.format(
+                BRENDER_MANAGER, options['task_id']),
             data=params,
             files=tfiles,
         )
@@ -609,6 +628,7 @@ def execute_task(task, files):
         'task_parser': task['task_parser'],
         'settings': task['settings'],
         'task_command': task['task_command'],
+        'compiler_settings': task['compiler_settings'],
     }
 
     workerstorage = app.config['TMP_FOLDER']

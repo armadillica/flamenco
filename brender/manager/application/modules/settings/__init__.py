@@ -1,3 +1,4 @@
+import json
 import logging
 from platform import system
 from os.path import isfile
@@ -26,25 +27,15 @@ setting_parser.add_argument('value', type=str)
 
 class SettingsListApi(Resource):
     def get(self):
-        args = parser.parse_args()
-        settings = {}
-        if not args['group']:
-            for setting in Setting.query.all():
-                settings[setting.name] = setting.value
-        elif args['group'] == 'render':
-            name = ''
-            if system() == 'Linux':
-                name = 'render_settings_path_linux'
-            elif system() == 'Windows':
-                name = 'render_settings_path_win'
-            else:
-                name = 'render_settings_path_osx'
-
-            path = Setting.query.filter_by(name=name).first()
-            onlyfiles = [f for f in listdir(path.value) if isfile(join(path.value, f))]
-            settings = dict(settings_files=onlyfiles)
-
-        return jsonify(settings)
+        settings = Setting.query.all()
+        ret = {}
+        for setting in settings:
+            try:
+                val = json.loads(setting.value)
+            except:
+                val = setting.value
+            ret[setting.name] = val
+        return jsonify(**ret)
 
     def post(self):
         args = parser.parse_args()
@@ -65,11 +56,21 @@ class SettingApi(Resource):
     """
     def get(self, name):
         setting = Setting.query.filter_by(name=name).first()
-        return jsonify(dict(name=setting.name, value=setting.value))
+        ret = {}
+        if setting:
+            ret = json.loads(setting.value)
+        return jsonify(**ret)
 
     def patch(self, name):
-        args = parser.parse_args()
+        args = setting_parser.parse_args()
+        value = args['value']
         setting = Setting.query.filter_by(name=name).first()
-        setting.value = args['value']
+        if setting:
+            setting.value = value
+            logging.info("Updating {0} {1}".format(name, value))
+        else:
+            setting = Setting(name=name, value=value)
+            logging.info("Creating {0} {1}".format(name, value))
+        db.session.add(setting)
         db.session.commit()
         return jsonify(dict(value=setting.value))

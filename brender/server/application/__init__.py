@@ -49,9 +49,12 @@ api.add_resource(ManagerListApi, '/managers')
 api.add_resource(ManagerApi, '/managers/<manager_uuid>')
 
 from modules.settings import SettingsListApi
-from modules.settings import RenderSettingsApi
+from modules.settings import ManagersSettingsApi
 api.add_resource(SettingsListApi, '/settings')
-api.add_resource(RenderSettingsApi, '/settings/render')
+api.add_resource(ManagersSettingsApi, '/settings/managers')
+
+from modules.settings import ManagerSettingApi
+api.add_resource(ManagerSettingApi, '/settings/managers/<int:manager_id>/<setting_name>')
 
 from modules.filebrowser import FileBrowserApi
 from modules.filebrowser import FileBrowserRootApi

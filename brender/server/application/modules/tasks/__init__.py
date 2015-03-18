@@ -322,7 +322,7 @@ class TaskApi(Resource):
         current_frame = 0
         percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
         percentage_done = round(percentage_done, 1)
-        rtask = {"id": task.id,
+        task = {"id": task.id,
                 "job_id": task.job_id,
                 "name": task.name,
                 "status": task.status,
@@ -343,8 +343,8 @@ class TaskApi(Resource):
                 "status": task.status,
                 "percentage_done": percentage_done}
 
+        return jsonify(**task)
 
-        return jsonify(rtask)
 
     @staticmethod
     def generate_thumbnails(job, start, end):
