@@ -18,7 +18,7 @@ class task_parser():
 
         if activity:
             activity=json.loads(activity)
-        settings=json.loads(options['settings'])
+        settings=options['settings']
 
         if not activity:
             activity={

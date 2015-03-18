@@ -8,7 +8,7 @@ class task_compiler():
     @staticmethod
     def compile(worker, task, add_file):
 
-        settings=json.loads(task['settings'])
+        settings=task['settings']
 
         """if 'Darwin' in worker.system:
             setting_blender_path = app.config['BLENDER_PATH_OSX']
