@@ -1,4 +1,6 @@
 import datetime
 
 def seconds_to_time(seconds):
-        return str(datetime.timedelta(seconds=seconds))
+    if not type(seconds) in [int, float]:
+        return
+    return str(datetime.timedelta(seconds=seconds))
