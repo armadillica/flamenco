@@ -10,7 +10,7 @@ venv/
 *.log
 *.ropeproject*
 config.py
-/brender/config.py
-/brender/server/render
-/brender/manager/application/static/storage/*
-/brender/server/application/static/storage/*
+/flamenco/config.py
+/flamenco/server/render
+/flamenco/manager/application/static/storage/*
+/flamenco/server/application/static/storage/*
