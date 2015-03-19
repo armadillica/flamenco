@@ -469,7 +469,11 @@ def run_blender_in_thread(options):
         'depend',
     )
     compiler_settings = options['compiler_settings']
-    command_name = str(options['settings']['command_name'])
+    if 'command_name' in options['settings']:
+        command_name = str(options['settings']['command_name'])
+    else:
+        # Backward compatibility
+        command_name = "default"
 
     for cmd, val in enumerate(render_command):
         render_command[cmd] = render_command[cmd].replace(
