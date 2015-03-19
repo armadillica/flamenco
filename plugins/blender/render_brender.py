@@ -202,6 +202,7 @@ class bamToRenderfarm (bpy.types.Operator):
             'filepath': os.path.split(D.filepath)[1],
             'render_settings': "",
             'format': "PNG",
+            'command_name': wm.flamenco_command,
             }
 
         job_properties = {
@@ -277,7 +278,7 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'flamenco_project')
         col.prop(wm, 'flamenco_jobName')
         col.prop(wm, 'flamenco_jobType')
-        # col.prop(wm, 'flamenco_managers')
+        col.prop(wm, 'flamenco_command')
         col.template_list(
             "UI_UL_list",
             "ui_lib_list_prop",
@@ -336,6 +337,10 @@ manager_list = [
     ('1', 'Manager Dell', '', 1),
     ]
 
+command_names = [
+    ('default', 'Default', '', 1),
+    ('multiview', 'Multiview', '', 2),
+    ]
 
 class flamencoManagers(bpy.types.PropertyGroup):
     name = StringProperty(
@@ -407,6 +412,8 @@ def register():
         type=flamencoManagers, name="Managers", description="Flamenco Managers")
     wm.flamenco_managersIndex = IntProperty(
         name="Manager Index", description="Currently selected Flamenco Manager")
+    wm.flamenco_command = EnumProperty(
+        items=command_names, name="Command", description="Flamenco Command")
     wm.flamenco_priority = IntProperty(
         options={'HIDDEN', 'SKIP_SAVE'})
     wm.flamenco_settingsServer = CollectionProperty(

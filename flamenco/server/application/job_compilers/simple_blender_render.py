@@ -13,6 +13,7 @@ class job_compiler():
         task_settings['filepath'] = job_settings['filepath']
         task_settings['render_settings'] = job_settings['render_settings']
         task_settings['format'] = job_settings['format']
+        task_settings['command_name'] = job_settings['command_name']
 
         #project = Project.query.filter_by(id = job.project_id).first()
         #filepath = task_settings['filepath']

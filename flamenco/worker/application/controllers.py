@@ -468,7 +468,8 @@ def run_blender_in_thread(options):
         str(options['job_id']),
         'depend',
     )
-
+    compiler_settings = options['compiler_settings']
+    command_name = str(options['settings']['command_name'])
 
     for cmd, val in enumerate(render_command):
         render_command[cmd] = render_command[cmd].replace(
@@ -477,7 +478,7 @@ def run_blender_in_thread(options):
             "==outputpath==",outputpath)
         render_command[cmd] = render_command[cmd].replace(
             "==command==",
-            options['compiler_settings']['commands']['linux'])
+            compiler_settings['commands'][ command_name ]['linux'])
 
     os.environ['WORKER_DEPENDPATH'] = dependpath
     os.environ['WORKER_OUTPUTPATH'] = outputpath
