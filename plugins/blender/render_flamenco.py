@@ -290,7 +290,7 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'flamenco_priority')
         col.operator("flamenco.send_job")
 
-        col.label(text="Server Settings")
+        """col.label(text="Server Settings")
         col.template_list(
             "UI_UL_list",
             "ui_lib_list_propp",
@@ -325,7 +325,7 @@ class MovPanelControl(bpy.types.Panel):
             if setting.new:
                 col.prop(setting, "name")
             col.prop(setting, "value")
-            col.operator("flamenco.save_manager_setting")
+            col.operator("flamenco.save_manager_setting")"""
 
 
 jobType_list = [
