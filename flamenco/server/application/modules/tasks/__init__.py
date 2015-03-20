@@ -48,13 +48,14 @@ class TaskApi(Resource):
         # TODO attribution of the best manager
 
         manager = JobManagers.query.filter_by(job_id=job_id).first()
+        job = Job.query.get(job_id)
 
         task = Task(job_id=job_id,
             name=name,
             type=task_type,
             settings=json.dumps(task_settings),
             status='ready',
-            priority=50,
+            priority=job.priority,
             manager_id = manager.manager_id,
             log=None,
             time_cost=None,

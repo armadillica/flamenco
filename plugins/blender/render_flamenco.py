@@ -198,7 +198,7 @@ class bamToRenderfarm (bpy.types.Operator):
         job_settings = {
             'frame_start': scn.frame_start,
             'frame_end': scn.frame_end,
-            'chunk_size': 5,
+            'chunk_size': wm.flamenco_chunkSize,
             'filepath': os.path.split(D.filepath)[1],
             'render_settings': "",
             'format': "PNG",
@@ -211,7 +211,8 @@ class bamToRenderfarm (bpy.types.Operator):
             'name': wm.flamenco_jobName,
             'type': wm.flamenco_jobType,
             'managers': wm.flamenco_managers[wm.flamenco_managersIndex].id,
-            'priority': wm.flamenco_priority
+            'priority': wm.flamenco_priority,
+            'start_job': wm.flamenco_startJob,
         }
 
         amaranth_addon = False
@@ -287,7 +288,9 @@ class MovPanelControl(bpy.types.Panel):
             wm,
             "flamenco_managersIndex",
             rows=5)
+        col.prop(wm, 'flamenco_chunkSize')
         col.prop(wm, 'flamenco_priority')
+        col.prop(wm, 'flamenco_startJob')
         col.operator("flamenco.send_job")
 
         """col.label(text="Server Settings")
@@ -408,6 +411,14 @@ def register():
         name="Job Name", default="", options={'HIDDEN', 'SKIP_SAVE'})
     wm.flamenco_jobType = EnumProperty(
         items=jobType_list, name="Job type", description="Flamenco Projects")
+    wm.flamenco_chunkSize = IntProperty(
+        name="Chunk Size",
+        default=5,
+        #hard_min=1,
+        #hard_max=20,
+        soft_min=1,
+        #soft_max=20,
+        options={'HIDDEN', 'SKIP_SAVE'})
     wm.flamenco_managers = CollectionProperty(
         type=flamencoManagers, name="Managers", description="Flamenco Managers")
     wm.flamenco_managersIndex = IntProperty(
@@ -415,6 +426,12 @@ def register():
     wm.flamenco_command = EnumProperty(
         items=command_names, name="Command", description="Flamenco Command")
     wm.flamenco_priority = IntProperty(
+        name="Priority",
+        default=50,
+        soft_min=0,
+        options={'HIDDEN', 'SKIP_SAVE'})
+    wm.flamenco_startJob = BoolProperty(
+        name="Start Job",
         options={'HIDDEN', 'SKIP_SAVE'})
     wm.flamenco_settingsServer = CollectionProperty(
         type=flamencoSettingsServer,

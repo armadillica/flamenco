@@ -60,6 +60,8 @@ class ManagersSettingsApi(Resource):
         managers = Manager.query.all()
         managers_settings = {}
         for manager in managers:
+            if manager.has_virtual_workers:
+                continue
             r = None
             url = 'http://{0}:{1}/settings'.format(
                 manager.ip_address, manager.port)
