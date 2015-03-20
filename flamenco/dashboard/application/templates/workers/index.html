@@ -118,6 +118,8 @@
                 return false;
             };
 
+            console.log(workers);
+
             //console.log(shots);
             workers_ids = workers.join();
 
@@ -130,14 +132,24 @@
                     $.growl('Workers ' + workers_ids + ' ' + status);
                     // redrawing the table to display changes
 
-                    workers.sort();
+                    //workers.sort();
                     var j = 0;
                     for (var i = 0; i < workers.length; i++) {
-                      while (workers[i] < data[j]["DT_RowId"].split('_')[1]) {
-                        j++;
-                      };
+                        //while (workers[i] < data[j]["DT_RowId"].split('_')[1]) {
+                        //  j++;
+                        //};
+                        for (var j = 0; j < data.length; j++) {
+                            id = data[j]["DT_RowId"];
+                            console.log(id);
+                            console.log(workers[i]);
+                            if (id == workers[i]) {
+                                console.log("MATCH");
+                                workersTable.fnUpdate(status, j, 5);
+                            }
+                        }
 
-                      workersTable.fnUpdate(status, j, 5);
+                        //alert(j+' '+5);
+
                     };
 
                     workersTable.fnDraw();
