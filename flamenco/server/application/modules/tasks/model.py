@@ -26,6 +26,8 @@ class Task(db.Model):
     child_id = db.Column(db.Integer())
     parser = db.Column(db.String(64))
     time_cost = db.Column(db.Integer())
+    last_activity = db.Column(db.DateTime())
+
 
     def __repr__(self):
         return '<Task %r>' % self.id

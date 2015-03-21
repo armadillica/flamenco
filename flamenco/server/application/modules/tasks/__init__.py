@@ -18,6 +18,9 @@ from flask.ext.restful import reqparse
 from application import app
 from application import db
 
+from datetime import datetime
+from datetime import timedelta
+
 from application.utils import http_rest_request
 from application.utils import get_file_ext
 
@@ -292,9 +295,17 @@ class TaskApi(Resource):
         if not manager:
             return '', 404
 
+        ten_minutes = datetime.now()-timedelta(minutes=10)
+        tasks = Task.query.filter(Task.last_activity < ten_minutes, Task.status=='running').all()
+        for task in tasks:
+            task.status = 'ready'
+            db.session.add(task)
+            db.session.commit()
+
         tasks = Task.query.filter(
             or_(Task.status == 'ready',
-                Task.status=='failed'),
+                Task.status=='failed',
+                Task.status=='aborted'),
             Task.manager_id==manager.id).with_for_update().\
             order_by(Task.priority.desc(), Task.id.desc())
         task = None
@@ -313,6 +324,7 @@ class TaskApi(Resource):
             return '', 500
 
         task.status = "running"
+        task.last_activity = datetime.now()
         db.session.add(task)
         db.session.commit()
 
@@ -426,6 +438,7 @@ class TaskApi(Resource):
         task.log = log
         task.time_cost = time_cost
         task.activity = activity
+        task.last_activity = datetime.now()
         db.session.add(task)
         db.session.commit()
 

@@ -1,13 +1,13 @@
-from application import db
+"""from application import db
 from urllib import urlopen
 
 class Worker(db.Model):
-    """Workers are the render nodes of the farm
+    ""Workers are the render nodes of the farm
 
     The creation of a Worker in the database happens automatically as soon
     as it connects to the server and its MAC address does not match any
     of the one already present in the database.
-    """
+    ""
     id = db.Column(db.Integer, primary_key=True)
     mac_address = db.Column(db.Integer())
     hostname = db.Column(db.String(120))
@@ -19,4 +19,4 @@ class Worker(db.Model):
     connection = db.Column(db.String(64))
 
     def __repr__(self):
-        return '<Worker %r>' % self.hostname
+        return '<Worker %r>' % self.hostname"""

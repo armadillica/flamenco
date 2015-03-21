@@ -68,6 +68,8 @@ class WorkerListApi(Resource):
                 timediff = datetime.now()-worker.last_activity
             if not timediff or timediff > timedelta(seconds=300):
                 worker.connection = "offline"
+                if worker.status != "disabled":
+                    worker.status = "enabled"
                 db.session.add(worker)
                 db.session.commit()
             workers[worker.hostname] = {
