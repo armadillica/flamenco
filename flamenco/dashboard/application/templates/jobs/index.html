@@ -206,10 +206,10 @@
             var table = $('#jobs').DataTable();
             for (var i = 0; i < data['id'].length; i++) {
               var row = table.row('#job_' + data['id'][i]);
-              row.data()[4] = data['status'];
+              var row_data = row.data();
+              row_data[9] = data['status'];
+              row.data(row_data).draw();
             };
-
-            table.draw();
 
             $.growl('Job ' + job_ids + ' ' + data['status']);
         });
