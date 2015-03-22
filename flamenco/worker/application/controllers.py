@@ -440,8 +440,6 @@ def clear_dir(cleardir):
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
 
-
-
 def run_blender_in_thread(options):
     """We take the command and run it
     """
