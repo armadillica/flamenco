@@ -5,6 +5,15 @@ from flask import Flask
 
 app = Flask(__name__)
 
+
+def clear_dir(cleardir):
+    if os.path.exists(cleardir):
+        for root, dirs, files in os.walk(cleardir, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+
 try:
     import config
     app.config.update(
@@ -14,6 +23,13 @@ try:
 except ImportError:
     app.config['BRENDER_MANAGER'] = 'localhost:7777'
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
+
+tmp_folder = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
+
+if not os.path.exists(tmp_folder):
+    os.mkdir(tmp_folder)
+
+clear_dir(tmp_folder)
 
 from controllers import controller_bp
 app.register_blueprint(controller_bp, url_prefix='/')

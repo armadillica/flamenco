@@ -168,7 +168,9 @@ def worker_loop():
                 'Cant connect with the Manager {0}'.format(app.config['BRENDER_MANAGER']))
             CONNECTIVITY = False
 
-        jobpath = os.path.join(app.config['TMP_FOLDER'], str(task['job_id']))
+        jobpath = os.path.join(app.config['TMP_FOLDER'],
+                               'flamenco-worker',
+                               str(task['job_id']))
         if not os.path.exists(jobpath):
             os.mkdir(jobpath)
 
@@ -345,7 +347,9 @@ def _parse_output(tmp_buffer, options):
     #    # action.append('stop')
 
     LOG = "{0}{1}".format(LOG, tmp_buffer)
-    logpath = os.path.join(app.config['TMP_FOLDER'], "{0}.log".format(task_id))
+    logpath = os.path.join(app.config['TMP_FOLDER'],
+                           'flamenco-worker',
+                           "{0}.log".format(task_id))
     f = open(logpath,"a")
     f.write(tmp_buffer)
     f.close()
@@ -449,7 +453,7 @@ def run_blender_in_thread(options):
 
     render_command = json.loads(options['task_command'])
 
-    workerstorage = app.config['TMP_FOLDER']
+    workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
     tmppath = os.path.join(
         workerstorage, str(options['job_id']))
     outpath = os.path.join(tmppath, 'output')
@@ -537,7 +541,7 @@ def run_blender_in_thread(options):
         time_cost = 0
         logging.error("time_init is None")
 
-    workerstorage = app.config['TMP_FOLDER']
+    workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
     taskpath = os.path.join(
         workerstorage,
         str(options['job_id']),
@@ -636,7 +640,7 @@ def execute_task(task, files):
         'compiler_settings': task['compiler_settings'],
     }
 
-    workerstorage = app.config['TMP_FOLDER']
+    workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
     taskpath = os.path.join(workerstorage, str(options['job_id']))
     zippath = os.path.join(taskpath, str(options['job_id']))
 
@@ -805,7 +809,7 @@ def run_info():
 def check_file(job_id):
     """Check if the Workers already have the file
     """
-    workerstorage = app.config['TMP_FOLDER']
+    workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
     jobpath = os.path.join(workerstorage, str(job_id))
     filepath = os.path.join(jobpath, "jobfile_{0}.zip".format(job_id))
     r = json.dumps({'file': os.path.isfile(filepath)})

@@ -51,7 +51,9 @@ class task_parser():
 
         if saved_file:
             file_name = "thumbnail_%s.png" % options['task_id']
-            output_path = os.path.join(app.config['TMP_FOLDER'], file_name)
+            output_path = os.path.join(app.config['TMP_FOLDER'],
+                                       'flamenco-worker',
+                                       file_name)
             print('Saving {0} to {1}'.format(file_name, output_path))
             tmberror=False
             try:
