@@ -312,6 +312,8 @@ class TaskApi(Resource):
 
         # If other workers are rendering the same task kill them
         others = Worker.query.filter(
+            Worker.status=='enabled',
+            Worker.connection=='online',
             Worker.id!=worker.id,
             Worker.current_task==worker.current_task).count()
 
