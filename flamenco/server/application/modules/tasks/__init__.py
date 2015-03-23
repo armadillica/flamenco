@@ -238,7 +238,7 @@ class TaskApi(Resource):
 
     @staticmethod
     def stop_task(task_ids):
-        """Stop a single task
+        """Stop a list of tasks
         """
         print ('Stoping tasks %s' % task_ids)
         managers = {}
@@ -264,7 +264,7 @@ class TaskApi(Resource):
             task.status = 'ready'
             db.session.add(task)
             db.session.commit()
-        print "Task %d stopped" % task_id
+        #print "Task %d stopped" % task_id
 
     @staticmethod
     def stop_tasks(job_id):
@@ -298,6 +298,9 @@ class TaskApi(Resource):
         ten_minutes = datetime.now()-timedelta(minutes=10)
         tasks = Task.query.filter(Task.last_activity < ten_minutes, Task.status=='running').all()
         for task in tasks:
+            manager_count = Manager.query.filter_by(id=task.manager_id, has_virtual_workers=0).count()
+            if not manager_count > 0:
+                continue
             task.status = 'ready'
             db.session.add(task)
             db.session.commit()
@@ -321,7 +324,7 @@ class TaskApi(Resource):
             failing_tasks = Task.query.filter(
                 Task.job_id==t.job_id, Task.status=='failed').count()
             if failing_tasks>3:
-                job = Job.query.filter_by(id=t.job_id).one()
+                job = Job.query.get(id=t.job_id)
                 job.status='failed'
                 db.session.add(job)
                 db.session.commit()
