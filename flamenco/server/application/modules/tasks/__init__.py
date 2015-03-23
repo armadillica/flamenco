@@ -304,7 +304,6 @@ class TaskApi(Resource):
 
         tasks = Task.query.filter(
             or_(Task.status == 'ready',
-                Task.status=='failed',
                 Task.status=='aborted'),
             Task.manager_id==manager.id).with_for_update().\
             order_by(Task.priority.desc(), Task.id.desc())
@@ -313,9 +312,19 @@ class TaskApi(Resource):
             job = Job.query.filter_by(id=t.job_id, status='running').count()
             if not job>0:
                 continue
+            # All the parents are finished?
             unfinished_parents = Task.query.filter(
                 Task.child_id==t.id, Task.status!='finished').count()
             if unfinished_parents>0:
+                continue
+            # Are the tasks failing?
+            failing_tasks = Task.query.filter(
+                Task.job_id==t.job_id, Task.status=='failed').count()
+            if failing_tasks>3:
+                job = Job.query.filter_by(id=t.job_id).one()
+                job.status='failed'
+                db.session.add(job)
+                db.session.commit()
                 continue
             task = t
             break
