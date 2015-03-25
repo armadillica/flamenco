@@ -325,7 +325,7 @@ class TaskApi(Resource):
             failing_tasks = Task.query.filter(
                 Task.job_id==t.job_id, Task.status=='failed').count()
             if failing_tasks>3:
-                job = Job.query.get(id=t.job_id)
+                job = Job.query.get(t.job_id)
                 job.status='failed'
                 db.session.add(job)
                 db.session.commit()
