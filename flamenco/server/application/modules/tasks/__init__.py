@@ -250,17 +250,18 @@ class TaskApi(Resource):
             managers[manager.id].append(task_id)
 
         for man in managers:
-            params = {'tasks': managers[man]}
-            try:
-                delete_task = http_rest_request(
-                    manager.host,
-                    '/tasks',
-                    'delete',
-                    params=params)
-            except:
-                logging.info("Error deleting task from Manager")
-                return
-                pass
+            if managers[man].has_virtual_workers == 0:
+                params = {'tasks': managers[man]}
+                try:
+                    delete_task = http_rest_request(
+                        manager.host,
+                        '/tasks',
+                        'delete',
+                        params=params)
+                except:
+                    logging.info("Error deleting task from Manager")
+                    return
+                    pass
             task.status = 'ready'
             db.session.add(task)
             db.session.commit()
