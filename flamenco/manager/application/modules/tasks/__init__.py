@@ -380,7 +380,9 @@ class TaskApi(Resource):
                     'taskfile.zip', open(zippath, 'rb'), 'application/zip'))]
 
         params = { 'id' : task_id, 'status': args['status'], 'time_cost' : args['time_cost'], 'log' : args['log'], 'activity' : args['activity'] }
-        http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params, files=jobfile)
+        r = http_request(app.config['BRENDER_SERVER'], '/tasks', 'post', params=params, files=jobfile)
+        if r[1]== 403:
+            return '', 403
 
         return '', 204
 

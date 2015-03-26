@@ -247,21 +247,21 @@ class TaskApi(Resource):
             manager = Manager.query.filter_by(id = task.manager_id).first()
             if not manager.id in managers:
                 managers[manager.id] = []
-            managers[manager.id].append(task_id)
+            if manager.has_virtual_workers == 0:
+                managers[manager.id].append(task_id)
 
         for man in managers:
-            if managers[man].has_virtual_workers == 0:
-                params = {'tasks': managers[man]}
-                try:
-                    delete_task = http_rest_request(
-                        manager.host,
-                        '/tasks',
-                        'delete',
-                        params=params)
-                except:
-                    logging.info("Error deleting task from Manager")
-                    return
-                    pass
+            params = {'tasks': managers[man]}
+            try:
+                delete_task = http_rest_request(
+                    manager.host,
+                    '/tasks',
+                    'delete',
+                    params=params)
+            except:
+                logging.info("Error deleting task from Manager")
+                return
+                pass
             task.status = 'ready'
             db.session.add(task)
             db.session.commit()
@@ -413,6 +413,12 @@ class TaskApi(Resource):
         if job is None:
             return '', 404
 
+        if status=="running" and task.status!="running":
+            return '', 403
+
+        if job.status!="running" and status!="aborted":
+            return '', 403
+
         serverstorage = app.config['SERVER_STORAGE']
         projectpath = os.path.join(serverstorage, str(job.project_id))
 
@@ -457,7 +463,7 @@ class TaskApi(Resource):
 
         if status != status_old:
             job = Job.query.get(task.job_id)
-            manager = Manager.query.get(task.manager_id)
+            # manager = Manager.query.get(task.manager_id)
             logging.info('Task {0} changed from {1} to {2}'.format(task_id, status_old, status))
 
             # Check if all tasks have been completed
