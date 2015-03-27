@@ -7,30 +7,30 @@ manager = Manager(app)
 
 import os
 import time
-from threading import Thread
-from threading import Timer
+# from threading import Thread
+# from threading import Timer
 from application import controllers
 
 
 @manager.command
 @manager.option('-p', '--port', help='The port')
 def runserver(port_number=None):
-    global LOOP_THREAD
-    try:
-        from application import config
-        PORT = config.Config.PORT
-        HOST = config.Config.HOST
-        DEBUG = config.Config.DEBUG
+    # global LOOP_THREAD
+    # try:
+    #     from application import config
+    #     PORT = config.Config.PORT
+    #     HOST = config.Config.HOST
+    #     DEBUG = config.Config.DEBUG
 
-    except ImportError:
-        DEBUG = False
-        PORT = 5000
-        HOST = '0.0.0.0'
+    # except ImportError:
+    #     DEBUG = False
+    #     PORT = 5000
+    #     HOST = '0.0.0.0'
 
     # Override port value (no matter if set in the config) if specified
     # at runtime with the --port argument.
-    if port_number:
-        PORT = int(port_number)
+    # if port_number:
+    #     PORT = int(port_number)
 
 
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
@@ -41,8 +41,6 @@ def runserver(port_number=None):
 | _ | |/ _` | '_ ` _ \ / _ \ '_ \ / __/ _ \\
 | | | | (_| | | | | | |  __/ | | | (_| (_) |
 |_| |_|\__,_|_| |_| |_|\___|_| |_|\___\___/
-    _  __ |  _  __
-\^/(_) |  |<(/_ |
 
 """)
 

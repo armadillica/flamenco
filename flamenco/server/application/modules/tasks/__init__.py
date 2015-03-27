@@ -334,7 +334,7 @@ class TaskApi(Resource):
             break
 
         if not task:
-            return '', 500
+            return '', 404
 
         task.status = "running"
         task.last_activity = datetime.now()

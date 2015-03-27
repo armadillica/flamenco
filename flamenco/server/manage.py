@@ -30,7 +30,7 @@ def runserver():
         print("Automatic DB Upgrade")
         print("Press Ctrl+C when finished")
         upgrade()
-        print("Upgrade completed")
+        print("Upgrade completed. Press Ctrl+C and runserver again.")
 
     try:
         from application import config

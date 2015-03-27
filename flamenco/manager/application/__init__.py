@@ -65,7 +65,7 @@ except ImportError:
     logging.error("No config.py file found, importing config from Server.")
 
     app.config['BRENDER_SERVER'] = 'localhost:9999'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../manager.sqlite')
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
     app.config['THUMBNAIL_EXTENSIONS'] = set(['png'])
     app.config['MANAGER_STORAGE'] = '{0}/static/storage'.format(

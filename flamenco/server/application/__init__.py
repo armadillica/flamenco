@@ -24,7 +24,7 @@ try:
 except ImportError:
     #from modules.managers.model import Manager
     app.config.update(
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../brender.sqlite'),
+        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../server.sqlite'),
         TMP_FOLDER=tempfile.gettempdir(),
         THUMBNAIL_EXTENSIONS=set(['png']),
         SERVER_STORAGE = '{0}/static/storage'.format(

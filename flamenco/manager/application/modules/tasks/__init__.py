@@ -118,8 +118,7 @@ class TaskCompiledApi(Resource):
         db.session.commit()
 
         tasks = TaskManagementApi().get()
-        print (tasks)
-        if tasks[0] == ('', 500):
+        if tasks[0] == ('', 404):
             return '', 400
         if not len(tasks) or not len(tasks[0]):
             return '', 400

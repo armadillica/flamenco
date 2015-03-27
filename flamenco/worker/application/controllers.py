@@ -60,7 +60,7 @@ def http_request(command, values):
         CONNECTIVITY = False
         logging.error("Could not connect to manager to register")
 
-def register_worker(port):
+def register_worker(port=7777):
     """This is going to be an HTTP request to the server with all the info
     for registering the render node.
     """
@@ -130,9 +130,9 @@ def getZipFile(url, tmpfile, zippath, force=False):
 global LOOP_THREAD
 def worker_loop():
     print ("Worker Loop")
-    from application import config
+    #from application import config
     print ("Registering")
-    register_worker(config.Config.PORT)
+    register_worker()
     print ("Quering for a new task")
     manager_url = "http://{0}/tasks/compiled/0".format(
         app.config['BRENDER_MANAGER'])
