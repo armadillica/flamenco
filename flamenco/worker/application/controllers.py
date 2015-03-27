@@ -26,6 +26,7 @@ from flask import Blueprint
 from uuid import getnode as get_mac_address
 
 from application import app
+from application import clean_dir
 from requests.exceptions import ConnectionError
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
@@ -140,7 +141,6 @@ def worker_loop():
     except KeyboardInterrupt:
         return
 
-
     if rtask.status_code==200:
         try:
             files = rtask.json()['files']
@@ -167,6 +167,10 @@ def worker_loop():
             logging.error(
                 'Cant connect with the Manager {0}'.format(app.config['BRENDER_MANAGER']))
             CONNECTIVITY = False
+
+
+        tmp_folder = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
+        clean_dir(tmp_folder, task['job_id'])
 
         jobpath = os.path.join(app.config['TMP_FOLDER'],
                                'flamenco-worker',

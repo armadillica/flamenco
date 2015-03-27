@@ -1,18 +1,21 @@
 import os
 import tempfile
-from threading import Thread
+# from threading import Thread
 from flask import Flask
-
 app = Flask(__name__)
 
-
-def clear_dir(cleardir):
+def clean_dir(cleardir, keep_job=None):
     if os.path.exists(cleardir):
         for root, dirs, files in os.walk(cleardir, topdown=False):
             for name in files:
+                if name=="taskfile_{0}.zip".format(keep_job):
+                    continue
                 os.remove(os.path.join(root, name))
             for name in dirs:
+                if name==str(keep_job):
+                    continue
                 os.rmdir(os.path.join(root, name))
+
 
 try:
     import config
@@ -25,11 +28,9 @@ except ImportError:
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
 
 tmp_folder = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
-
 if not os.path.exists(tmp_folder):
     os.mkdir(tmp_folder)
-
-clear_dir(tmp_folder)
+clean_dir(tmp_folder)
 
 from controllers import controller_bp
 app.register_blueprint(controller_bp, url_prefix='/')
