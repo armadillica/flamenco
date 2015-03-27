@@ -10,6 +10,7 @@ from os.path import join
 from os.path import exists
 from shutil import rmtree
 from functools import partial
+from sqlalchemy import or_
 from zipfile import ZipFile
 
 from flask import jsonify
@@ -152,12 +153,13 @@ class JobListApi(Resource):
     def start(self, job_id):
         job = Job.query.get(job_id)
         if job:
-            if job.status not in ['running', 'completed', 'failed']:
+            if job.status not in ['running', 'completed']:
                 job.status = 'running'
                 db.session.add(job)
 
                 db.session.query(Task).filter(Task.job_id == job_id)\
-                        .filter(Task.status == 'aborted')\
+                        .filter(or_(Task.status == 'aborted',
+                                Task.status == 'failed'))\
                         .update({'status' : 'ready'})
                 db.session.commit()
         else:
@@ -553,7 +555,6 @@ class JobFileOutputApi(Resource):
         jobfile = os.path.join(jobpath, zname)
 
         with ZipFile(jobfile, 'w') as jobzip:
-            f = []
             for dirpath, dirnames, filenames in os.walk(zippath):
                 for fname in filenames:
                     filepath = os.path.join(dirpath, fname)
