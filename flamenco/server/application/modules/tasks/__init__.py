@@ -5,6 +5,8 @@ from PIL import Image
 from platform import system
 from threading import Thread
 from sqlalchemy import func
+from sqlalchemy import or_
+from decimal import Decimal
 from zipfile import ZipFile
 
 from flask import abort
@@ -285,8 +287,6 @@ class TaskApi(Resource):
 
 
     def get(self):
-        from sqlalchemy import or_
-        from decimal import Decimal
         tasks = {}
         percentage_done = 0
 
