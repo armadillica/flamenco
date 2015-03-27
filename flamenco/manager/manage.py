@@ -3,6 +3,7 @@ import os
 import logging
 import socket
 import requests
+import json
 from threading import Thread
 
 from flask.ext.script import Manager
@@ -13,7 +14,10 @@ from sqlalchemy import create_engine
 from alembic.migration import MigrationContext
 
 from application import app
+from application import db
 from application import register_manager
+
+from application.modules.settings.model import Setting
 
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
@@ -48,6 +52,25 @@ def runserver():
         VIRTUAL_WORKERS = False
         HOSTNAME = socket.gethostname()
 
+    # TODO: search for the task_compilers and ask for required commands accordigly
+    render_config = Setting.query.filter_by(name='simple_blender_render').first()
+    if not render_config:
+        configuration = {'commands' : {
+            'default' : {
+                'Linux' : '',
+                'Darwin' : '',
+                'Windows' : ''
+            }
+        }}
+        configuration['commands']['default']['Linux'] = raw_input('Linux path: ')
+        configuration['commands']['default']['Darwin'] = raw_input('OSX path: ')
+        configuration['commands']['default']['Windows'] = raw_input('Windows path: ')
+
+    render_config = Setting(
+        name='simple_blender_render',
+        value=json.dumps(configuration))
+    db.session.add(render_config)
+    db.session.commit()
 
     # Register the manager to the server
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':

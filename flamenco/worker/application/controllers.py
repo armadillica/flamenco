@@ -31,13 +31,15 @@ from requests.exceptions import ConnectionError
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
-SYSTEM = platform.system() + ' ' + platform.release()
+PLATFORM = platform.system()
+SYSTEM = PLATFORM + ' ' + platform.release()
 PROCESS = None
 LOCK = Lock()
 ACTIVITY = None
 LOG = None
 TIME_INIT = None
 CONNECTIVITY = False
+
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
@@ -481,6 +483,8 @@ def run_blender_in_thread(options):
         # Backward compatibility
         command_name = "default"
 
+
+
     for cmd, val in enumerate(render_command):
         render_command[cmd] = render_command[cmd].replace(
             "==jobpath==",jobpath)
@@ -488,7 +492,7 @@ def run_blender_in_thread(options):
             "==outputpath==",outputpath)
         render_command[cmd] = render_command[cmd].replace(
             "==command==",
-            compiler_settings['commands'][ command_name ]['linux'])
+            compiler_settings['commands'][command_name][PLATFORM])
 
     os.environ['WORKER_DEPENDPATH'] = dependpath
     os.environ['WORKER_OUTPUTPATH'] = outputpath
