@@ -3,7 +3,6 @@ import urllib
 import time
 import subprocess
 import platform
-import psutil
 import os
 import json
 import select
@@ -12,7 +11,6 @@ import logging
 from zipfile import ZipFile
 from zipfile import BadZipfile
 from zipfile import zlib
-import gocept.cache.method
 from threading import Thread
 from threading import Lock
 from threading import Timer
@@ -407,36 +405,6 @@ def _interactiveReadProcess(process, options):
 
     return (process.returncode, full_buffer)
 
-@app.route('/')
-def index():
-    return redirect(url_for('info'))
-
-@app.route('/info')
-def info():
-    global PROCESS
-    global ACTIVITY
-    global LOG
-    global TIME_INIT
-    global CONNECTIVITY
-
-    if PROCESS:
-        status = 'rendering'
-    else:
-        status = 'enabled'
-    if not CONNECTIVITY:
-        status = 'error'
-
-    time_cost=None
-    if TIME_INIT:
-        time_cost=int(time.time())-TIME_INIT
-
-    return jsonify(mac_address=MAC_ADDRESS,
-                   hostname=HOSTNAME,
-                   system=SYSTEM,
-                   activity=ACTIVITY,
-                   log=LOG,
-                   time_cost=time_cost,
-                   status=status)
 
 def clear_dir(cleardir):
     if os.path.exists(cleardir):
@@ -445,6 +413,7 @@ def clear_dir(cleardir):
                 os.remove(os.path.join(root, name))
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
+
 
 def run_blender_in_thread(options):
     """We take the command and run it
@@ -629,7 +598,6 @@ def extract_file(filename, taskpath, zippath, zipname):
             logging.error("File is not zip {0}".format(e))
 
 
-#@app.route('/execute_task', methods=['POST'])
 def execute_task(task, files):
     global PROCESS
     #global LOCK
@@ -688,136 +656,4 @@ def execute_task(task, files):
     #LOCK.release()
     return json.dumps(dict(pid=0))
 
-@app.route('/pid')
-def get_pid():
-    global PROCESS
-    response = dict(pid=PROCESS.pid)
-    return jsonify(response)
-
-@app.route('/command', methods=['HEAD'])
-def get_command():
-    # TODO Return the running command
-    return '', 503
-
-@app.route('/kill', methods=['DELETE'])
-def update():
-    global PROCESS
-    global LOCK
-    if not PROCESS:
-        print ("No PROCESS")
-        return '',204
-
-    print ('killing {0}'.format(PROCESS.pid))
-    if platform.system() is 'Windows':
-        os.kill(PROCESS.pid, CTRL_C_EVENT)
-    else:
-        os.kill(PROCESS.pid, SIGKILL)
-
-    #LOCK.acquire()
-    #PROCESS = None
-    #LOCK.release()
-    return '', 204
-
-def online_stats(system_stat):
-    '''
-    if 'blender_cpu' in [system_stat]:
-        try:
-            find_blender_process = [x for x in psutil.process_iter() if x.name == 'blender']
-            cpu = []
-            if find_blender_process:
-                for process in find_blender_process:
-                    cpu.append(process.get_cpu_percent())
-                    return round(sum(cpu), 2)
-            else:
-                return int(0)
-        except psutil._error.NoSuchProcess:
-            return int(0)
-    if 'blender_mem' in [system_stat]:
-        try:
-            find_blender_process = [x for x in psutil.get_process_list() if x.name == 'blender']
-            mem = []
-            if find_blender_process:
-                for process in find_blender_process:
-                    mem.append(process.get_memory_percent())
-                    return round(sum(mem), 2)
-            else:
-                return int(0)
-        except psutil._error.NoSuchProcess:
-            return int(0)
-    '''
-
-    if 'system_cpu' in [system_stat]:
-        try:
-            cputimes = psutil.cpu_percent(interval=1)
-            return cputimes
-        except:
-            return int(0)
-    if 'system_mem' in [system_stat]:
-        mem_percent = psutil.phymem_usage().percent
-        return mem_percent
-    if 'system_disk' in [system_stat]:
-        disk_percent = psutil.disk_usage('/').percent
-        return disk_percent
-
-def offline_stats(offline_stat):
-    if 'number_cpu' in [offline_stat]:
-        return psutil.NUM_CPUS
-
-    if 'arch' in [offline_stat]:
-        return platform.machine()
-
-@gocept.cache.method.Memoize(5)
-def get_system_load_frequent():
-    if platform.system() is not "Windows":
-        load = os.getloadavg()
-        return ({
-            "load_average": ({
-                "1min": round(load[0], 2),
-                "5min": round(load[1], 2),
-                "15min": round(load[2], 2)
-                }),
-            "worker_cpu_percent": online_stats('system_cpu'),
-            #'worker_blender_cpu_usage': online_stats('blender_cpu')
-            })
-    else:
-        # os.getloadavg does not exists on Windows
-        return ({
-            "load_average":({
-                "1min": '?',
-                "5min": '?',
-                "15min": '?'
-            }),
-           "worker_cpu_percent": online_stats('system_cpu')
-        })
-
-@gocept.cache.method.Memoize(120)
-def get_system_load_less_frequent():
-    return ({
-        "worker_num_cpus": offline_stats('number_cpu'),
-        "worker_architecture": offline_stats('arch'),
-        "worker_mem_percent": online_stats('system_mem'),
-        "worker_disk_percent": online_stats('system_disk'),
-        # "worker_blender_mem_usage": online_stats('blender_mem')
-        })
-
-@app.route('/run_info')
-def run_info():
-    print('[Debug] get_system_load for %s') % HOSTNAME
-    return jsonify(mac_address=MAC_ADDRESS,
-                   hostname=HOSTNAME,
-                   system=SYSTEM,
-                   update_frequent=get_system_load_frequent(),
-                   update_less_frequent=get_system_load_less_frequent()
-                   )
-
-
-@app.route('/tasks/file/<int:job_id>')
-def check_file(job_id):
-    """Check if the Workers already have the file
-    """
-    workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
-    jobpath = os.path.join(workerstorage, str(job_id))
-    filepath = os.path.join(jobpath, "jobfile_{0}.zip".format(job_id))
-    r = json.dumps({'file': os.path.isfile(filepath)})
-    return r, 200
 
