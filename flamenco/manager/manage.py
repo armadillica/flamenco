@@ -66,11 +66,11 @@ def runserver():
         configuration['commands']['default']['Darwin'] = raw_input('OSX path: ')
         configuration['commands']['default']['Windows'] = raw_input('Windows path: ')
 
-    render_config = Setting(
-        name='simple_blender_render',
-        value=json.dumps(configuration))
-    db.session.add(render_config)
-    db.session.commit()
+        render_config = Setting(
+            name='simple_blender_render',
+            value=json.dumps(configuration))
+        db.session.add(render_config)
+        db.session.commit()
 
     # Register the manager to the server
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
