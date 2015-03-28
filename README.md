@@ -2,7 +2,7 @@
 
 Development repo for Flamenco 2.0 (originally known as brender). Flamenco is a Free and Open Source Job distribution system for render farms.
 
-Warning: we are going to stay in alpha stage until the end of February 2015.
+Warning: currently Flamenco is in beta stage, testing welcome!
 
 ## Developer installation
 
@@ -41,7 +41,7 @@ The project has been developed for `python2.7`. We will move to `python3` eventu
 
 On Unix systems, to install python dependencies, you may need to install `python-dev` package.
 
-On OSX, in order to prevent some warnings, you should first run:
+On OSX, in order to prevent some warnings, you might need to run:
 
 ```
 $ ARCHFLAGS=-Wno-error=unused-command-line-argument-hard-error-in-future
@@ -53,33 +53,24 @@ Then we just install all the packages required (run this on all systems)
 $ pip install -r requirements.txt
 ```
 
-Databases are managed by `MySQL` or `SQLite`.
+Databases are managed by `MySQL` or `SQLite` (for testing only, don't use in production).
 
-Psutil is needed for gathering system usage/performance stats on the worker. Ideally psutil is needed only on the workers.
-
-## Initialize Flamenco
-First you need to initialize the server and manager's databases:
-
-```
-$ cd server; ./manage.py db upgrade
-$ cd manager; ./manage.py db upgrade
-
-```
 
 ## Running Flamenco
-It's pretty simple. Move into each node folder and run - in four different terminals:
+It's pretty simple. Move into each folder (dashboard, server, manager or worker) and run:
 
 ```
-$ ./manage.py runserver # will start the node (dashboard, server, manager or worker according to the current folder)
+$ ./manage.py runserver # will start the different components
 ```
+
+When running this command for the Manager for the first time, you will be prompted for some configuration parameters.
 
 If you now visit `http://localhost:8888` with your web browser you should see the dashboard!
 
-It is also possible to configure the different applications. You may find a `config.py.example`, so you can rename
-it to `config.py` and edit it before run the application.
+It is also possible to configure the different applications. You may find a `config.py.example`, so you can rename it to `config.py` and edit it before run the application.
 
 ## Architecture
-At the moment we are still using the original `brender` folder, which will be renamed soon. The important subfolders are:
+The important subfolders are:
 
 * `server` containing the server files
 * `worker` containing the worker files (render nodes)
@@ -87,9 +78,8 @@ At the moment we are still using the original `brender` folder, which will be re
 * `dashboard` containing the dashboard (web interface to talk to the server)
 
 This structure explains also the naming conventions adopted to distinguish the different parts of Flamenco.
-Each folder contains an individual Flask application. Server, Manager and Worker exchange JSON formatted messages between each other via a Rest API.
+Each folder contains an individual Flask application (except for the worker). Server, Manager and Worker exchange JSON formatted messages between each other via a REST API.
 Dashboard connects to the Server only and accepts connections from clients (Browsers).
-
 
 
 ### About the web interface
@@ -100,11 +90,9 @@ Frameworks and tools used by the interface are:
 * DataTables
 
 ### User and Developer documentation
-Most of this document will be migrated into the `docs` folder, alongside with the user documentation.
 
-The documentation is made with Sphinx and uses the readthedocs.org theme, so make sure you have it installed. Instructions are available here:
+The documentation is built with Sphinx and uses the readthedocs.org theme, so make sure you have it installed. Instructions are available here:
 
 `https://github.com/snide/sphinx_rtd_theme`
 
 The `_build` contains the locally compiled documentation, which does not need to be committed to the branch.
-
