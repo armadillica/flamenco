@@ -4,11 +4,12 @@ from application import db
 from application.modules.managers.model import Manager
 
 class Job(db.Model):
-    """A Shot is one of the basic units of brender
+    """A Job is the basic work unit of Flamenco
 
-    The creation of a shot can happen in different ways:
-    * within brender (using a shot creation form)
+    The creation of a job can happen in different ways:
+    * within Flamenco (using a shot creation form)
     * via a query from an external software (e.g. Attract)
+    * withing Blender itself
     """
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
