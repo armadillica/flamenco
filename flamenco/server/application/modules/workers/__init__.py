@@ -4,7 +4,6 @@ from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from application.utils import list_integers_string
 from application.utils import http_rest_request
-#from application.modules.workers.model import Worker
 from application.modules.managers.model import Manager
 
 parser = reqparse.RequestParser()
