@@ -39,19 +39,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('ip_address', 'port', name='connection_uix')
     )
-    op.create_table('worker',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('mac_address', sa.Integer(), nullable=True),
-    sa.Column('hostname', sa.String(length=120), nullable=True),
-    sa.Column('status', sa.String(length=60), nullable=True),
-    sa.Column('warning', sa.Boolean(), nullable=True),
-    sa.Column('config', sa.String(length=120), nullable=True),
-    sa.Column('system', sa.String(length=120), nullable=True),
-    sa.Column('ip_address', sa.String(length=32), nullable=True),
-    sa.Column('connection', sa.String(length=64), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('ip_address')
-    )
     op.create_table('job',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('project_id', sa.Integer(), nullable=True),
@@ -85,7 +72,6 @@ def upgrade():
 def downgrade():
     op.drop_table('task')
     op.drop_table('job')
-    op.drop_table('worker')
     op.drop_table('manager')
     op.drop_table('project')
     op.drop_table('setting')
