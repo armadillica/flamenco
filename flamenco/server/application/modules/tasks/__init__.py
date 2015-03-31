@@ -285,93 +285,6 @@ class TaskApi(Resource):
             tasklist.append(t.id)
         TaskApi.stop_task(tasklist)
 
-
-    def get(self):
-        tasks = {}
-        percentage_done = 0
-
-        ip_address = request.remote_addr
-        manager = Manager.query.filter_by(ip_address=ip_address).first()
-
-        if not manager:
-            return '', 404
-
-        ten_minutes = datetime.now()-timedelta(minutes=10)
-        tasks = Task.query.filter(Task.last_activity < ten_minutes, Task.status=='running').all()
-        for task in tasks:
-            manager_count = Manager.query.filter_by(id=task.manager_id, has_virtual_workers=0).count()
-            if not manager_count > 0:
-                continue
-            task.status = 'ready'
-            db.session.add(task)
-            db.session.commit()
-
-        tasks = Task.query.filter(
-            or_(Task.status == 'ready',
-                Task.status=='aborted'),
-            Task.manager_id==manager.id).with_for_update().\
-            order_by(Task.priority.desc(), Task.id.asc())
-        task = None
-        for t in tasks:
-            job = Job.query.filter_by(id=t.job_id, status='running').count()
-            if not job>0:
-                continue
-            # All the parents are finished?
-            unfinished_parents = Task.query.filter(
-                Task.child_id==t.id, Task.status!='finished').count()
-            if unfinished_parents>0:
-                continue
-            # Are the tasks failing?
-            failing_tasks = Task.query.filter(
-                Task.job_id==t.job_id, Task.status=='failed').count()
-            if failing_tasks>3:
-                job = Job.query.get(t.job_id)
-                job.status='failed'
-                db.session.add(job)
-                db.session.commit()
-                continue
-            task = t
-            break
-
-        if not task:
-            return '', 404
-
-        task.status = "running"
-        task.last_activity = datetime.now()
-        db.session.add(task)
-        db.session.commit()
-
-        job = Job.query.get(task.job_id)
-
-        #tasks = {}
-        frame_count = 1
-        current_frame = 0
-        percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
-        percentage_done = round(percentage_done, 1)
-        task = {"id": task.id,
-                "job_id": task.job_id,
-                "name": task.name,
-                "status": task.status,
-                "type": task.type,
-                "settings": json.loads(task.settings),
-                "log": task.log,
-                "activity": task.activity,
-                "manager_id": task.manager_id,
-                "priority": task.priority,
-                "child_id": task.child_id,
-                "parser": task.parser,
-                "time_cost": task.time_cost,
-                "project_id": job.project_id,
-
-                "chunk_start": 0,
-                "chunk_end": 0,
-                "current_frame": 0,
-                "status": task.status,
-                "percentage_done": percentage_done}
-
-        return jsonify(**task)
-
-
     @staticmethod
     def generate_thumbnails(job, start, end):
         # FIXME problem with PIL (string index out of range)
@@ -398,7 +311,7 @@ class TaskApi(Resource):
                 thumbnail_path = os.path.join(thumbnail_dir, '{0:05d}'.format(i) + '.thumb')
                 img.save(thumbnail_path, job.format)
 
-    def post(self):
+    def post(self, task_id):
         args = parser.parse_args()
         task_id = args['id']
         status = args['status'].lower()
@@ -478,6 +391,107 @@ class TaskApi(Resource):
                 db.session.commit()
 
         return '', 204
+
+
+class TaskListApi(Resource):
+    def get(self):
+        tasks = Task.query.all()
+        return jsonify(tasks='List of tasks here')
+
+
+class TaskGeneratorApi(Resource):
+    def get(self):
+        """Upon request from a manager, picks the first task available and returns
+        it in JSON format.
+        """
+        tasks = {}
+        percentage_done = 0
+
+        ip_address = request.remote_addr
+        manager = Manager.query.filter_by(ip_address=ip_address).first()
+
+        if not manager:
+            return '', 404
+
+        ten_minutes = datetime.now() - timedelta(minutes=10)
+        tasks = Task.query\
+            .filter(Task.last_activity < ten_minutes, Task.status == 'running')\
+            .all()
+        for task in tasks:
+            manager_count = Manager.query\
+                .filter_by(id=task.manager_id, has_virtual_workers=0)\
+                .count()
+            if not manager_count > 0:
+                continue
+            task.status = 'ready'
+            db.session.add(task)
+            db.session.commit()
+
+        tasks = Task.query.filter(
+            or_(Task.status == 'ready',
+                Task.status=='aborted'),
+            Task.manager_id == manager.id).with_for_update().\
+            order_by(Task.priority.desc(), Task.id.asc())
+        task = None
+        for t in tasks:
+            job = Job.query.filter_by(id=t.job_id, status='running').count()
+            if not job > 0:
+                continue
+            # All the parents are finished?
+            unfinished_parents = Task.query\
+                .filter(Task.child_id == t.id, Task.status != 'finished')\
+                .count()
+            if unfinished_parents > 0:
+                continue
+            # Are the tasks failing?
+            failing_tasks = Task.query\
+                .filter(Task.job_id == t.job_id, Task.status == 'failed')\
+                .count()
+            if failing_tasks > 3:
+                job = Job.query.get(t.job_id)
+                job.status = 'failed'
+                db.session.add(job)
+                db.session.commit()
+                continue
+            task = t
+            break
+
+        if not task:
+            return '', 404
+
+        task.status = "running"
+        task.last_activity = datetime.now()
+        db.session.add(task)
+        db.session.commit()
+
+        job = Job.query.get(task.job_id)
+
+        #tasks = {}
+        frame_count = 1
+        current_frame = 0
+        percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
+        percentage_done = round(percentage_done, 1)
+        task = {"id": task.id,
+                "job_id": task.job_id,
+                "name": task.name,
+                "status": task.status,
+                "type": task.type,
+                "settings": json.loads(task.settings),
+                "log": task.log,
+                "activity": task.activity,
+                "manager_id": task.manager_id,
+                "priority": task.priority,
+                "child_id": task.child_id,
+                "parser": task.parser,
+                "time_cost": task.time_cost,
+                "project_id": job.project_id,
+                "chunk_start": 0,
+                "chunk_end": 0,
+                "current_frame": 0,
+                "status": task.status,
+                "percentage_done": percentage_done}
+
+        return jsonify(**task)
 
 
 class TaskFileOutputApi(Resource):

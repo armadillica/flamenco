@@ -77,8 +77,12 @@ api.add_resource(JobFileApi, '/jobs/file/<int:job_id>')
 api.add_resource(JobFileOutputApi, '/jobs/file/output/<int:job_id>')
 
 from modules.tasks import TaskApi
+from modules.tasks import TaskListApi
+from modules.tasks import TaskGeneratorApi
 from modules.tasks import TaskFileOutputApi
-api.add_resource(TaskApi, '/tasks')
+api.add_resource(TaskApi, '/tasks/<int:task_id>')
+api.add_resource(TaskListApi, '/tasks')
+api.add_resource(TaskGeneratorApi, '/tasks/generate')
 api.add_resource(TaskFileOutputApi, '/task/file/output/<int:task_id>')
 
 from modules.main import main

@@ -71,10 +71,7 @@ def index():
 
 @jobs.route('/<int:job_id>')
 def job(job_id):
-    print '[Debug] job_id is %s' % job_id
     job = http_server_request('get', '/jobs/{0}'.format(job_id))
-    job['settings'] = job['settings']
-
     #Tasks
     job['thumbnail'] = 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, job_id)
     return render_template('jobs/view.html', job=job)

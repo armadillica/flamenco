@@ -1,72 +1,29 @@
 {% extends "layout.html" %}
 {% block footer_scripts %}
-<script>
-    $('[data-toggle="popover"]').popover({
-        html: true,
-        trigger: 'click',
-        'placement': 'bottom',
-        container: 'body',
-        animation: true
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $(document).on("click", "#job-delete", function() {
-            job_id = {{ job['id'] }}
-            $.post('/jobs/delete', { 'id': job_id});
-            location = '/jobs'
-        });
-    });
-</script>
+
 {% endblock %}
 {% block body %}
 <div class="row">
     <div class="col-md-12">
-      <div class="panel panel-primary">
-        <div class="panel-heading">
-            <h3 class="panel-title">
-                {{ job['job_name'] }}
-                <a id="pop-{{ job['id'] }}"
-                    href="#"
-                    class="glyphicon glyphicon-remove pull-right"
-                    data-toggle="popover",
-                    title="<p class='text-danger'>Delete {{job['job_name']}}?</p>"
-                data-content="
-                    <a href='#' id='job-delete' class='btn btn-danger'>Ok</a>
-                    <a onclick=&quot;$('#pop-{{ job['id'] }}').popover('hide');&quot; class='btn btn-default'>Cancel</a>"
-                ></a>
-                <div class="clearfix"></div>
-            </h3>
-        </div> <!-- end panel-heading -->
-        <div class="panel-body">
-            <div class="progress">
-                <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: {{ job['percentage_done'] }}%;">
-                    <span class="sr-only">{{ job['percentage_done'] }} Complete</span>
-                </div>
+        <h1>{{ job['job_name'] }}</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <img src="{{ job['thumbnail'] }}" class="img-responsive"/>
             </div>
-            <br/>
-            
-            <p>Status: {{ job['status'] }}</p>
-            <p>Frame Start: {{ job['settings']['frame_start'] }}</p>
-            <p>Frame End: {{ job['settings']['frame_end'] }}</p>
-            <p>Format: {{ job['settings']['format'] }}</p>
-            <p>Current Activity: {{ job['activity'] }}</p>
-            <p>Thumbnails: </p><br />
-
-            <a href="#" class="thumbnail">
-              <img src="{{ job['thumbnail'] }}" style="width:100%"/>
-            </a>
-
-            <table style="display:none">
-              <!-- TODO find a way to display several images on the same line -->
-              {% for path in job['render'] %}
-                <tr>
-                  <td><img src="{{ path }}" /><br /><br /></td>
-                </tr>
-              {% endfor %}
-            </table>
-        </div> <!-- end panel-body -->
-      </div> <!-- end panel -->
+            <div class="col-md-6">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: {{ job['percentage_done'] }}%;">
+                        <span class="sr-only">{{ job['percentage_done'] }} Complete</span>
+                    </div>
+                </div>
+                <p>Status: {{ job['status'] }}</p>
+                <p>Frame Start: {{ job['settings']['frame_start'] }}</p>
+                <p>Frame End: {{ job['settings']['frame_end'] }}</p>
+                <p>Format: {{ job['settings']['format'] }}</p>
+                <p>Current Activity: {{ job['activity'] }}</p>
+                <p>Thumbnails: </p><br />
+            </div>
+        </div>
     </div> <!-- end col-md-12 -->
   </div> <!-- end row -->
 {% endblock %}
