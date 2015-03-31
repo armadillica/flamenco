@@ -13,6 +13,7 @@
       <div id="job-respawn" class="btn btn-default disabled" command="respawn">Respawn</div>
       <div id="job-pause" class="btn btn-default disabled" command="pause">Pause</div>
       <div id="job-reset" class="btn btn-default" command="reset">Reset</div>
+      <div id="job-archive" class="btn btn-default" command="archive">Archive</div>
     </div>
     <div class="btn-group navbar-btn">
       <div id="job-delete" class="btn btn-danger">Delete</div>
@@ -177,7 +178,7 @@
 
     $(document).on(
       "click",
-      "#job-start, #job-stop, #job-respawn, #job-pause, #job-reset",
+      "#job-start, #job-stop, #job-respawn, #job-pause, #job-reset, #job-archive",
       function(){
         var jobs = new Array();
 
@@ -206,11 +207,15 @@
             var table = $('#jobs').DataTable();
             for (var i = 0; i < data['id'].length; i++) {
               var row = table.row('#job_' + data['id'][i]);
-              var row_data = row.data();
-              row_data[9] = data['status'];
-              row.data(row_data).draw();
+              if (data['status'] === 'archived') {
+                row.remove();
+              } else {
+                var row_data = row.data();
+                row_data[9] = data['status'];
+                row.data(row_data);
+              }
             };
-
+            table.draw();
             $.growl('Job ' + job_ids + ' ' + data['status']);
         });
     });
@@ -219,10 +224,11 @@
       $("table input[type=checkbox]").attr('checked', $(this).is(':checked'));
     });
 
-     $("#sidebar-toggle").click(function(e) {
+    $("#sidebar-toggle").click(function(e) {
         e.preventDefault();
         $("#wrapper").toggleClass("toggled");
     });
+
     $(".job-details").click(function(e) {
         $.get("/jobs/" + $(this).attr('job_id') + ".json", function( data ) {
           $("#job-details-table > tbody > tr").remove();

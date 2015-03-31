@@ -36,6 +36,7 @@ from application.modules.projects.model import Project
 from application.modules.jobs.model import Job
 from application.modules.jobs.model import JobManagers
 from application.modules.managers.model import Manager
+from application.modules.log import log_to_database
 
 id_list = reqparse.RequestParser()
 id_list.add_argument('id', type=str)
@@ -142,10 +143,11 @@ class jobInfo():
             "creation_date" : job.creation_date}
         return job_info
 
+
 class JobListApi(Resource):
     def get(self):
         jobs = {}
-        for job in Job.query.all():
+        for job in Job.query.filter(Job.status != 'archived').all():
             jobs[job.id]=jobInfo.get(job)
 
         return jsonify(jobs)
@@ -228,7 +230,6 @@ class JobListApi(Resource):
             logging.error('Job %d not found' % job_id)
             raise KeyError
 
-
     def put(self):
         """Run a command against a list of jobs.
         """
@@ -250,6 +251,9 @@ class JobListApi(Resource):
         elif args['command'] == "respawn":
             fun = self.respawn
             status = "respawned"
+        elif args['command'] == "archive":
+            fun = JobApi.archive
+            status = "archived"
         else:
             logging.error("command not found")
             return args, 400
@@ -344,6 +348,9 @@ class JobApi(Resource):
                 return job # stop job
             elif commands['command'] == 'reset':
                 return job # reset job
+            elif commands['command'] == 'archive':
+                self.archive(job_id)
+                return job # archive job
             else:
                 response = jsonify({
                     'code' : 400,
@@ -422,6 +429,19 @@ class JobApi(Resource):
                 if os.path.exists(path):
                     rmtree(path)
             logging.info('Job {0} reset end ready'.format(job_id))
+
+    @staticmethod
+    def archive(job_id):
+        logging.info('Archiving job {0}'.format(job_id))
+        job = Job.query.get(job_id)
+        if job.status != 'running':
+            log = "Status changed from {0} to {1}".format(job.status, 'archived')
+            job.status = 'archived'
+            db.session.commit()
+            log_to_database(job_id, 'job', log)
+        else:
+            pass
+
 
 class JobDeleteApi(Resource):
     def post(self):

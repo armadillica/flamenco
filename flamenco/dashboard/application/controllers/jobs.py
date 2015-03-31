@@ -118,7 +118,7 @@ def jobs_update():
     job_ids = request.form['id']
     params = {'id': job_ids,
               'command' : command}
-    if command in ['start', 'stop', 'respawn', 'reset']:
+    if command in ['start', 'stop', 'respawn', 'reset', 'archive']:
         jobs = http_server_request('put',
             '/jobs', params)
         return jsonify(jobs)
