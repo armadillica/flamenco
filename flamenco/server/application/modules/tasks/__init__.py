@@ -228,7 +228,7 @@ class TaskApi(Resource):
             print(e)
             return 'error'
         task.delete_instance()
-        print('Deleted task', task_id)
+        logging.info("Deleted task {0}".format(task_id))
 
     @staticmethod
     def delete_tasks(job_id):
@@ -242,7 +242,7 @@ class TaskApi(Resource):
     def stop_task(task_ids):
         """Stop a list of tasks
         """
-        print ('Stoping tasks %s' % task_ids)
+        logging.info("Stopping tasks {0}".format(task_ids))
         managers = {}
         for task_id in task_ids:
             task = Task.query.get(task_id)
@@ -278,10 +278,10 @@ class TaskApi(Resource):
             filter_by(status = 'running').\
             all()
 
-        print tasks
+        # print tasks
         tasklist = []
         for t in tasks:
-            print t
+            # print t
             tasklist.append(t.id)
         TaskApi.stop_task(tasklist)
 
