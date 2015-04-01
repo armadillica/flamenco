@@ -21,9 +21,42 @@
                 <p>Frame End: {{ job['settings']['frame_end'] }}</p>
                 <p>Format: {{ job['settings']['format'] }}</p>
                 <p>Current Activity: {{ job['activity'] }}</p>
-                <p>Thumbnails: </p><br />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Tasks</h2>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="tasks">
+                    <thead>
+                        <tr>
+                            <th width="20%">Name</th>
+                            <th width="20%">Status</th>
+                            <th width="20%">Log</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in job['tasks'] %}
+                            <tr>
+                                <td>
+                                    {{task['name']}}
+                                </td>
+                                <td>
+                                    {{task['status']}}
+                                </td>
+                                <td>
+                                    {{task['log']|truncate(250)}}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div> <!-- end col-md-12 -->
-  </div> <!-- end row -->
+</div> <!-- end row -->
 {% endblock %}
