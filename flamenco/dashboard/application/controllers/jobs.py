@@ -61,7 +61,8 @@ def index():
             "8" : val['activity'],
             "9" : val['status'],
             "10" : None,
-            "11" : val['creation_date']
+            "11" : val['creation_date'],
+            "12" : val['priority']
             })
 
     jobs_list = sorted(jobs_list, key=lambda x: x['1'])

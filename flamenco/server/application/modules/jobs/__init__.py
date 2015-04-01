@@ -150,7 +150,7 @@ class JobListApi(Resource):
     def get(self):
         jobs = {}
         for job in Job.query.filter(Job.status != 'archived').all():
-            jobs[job.id]=jobInfo.get(job)
+            jobs[job.id] = jobInfo.get(job)
 
         return jsonify(jobs)
 

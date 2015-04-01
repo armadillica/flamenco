@@ -62,35 +62,21 @@
               <tr>
                 <th width="1%"><input class="check-all" type="checkbox"></th>
                 <th>ID</th>
-                <th width="1%">Thumbnail</th>
+                <th width="1%"></th>
                 <th width="10%">Name</th>
-                <th width="15%">Completion</th>
+                <th width="10%">Priority</th>
+                <th width="10%">Completion</th>
                 <th width="10%">ETA</th>
-                <th width="20%">Average Time</th>
-                <th width="20%">Total Time</th>
-                <th width="20%">Activity</th>
+                <th width="15%">Average Time</th>
+                <th width="15%">Total Time</th>
+                <th width="1%">Activity</th>
                 <th width="1%">Status</th>
+                <th width="1%">Creation Time</th>
                 <th width="1%">Action</th>
               </tr>
             </thead>
             <tbody>
-
             </tbody>
-            <!-- <tfoot>
-              <tr>
-                <th></th>
-                <th></th>
-                <th>Thumbnail</th>
-                <th>Name</th>
-                <th>Completion</th>
-                <th>ETA</th>
-                <th>Average Time</th>
-                <th>Total Time</th>
-                <th>Activity</th>
-                <th>Status</th>
-                <th width="1%">Status</th>
-              </tr>
-            </tfoot> -->
           </table>
         </div>
       </div>
@@ -110,11 +96,11 @@
       "order": [[ 11, "desc" ]],
       "columnDefs": [
           {
-              "targets": [1, 8, 11],
+              "targets": [1, 9, 11],
               "visible": false
           },
           {
-              "targets": [0, 10],
+              "targets": [0, 2, 10],
               "sortable": false
           }
       ],
@@ -125,7 +111,7 @@
         if (data[9] === 'running') {
           progress_bar_active = 'progress-bar-striped active';
         }
-        $('td', row).eq(3).html('<div class="progress"><div class="progress-bar ' +progress_bar_active +'" role="progressbar" aria-valuenow="' + data[4] + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data[4] + '%;"><span class="">' + data[4] + '%</span></div></div>');
+        $('td', row).eq(4).html('<div class="progress"><div class="progress-bar ' +progress_bar_active +'" role="progressbar" aria-valuenow="' + data[4] + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data[4] + '%;"><span class="">' + data[4] + '%</span></div></div>');
 
         var job_status_label = '';
         if (data[9] === 'completed') {
@@ -137,8 +123,8 @@
         } else {
           job_status_label = '<span class="label label-default">' + data[9] + '</label>';
         }
-        $('td', row).eq(7).html(job_status_label);
-        $('td', row).eq(8).html('<span class="btn btn-default btn-xs job-details" job_id="' + data[1] + '">Details</span>');
+        $('td', row).eq(8).html(job_status_label);
+        $('td', row).eq(9).html('<span class="btn btn-default btn-xs job-details" job_id="' + data[1] + '">Details</span>');
       }
     });
 
