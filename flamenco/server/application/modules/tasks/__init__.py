@@ -46,6 +46,8 @@ parser.add_argument('time_cost', type=int)
 parser.add_argument('activity', type=str)
 parser.add_argument('taskfile', type=FileStorage, location='files')
 
+tasks_list_parser = reqparse.RequestParser()
+tasks_list_parser.add_argument('job_id', type=int)
 
 class TaskApi(Resource):
     @staticmethod
@@ -392,11 +394,36 @@ class TaskApi(Resource):
 
         return '', 204
 
+    def get(self, task_id):
+        return jsonify(task='task')
+
 
 class TaskListApi(Resource):
+    @staticmethod
+    def get_tasks_list(tasks):
+        tasks_list = []
+        for task in tasks:
+            t = {
+            "name" : task.name,
+            "status" : task.status,
+            "priority" : task.priority,
+            "type" : task.type,
+            "log" : task.log,
+            "activity" : task.activity,
+            "parser" : task.parser
+            }
+            tasks_list.append(t)
+        return tasks_list
+
     def get(self):
-        tasks = Task.query.all()
-        return jsonify(tasks='List of tasks here')
+        args = tasks_list_parser.parse_args()
+        job_id = args['job_id']
+        if job_id:
+            tasks = Task.query.filter_by(job_id=job_id).all()
+        else:
+            tasks = Task.query.all()
+        tasks_list = TaskListApi.get_tasks_list(tasks)
+        return jsonify(tasks=tasks_list)
 
 
 class TaskGeneratorApi(Resource):

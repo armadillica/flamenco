@@ -30,6 +30,7 @@ from application import app
 from application.utils import list_integers_string
 
 from application.modules.tasks import TaskApi
+from application.modules.tasks import TaskListApi
 from application.modules.tasks.model import Task
 from application.modules.settings.model import Setting
 from application.modules.projects.model import Project
@@ -72,7 +73,7 @@ job_fields = {
 class jobInfo():
     @staticmethod
     def get(job):
-        tasks = Task.query.filter(Task.job_id == job.id).all()
+        tasks = Task.query.filter_by(job_id=job.id).all()
         tasks_completed = Task.query.filter_by(job_id=job.id, status='finished').count()
 
         percentage_done = 0
@@ -114,14 +115,14 @@ class jobInfo():
 
         if job.status == 'running':
             if finished_tasks > 0:
-                average_time = finished_time/finished_tasks
+                average_time = finished_time / finished_tasks
             if finished_tasks > 0:
-                remaining_time = (average_time*len(tasks))-total_time
+                remaining_time = (average_time * len(tasks)) - total_time
             if remaining_time and running_tasks > 0:
-                remaining_time = remaining_time/running_tasks
+                remaining_time = remaining_time / running_tasks
             activity = "Rendering: {0}.".format(frames_rendering)
         elif job.status == 'completed':
-            average_time = finished_time/finished_tasks
+            average_time = finished_time / finished_tasks
 
 
         if running_tasks > 0:
@@ -140,7 +141,8 @@ class jobInfo():
             "type" : job.type,
             "priority" : job.priority,
             "percentage_done" : percentage_done,
-            "creation_date" : job.creation_date}
+            "creation_date" : job.creation_date,
+            "tasks" : TaskListApi.get_tasks_list(tasks)}
         return job_info
 
 
@@ -328,8 +330,8 @@ class JobListApi(Resource):
 
 class JobApi(Resource):
     def get(self, job_id):
-        job=Job.query.get(job_id)
-        job_info=jobInfo.get(job)
+        job = Job.query.get(job_id)
+        job_info = jobInfo.get(job)
         return jsonify(job_info)
 
     @marshal_with(job_fields)
