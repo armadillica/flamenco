@@ -89,7 +89,7 @@ def http_request(ip_address, command, method, params=None, files=None):
     return r.json()
 
 
-def register_worker(port=5000):
+def register_worker():
     """This is going to be an HTTP request to the server with all the info
     for registering the render node.
     """
@@ -110,7 +110,7 @@ def register_worker(port=5000):
 
     http_request(app.config['FLAMENCO_MANAGER'], '/workers', 'post',
         params={
-            'port': port,
+            'port': app.config['PORT'],
             'hostname': HOSTNAME,
             'system': SYSTEM})
 

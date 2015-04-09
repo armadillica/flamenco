@@ -17,18 +17,20 @@ def clean_dir(cleardir, keep_job=None):
                 os.rmdir(os.path.join(root, name))
 
 try:
+    # Load config.py if available
     import config
-    app.config.update(
-        FLAMENCO_MANAGER = config.Config.FLAMENCO_MANAGER,
-        TMP_FOLDER = config.Config.TMP_FOLDER,
-    )
+    app.config.from_object('config.Config')
 except ImportError:
+    # If we don't find the config.py we use the following defaults
     app.config['FLAMENCO_MANAGER'] = 'localhost:7777'
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
+    app.config['PORT'] = 5000
 
+# Clean the temp folder from previous sessions
 tmp_folder = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
 if not os.path.exists(tmp_folder):
     os.mkdir(tmp_folder)
+
 clean_dir(tmp_folder)
 
 # Use multiprocessing to register the client the worker to the server
