@@ -102,7 +102,9 @@ class TaskCompiledApi(Resource):
         ip_address = request.remote_addr
         worker = Worker.query.filter_by(ip_address=ip_address).one()
         if not worker:
-            return '', 500
+            response = jsonify({'code' : 404, 'message' : 'No worker is online'})
+            response.status_code = 404
+            return response
         worker.last_activity = datetime.now()
         db.session.add(worker)
         db.session.commit()
@@ -293,6 +295,7 @@ class TaskManagementApi(Resource):
 
         return task_id, 202
 
+
 class TaskApi(Resource):
 
     def patch(self, task_id):
@@ -385,6 +388,7 @@ class TaskApi(Resource):
 
         return '', 204
 
+
 class TaskThumbnailListApi(Resource):
     """Thumbnail list interface for the Manager
     """
@@ -418,7 +422,6 @@ class TaskThumbnailListApi(Resource):
 
         request_thread = Thread(target=self.send_thumbnail, args=(server_url, full_path, params))
         request_thread.start()
-
 
 
 class TaskZipApi(Resource):
