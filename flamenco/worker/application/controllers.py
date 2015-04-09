@@ -20,7 +20,7 @@ from flask import redirect
 from flask import url_for
 from flask import request
 from flask import jsonify
-from flask import Blueprint
+
 from uuid import getnode as get_mac_address
 
 from application import app
@@ -48,7 +48,6 @@ else:
 
 BRENDER_MANAGER = app.config['BRENDER_MANAGER']
 
-controller_bp = Blueprint('controllers', __name__)
 
 def http_request(command, values):
     global CONNECTIVITY
@@ -81,11 +80,9 @@ def register_worker(port=5000):
     http_request('workers', {
         'port': port, 'hostname': HOSTNAME, 'system': SYSTEM})
 
-
 def get_task():
     manager_url = "http://{0}/tasks".format(app.config['BRENDER_MANAGER'])
     return requests.get(manager_url)
-
 
 def getZipFile(url, tmpfile, zippath, force=False):
     if not os.path.exists(tmpfile) or force:
@@ -124,7 +121,6 @@ def getZipFile(url, tmpfile, zippath, force=False):
         logging.error('Not a ZipFile')
 
     return unzipok
-
 
 global LOOP_THREAD
 def worker_loop():
@@ -404,7 +400,6 @@ def _interactiveReadProcess(process, options):
 
     return (process.returncode, full_buffer)
 
-
 def clear_dir(cleardir):
     if os.path.exists(cleardir):
         for root, dirs, files in os.walk(cleardir, topdown=False):
@@ -412,7 +407,6 @@ def clear_dir(cleardir):
                 os.remove(os.path.join(root, name))
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
-
 
 def run_blender_in_thread(options):
     """We take the command and run it
@@ -569,7 +563,6 @@ def run_blender_in_thread(options):
     LOG = None
     TIME_INIT = None
 
-
 def extract_file(filename, taskpath, zippath, zipname):
     #if not filename in request.files:
     #    return
@@ -595,7 +588,6 @@ def extract_file(filename, taskpath, zippath, zipname):
                     jobzip.extractall(path=zippath)
         except BadZipfile, e:
             logging.error("File is not zip {0}".format(e))
-
 
 def execute_task(task, files):
     global PROCESS
@@ -654,5 +646,4 @@ def execute_task(task, files):
     run_blender_in_thread(options)
     #LOCK.release()
     return json.dumps(dict(pid=0))
-
 

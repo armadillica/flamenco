@@ -16,7 +16,6 @@ def clean_dir(cleardir, keep_job=None):
                     continue
                 os.rmdir(os.path.join(root, name))
 
-
 try:
     import config
     app.config.update(
@@ -31,9 +30,6 @@ tmp_folder = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
 if not os.path.exists(tmp_folder):
     os.mkdir(tmp_folder)
 clean_dir(tmp_folder)
-
-from controllers import controller_bp
-app.register_blueprint(controller_bp, url_prefix='/')
 
 # Use multiprocessing to register the client the worker to the server
 # while the worker app starts up
