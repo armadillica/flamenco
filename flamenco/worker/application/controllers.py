@@ -37,6 +37,7 @@ ACTIVITY = None
 LOG = None
 TIME_INIT = None
 CONNECTIVITY = False
+FLAMENCO_MANAGER = app.config['FLAMENCO_MANAGER']
 
 
 if platform.system() is not 'Windows':
@@ -46,14 +47,11 @@ else:
     from signal import CTRL_C_EVENT
 
 
-BRENDER_MANAGER = app.config['BRENDER_MANAGER']
-
-
 def http_request(command, values):
     global CONNECTIVITY
     params = urllib.urlencode(values)
     try:
-        urllib.urlopen('http://' + BRENDER_MANAGER + '/' + command, params)
+        urllib.urlopen('http://' + FLAMENCO_MANAGER + '/' + command, params)
         #print(f.read())
     except IOError:
         CONNECTIVITY = False
@@ -67,7 +65,7 @@ def register_worker(port=5000):
 
     while True:
         try:
-            manager_url = "http://{0}/info".format(app.config['BRENDER_MANAGER'])
+            manager_url = "http://{0}/info".format(app.config['FLAMENCO_MANAGER'])
             requests.get(manager_url)
             CONNECTIVITY = True
             break
@@ -81,7 +79,7 @@ def register_worker(port=5000):
         'port': port, 'hostname': HOSTNAME, 'system': SYSTEM})
 
 def get_task():
-    manager_url = "http://{0}/tasks".format(app.config['BRENDER_MANAGER'])
+    manager_url = "http://{0}/tasks".format(app.config['FLAMENCO_MANAGER'])
     return requests.get(manager_url)
 
 def getZipFile(url, tmpfile, zippath, force=False):
@@ -130,13 +128,13 @@ def worker_loop():
     register_worker()
     print ("Quering for a new task")
     manager_url = "http://{0}/tasks/compiled/0".format(
-        app.config['BRENDER_MANAGER'])
+        app.config['FLAMENCO_MANAGER'])
     try:
         rtask = requests.get(manager_url)
     except KeyboardInterrupt:
         return
 
-    if rtask.status_code==200:
+    if rtask.status_code == 200:
         try:
             files = rtask.json()['files']
             task = rtask.json()['options']
@@ -154,13 +152,13 @@ def worker_loop():
             }
         try:
             requests.patch(
-                'http://'+app.config['BRENDER_MANAGER']+'/tasks/'+str(task['task_id']),
+                'http://'+app.config['FLAMENCO_MANAGER']+'/tasks/'+str(task['task_id']),
             data = params
             )
             CONNECTIVITY = True
         except ConnectionError:
             logging.error(
-                'Cant connect with the Manager {0}'.format(app.config['BRENDER_MANAGER']))
+                'Cant connect with the Manager {0}'.format(app.config['FLAMENCO_MANAGER']))
             CONNECTIVITY = False
 
 
@@ -179,7 +177,7 @@ def worker_loop():
         tmpfile = os.path.join(
             jobpath, 'taskfile_{0}.zip'.format(task['job_id']))
         url = "http://{0}/static/storage/{1}/jobfile_{1}.zip".format(
-                app.config['BRENDER_MANAGER'], task['job_id'])
+                app.config['FLAMENCO_MANAGER'], task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath)
 
         # Get suport file
@@ -188,7 +186,7 @@ def worker_loop():
         tmpfile = os.path.join(
             jobpath, 'tasksupportfile_{0}.zip'.format(task['job_id']))
         url = "http://{0}/static/storage/{1}/jobsupportfile_{1}.zip".format(
-                app.config['BRENDER_MANAGER'], task['job_id'])
+                app.config['FLAMENCO_MANAGER'], task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath, True)
 
         # Get depend file
@@ -196,20 +194,20 @@ def worker_loop():
         tmpfile = os.path.join(
             jobpath, 'dependencies.zip'.format(task['job_id']))
         url = "http://{0}/static/storage/{1}/dependencies_{2}.zip".format(
-                app.config['BRENDER_MANAGER'], task['job_id'], task['task_id'])
+                app.config['FLAMENCO_MANAGER'], task['job_id'], task['task_id'])
         print ("Fetching deppend file {0}".format(url))
         unzipdepok = getZipFile(url, tmpfile, zippath)
 
         # Get Compiler Settings
         r = None
-        url = 'http://'+app.config['BRENDER_MANAGER']+'/settings/'
+        url = 'http://'+app.config['FLAMENCO_MANAGER']+'/settings/'
         try:
             r = requests.get(
                 url + task['type'],
             )
         except ConnectionError:
             logging.error(
-                'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
+                'Cant connect with the Manager {0}'.format(FLAMENCO_MANAGER))
 
         task['compiler_settings'] = {}
         print (r.status_code)
@@ -304,7 +302,7 @@ def _parse_output(tmp_buffer, options):
 
         if activity.get('thumbnail'):
             params = dict(task_id=task_id)
-            manager_url = "http://%s/tasks/thumbnails" % (app.config['BRENDER_MANAGER'])
+            manager_url = "http://%s/tasks/thumbnails" % (app.config['FLAMENCO_MANAGER'])
             request_thread = Thread(target=send_thumbnail, args=(manager_url, activity.get('thumbnail'), params))
             request_thread.start()
 
@@ -328,13 +326,13 @@ def _parse_output(tmp_buffer, options):
     try:
         r = requests.patch(
             'http://{0}/tasks/{1}'.format(
-                app.config['BRENDER_MANAGER'], task_id),
+                app.config['FLAMENCO_MANAGER'], task_id),
             data=params,
         )
         CONNECTIVITY = True
     except ConnectionError:
         logging.error(
-            'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
+            'Cant connect with the Manager {0}'.format(FLAMENCO_MANAGER))
         CONNECTIVITY = False
 
     if r != None and r.status_code != 204:
@@ -546,14 +544,14 @@ def run_blender_in_thread(options):
     try:
         requests.patch(
             'http://{0}/tasks/{1}'.format(
-                BRENDER_MANAGER, options['task_id']),
+                FLAMENCO_MANAGER, options['task_id']),
             data=params,
             files=tfiles,
         )
         CONNECTIVITY = True
     except ConnectionError:
         logging.error(
-            'Cant connect with the Manager {0}'.format(BRENDER_MANAGER))
+            'Cant connect with the Manager {0}'.format(FLAMENCO_MANAGER))
         CONNECTIVITY = False
 
     logging.debug( 'Return code: {0}'.format(retcode) )
