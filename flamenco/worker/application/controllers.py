@@ -60,7 +60,7 @@ def http_request(command, values):
         CONNECTIVITY = False
         logging.error("Could not connect to manager to register")
 
-def register_worker(port=7777):
+def register_worker(port=5000):
     """This is going to be an HTTP request to the server with all the info
     for registering the render node.
     """
@@ -78,9 +78,8 @@ def register_worker(port=7777):
             pass
         time.sleep(1)
 
-    http_request('workers', {'port': port,
-                               'hostname': HOSTNAME,
-                               'system': SYSTEM})
+    http_request('workers', {
+        'port': port, 'hostname': HOSTNAME, 'system': SYSTEM})
 
 
 def get_task():
