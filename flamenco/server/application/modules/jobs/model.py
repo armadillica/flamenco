@@ -7,7 +7,7 @@ class Job(db.Model):
     """A Job is the basic work unit of Flamenco
 
     The creation of a job can happen in different ways:
-    * within Flamenco (using a shot creation form)
+    * within Flamenco (using the job creation form)
     * via a query from an external software (e.g. Attract)
     * withing Blender itself
     """
