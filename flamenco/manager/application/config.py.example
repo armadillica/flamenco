@@ -8,7 +8,7 @@ class Config(object):
 
     BRENDER_SERVER = 'localhost:9999'
 
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../task_queue.sqlite')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../manager.sqlite')
 
     VIRTUAL_WORKERS = False # If true, the manager will not have a fixed number of workers 
     IS_PRIVATE_MANAGER = False
