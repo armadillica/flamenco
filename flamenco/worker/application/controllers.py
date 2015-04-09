@@ -47,15 +47,47 @@ else:
     from signal import CTRL_C_EVENT
 
 
-def http_request(command, values):
+# def http_request(command, values):
+#     global CONNECTIVITY
+#     params = urllib.urlencode(values)
+#     try:
+#         urllib.urlopen('http://' + FLAMENCO_MANAGER + '/' + command, params)
+#         #print(f.read())
+#     except IOError:
+#         CONNECTIVITY = False
+#         logging.error("Could not connect to manager to register")
+
+def http_request(ip_address, command, method, params=None, files=None):
     global CONNECTIVITY
-    params = urllib.urlencode(values)
-    try:
-        urllib.urlopen('http://' + FLAMENCO_MANAGER + '/' + command, params)
-        #print(f.read())
-    except IOError:
-        CONNECTIVITY = False
-        logging.error("Could not connect to manager to register")
+    if method == 'delete':
+        r = requests.delete('http://' + ip_address + command)
+    elif method == 'post':
+        r = requests.post('http://' + ip_address + command, data=params, files=files)
+    elif method == 'get':
+        r = requests.get('http://' + ip_address + command)
+    elif method == 'put':
+        r = requests.put('http://' + ip_address + command, data=params)
+    elif method == 'patch':
+        r = requests.patch('http://' + ip_address + command, data=params)
+
+    if r.status_code == 404:
+        return '', 404
+
+    # Only for debug
+    if r.status_code == 400:
+        for chunk in r.iter_content(50):
+            print chunk
+        return '', 404
+
+    if r.status_code == 204:
+        return '', 204
+
+    if r.status_code >= 500:
+        logging.debug("STATUS CODE: %d" % r.status_code)
+        return '', 500
+
+    return r.json()
+
 
 def register_worker(port=5000):
     """This is going to be an HTTP request to the server with all the info
@@ -65,6 +97,7 @@ def register_worker(port=5000):
 
     while True:
         try:
+            # TODO set a proper entry point to check if the manager is online
             manager_url = "http://{0}/info".format(app.config['FLAMENCO_MANAGER'])
             requests.get(manager_url)
             CONNECTIVITY = True
@@ -75,8 +108,11 @@ def register_worker(port=5000):
             pass
         time.sleep(1)
 
-    http_request('workers', {
-        'port': port, 'hostname': HOSTNAME, 'system': SYSTEM})
+    http_request(app.config['FLAMENCO_MANAGER'], '/workers', 'post',
+        params={
+            'port': port,
+            'hostname': HOSTNAME,
+            'system': SYSTEM})
 
 def get_task():
     manager_url = "http://{0}/tasks".format(app.config['FLAMENCO_MANAGER'])
@@ -152,7 +188,7 @@ def worker_loop():
             }
         try:
             requests.patch(
-                'http://'+app.config['FLAMENCO_MANAGER']+'/tasks/'+str(task['task_id']),
+                'http://' + app.config['FLAMENCO_MANAGER'] + '/tasks/' + str(task['task_id']),
             data = params
             )
             CONNECTIVITY = True
@@ -180,7 +216,7 @@ def worker_loop():
                 app.config['FLAMENCO_MANAGER'], task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath)
 
-        # Get suport file
+        # Get support file
         print ("Fetching support file {0}".format(task['job_id']))
         zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
@@ -189,25 +225,25 @@ def worker_loop():
                 app.config['FLAMENCO_MANAGER'], task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath, True)
 
-        # Get depend file
+        # Get dependency file
         zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
             jobpath, 'dependencies.zip'.format(task['job_id']))
         url = "http://{0}/static/storage/{1}/dependencies_{2}.zip".format(
                 app.config['FLAMENCO_MANAGER'], task['job_id'], task['task_id'])
-        print ("Fetching deppend file {0}".format(url))
+        print ("Fetching dependency {0}".format(url))
         unzipdepok = getZipFile(url, tmpfile, zippath)
 
-        # Get Compiler Settings
+        # Get compiler settings
         r = None
-        url = 'http://'+app.config['FLAMENCO_MANAGER']+'/settings/'
+        url = 'http://' + app.config['FLAMENCO_MANAGER']+'/settings/'
         try:
             r = requests.get(
                 url + task['type'],
             )
         except ConnectionError:
             logging.error(
-                'Cant connect with the Manager {0}'.format(FLAMENCO_MANAGER))
+                'Can not connect with the Manager {0}'.format(FLAMENCO_MANAGER))
 
         task['compiler_settings'] = {}
         print (r.status_code)
@@ -415,6 +451,7 @@ def run_blender_in_thread(options):
     global TIME_INIT
     global CONNECTIVITY
 
+    print(options)
     render_command = json.loads(options['task_command'])
 
     workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
@@ -561,31 +598,6 @@ def run_blender_in_thread(options):
     LOG = None
     TIME_INIT = None
 
-def extract_file(filename, taskpath, zippath, zipname):
-    #if not filename in request.files:
-    #    return
-
-    #if request.files[filename]:
-    if 0:
-        try:
-            os.mkdir(taskpath)
-        except:
-            logging.error("Error creatig folder:{0}".format(taskpath))
-        taskfile = os.path.join(
-            taskpath, zipname)
-        request.files[filename].save( taskfile )
-
-        if not os.path.exists(zippath):
-            try:
-                os.mkdir(zippath)
-            except:
-                logging.error("Error creatig folder:{0}".format(zippath))
-
-        try:
-            with ZipFile(taskfile, 'r') as jobzip:
-                    jobzip.extractall(path=zippath)
-        except BadZipfile, e:
-            logging.error("File is not zip {0}".format(e))
 
 def execute_task(task, files):
     global PROCESS
@@ -606,29 +618,6 @@ def execute_task(task, files):
     workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
     taskpath = os.path.join(workerstorage, str(options['job_id']))
     zippath = os.path.join(taskpath, str(options['job_id']))
-
-    """extract_file (
-        'jobfile',
-        taskpath,
-        zippath,
-        'taskfile_{0}.zip'.format(options['job_id'])
-    )
-
-    extract_file (
-        'jobsupportfile',
-        taskpath,
-        zippath,
-        'tasksupportfile_{0}.zip'.format(options['job_id'])
-    )
-
-    deppath = os.path.join(taskpath, 'depend')
-    clear_dir(deppath)
-    extract_file (
-        'jobdepfile',
-        taskpath,
-        deppath,
-        'taskdepfile_{0}.zip'.format(options['job_id'])
-    )"""
 
     options['jobpath'] = taskpath
 
