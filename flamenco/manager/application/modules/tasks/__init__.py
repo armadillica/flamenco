@@ -97,26 +97,22 @@ def get_availabe_worker():
 
 class TaskCompiledApi(Resource):
     def get(self, task_id):
+        """Entry point for a worker to require a task, which will be compiled
+        on the fly according to the worker specs.
+        """
         logging.info("Scheduling")
 
+        # TODO we will need to make this more robust, and give each worker a uuid
         ip_address = request.remote_addr
         worker = Worker.query.filter_by(ip_address=ip_address).one()
         if not worker:
-            response = jsonify({'code' : 404, 'message' : 'No worker is online'})
-            response.status_code = 404
-            return response
-        worker.last_activity = datetime.now()
-        db.session.add(worker)
-        db.session.commit()
-        if not worker:
             return 'Worker is not registered', 403
-        db.session.add(worker)
+        worker.last_activity = datetime.now()
         db.session.commit()
-        if worker.status == "disabled":
-            return '', 403
+        if worker.status == 'disabled':
+            return 'Worker is disabled', 403
         worker.current_task = None
         worker.status = 'enabled'
-        db.session.add(worker)
         db.session.commit()
 
         tasks = TaskManagementApi().get()
@@ -128,7 +124,6 @@ class TaskCompiledApi(Resource):
 
         worker.current_task = task['id']
         worker.child_task = task['child_id']
-        db.session.add(worker)
         db.session.commit()
 
         managerstorage = app.config['MANAGER_STORAGE']
