@@ -156,6 +156,26 @@ def getZipFile(url, tmpfile, zippath, force=False):
 
     return unzipok
 
+
+def update():
+    global PROCESS
+    global LOCK
+    if not PROCESS:
+        logging.info("No PROCESS")
+        return '', 204
+
+    logging.info("Killing {0}".format(PROCESS.pid))
+    if platform.system() is 'Windows':
+        os.kill(PROCESS.pid, CTRL_C_EVENT)
+    else:
+        os.kill(PROCESS.pid, SIGKILL)
+
+    #LOCK.acquire()
+    #PROCESS = None
+    #LOCK.release()
+    return '', 204
+
+
 global LOOP_THREAD
 def worker_loop():
     print ("Worker Loop")
