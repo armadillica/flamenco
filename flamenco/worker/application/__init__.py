@@ -1,5 +1,6 @@
 import os
 import tempfile
+import logging
 # from threading import Thread
 from flask import Flask
 app = Flask(__name__)
@@ -19,9 +20,14 @@ def clean_dir(cleardir, keep_job=None):
 try:
     # Load config.py if available
     import config
-    app.config.from_object('config.Config')
+    app.config.update(
+        FLAMENCO_MANAGER = config.Config.FLAMENCO_MANAGER,
+        TMP_FOLDER = config.Config.TMP_FOLDER,
+        PORT = config.Config.PORT,
+    )
 except ImportError:
     # If we don't find the config.py we use the following defaults
+    logging.info("Configuration file not found, using defaults")
     app.config['FLAMENCO_MANAGER'] = 'localhost:7777'
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
     app.config['PORT'] = 5000
