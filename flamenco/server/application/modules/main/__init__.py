@@ -16,7 +16,7 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
-    return jsonify(message='Brender server up and running!')
+    return jsonify(message='Flamenco server up and running!')
 
 
 @main.route('/connect', methods=['POST'])

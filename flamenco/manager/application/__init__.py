@@ -154,6 +154,10 @@ def register_manager(port, name, has_virtual_workers):
     # TODO: manage update if uuid already exists and does not match with the one
     # returned by the server
 
+@app.route('/')
+def index():
+    return jsonify(message='Flamenco manager up and running!')
+
 @app.errorhandler(404)
 def not_found(error):
     response = jsonify({'code' : 404, 'message' : 'No interface defined for URL'})

@@ -97,13 +97,13 @@ def register_worker():
 
     while True:
         try:
-            # TODO set a proper entry point to check if the manager is online
-            manager_url = "http://{0}/info".format(app.config['FLAMENCO_MANAGER'])
-            requests.get(manager_url)
+            r = http_request(app.config['FLAMENCO_MANAGER'], '/', 'get')
             CONNECTIVITY = True
             break
         except ConnectionError:
-            logging.error("Could not connect to manager to register")
+            logging.error(
+                "Could not connect to {0} to register".format(
+                    app.config['FLAMENCO_MANAGER']))
             CONNECTIVITY = False
             pass
         time.sleep(1)
@@ -358,7 +358,7 @@ def _parse_output(tmp_buffer, options):
 
         if activity.get('thumbnail'):
             params = dict(task_id=task_id)
-            manager_url = "http://%s/tasks/thumbnails" % (app.config['FLAMENCO_MANAGER'])
+            manager_url = "http://{0}/tasks/thumbnails".format(app.config['FLAMENCO_MANAGER'])
             request_thread = Thread(target=send_thumbnail, args=(manager_url, activity.get('thumbnail'), params))
             request_thread.start()
 
