@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block footer_scripts %}
+<script type="text/javascript">
+    $("#worker_refresh").click(function() {
+        console.log('Button Refresh worker');
+        location.reload();
+    });
+</script>
+{% endblock %}
+{% block body %}
+    <div class="row">
+            <div class="span10">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            {{manager['id']}}
+                            <a id="worker_refresh" href="#" class="glyphicon glyphicon-refresh pull-right"></a>
+                        </h3>
+
+                    </div>
+                    <div class="panel-body">
+                            <p>ip_address: {{ manager['ip_address'] | default('N/A')}}</p>
+                            <p>port: {{ manager['port'] | default('N/A')}}</p>
+                            <p>uuid: {{ manager['uuid'] | default('N/A')}}</p>
+                            <p>settings: {{ manager['settings'] | default('N/A')}}</p>
+                    </div>
+                    <div class="panel-footer">
+                        <p class="pull-right">
+                            <span>load-average
+                            </span>
+                        </p>
+                        <br class='clearfix'/>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}

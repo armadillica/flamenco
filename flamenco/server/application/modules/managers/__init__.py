@@ -1,5 +1,6 @@
 import logging
 import uuid
+import requests
 from flask import request
 from flask import jsonify
 from flask.ext.restful import Resource
@@ -13,6 +14,8 @@ from flask.ext.restful import fields
 from application.utils import list_integers_string
 
 from application.modules.managers.model import Manager
+
+from requests.exceptions import ConnectionError
 
 parser = reqparse.RequestParser()
 parser.add_argument('port', type=int)
@@ -72,12 +75,34 @@ class ManagerListApi(Resource):
                 "name" : manager.name,
                 "ip_address" : manager.ip_address,
                 "port" : manager.port,
-                "connection" : 'online'
+                "connection" : 'online',
+                "uuid": manager.uuid
             }
         return jsonify(managers)
 
 
 class ManagerApi(Resource):
+    def get(self, manager_uuid):
+        try:
+            manager = Manager.query.filter_by(uuid=manager_uuid).one()
+        except NoResultFound:
+            logging.warning("No manager found in Database")
+            return '', 404
+        manager_dict = {
+            'id': manager.id,
+            'ip_address': manager.ip_address,
+            'port': manager.port,
+            'uuid': manager.uuid,
+        }
+        url = 'http://' + manager.ip_address+':'+str(manager.port)+'/settings'
+        try:
+            r = requests.get(url)
+            manager_dict['settings'] = r.text
+        except ConnectionError:
+            logging.error(
+                'Can not connect with the Manager {0}'.format(manager.uuid))
+        return jsonify(manager_dict)
+
     def patch(self, manager_uuid):
         from application.modules.tasks import TaskApi
 

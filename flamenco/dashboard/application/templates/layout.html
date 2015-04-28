@@ -74,6 +74,9 @@
           {% block nav %}
           {% endblock %}
           <ul class="nav navbar-nav navbar-right">
+            <li {% if title == 'managers': %} class="active"{% endif %}>
+              <a href="{{ url_for('managers.index') }}">Managers</a>
+            </li>
             <li {% if title == 'workers': %} class="active"{% endif %}>
               <a href="{{ url_for('workers.index') }}">Workers</a>
             </li>
