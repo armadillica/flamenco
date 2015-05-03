@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+{% block nav %}
+<ul class="nav navbar-nav navbar-left">
+  <span class="navbar-brand">Managers</span>
+  <!--<li>
+    <div class="btn-group navbar-btn" role="group" aria-label="...">
+      <button type="button" class="btn btn-default" id="workers-disable" status="disabled">Disable</button>
+      <button type="button" class="btn btn-default" id="workers-enable" status="enabled">Enable</button>
+    </div>
+    <div class="btn-group navbar-btn" role="group" aria-label="...">
+      <button type="button" class="btn btn-default disabled">Restart</button>
+      <button type="button" class="btn btn-default disabled">Delete</button>
+    </div>
+    </li>-->
+</ul>
+{% endblock %}
+
+{% block body %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="workers">
+                <thead>
+                    <tr>
+                        <th width="5%"><input class="check-all" type="checkbox"></th>
+                        <th width="20%">Hostname</th>
+                        <th width="20%">UUID</th>
+                        <th width="20%">IP Address</th>
+                        <th width="20%">Port</th>
+                        <th width="20%">Connection</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th></th>
+                        <th>Hostname</th>
+                        <th>UUID</th>
+                        <th>IP Address</th>
+                        <th>Port</th>
+                        <th>Connection</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block footer_scripts %}
+<script type="text/javascript">
+    $(document).ready(function() {
+
+        var data = {{ entries | safe }};
+
+        // TODO change to managers
+        var workersTable = $('#workers').dataTable({
+            "bProcessing": true,
+            "iDisplayLength": 25,
+            "aaData": data,
+            "aoColumns": [
+                 { "bSortable": false },
+                 null,
+                 null,
+                 null,
+                 null,
+                 null
+             ],
+
+            "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
+                $('td:eq(1)', nRow).html('<a href="/managers/view/' + aData[2] + '"> ' + aData[1] + ' </a>');
+                if (aData[5] == "offline"){
+                    $('td:eq(5)', nRow).html('<span class="label label-danger">offline</span>');
+                } else if (aData[5] == "online"){
+                    $('td:eq(5)', nRow).html('<span class="label label-success">online</span>');
+                }
+            }
+
+        });
+
+        $("div.toolbar").html('Custom tool bar! Text/images etc.');
+
+
+        $(document).on("click", "#managers-enable, #managers-disable", function() {
+
+            var managers = new Array();
+
+            var checkbox_list = $( "tbody input:checked" );
+            for (var i = checkbox_list.length - 1; i >= 0; i--) {
+                var checkbox = checkbox_list[i];
+                managers.push($(checkbox).val());
+            };
+
+            if (managers.length == 0) {
+              $.growl("Please select one or more managers", {
+                type: "warning"
+              });
+                return false;
+            };
+
+            workers_ids = managers.join();
+
+            status = $(this).attr('status');
+            params = { 'id' : workers_ids, 'status' : status}
+
+            $.post("/managers/edit", params)
+                .done(function(data_fun) {
+                    // console.log('Managers ' + workers_ids + ' updated : ' + status);
+                    $.growl('Managers ' + workers_ids + ' ' + status);
+                    // redrawing the table to display changes
+
+                    var j = 0;
+                    for (var i = 0; i < managers.length; i++) {
+                        for (var j = 0; j < data.length; j++) {
+                            id = data[j][6]+';'+data[j][8];
+                            if (id == managers[i]) {
+                                workersTable.fnUpdate(status, j, 5);
+                            }
+                        }
+                    };
+
+                    workersTable.fnDraw();
+            });
+        });
+
+        $(document).on("click", ".check-all", function(){
+            $("table input[type=checkbox]").attr('checked', $(this).is(':checked'));
+        });
+
+    });
+</script>
+{% endblock %}
