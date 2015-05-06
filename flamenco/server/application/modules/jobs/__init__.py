@@ -72,15 +72,23 @@ job_fields = {
 
 class jobInfo():
     @staticmethod
-    def get(job):
-        tasks = Task.query.filter_by(job_id=job.id).all()
-        tasks_completed = Task.query.filter_by(job_id=job.id, status='finished').count()
+    def get(job, embed_tasks=False):
+        """Global function to get info about one job"""
 
+        # Collect all tasks related to the job
+        tasks = Task.query.filter_by(job_id=job.id).all()
+        # Query again, but filtering only for finished jobs (refactor this!)
+        tasks_completed = Task.query\
+            .filter_by(job_id=job.id, status='finished').count()
+
+        # Default completion value
         percentage_done = 0
 
+        # Update percentabe value if the job has at least 1 complete task
         if tasks and tasks_completed:
             percentage_done = round(float(tasks_completed) / float(len(tasks)) * 100.0, 1)
 
+        # Define other default values
         remaining_time = None
         average_time = None
         total_time = 0
@@ -96,6 +104,7 @@ class jobInfo():
             try:
                 task_activity = json.loads(task.activity)
             except:
+                # If the task status is not in JSON format, or any other error
                 task_activity = None
 
             if task.status == 'finished':
@@ -105,10 +114,11 @@ class jobInfo():
             if task.status == 'running':
                 running_tasks += 1
                 if task_activity and task_activity.get('current_frame'):
-                    frames_rendering = "{0} {1}".format(frames_rendering, task_activity.get('current_frame'))
+                    frames_rendering = "{0} {1}".format(
+                        frames_rendering, task_activity.get('current_frame'))
                     if task_activity.get('remaining'):
-                        frames_rendering = "{0} ({1}sec)".format(frames_rendering, task_activity.get('remaining'))
-
+                        frames_rendering = "{0} ({1}sec)".format(
+                            frames_rendering, task_activity.get('remaining'))
 
             if task.time_cost:
                 total_time += task.time_cost
@@ -124,11 +134,16 @@ class jobInfo():
         elif job.status == 'completed':
             average_time = finished_time / finished_tasks
 
-
         if running_tasks > 0:
             job_time = total_time/running_tasks
 
+        if embed_tasks:
+            embedded_tasks = TaskListApi.get_tasks_list(tasks)
+        else:
+            embedded_tasks = None
+
         job_info = {
+            "id" : job.id,
             "job_name" : job.name,
             "project_id" : job.project_id,
             "status" : job.status,
@@ -142,7 +157,8 @@ class jobInfo():
             "priority" : job.priority,
             "percentage_done" : percentage_done,
             "creation_date" : job.creation_date,
-            "tasks" : TaskListApi.get_tasks_list(tasks)}
+            "tasks" : embedded_tasks
+            }
         return job_info
 
 
@@ -331,7 +347,7 @@ class JobListApi(Resource):
 class JobApi(Resource):
     def get(self, job_id):
         job = Job.query.get(job_id)
-        job_info = jobInfo.get(job)
+        job_info = jobInfo.get(job, embed_tasks=True)
         return jsonify(job_info)
 
     @marshal_with(job_fields)
