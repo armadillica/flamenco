@@ -403,7 +403,7 @@ class TaskListApi(Resource):
     def get_tasks_list(tasks):
         tasks_list = []
         for task in tasks:
-            t = {
+            task_info = {
             "name" : task.name,
             "status" : task.status,
             "priority" : task.priority,
@@ -412,7 +412,7 @@ class TaskListApi(Resource):
             "activity" : task.activity,
             "parser" : task.parser
             }
-            tasks_list.append(t)
+            tasks_list.append(task_info)
         return tasks_list
 
     def get(self):

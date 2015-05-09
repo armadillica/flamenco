@@ -236,19 +236,44 @@
         $("#wrapper").toggleClass("toggled");
     });
 
+    function display_json(data) {
+      // Recursively traverse an object and display all its properties
+      var content = '<ul>';
+      $.each(data, function(i, post) {
+        if (post !== null && typeof post == 'object') {
+          content += '<li>' + i + '</li>'+display_json(post);
+        } else {
+          content += '<li>' + i + " : " + post + '</li>';
+        }
+      });
+      content += '</ul>';
+      return content;
+    }
+
     $(".job-details").click(function(e) {
         $.get("/jobs/" + $(this).attr('job_id') + ".json", function( data ) {
           $("#job-details-table > tbody > tr").remove();
-          $.each( data, function( key, value ) {
-            $("#job-details-table").append("<tr><td>"+ key + "</td><td> " + value + "</td></tr>")
-          });
+          $("#job-details-table").html(display_json(data));
+          // Legacy code to display first level key value data in a table
+          // $.each( data, function( key, value ) {
+          //   console.log(value);
+          //   if (typeof(value) === 'object') {
+          //     console.log('obj');
+          //     for (var k in value) {
+          //       if (value.hasOwnProperty(k)) {
+          //         console.log(k + " -> " + value[k]);
+          //       }
+          //     }
+          //   };
+          //   $("#job-details-table").append("<tr><td>"+ key + "</td><td> " + value + "</td></tr>")
+          // });
         });
         if ($("#wrapper").hasClass("toggled")) {
           $("#wrapper").toggleClass("toggled");
         } else {
         }
-        
     });
+
 
   });
 </script>

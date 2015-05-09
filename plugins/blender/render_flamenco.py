@@ -215,19 +215,7 @@ class bamToRenderfarm (bpy.types.Operator):
             'start_job': wm.flamenco_startJob,
         }
 
-        amaranth_addon = False
-        try:
-            scn.use_unsimplify_render
-            amaranth_addon = True
-        except:
-            pass
-
-        tmp_simplify = scn.render.use_simplify
-        if amaranth_addon and scn.use_unsimplify_render:
-            scn.render.use_simplify = False
-
         bpy.ops.wm.save_mainfile()
-        scn.render.use_simplify = tmp_simplify
 
         tmppath = C.user_preferences.filepaths.temporary_directory
         zipname = "job"
