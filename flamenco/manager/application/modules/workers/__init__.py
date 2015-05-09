@@ -49,7 +49,7 @@ class WorkerListApi(Resource):
                           time_cost=None,
                           activity=None,
                           connection='online',
-                          system=args['system'])
+                          system=args['system'][:20])
         else:
             worker.connection = 'online'
             worker.current_task = None

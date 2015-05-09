@@ -327,7 +327,8 @@ class TaskApi(Resource):
                 worker.current_task = args['task_id']
             worker.time_cost = args['time_cost']
             worker.log = args['log']
-            worker.activity = args['activity']
+            if args['activity'] is not None:
+                worker.activity = args['activity'][:64]
             worker.status = 'rendering'
         else:
             worker.current_task = None

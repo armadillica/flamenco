@@ -371,7 +371,8 @@ class TaskApi(Resource):
         task.status = status
         task.log = log
         task.time_cost = time_cost
-        task.activity = activity
+        if activity is not None:
+            task.activity = activity[:128]
         task.last_activity = datetime.now()
         db.session.add(task)
         db.session.commit()
