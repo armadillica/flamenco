@@ -549,6 +549,7 @@ class JobThumbnailApi(Resource):
                         try:
                             im.thumbnail(size)
                             im.save(file_path_resized_thumbnail)
+                            logging.debug("Generated thumbnail for job {0}".format(job_id))
                         except IOError, e:
                             logging.error("Making the thumbnail: {0}".format(e))
                         else:
