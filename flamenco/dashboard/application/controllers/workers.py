@@ -8,8 +8,6 @@ from flask import (redirect,
 from application import app
 from application import http_server_request
 
-BRENDER_SERVER = app.config['BRENDER_SERVER']
-
 # Name of the Blueprint
 workers = Blueprint('workers', __name__)
 

@@ -1,6 +1,6 @@
 class Config(object):
     DEBUG=True
-    BRENDER_SERVER='localhost:9999'
+    FLAMENCO_SERVER='localhost:9999'
 
     PORT=8888
     HOST='0.0.0.0'

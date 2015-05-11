@@ -14,7 +14,7 @@ from application import http_server_request
 from application.helpers import seconds_to_time
 
 # TODO: find a better way to fill/use this variable
-BRENDER_SERVER = app.config['BRENDER_SERVER']
+FLAMENCO_SERVER = app.config['FLAMENCO_SERVER']
 
 
 # Name of the Blueprint
@@ -52,7 +52,7 @@ def index():
             "DT_RowId" : "job_" + str(key),
             "0" : val['checkbox'],
             "1" : key,
-            "2" : 'http://{0}/jobs/thumbnails/{1}s'.format(BRENDER_SERVER, key),
+            "2" : 'http://{0}/jobs/thumbnails/{1}s'.format(FLAMENCO_SERVER, key),
             "3" : val['job_name'],
             "4" : val['percentage_done'],
             "5" : remaining_time,
@@ -74,7 +74,7 @@ def index():
 def job(job_id):
     job = http_server_request('get', '/jobs/{0}'.format(job_id))
     #Tasks
-    job['thumbnail'] = 'http://%s/jobs/thumbnails/%s' % (BRENDER_SERVER, job_id)
+    job['thumbnail'] = 'http://%s/jobs/thumbnails/%s' % (FLAMENCO_SERVER, job_id)
     return render_template('jobs/view.html', job=job)
 
 

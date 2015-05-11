@@ -12,9 +12,9 @@ app.config.update(
 
 try:
     from application import config
-    app.config['BRENDER_SERVER'] = config.Config.BRENDER_SERVER
+    app.config['FLAMENCO_SERVER'] = config.Config.FLAMENCO_SERVER
 except ImportError:
-    app.config['BRENDER_SERVER'] = 'localhost:9999'
+    app.config['FLAMENCO_SERVER'] = 'localhost:9999'
 
 def check_connection():
     try:
@@ -57,13 +57,13 @@ def http_server_request(method, path, params=None):
     """
 
     if method == 'get':
-        r = requests.get('http://' + app.config['BRENDER_SERVER'] + path)
+        r = requests.get('http://' + app.config['FLAMENCO_SERVER'] + path)
     elif method == 'delete':
-        r = requests.delete('http://' + app.config['BRENDER_SERVER'] + path)
+        r = requests.delete('http://' + app.config['FLAMENCO_SERVER'] + path)
     elif method == 'post':
-        r = requests.post('http://' + app.config['BRENDER_SERVER'] + path, params)
+        r = requests.post('http://' + app.config['FLAMENCO_SERVER'] + path, params)
     elif method == 'put':
-        r = requests.put('http://' + app.config['BRENDER_SERVER'] + path, params)
+        r = requests.put('http://' + app.config['FLAMENCO_SERVER'] + path, params)
 
     if r.status_code == 204:
         return '', 204
