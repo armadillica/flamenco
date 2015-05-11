@@ -276,7 +276,8 @@ class MovPanelControl(bpy.types.Panel):
             wm,
             "flamenco_managersIndex",
             rows=5)
-        col.prop(wm, 'flamenco_chunkSize')
+        if not wm.flamenco_jobType in ['blender_bake_anim_cache']:
+            col.prop(wm, 'flamenco_chunkSize')
         col.prop(wm, 'flamenco_priority')
         col.prop(wm, 'flamenco_startJob')
         col.operator("flamenco.send_job")
@@ -322,6 +323,7 @@ class MovPanelControl(bpy.types.Panel):
 jobType_list = [
     ('simple_blender_render', 'Simple', '', 1),
     ('tiled_blender_render', 'Tiled', '', 2),
+    ('blender_bake_anim_cache', 'Bake Anim Cache', '', 3),
     ]
 
 manager_list = [

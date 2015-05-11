@@ -53,6 +53,7 @@ def runserver():
         HOSTNAME = socket.gethostname()
 
     # TODO: search for the task_compilers and ask for required commands accordigly
+    # Render Config
     render_config = Setting.query.filter_by(name='simple_blender_render').first()
     if not render_config:
         configuration = {'commands' : {
@@ -69,7 +70,30 @@ def runserver():
         render_config = Setting(
             name='simple_blender_render',
             value=json.dumps(configuration))
+        bake_config = Setting(
+            name='blender_bake_anim_cache',
+            value=json.dumps(configuration))
         db.session.add(render_config)
+        db.session.add(bake_config)
+        db.session.commit()
+    # Bake config
+    bake_config = Setting.query.filter_by(name='blender_bake_anim_cache').first()
+    if not bake_config:
+        configuration = {'commands' : {
+            'default' : {
+                'Linux' : '',
+                'Darwin' : '',
+                'Windows' : ''
+            }
+        }}
+        configuration['commands']['default']['Linux'] = raw_input('Linux path: ')
+        configuration['commands']['default']['Darwin'] = raw_input('OSX path: ')
+        configuration['commands']['default']['Windows'] = raw_input('Windows path: ')
+
+        bake_config = Setting(
+            name='blender_bake_anim_cache',
+            value=json.dumps(configuration))
+        db.session.add(bake_config)
         db.session.commit()
 
     # Register the manager to the server
