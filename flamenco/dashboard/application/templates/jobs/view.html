@@ -50,7 +50,9 @@
                                     {{task['status']}}
                                 </td>
                                 <td>
-                                    {{task['log']|truncate(250)}}
+                                    {% if task['log'] %}
+                                        {{task['log']|truncate(250)}}
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}
