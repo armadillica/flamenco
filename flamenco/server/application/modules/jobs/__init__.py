@@ -550,8 +550,9 @@ class JobThumbnailApi(Resource):
                             im.thumbnail(size)
                             im.save(file_path_resized_thumbnail)
                         except IOError, e:
-                            logging.error(' making the thumbnail: {0}'.format(e))
+                            logging.error("Making the thumbnail: {0}".format(e))
                         else:
+                            logging.error("Error generating thumbnail for job {0}".format(job_id))
                             thumb_file = open(file_path_resized_thumbnail, 'r')
 
                 if not thumb_file:
