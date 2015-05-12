@@ -118,7 +118,14 @@
           {% endfor %}
         </div>
       </div>
-      {% block body %}{% endblock %}
+      <div class="container-fluid">
+        <div class="row">
+          {% block body %}{% endblock %}
+          {% block sidebar %}{% endblock %}
+        </div>
+      </div>
+
+
     </div> <!-- /container -->
 
     <div class="container-fluid">

@@ -1,7 +1,4 @@
 {% extends "layout.html" %}
-{% block header_scripts %}
-  <link href="{{ url_for('static', filename='css/sidebar.css') }}" rel="stylesheet">
-{% endblock %}
 
 {% block nav %}
 <ul class="nav navbar-nav navbar-left">
@@ -23,67 +20,48 @@
 {% endblock %}
 
 {% block body %}
-<div id="wrapper">
 
-  <!-- Sidebar -->
-  <div id="sidebar-wrapper">
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-12">
-          <a href="#sidebar-toggle" class="btn btn-default" id="sidebar-toggle">Toggle</a>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12" id="sidebar-body">
-          <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="job-details-table">
-            <thead>
-              <tr>
-                <th>Key</th>
-                <th>Val</th>
-              </th>
-            </thead>
-            <tbody>
+<div class="col-md-8">
+  <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs" width="100%">
+    <thead>
+      <tr>
+        <th width="1%"><input class="check-all" type="checkbox"></th>
+        <th>ID</th>
+        <th width="1%"></th>
+        <th width="10%">Name</th>
+        <th width="10%">Priority</th>
+        <th width="10%">Completion</th>
+        <th width="10%">ETA</th>
+        <th width="15%">Average Time</th>
+        <th width="15%">Total Time</th>
+        <th width="1%">Activity</th>
+        <th width="1%">Status</th>
+        <th width="1%">Creation Time</th>
+        <th width="1%">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+{% endblock %}
 
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- /#sidebar-wrapper -->
-
-  <!-- Page Content -->
-  <div id="page-content-wrapper">
-    <!-- <div class="container-fluid"> -->
-      <div class="row">
-        <div class="col-md-12">
-          <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs" width="100%">
-            <thead>
-              <tr>
-                <th width="1%"><input class="check-all" type="checkbox"></th>
-                <th>ID</th>
-                <th width="1%"></th>
-                <th width="10%">Name</th>
-                <th width="10%">Priority</th>
-                <th width="10%">Completion</th>
-                <th width="10%">ETA</th>
-                <th width="15%">Average Time</th>
-                <th width="15%">Total Time</th>
-                <th width="1%">Activity</th>
-                <th width="1%">Status</th>
-                <th width="1%">Creation Time</th>
-                <th width="1%">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  <!-- </div> -->
+{% block sidebar %}
+<!-- Sidebar -->
+<div class="col-md-4" id="sidebar-body">
+  <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="job-details-table">
+    <thead>
+      <tr>
+        <th>Key</th>
+        <th>Val</th>
+      </th>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
 </div>
 
+<!-- /#sidebar-wrapper -->
 {% endblock %}
 
 {% block footer_scripts %}
