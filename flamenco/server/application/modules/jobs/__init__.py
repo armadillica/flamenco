@@ -214,9 +214,9 @@ class JobListApi(Resource):
                 TaskApi.delete_tasks(job.id)
                 TaskApi.create_tasks(job)
 
-                path = os.path.join(
+                path = join(
                     job.project.render_path_server, str(job.id))
-                if os.path.exists(path):
+                if exists(path):
                     rmtree(path)
         else:
             print('[error] Job %d not found' % job_id)
@@ -280,9 +280,11 @@ class JobListApi(Resource):
             # Run the right function (according to the command specified) against
             # a list of job IDs
             map(fun, args['id'])
-            # Return a dictionary with the IDs list, the command that was run agains them
-            # and the status they have after such command has been executed
-            return dict(id=args['id'], command=args['command'], status=status), 200
+            # Return a dictionary with the IDs list, the command that was run
+            # agains them and the status they have after such command has been
+            # executed
+            return dict(
+                id=args['id'], command=args['command'], status=status), 200
         except KeyError:
             return args, 404
 
@@ -331,7 +333,7 @@ class JobListApi(Resource):
                 os.mkdir(jobpath)
             except:
                 pass
-            args['jobfile'].save( join(jobpath, 'jobfile_{0}.zip'.format(job.id)) )
+            args['jobfile'].save(join(jobpath, 'jobfile_{0}.zip'.format(job.id)))
 
 
         allowed_managers = args['managers']
@@ -442,9 +444,9 @@ class JobApi(Resource):
 
             #Security check
             insecure_names=[None, "", "/", "\\", ".", ".."]
-            path = os.path.join(job.project.render_path_server, str(job.id))
+            path = join(job.project.render_path_server, str(job.id))
             if job.project.render_path_server not in insecure_names and str(job.id) not in insecure_names:
-                if os.path.exists(path):
+                if exists(path):
                     rmtree(path)
             logging.info('Job {0} reset end ready'.format(job_id))
 
@@ -464,26 +466,25 @@ class JobApi(Resource):
 class JobDeleteApi(Resource):
     def post(self):
         args = id_list.parse_args()
-        print Job.query.all()
-        print args['id']
         int_list = list_integers_string(args['id'])
         for j in int_list:
             TaskApi.delete_tasks(j)
             job = Job.query.get(j)
             if job:
-                #path = os.path.join(job.project.render_path_server, str(j))
+                #path = join(job.project.render_path_server, str(j))
                 #Security check
                 #insecure_names=[None, "", "/", "\\", ".", ".."]
                 #if job.project.render_path_server not in insecure_names and str(j) not in insecure_names:
                 #    if exists(path):
                 #        rmtree(path)
 
-                db.session.query(JobManagers).filter(JobManagers.job_id == job.id).delete()
+                db.session.query(JobManagers)\
+                    .filter(JobManagers.job_id == job.id).delete()
                 db.session.delete(job)
                 db.session.commit()
-                print "[info] Deleted job %d" % j
+                logging.info("Deleted job {0}".format(j))
             else:
-                print "[error] Job %d not found" % j
+                logging.error("Job {0} not found".format(j))
                 return '', 404
 
         return '', 204
@@ -509,8 +510,8 @@ class JobThumbnailListApi(Resource):
 
         file = request.files['file']
         if file and self.allowed_file(file.filename):
-            filepath=os.path.join( app.config['TMP_FOLDER'] , thumbnail_filename)
-            filepath_last=os.path.join( app.config['TMP_FOLDER'] , 'thumbnail_0.png')
+            filepath=join( app.config['TMP_FOLDER'] , thumbnail_filename)
+            filepath_last=join( app.config['TMP_FOLDER'] , 'thumbnail_0.png')
             file.save(filepath)
             shutil.copy2(filepath, filepath_last)
 
@@ -563,7 +564,7 @@ class JobThumbnailApi(Resource):
             size. If the size is None, we return the orginal.
             """
             filename = 'thumbnail_{0}.png'.format(job_id)
-            path_thumbnail_original = os.path.join(app.config['TMP_FOLDER'], filename)
+            path_thumbnail_original = join(app.config['TMP_FOLDER'], filename)
             # Check that the original file exsits
             if os.path.isfile(path_thumbnail_original):
                 # Thumbnail file object that is returned by the view
@@ -626,8 +627,8 @@ class JobFileApi(Resource):
         """
         job = Job.query.get(job_id)
         serverstorage = app.config['SERVER_STORAGE']
-        projectpath = os.path.join(serverstorage, str(job.project_id))
-        jobpath = os.path.join(projectpath, str(job_id))
+        projectpath = join(serverstorage, str(job.project_id))
+        jobpath = join(projectpath, str(job_id))
         return send_from_directory(jobpath, 'jobfile_{0}.zip'.format(job_id))
 
 
@@ -637,16 +638,16 @@ class JobFileOutputApi(Resource):
         """
         serverstorage = app.config['SERVER_STORAGE']
         job = Job.query.get(job_id)
-        projectpath = os.path.join(serverstorage, str(job.project_id))
-        jobpath = os.path.join(projectpath, str(job_id))
-        zippath = os.path.join(jobpath, 'output')
+        projectpath = join(serverstorage, str(job.project_id))
+        jobpath = join(projectpath, str(job_id))
+        zippath = join(jobpath, 'output')
         zname = 'jobfileout_{0}.zip'.format(job_id)
-        jobfile = os.path.join(jobpath, zname)
+        jobfile = join(jobpath, zname)
 
         with ZipFile(jobfile, 'w') as jobzip:
             for dirpath, dirnames, filenames in os.walk(zippath):
                 for fname in filenames:
-                    filepath = os.path.join(dirpath, fname)
+                    filepath = join(dirpath, fname)
                     jobzip.write(filepath, fname)
 
         return send_from_directory(jobpath, zname, as_attachment=True)
