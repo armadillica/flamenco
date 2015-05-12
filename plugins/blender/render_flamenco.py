@@ -215,7 +215,10 @@ class bamToRenderfarm (bpy.types.Operator):
             'start_job': wm.flamenco_startJob,
         }
 
+        use_extension = C.scene.render.use_file_extension
+        C.scene.render.use_file_extension = True
         bpy.ops.wm.save_mainfile()
+        C.scene.render.use_file_extension = use_extension
 
         tmppath = C.user_preferences.filepaths.temporary_directory
         zipname = "job"
