@@ -3,8 +3,8 @@ import os
 import json
 import shutil
 import requests
+import time
 from PIL import Image
-import os
 from os import listdir
 from os.path import join
 from os.path import exists
@@ -518,6 +518,10 @@ class JobThumbnailListApi(Resource):
 class JobThumbnailApi(Resource):
     """Thumbnail interface for the Server
     """
+
+    #: Allowed sizes for thumbnails
+    sizes = {'s': (128, 128), 'm': (512, 512), 'l': (1024, 1024)}
+
     def get(self, job_id, size=None):
         """Returns the last thumbnail for the Job, or a blank image if none.
         If job_id is 0 return the global last thumbnail. It is possible to
@@ -529,6 +533,34 @@ class JobThumbnailApi(Resource):
         if no suffix is added, we use the original image.
         """
 
+        def make_thumbnail(file_src, file_dst, size='s'):
+            """Given an input path, generate a thumbnail with the proper size.
+            Returns a file object with the resized thumbnail, or None.
+            """
+
+            if size in self.sizes:
+                size = self.sizes[size]
+            else:
+                # Size not supported
+                return None
+
+            try:
+                im = Image.open(file_src)
+                im.thumbnail(size)
+                im.save(file_dst)
+                logging.debug("Generated thumbnail for {0}".format(file_src))
+                return open(file_dst, 'r')
+            except IOError, e:
+                logging.error("Making the thumbnail: {0}".format(e))
+                return None
+            else:
+                logging.error("Generic error making the thumbnail")
+                return None
+            # else:
+            #     logging.error("Error generating thumbnail for job {0}".format(job_id))
+            #     thumb_file = open(file_path_resized_thumbnail, 'r')
+
+
         def generate():
             is_thumbnail = False
             if job_id[-1:].isalpha():
@@ -538,32 +570,44 @@ class JobThumbnailApi(Resource):
                 real_job_id = job_id
             filename = 'thumbnail_{0}.png'.format(real_job_id)
             file_path_original_thumbnail = os.path.join(app.config['TMP_FOLDER'], filename)
+            # Check that the original file exsits
             if os.path.isfile(file_path_original_thumbnail):
+                # Thumbnail file object that is returned by the view
                 thumb_file = None
+                # Check if we are asking for a thumbnail
                 if is_thumbnail:
-                    size = 128, 128
-                    file_path_resized_thumbnail = os.path.join(app.config['TMP_FOLDER'], filename + ".thumbnail.png")
-                    if not os.path.isfile(file_path_resized_thumbnail):
-                        filename, ext = os.path.splitext(filename)
-                        im = Image.open(file_path_original_thumbnail)
-                        try:
-                            im.thumbnail(size)
-                            im.save(file_path_resized_thumbnail)
-                            logging.debug("Generated thumbnail for job {0}".format(job_id))
-                        except IOError, e:
-                            logging.error("Making the thumbnail: {0}".format(e))
+                    # Define expected path for thumbnail
+                    root, ext = os.path.splitext(file_path_original_thumbnail)
+                    file_path_resized_thumbnail = "{0}.{1}{2}".format(root, 's', ext)
+                    # Check if the thumbnails has been generated already
+                    if os.path.isfile(file_path_resized_thumbnail):
+                        thumb_original_timestamp = time.ctime(os.path.getmtime(file_path_original_thumbnail))
+                        thumb_resized_timestamp = time.ctime(os.path.getmtime(file_path_resized_thumbnail))
+                        # Check if the original file is more recent than the resized
+                        if thumb_original_timestamp > thumb_resized_timestamp:
+                            thumb_file = make_thumbnail(
+                                file_path_original_thumbnail,
+                                file_path_resized_thumbnail)
                         else:
-                            logging.error("Error generating thumbnail for job {0}".format(job_id))
                             thumb_file = open(file_path_resized_thumbnail, 'r')
+                    else:
+                        # Generate a new thumbnail, defaults to small
+                        thumb_file = make_thumbnail(
+                            file_path_original_thumbnail,
+                            file_path_resized_thumbnail)
 
+                # If no thumb file is found, open the original image instead
                 if not thumb_file:
                     thumb_file = open(str(file_path_original_thumbnail), 'r')
-
                 return thumb_file.read()
+            # If no resized file is available (job did not start or is running)
             else:
                 with app.open_resource('static/missing_thumbnail.png') as thumb_file:
                     return thumb_file.read()
             return False
+
+        # The actual image generator that returns the thumbnail or 404
+        # TODO: improve the functionality by actually allowing multiple sizes
         bin = generate()
         if bin:
             return Response(bin, mimetype='image/png')
