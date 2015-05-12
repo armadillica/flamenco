@@ -1,15 +1,17 @@
-import os
 import json
-import logging
+
 
 class job_compiler():
+    """ Create cache for Selected Objects
+    that have a Cache Library.
+    """
     @staticmethod
     def compile(job, project, create_task):
         job_settings = json.loads(job.settings)
-        task_type='blender_bake_anim_cache'
-        parser='blender_render'
+        task_type = 'blender_bake_anim_cache'
+        parser = 'blender_render'
 
-        task_settings={}
+        task_settings = {}
         task_settings['filepath'] = job_settings['filepath']
         task_settings['render_settings'] = job_settings['render_settings']
         task_settings['format'] = job_settings['format']
