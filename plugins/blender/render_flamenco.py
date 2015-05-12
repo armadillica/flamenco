@@ -267,6 +267,11 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'flamenco_project')
         col.prop(wm, 'flamenco_jobName')
         col.prop(wm, 'flamenco_jobType')
+        if wm.flamenco_jobType in ['blender_bake_anim_cache']:
+            col.label(text="Objects to Bake:")
+            for obj in context.selected_objects:
+                if obj.cache_library:
+                    col.label(text="- {0}".format(obj.name))
         col.prop(wm, 'flamenco_command')
         col.template_list(
             "UI_UL_list",
@@ -281,6 +286,7 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'flamenco_priority')
         col.prop(wm, 'flamenco_startJob')
         col.operator("flamenco.send_job")
+
 
         """col.label(text="Server Settings")
         col.template_list(
