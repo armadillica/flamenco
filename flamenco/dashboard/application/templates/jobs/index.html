@@ -75,7 +75,7 @@
     var jobsTable = $('#jobs').dataTable({
       //"bProcessing": true,
       "ajax": "{{url_for('jobs.index_json')}}",
-      //"iDisplayLength": 25,
+      "iDisplayLength": 25,
       "order": [[ 11, "desc" ]],
       "columnDefs": [
           {
