@@ -14,3 +14,7 @@ config.py
 /flamenco/server/render
 /flamenco/manager/application/static/storage/*
 /flamenco/server/application/static/storage/*
+
+/flamenco/dashboard/node_modules/
+/flamenco/dashboard/.sass-cache/
+*.css.map
