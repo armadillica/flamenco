@@ -30,7 +30,7 @@ class JobManagers(db.Model):
     job_id = db.Column(db.Integer(), db.ForeignKey('job.id'))
     job = db.relationship('Job', backref=db.backref('manager_list', lazy='dynamic'))
     manager_id = db.Column(db.Integer(), db.ForeignKey('manager.id'))
-    manager = db.relationship('Job', backref=db.backref('jobs_list', lazy='dynamic'))
+    manager = db.relationship('Manager', backref=db.backref('jobs_list', lazy='dynamic'))
 
 # TODO: look into the benefits of using the standard many to many
 # job_managers_table = db.Table('job_managers', db.Model.metadata,

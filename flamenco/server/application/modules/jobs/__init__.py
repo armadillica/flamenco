@@ -142,6 +142,9 @@ class jobInfo():
         else:
             embedded_tasks = None
 
+        # TODO: incorporate this in the original job query
+        job_managers = JobManagers.query.filter_by(job_id=job.id).first()
+
         job_info = {
             "id" : job.id,
             "job_name" : job.name,
@@ -157,7 +160,8 @@ class jobInfo():
             "priority" : job.priority,
             "percentage_done" : percentage_done,
             "creation_date" : job.creation_date,
-            "tasks" : embedded_tasks
+            "tasks" : embedded_tasks,
+            "manager": job_managers.manager.name
             }
         return job_info
 

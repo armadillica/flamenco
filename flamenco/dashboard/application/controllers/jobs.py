@@ -8,6 +8,7 @@ from flask import request
 from flask import url_for
 from flask import Blueprint
 from flask import jsonify
+from flask import Response
 
 from application import app
 from application import http_server_request
@@ -23,6 +24,11 @@ jobs = Blueprint('jobs', __name__)
 
 @jobs.route('/')
 def index():
+    return render_template('jobs/index.html', title='jobs')
+
+
+@jobs.route('/index.json')
+def index_json():
     jobs = http_server_request('get', '/jobs')
     jobs_list = []
 
@@ -50,25 +56,34 @@ def index():
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
             "DT_RowId" : "job_" + str(key),
-            "0" : val['checkbox'],
-            "1" : key,
-            "2" : 'http://{0}/jobs/thumbnails/{1}s'.format(FLAMENCO_SERVER, key),
-            "3" : val['job_name'],
-            "4" : val['percentage_done'],
-            "5" : remaining_time,
-            "6" : average_time,
-            "7" : total_time,
-            "8" : val['activity'],
-            "9" : val['status'],
-            "10" : None,
-            "11" : val['creation_date'],
-            "12" : val['priority']
+            "checkbox" : val['checkbox'],
+            "job_id" : key,
+            "thumbnail" : 'http://{0}/jobs/thumbnails/{1}s'.format(FLAMENCO_SERVER, key),
+            "name" : val['job_name'],
+            "percentage_done" : val['percentage_done'],
+            "time_remaining" : remaining_time,
+            "time_average" : average_time,
+            "time_total" : total_time,
+            "status" : val['status'],
+            "date_creation" : val['creation_date'],
+            "priority" : val['priority'],
+            "manager": val['manager']
             })
 
-    jobs_list = sorted(jobs_list, key=lambda x: x['1'])
-    entries = json.dumps(jobs_list)
+    #jobs_list = sorted(jobs_list, key=lambda x: x['1'])
 
-    return render_template('jobs/index.html', entries=entries, title='jobs')
+    # For debugging, if we add the pretty arg to the get request, we get a pretty
+    # printed version of the jobs_list
+    if request.args.get('pretty'):
+        print request.args.get('pretty')
+        if request.args.get('pretty') == 'true':
+            return jsonify(data=jobs_list)
+
+    # Default json return
+    return jsonify(data=jobs_list)
+    content = u"{\"data\"=[{0}]}".format(json.dumps(jobs_list))
+    return Response(content, mimetype='application/json')
+
 
 @jobs.route('/<int:job_id>')
 def job(job_id):

@@ -29,18 +29,18 @@
     <thead>
       <tr>
         <th width="1%"><input class="check-all" type="checkbox"></th>
-        <th>ID</th>
-        <th width="1%"></th>
+        <th width="1%">ID</th>
+        <th width="10%"></th>
         <th width="10%">Name</th>
+        <th width="10%">Manager</th>
         <th width="10%">Priority</th>
         <th width="10%">Completion</th>
         <th width="10%">ETA</th>
         <th width="15%">Average Time</th>
         <th width="15%">Total Time</th>
-        <th width="1%">Activity</th>
-        <th width="1%">Status</th>
-        <th width="1%">Creation Time</th>
-        <th width="1%">Action</th>
+        <th>Status</th>
+        <th>Creation Time</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -73,62 +73,79 @@
 <script type="text/javascript">
   $(document).ready(function() {
     var jobsTable = $('#jobs').dataTable({
-      "bProcessing": true,
-      "iDisplayLength": 25,
-      "aaData": {{ entries | safe }},
+      //"bProcessing": true,
+      "ajax": "{{url_for('jobs.index_json')}}",
+      //"iDisplayLength": 25,
       "order": [[ 11, "desc" ]],
       "columnDefs": [
           {
-              "targets": [1, 9, 11],
-              "visible": false
+            // We hide the total time
+            "targets": [8,11],
+            "visible": false
           },
           {
-              "targets": [0, 2, 10],
-              "sortable": false
+            "targets": [0, 2, 10],
+            "sortable": false
           }
       ],
+      "columns": [
+      /*  0 */ {"data": "checkbox"},
+      /*  1 */ {"data": "job_id"},
+      /*  2 */ {"data": "thumbnail"},
+      /*  3 */ {"data": "name"},
+      /*  4 */ {"data": "manager"},
+      /*  5 */ {"data": "priority"},
+      /*  6 */ {"data": "percentage_done"},
+      /*  7 */ {"data": "time_remaining"},
+      /*  8 */ {"data": "time_average"},
+      /*    */ {"data": "time_total"},
+      /*  9 */ {"data": "status"},
+      /*    */ {"data": "date_creation"},
+      /* 10 */ {"data": "date_creation"},
+      ],
+
 
       "createdRow": function ( row, data, index ) {
         // Thumbnail
-        $('td', row).eq(1).html('<a href="/jobs/' + data[1] + '"> <img style="width: 50px;" src="' + data[2] + '"/> </a>');
+        $('td', row).eq(2).html('<a href="/jobs/' + data.job_id + '"> <img style="width: 50px;" src="' + data.thumbnail + '"/> </a>');
 
         // Name
-        $('td', row).eq(2).html(data[3]);
+        $('td', row).eq(3).html(data.name);
+
+        // Manager
+        $('td', row).eq(4).html(data.manager);
 
         // Priority
-        $('td', row).eq(3).html(data[12]);
+        $('td', row).eq(5).html(data.priority);
 
         // Completion
         var progress_bar_active = '';
-        if (data[9] === 'running') {
+        if (data.status === 'running') {
           progress_bar_active = 'progress-bar-striped active';
         }
-        $('td', row).eq(4).html('<div class="progress"><div class="progress-bar ' +progress_bar_active +'" role="progressbar" aria-valuenow="' + data[4] + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data[4] + '%;"><span class="">' + data[4] + '%</span></div></div>');
+        $('td', row).eq(6).html('<div class="progress"><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"><span class="">' + data.percentage_done + '%</span></div></div>');
 
         // ETA
-        $('td', row).eq(5).html(data[5]);
+        $('td', row).eq(7).html(data.time_remaining);
 
         // Average Time
-        $('td', row).eq(6).html(data[6]);
-
-        //Total Time
-        $('td', row).eq(7).html(data[7]);
+        $('td', row).eq(8).html(data.time_average);
 
         // Status
         var job_status_label = '';
-        if (data[9] === 'completed') {
-          job_status_label = '<span class="label label-success">' + data[9] + '</label>';
-        } else if (data[9] === 'failed') {
-          job_status_label = '<span class="label label-danger">' + data[9] + '</label>';
-        } else if (data[9] === 'running') {
-          job_status_label = '<span class="label label-primary">' + data[9] + '</label>';
+        if (data.status === 'completed') {
+          job_status_label = '<span class="label label-success">' + data.status + '</label>';
+        } else if (data.status === 'failed') {
+          job_status_label = '<span class="label label-danger">' + data.status + '</label>';
+        } else if (data.status === 'running') {
+          job_status_label = '<span class="label label-primary">' + data.status + '</label>';
         } else {
-          job_status_label = '<span class="label label-default">' + data[9] + '</label>';
+          job_status_label = '<span class="label label-default">' + data.status + '</label>';
         }
-        $('td', row).eq(8).html(job_status_label);
+        $('td', row).eq(9).html(job_status_label);
 
         // Action
-        $('td', row).eq(9).html('<span class="btn btn-default btn-xs job-details" job_id="' + data[1] + '">Details</span>');
+        $('td', row).eq(10).html('<span class="btn btn-default btn-xs job-details" job_id="' + data.job_id + '">Details</span>');
       }
     });
 
@@ -225,7 +242,8 @@
       return content;
     }
 
-    function display_table(data, index_prefix=null) {
+    function display_table(data, index_prefix) {
+      index_prefix = typeof index_prefix !== 'undefined' ? index_prefix : null;
       // Recursively traverse an object and display all its properties
 
       var index = 1;
@@ -264,8 +282,8 @@
       return content;
     }
 
-    $(".job-details").click(function(e) {
-        $.get("/jobs/" + $(this).attr('job_id') + ".json", function( data ) {
+    $(document).on("click", ".job-details", function() {
+      $.get("/jobs/" + $(this).attr('job_id') + ".json", function( data ) {
           $("#job-details-table-body").html(display_table(data));
           $("#job-details-table").treetable({ expandable: true }, force=true);
         });
