@@ -265,8 +265,8 @@
 
         if (post !== null && typeof post == 'object') {
           content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td></td></tr>';
+          content += display_table(post, data_tt_id);
         } else {
-
           content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td>' + post + '</td></tr>';
         }
         index++;
