@@ -46,17 +46,17 @@
             "ajax": "{{url_for('workers.index_json')}}",
             "iDisplayLength": 25,
             "order": [[ 1, "desc" ]],
-            // "columnDefs": [
-            //     {
-            //       // We hide the total time
-            //       "targets": [8,11],
-            //       "visible": false
-            //     },
-            //     {
-            //       "targets": [0, 2, 12],
-            //       "sortable": false
-            //     }
-            // ],
+            "columnDefs": [
+                // {
+                //   // We hide the total time
+                //   "targets": [8,11],
+                //   "visible": false
+                // },
+                {
+                  "targets": [0,],
+                  "sortable": false
+                }
+            ],
             "columns": [
             /*  0 */ {"data": "checkbox"},
             /*  1 */ {"data": "hostname"},
