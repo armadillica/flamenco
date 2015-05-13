@@ -36,10 +36,13 @@ class WorkerListApi(Resource):
             int_list = par.split(';')
             workers.append( map(int, int_list) )
 
-        for worker_id,manager_id in workers:
+        for worker_id, manager_id in workers:
             manager = Manager.query.get(manager_id)
             if not manager.has_virtual_workers:
-                r = http_rest_request(manager.host, '/workers/status/{0}'.format(worker_id), 'patch', dict(status=args['status']))
+                r = http_rest_request(
+                    manager.host,
+                    '/workers/status/{0}'.format(worker_id),
+                    'patch', dict(status=args['status']))
 
         return '', 204
 

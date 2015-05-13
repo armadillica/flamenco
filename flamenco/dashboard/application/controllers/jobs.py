@@ -80,8 +80,8 @@ def index_json():
             return jsonify(data=jobs_list)
 
     # Default json return
-    return jsonify(data=jobs_list)
-    content = u"{\"data\"=[{0}]}".format(json.dumps(jobs_list))
+    jobs_list_dict = {'data': jobs_list}
+    content = u"{0}".format(json.dumps(jobs_list_dict))
     return Response(content, mimetype='application/json')
 
 

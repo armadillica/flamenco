@@ -90,7 +90,7 @@ class WorkerListApi(Resource):
 
 
 class WorkerStatusApi(Resource):
-    def patch(self,worker_id):
+    def patch(self, worker_id):
         args = status_parser.parse_args()
         worker = Worker.query.get_or_404(worker_id)
         worker.status = args['status']

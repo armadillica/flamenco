@@ -23,28 +23,16 @@
                 <thead>
                     <tr>
                         <th width="5%"><input class="check-all" type="checkbox"></th>
-                        <th width="20%">Hostname</th>
-                        <th width="20%">System</th>
-                        <th width="20%">IP Address</th>
-                        <th width="20%">Activity</th>
-                        <th width="20%">Connection</th>
-                        <th width="20%">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <th></th>
                         <th>Hostname</th>
                         <th>System</th>
                         <th>IP Address</th>
-                        <th>Activity</th>
                         <th>Connection</th>
                         <th>Status</th>
+                        <th>Manager ID</th>
                     </tr>
-                </tfoot>
+                </thead>
+                <tbody>
+                </tbody>
             </table>
         </div>
     </div>
@@ -54,46 +42,57 @@
 {% block footer_scripts %}
 <script type="text/javascript">
     $(document).ready(function() {
-
-        var data = {{ entries | safe }};
-
-        var workersTable = $('#workers').dataTable({
-            "bProcessing": true,
+        var workersTable = $('#workers').DataTable({
+            "ajax": "{{url_for('workers.index_json')}}",
             "iDisplayLength": 25,
-            "aaData": data,
-            "aoColumns": [
-                 { "bSortable": false },
-                 null,
-                 null,
-                 null,
-                 null,
-                 null,
-                 null,
-                 { "bVisible" : false}
-             ],
+            "order": [[ 1, "desc" ]],
+            // "columnDefs": [
+            //     {
+            //       // We hide the total time
+            //       "targets": [8,11],
+            //       "visible": false
+            //     },
+            //     {
+            //       "targets": [0, 2, 12],
+            //       "sortable": false
+            //     }
+            // ],
+            "columns": [
+            /*  0 */ {"data": "checkbox"},
+            /*  1 */ {"data": "hostname"},
+            /*  2 */ {"data": "system"},
+            /*  3 */ {"data": "ip_address"},
+            /*  4 */ {"data": "connection"},
+            /*  5 */ {"data": "status"},
+            /*  6 */ {"data": "manager_id"},
+            ],
 
-            "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
-                if (aData[4] == "offline"){
-                    $('td:eq(5)', nRow).html('<span class="label label-danger">offline</span>');
-                } else if (aData[4] == "online"){
-                    $('td:eq(5)', nRow).html('<span class="label label-success">online</span>');
+
+            "fnRowCallback": function( row, data, iDisplayIndex, iDisplayIndexFull ) {
+                // Connection
+                if (data.connection == "offline"){
+                    $('td', row).eq(4).html('<span class="label label-danger">offline</span>');
+                } else if (data.connection == "online"){
+                    $('td', row).eq(4).html('<span class="label label-success">online</span>');
                 }
 
-                $('td:eq(4)', nRow).html( aData[7] );
+
+                //$('td', row).eq(2).html(data[7]);
 
                 var worker_status_label = '';
-                if (aData[5] === 'enabled') {
-                  worker_status_label = '<span class="label label-success">' + aData[5] + '</label>';
-                } else if (aData[5] === 'disabled'){
-                  worker_status_label = '<span class="label label-warning">' + aData[5] + '</label>';
-                } else if (aData[5] === 'busy') {
-                  worker_status_label = '<span class="label label-info">' + aData[5] + '</label>';
-                } else if (aData[5] === 'rendering') {
-                  worker_status_label = '<span class="label label-info">' + aData[5] + '</label>';
+                if (data.status === 'enabled') {
+                  worker_status_label = '<span class="label label-success">' + data.status + '</label>';
+                } else if (data.status === 'disabled'){
+                  worker_status_label = '<span class="label label-warning">' + data.status + '</label>';
+                } else if (data.status === 'busy') {
+                  worker_status_label = '<span class="label label-info">' + data.status + '</label>';
+                } else if (data.status === 'rendering') {
+                  worker_status_label = '<span class="label label-info">' + data.status + '</label>';
                 }
-                $('td:eq(6)', nRow).html(worker_status_label);
+                // Statis
+                $('td', row).eq(5).html(worker_status_label);
 
-                $('td:eq(1)', nRow).html('<a href="/workers/view/' + aData[6] + '"> ' + aData[1] + ' </a>');
+                $('td', row).eq(1).html('<a href="/workers/view/' + data.id + '"> ' + data.hostname + ' </a>');
             }
 
         });
@@ -102,6 +101,20 @@
 
 
         $(document).on("click", "#workers-enable, #workers-disable", function() {
+
+            // var data = null;
+            // $.getJSON("{{url_for('workers.index_json')}}", function( json ) {
+            //     console.log( "JSON Data: " + json.data );
+            //     data = json.data;
+            // });
+            // //data = data['data'];
+            // console.log(data);
+
+            var data = workersTable.data();
+
+            workersTable.data().each( function (d) {
+                console.log(d.status);
+            });
 
             var workers = new Array();
 
@@ -126,20 +139,22 @@
             $.post("/workers/edit", params)
                 .done(function(data_fun) {
                     // console.log('Workers ' + workers_ids + ' updated : ' + status);
-                    $.growl('Workers ' + workers_ids + ' ' + status);
-                    // redrawing the table to display changes
 
-                    var j = 0;
+
+                    worker_names = [];
                     for (var i = 0; i < workers.length; i++) {
-                        for (var j = 0; j < data.length; j++) {
-                            id = data[j][6]+';'+data[j][8];
+                        workersTable.rows().every( function () {
+                            var d = this.data();
+                            id = d.id + ';' + d.manager_id;
                             if (id == workers[i]) {
-                                workersTable.fnUpdate(status, j, 5);
+                                d.status = status;
+                                worker_names.push(d.hostname);
+                                this.invalidate();
                             }
-                        }
+                        });
                     };
-
-                    workersTable.fnDraw();
+                    workersTable.draw();
+                    $.growl('Workers ' + worker_names + ' ' + status);
             });
         });
 
