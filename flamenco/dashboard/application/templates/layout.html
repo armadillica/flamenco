@@ -107,26 +107,25 @@
       </div>
     </header>
 
+
+    <div class="row">
+      <div class="col-md-12">
+        {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
     <div class="container-fluid">
       <div class="row">
-        <div class="col-md-12">
-          {% for message in get_flashed_messages() %}
-          <div class="alert alert-warning">
-              <button type="button" class="close" data-dismiss="alert">&times;</button>
-              {{ message }}
-            </div>
-          {% endfor %}
-        </div>
+        {% block body %}{% endblock %}
+        {% block sidebar %}{% endblock %}
       </div>
-      <div class="container-fluid">
-        <div class="row">
-          {% block body %}{% endblock %}
-          {% block sidebar %}{% endblock %}
-        </div>
-      </div>
+    </div>
 
 
-    </div> <!-- /container -->
 
     <div class="container-fluid">
       <hr>
