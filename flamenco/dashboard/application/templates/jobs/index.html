@@ -175,7 +175,7 @@
           var aPos = jobsTable.fnGetPosition( tableRow[0] );
           jobsTable.fnDeleteRow(aPos);
         };
-        console.log('Job removed from table');
+        // console.log('Job removed from table');
       });
     });
 
@@ -247,7 +247,6 @@
       // Recursively traverse an object and display all its properties
 
       var index = 1;
-      // var content = '<tr>';
       var content = '';
       $.each(data, function(i, post) {
         if (index_prefix) {
@@ -258,7 +257,6 @@
           data_tt_parent_id = null;
         }
 
-        console.log(data_tt_parent_id);
         if (data_tt_parent_id) {
           data_tt_parent_id_tag = ' data-tt-parent-id="' + data_tt_parent_id + '"'
         } else {
@@ -267,18 +265,12 @@
 
         if (post !== null && typeof post == 'object') {
           content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td></td></tr>';
-          content += display_table(post, data_tt_id);
-          //content += '<li>' + i + '</li>' + display_table(post);
-          //console.log(data_tt_id);
         } else {
 
           content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td>' + post + '</td></tr>';
-          //console.log(data_tt_id);
         }
         index++;
       });
-      // content += '</tr>';
-      //console.log(content);
       return content;
     }
 
