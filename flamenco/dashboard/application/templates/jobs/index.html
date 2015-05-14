@@ -122,6 +122,16 @@
   }
 
   $(document).ready(function() {
+
+    // Binding for ajax event
+    $(document).bind("ajaxSend", function(){
+      $('#jobs-index-table-reload').toggleClass('disabled');
+      $('#jobs-index-table-reload-icon').toggleClass('animate-spin');
+    }).bind("ajaxComplete", function(){
+      $('#jobs-index-table-reload').toggleClass('disabled');
+      $('#jobs-index-table-reload-icon').toggleClass('animate-spin');
+    });
+
     var jobsTable = $('#jobs').DataTable({
       //"bProcessing": true,
       "ajax": "{{url_for('jobs.index_json')}}",
@@ -223,14 +233,6 @@
         };
       });
     });
-
-    // Binding for ajax event
-    $(document).bind("ajaxSend", function(){
-      $('#jobs-index-table-reload-icon').addClass('animate-spin');
-    }).bind("ajaxComplete", function(){
-      $('#jobs-index-table-reload-icon').removeClass('animate-spin');
-    });
-
   });
 
   $(document).on(
