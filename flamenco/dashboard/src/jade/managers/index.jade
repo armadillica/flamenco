@@ -1,7 +1,8 @@
 | {% extends "layout.html" %}
 | {% block nav %}
 ul.nav.navbar-nav.navbar-left
-	span.navbar-brand Managers
+	span.navbar-brand
+		a(href="{{url_for('managers.index')}}") Managers
 	//
 		<li>
 			<div class="btn-group navbar-btn" role="group" aria-label="...">

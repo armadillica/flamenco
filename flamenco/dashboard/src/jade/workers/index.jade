@@ -1,7 +1,8 @@
 | {% extends "layout.html" %}
 | {% block nav %}
 ul.nav.navbar-nav.navbar-left
-	span.navbar-brand Workers
+	span.navbar-brand
+		a(href="{{url_for('workers.index')}}") Workers
 	li
 		.btn-group.navbar-btn(role="group" aria-label="...")
 			button#workers-enable.btn.btn-default(type="button", status="enabled").
@@ -24,7 +25,7 @@ ul.nav.navbar-nav.navbar-left
 		table#workers.table.table-striped.table-condensed.table-hover(cellpadding="0", cellspacing="0", border="0")
 			thead
 				tr
-					th(width="5%")
+					th(width="1%")
 						input.check-all(type="checkbox")
 					th Hostname
 					th System
@@ -95,7 +96,7 @@ script.
 	            } else if (data.status === 'rendering') {
 	              worker_status_label = '<span class="label label-info">' + data.status + '</label>';
 	            }
-	            // Statis
+	            // Status
 	            $('td', row).eq(5).html(worker_status_label);
 
 	            $('td', row).eq(1).html('<a href="/workers/view/' + data.id + '"> ' + data.hostname + ' </a>');
