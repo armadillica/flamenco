@@ -99,9 +99,9 @@ app.register_blueprint(render, url_prefix='/render')
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return render_template('404_error.html'), 404
+    return render_template('errors/404.html'), 404
 
 @app.errorhandler(ServerError)
 def server_error(error):
-    return render_template('500_error.html', error=error.to_html()), 500
+    return render_template('errors/500.html', error=error.to_html()), 500
 
