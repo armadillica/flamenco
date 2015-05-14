@@ -187,12 +187,12 @@ class JobListApi(Resource):
                         .update({'status' : 'ready'})
                 db.session.commit()
         else:
-            print('[error] Job %d not found' % job_id)
+            logging.error("Job {0} not found".format(job_id))
             raise KeyError
 
     def stop(self, job_id):
-        print '[info] Stopping job', job_id
-        # first we delete the associated jobs (no foreign keys)
+        logging.info("Stopped job {0}".format(job_id))
+        # first we stop the associated tasks (no foreign keys)
         job = Job.query.get(job_id)
         if job:
             if job.status not in ['stopped', 'completed', 'failed']:
@@ -201,14 +201,14 @@ class JobListApi(Resource):
                 db.session.commit()
                 TaskApi.stop_tasks(job.id)
         else:
-            print('[error] Job %d not found' % job_id)
+            logging.error("Job {0} not found".format(job_id))
             raise KeyError
 
     def reset(self, job_id):
         job = Job.query.get(job_id)
         if job:
             if job.status == 'running':
-                print'Job %d is running' % job_id
+                logging.error("Job {0} is_running".format(job_id))
                 raise KeyError
             else:
                 job.status = 'ready'
@@ -223,7 +223,7 @@ class JobListApi(Resource):
                 if exists(path):
                     rmtree(path)
         else:
-            print('[error] Job %d not found' % job_id)
+            logging.error("Job {0} not found".format(job_id))
             raise KeyError
 
     def respawn(self, job_id):
@@ -342,7 +342,7 @@ class JobListApi(Resource):
 
         allowed_managers = args['managers']
         for m in allowed_managers:
-            print "allowed managers: %d" % int(m)
+            logging.info("Allowed managers: {0}".format(int(m)))
             db.session.add(JobManagers(job_id=job.id, manager_id=int(m)))
 
         db.session.commit()
