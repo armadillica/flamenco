@@ -35,7 +35,6 @@ from application.modules.jobs.model import JobManagers
 
 from requests.exceptions import ConnectionError
 
-
 from werkzeug.datastructures import FileStorage
 
 parser = reqparse.RequestParser()

@@ -47,10 +47,10 @@ status_parser.add_argument('task_id', type=int)
 status_parser.add_argument('taskfile', type=FileStorage, location='files')
 
 parser_thumbnail = reqparse.RequestParser()
-parser_thumbnail.add_argument("task_id", type=int)
+parser_thumbnail.add_argument('task_id', type=int)
 
 parser_delete = reqparse.RequestParser()
-parser_delete.add_argument("tasks", type=str, action="append", required=True)
+parser_delete.add_argument('tasks', type=str, action='append', required=True)
 
 task_fields = {
     'id': fields.Integer,
@@ -302,20 +302,20 @@ class TaskApi(Resource):
         worker.last_activity = datetime.now()
         db.session.add(worker)
         db.session.commit()
-        if worker.status=='disabled':
-            return 'Worker is Disabled', 403
+        if worker.status == 'disabled':
+            return 'Worker is disabled', 403
         if not worker.current_task:
-            return 'Task Cancelled', 403
+            return 'Task cancelled', 403
 
         # If other workers are rendering the same task kill them
         others = Worker.query.filter(
-            Worker.status=='enabled',
-            Worker.connection=='online',
-            Worker.id!=worker.id,
-            Worker.current_task==worker.current_task).count()
+            Worker.status == 'enabled',
+            Worker.connection == 'online',
+            Worker.id != worker.id,
+            Worker.current_task == worker.current_task).count()
 
         if others > 0:
-            return 'Duplicated Task', 403
+            return 'Duplicated task', 403
 
         """for other in others:
             other.current_task = None
@@ -340,7 +340,7 @@ class TaskApi(Resource):
             if not task:
                 return 'Task is cancelled', 403"""
 
-        jobfile=None
+        jobfile = None
         if args['taskfile']:
             managerstorage = app.config['MANAGER_STORAGE']
             jobpath = os.path.join(managerstorage, str(args['job_id']))
@@ -376,9 +376,21 @@ class TaskApi(Resource):
                 ('taskfile', (
                     'taskfile.zip', open(zippath, 'rb'), 'application/zip'))]
 
-        params = { 'id' : task_id, 'status': args['status'], 'time_cost' : args['time_cost'], 'log' : args['log'], 'activity' : args['activity'] }
-        r = http_request(app.config['BRENDER_SERVER'], '/tasks/{0}'.format(task_id), 'post', params=params, files=jobfile)
-        if r[1]== 403:
+        params = {
+            'id': task_id,
+            'status': args['status'],
+            'time_cost': args['time_cost'],
+            'log': args['log'],
+            'activity': args['activity']}
+
+        r = http_request(
+            app.config['BRENDER_SERVER'],
+            '/tasks/{0}'.format(task_id),
+            'post',
+            params=params,
+            files=jobfile)
+
+        if r[1] == 403:
             return '', 403
 
         return '', 204
