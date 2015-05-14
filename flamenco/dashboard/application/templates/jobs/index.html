@@ -18,6 +18,9 @@
     <div class="btn-group navbar-btn">
       <div id="job-delete" class="btn btn-danger">Delete</div>
     </div>
+    <div class="btn-group navbar-btn">
+      <div id="jobs-index-table-reload" class="btn btn-default">Reload</div>
+    </div>
   </li>
 </ul>
 {% endblock %}
@@ -119,7 +122,7 @@
   }
 
   $(document).ready(function() {
-    var jobsTable = $('#jobs').dataTable({
+    var jobsTable = $('#jobs').DataTable({
       //"bProcessing": true,
       "ajax": "{{url_for('jobs.index_json')}}",
       "iDisplayLength": 25,
@@ -185,7 +188,16 @@
         $('td', row).eq(10).html('<span class="btn btn-default btn-xs load-tasks-index" job_id="' + data.job_id + '">Details</span>');
       }
     });
-  });
+
+    // Automatic data reload
+    setInterval( function () {
+      jobsTable.ajax.reload( null, false ); // user paging is not reset on reload
+    }, 30000 );
+
+    $(document).on("click", "#jobs-index-table-reload", function() {
+      jobsTable.ajax.reload( null, false );
+    });
+
 
   $(document).on("click", "#job-delete", function() {
     var jobs = new Array();
@@ -206,14 +218,10 @@
           return false;
         };
         for (var i = checkbox_list.length - 1; i >= 0; i--) {
-        var checkbox = checkbox_list[i];
-        var tableRow = $(checkbox).parents("tr");
-        // make sure to treat tableRow as an array and onlu get
-        // the first value (there is only one actually)
-        var aPos = jobsTable.fnGetPosition( tableRow[0] );
-        jobsTable.fnDeleteRow(aPos);
-      };
-      // console.log('Job removed from table');
+          var checkbox = checkbox_list[i];
+          jobsTable.row($(checkbox).parents('tr')).remove().draw();
+        };
+      });
     });
   });
 
@@ -364,9 +372,6 @@
     $("#jobs-index").show();
     $("#tasks-view").hide();
   });
-
-
-
 
 </script>
 {% endblock %}
