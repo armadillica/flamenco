@@ -192,7 +192,7 @@
     // Automatic data reload
     setInterval( function () {
       jobsTable.ajax.reload( null, false ); // user paging is not reset on reload
-    }, 30000 );
+    }, 60000 );
 
     $(document).on("click", "#jobs-index-table-reload", function() {
       jobsTable.ajax.reload( null, false );
