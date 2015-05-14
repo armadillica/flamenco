@@ -6,11 +6,11 @@ class Config(object):
     HOST = '0.0.0.0' # or 'localhost'
     HOSTNAME = 'My Manager' # or use socket.gethostname()
 
-    BRENDER_SERVER = 'localhost:9999'
+    FLAMENCO_SERVER = 'localhost:9999'
 
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../manager.sqlite')
 
-    VIRTUAL_WORKERS = False # If true, the manager will not have a fixed number of workers 
+    VIRTUAL_WORKERS = False # If true, the manager will not have a fixed number of workers
     IS_PRIVATE_MANAGER = False
 
     # If IS_PRIVATE_MANAGER is False, the following settings are not neede

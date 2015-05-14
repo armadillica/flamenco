@@ -47,7 +47,7 @@ clean_dir(tmp_folder)
 #    if user_config:
 #        config.from_object(user_config)
 #
-#    controllers.BRENDER_SERVER = config['FLAMENCO_MANAGER']
+#    controllers.FLAMENCO_SERVER = config['FLAMENCO_MANAGER']
 #
 #    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
 #        register_thread = Thread(target=controllers.register_worker)

@@ -156,7 +156,7 @@ class TaskCompiledApi(Resource):
             r = requests.get(
                 #'http://{0}/jobs/file/{1}'.format(
                 'http://{0}/static/storage/{1}/{2}/jobfile_{2}.zip'.format(
-                    app.config['BRENDER_SERVER'], task['project_id'], task['job_id'])
+                    app.config['FLAMENCO_SERVER'], task['project_id'], task['job_id'])
             )
 
             with open(tmpfile, 'wb') as f:
@@ -273,7 +273,7 @@ class TaskManagementApi(Resource):
         return task, 202
 
     def get(self):
-        r = http_request(app.config['BRENDER_SERVER'], '/tasks/generate', 'get')
+        r = http_request(app.config['FLAMENCO_SERVER'], '/tasks/generate', 'get')
         return r, 200
 
     #@marshal_with(task_fields)
@@ -384,7 +384,7 @@ class TaskApi(Resource):
             'activity': args['activity']}
 
         r = http_request(
-            app.config['BRENDER_SERVER'],
+            app.config['FLAMENCO_SERVER'],
             '/tasks/{0}'.format(task_id),
             'post',
             params=params,
@@ -425,7 +425,7 @@ class TaskThumbnailListApi(Resource):
             file.save(full_path)
 
         params = dict(task_id=args['task_id'])
-        server_url = "http://%s/jobs/thumbnails" % (app.config['BRENDER_SERVER'])
+        server_url = "http://%s/jobs/thumbnails" % (app.config['FLAMENCO_SERVER'])
 
         request_thread = Thread(target=self.send_thumbnail, args=(server_url, full_path, params))
         request_thread.start()

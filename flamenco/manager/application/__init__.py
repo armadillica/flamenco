@@ -27,13 +27,13 @@ try:
     app.config['THUMBNAIL_EXTENSIONS']= config.Config.THUMBNAIL_EXTENSIONS
     app.config['MANAGER_STORAGE'] = config.Config.MANAGER_STORAGE
     app.config.update(
-        BRENDER_SERVER=config.Config.BRENDER_SERVER,
+        FLAMENCO_SERVER=config.Config.FLAMENCO_SERVER,
         SQLALCHEMY_DATABASE_URI= config.Config.SQLALCHEMY_DATABASE_URI,
     )
 
     if not config.Config.IS_PRIVATE_MANAGER:
         """try:
-            server_settings = http_request(app.config['BRENDER_SERVER'], '/settings', 'get')
+            server_settings = http_request(app.config['FLAMENCO_SERVER'], '/settings', 'get')
             app.config.update(
                 BLENDER_PATH_LINUX=server_settings['blender_path_linux'],
                 BLENDER_PATH_OSX=server_settings['blender_path_osx'],
@@ -43,7 +43,7 @@ try:
                 SETTINGS_PATH_WIN=server_settings['render_settings_path_win']
             )
         except ConnectionError:
-            logging.error("The server {0} seems be unavailable.".format(app.config['BRENDER_SERVER']))
+            logging.error("The server {0} seems be unavailable.".format(app.config['FLAMENCO_SERVER']))
             exit(3)
         except KeyError:
             logging.error("Please, configure Brender Paths browsing Dashboard->Server->Settings")
@@ -64,7 +64,7 @@ except ImportError:
     """
     logging.error("No config.py file found, importing config from Server.")
 
-    app.config['BRENDER_SERVER'] = 'localhost:9999'
+    app.config['FLAMENCO_SERVER'] = 'localhost:9999'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../manager.sqlite')
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
     app.config['THUMBNAIL_EXTENSIONS'] = set(['png'])
@@ -72,7 +72,7 @@ except ImportError:
         os.path.join(os.path.dirname(__file__)))
 
     """try:
-        server_settings = http_request(app.config['BRENDER_SERVER'], '/settings', 'get')
+        server_settings = http_request(app.config['FLAMENCO_SERVER'], '/settings', 'get')
         app.config.update(
             BLENDER_PATH_LINUX=server_settings['blender_path_linux'],
             BLENDER_PATH_OSX=server_settings['blender_path_osx'],
@@ -82,7 +82,7 @@ except ImportError:
             SETTINGS_PATH_WIN=server_settings['render_settings_path_win']
         )
     except ConnectionError:
-        logging.error("The server {0} seems be unavailable.".format(app.config['BRENDER_SERVER']))
+        logging.error("The server {0} seems be unavailable.".format(app.config['FLAMENCO_SERVER']))
         exit(3)
     except KeyError:
         logging.error("Please, configure Brender Paths browsing Dashboard->Server->Settings")
@@ -129,7 +129,7 @@ def register_manager(port, name, has_virtual_workers):
     import time
     while True:
         try:
-            connection = httplib.HTTPConnection(app.config['BRENDER_SERVER'])
+            connection = httplib.HTTPConnection(app.config['FLAMENCO_SERVER'])
             connection.request("GET", "/managers")
             break
         except socket.error:
@@ -142,7 +142,7 @@ def register_manager(port, name, has_virtual_workers):
         'has_virtual_workers' : has_virtual_workers
         }
 
-    r = http_request(app.config['BRENDER_SERVER'], '/managers', 'post', params=params)
+    r = http_request(app.config['FLAMENCO_SERVER'], '/managers', 'post', params=params)
 
     # Search in the settings if we have a uuid for the manager
     uuid = Setting.query.filter_by(name='uuid').first()
