@@ -33,29 +33,6 @@ def index():
     else:
         return "[error] Dashboard could not connect to server"
 
-
-@main.route('/tasks/')
-def tasks_index():
-    tasks = http_server_request('get', '/tasks')
-    tasks_list = []
-
-    for key, val in tasks.iteritems():
-        val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
-        tasks_list.append({
-            "DT_RowId": "worker_" + str(key),
-            "0": val['checkbox'],
-            "1": key,
-            "2": val['percentage_done'],
-            "3": val['priority'],
-            "4": val['status']
-            })
-        #print(v)
-
-    entries = json.dumps(tasks_list)
-
-    return render_template('tasks.html', entries=entries, title='tasks')
-
-
 @main.route('/about')
 def about():
         return render_template('about.html')

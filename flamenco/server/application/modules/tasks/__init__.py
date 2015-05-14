@@ -395,7 +395,18 @@ class TaskApi(Resource):
         return '', 204
 
     def get(self, task_id):
-        return jsonify(task='task')
+        task = Task.query.get_or_404(task_id)
+        task_info = {
+            'id': task.id,
+            'name': task.name,
+            'status': task.status,
+            'priority': task.priority,
+            'type': task.type,
+            'log': task.log,
+            'activity': task.activity,
+            'parser': task.parser
+        }
+        return jsonify(task_info)
 
 
 class TaskListApi(Resource):
@@ -404,13 +415,14 @@ class TaskListApi(Resource):
         tasks_list = []
         for task in tasks:
             task_info = {
-            "name" : task.name,
-            "status" : task.status,
-            "priority" : task.priority,
-            "type" : task.type,
-            "log" : task.log,
-            "activity" : task.activity,
-            "parser" : task.parser
+                'id': task.id,
+                'name': task.name,
+                'status': task.status,
+                'priority': task.priority,
+                'type': task.type,
+                'log': task.log,
+                'activity': task.activity,
+                'parser': task.parser
             }
             tasks_list.append(task_info)
         return tasks_list

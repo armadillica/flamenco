@@ -89,6 +89,7 @@ from application.controllers.managers import managers
 from application.controllers.settings import settings
 from application.controllers.projects import projects
 from application.controllers.render import render
+from application.controllers.tasks import tasks
 app.register_blueprint(main)
 app.register_blueprint(jobs, url_prefix='/jobs')
 app.register_blueprint(workers, url_prefix='/workers')
@@ -96,6 +97,7 @@ app.register_blueprint(managers, url_prefix='/managers')
 app.register_blueprint(settings, url_prefix='/settings')
 app.register_blueprint(projects, url_prefix='/projects')
 app.register_blueprint(render, url_prefix='/render')
+app.register_blueprint(tasks, url_prefix='/tasks')
 
 @app.errorhandler(404)
 def page_not_found(error):

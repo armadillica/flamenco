@@ -23,8 +23,28 @@
 {% endblock %}
 
 {% block body %}
-
-<div class="col-md-8">
+<div class="col-md-8" id="tasks-view">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="btn btn-default load-jobs-index">Back</div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table id="tasks-view-table" cellpadding="0" cellspacing="0" border="0" class="table table-striped" width="100%">
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Val</th>
+          </th>
+        </thead>
+        <tbody id="tasks-view-table-body">
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="col-md-8" id="jobs-index">
   <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs" width="100%">
     <thead>
       <tr>
@@ -52,14 +72,26 @@
 {% block sidebar %}
 <!-- Sidebar -->
 <div class="col-md-4" id="sidebar-body">
-  <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="job-details-table">
+  <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs-view-table">
     <thead>
       <tr>
         <th>Key</th>
         <th>Val</th>
       </th>
     </thead>
-    <tbody id="job-details-table-body">
+    <tbody id="jobs-view-table-body">
+    </tbody>
+  </table>
+
+  <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="tasks-index-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Status</th>
+        <th></th>
+      </th>
+    </thead>
+    <tbody id="tasks-index-table-body">
     </tbody>
   </table>
 </div>
@@ -71,6 +103,21 @@
 <script src="{{ url_for('static', filename='js/jquery.treetable.js') }}"></script>
 
 <script type="text/javascript">
+
+  function parse_status(status) {
+    var job_status_label = '';
+    if (status === 'completed') {
+      job_status_label = '<span class="label label-success">' + status + '</label>';
+    } else if (status === 'failed') {
+      job_status_label = '<span class="label label-danger">' + status + '</label>';
+    } else if (status === 'running') {
+      job_status_label = '<span class="label label-primary">' + status + '</label>';
+    } else {
+      job_status_label = '<span class="label label-default">' + status + '</label>';
+    }
+    return job_status_label;
+  }
+
   $(document).ready(function() {
     var jobsTable = $('#jobs').dataTable({
       //"bProcessing": true,
@@ -132,20 +179,10 @@
         $('td', row).eq(8).html(data.time_average);
 
         // Status
-        var job_status_label = '';
-        if (data.status === 'completed') {
-          job_status_label = '<span class="label label-success">' + data.status + '</label>';
-        } else if (data.status === 'failed') {
-          job_status_label = '<span class="label label-danger">' + data.status + '</label>';
-        } else if (data.status === 'running') {
-          job_status_label = '<span class="label label-primary">' + data.status + '</label>';
-        } else {
-          job_status_label = '<span class="label label-default">' + data.status + '</label>';
-        }
-        $('td', row).eq(9).html(job_status_label);
+        $('td', row).eq(9).html(parse_status(data.status));
 
         // Action
-        $('td', row).eq(10).html('<span class="btn btn-default btn-xs job-details" job_id="' + data.job_id + '">Details</span>');
+        $('td', row).eq(10).html('<span class="btn btn-default btn-xs load-tasks-index" job_id="' + data.job_id + '">Details</span>');
       }
     });
   });
@@ -245,7 +282,33 @@
   //   return content;
   // }
 
-  function display_table(data, index_prefix) {
+
+
+  function tasks_index_table_rows(data) {
+    var content = '';
+    $.each(data, function(i, post) {
+      if (post !== null && typeof post == 'object') {
+        content += '<tr><td>' + post.name + '</td>';
+        content += '<td>' + parse_status(post.status) + '</td>';
+        content += '<td><span class="btn btn-default btn-xs load-tasks-view" task_id="' + post.id + '">View</span></td></tr>';
+      }
+    });
+    return content;
+  }
+
+  function tasks_view_table_rows(data) {
+    var content = '';
+    console.log(data);
+    $.each(data, function(i, post) {
+      content += '<tr><td>' + i + '</td>';
+      content += '<td>' + post + '</td></tr>';
+      // content += '<td><span class="btn btn-default btn-xs load-tasks-view" task_id="' + post.id + '">View</span></td></tr>';
+    });
+    return content;
+  }
+
+
+  function jobs_view_table_rows(data, index_prefix) {
     index_prefix = typeof index_prefix !== 'undefined' ? index_prefix : null;
     // Recursively traverse an object and display all its properties
 
@@ -268,7 +331,7 @@
 
       if (post !== null && typeof post == 'object') {
         content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td></td></tr>';
-        content += display_table(post, data_tt_id);
+        content += jobs_view_table_rows(post, data_tt_id);
       } else {
         content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td>' + post + '</td></tr>';
       }
@@ -277,16 +340,31 @@
     return content;
   }
 
-  $(document).on("click", ".job-details", function() {
+  $(document).on("click", ".load-tasks-index", function() {
     $.get("/jobs/" + $(this).attr('job_id') + ".json", function( data ) {
-        $("#job-details-table-body").html(display_table(data));
-        $("#job-details-table").treetable({ expandable: true }, force=true);
-      });
-      if ($("#wrapper").hasClass("toggled")) {
-        $("#wrapper").toggleClass("toggled");
-      } else {
-      }
+      //$("#jobs-view-table-body").html(jobs_view_table_rows(data));
+      $("#tasks-index-table-body").html(tasks_index_table_rows(data.tasks));
+      //$("#jobs-view-table").treetable({ expandable: true }, force=true);
+    });
   });
+
+
+  $(document).on("click", ".load-tasks-view", function() {
+    $.get("/tasks/" + $(this).attr('task_id') + ".json", function( data ) {
+      $("#jobs-index").hide();
+      $("#tasks-view").show();
+      $("#tasks-view-table-body").html(tasks_view_table_rows(data));
+      // $.each(data, function(i, post) {
+      //   $("#tasks-view").append(post);
+      // });
+    });
+  });
+
+  $(document).on("click", ".load-jobs-index", function() {
+    $("#jobs-index").show();
+    $("#tasks-view").hide();
+  });
+
 
 
 
