@@ -1,5 +1,6 @@
 import requests
 from flask import jsonify
+from flask import abort
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from application.utils import list_integers_string
@@ -47,9 +48,11 @@ class WorkerListApi(Resource):
         return '', 204
 
 
-# FIXME this will probably be depreceated
+# FIXME this will probably be depreceated, because worker talk to the server
+# only via the manager.
 class WorkerApi(Resource):
     def get(self, worker_id):
+        return abort(404)
         worker = Worker.query.get_or_404(worker_id)
         r = requests.get('http://' + worker.ip_address + '/run_info')
         return r.json()
