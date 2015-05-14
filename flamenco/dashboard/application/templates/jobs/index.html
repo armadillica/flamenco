@@ -148,144 +148,147 @@
         $('td', row).eq(10).html('<span class="btn btn-default btn-xs job-details" job_id="' + data.job_id + '">Details</span>');
       }
     });
+  });
 
-    $(document).on("click", "#job-delete", function() {
+  $(document).on("click", "#job-delete", function() {
+    var jobs = new Array();
+    var checkbox_list = $( "tbody input:checked" );
+    for (var i = checkbox_list.length - 1; i >= 0; i--) {
+      var checkbox = checkbox_list[i];
+      jobs.push($(checkbox).val());
+    };
+
+    jobs_ids = jobs.join();
+
+    $.post("/jobs/delete", { 'id' : jobs_ids})
+      .done(function(data) {
+        // we reuse the checkbox list to delete the table rows we just
+        // removed in the database table
+        if (checkbox_list.length == 0) {
+          alert("Please select one or more jobs");
+          return false;
+        };
+        for (var i = checkbox_list.length - 1; i >= 0; i--) {
+        var checkbox = checkbox_list[i];
+        var tableRow = $(checkbox).parents("tr");
+        // make sure to treat tableRow as an array and onlu get
+        // the first value (there is only one actually)
+        var aPos = jobsTable.fnGetPosition( tableRow[0] );
+        jobsTable.fnDeleteRow(aPos);
+      };
+      // console.log('Job removed from table');
+    });
+  });
+
+  $(document).on(
+    "click",
+    "#job-start, #job-stop, #job-respawn, #job-pause, #job-reset, #job-archive",
+    function(){
       var jobs = new Array();
+
       var checkbox_list = $( "tbody input:checked" );
       for (var i = checkbox_list.length - 1; i >= 0; i--) {
         var checkbox = checkbox_list[i];
         jobs.push($(checkbox).val());
       };
 
-      jobs_ids = jobs.join();
+      if (jobs.length == 0) {
+        $.growl("Please select one or more jobs", {
+          type: "warning"
+        });
+        return false;
+      };
 
-      $.post("/jobs/delete", { 'id' : jobs_ids})
+      //console.log(jobs);
+      job_ids = jobs.join();
+
+      command = $(this).attr('command');
+      params = { 'id' : job_ids, 'command' : command}
+
+      $.post("/jobs/update", params)
         .done(function(data) {
-          // we reuse the checkbox list to delete the table rows we just
-          // removed in the database table
-          if (checkbox_list.length == 0) {
-            alert("Please select one or more jobs");
-            return false;
+          //console.log('Job ' + job_ids + ' update: ' + command);
+          var table = $('#jobs').DataTable();
+          for (var i = 0; i < data['id'].length; i++) {
+            var row = table.row('#job_' + data['id'][i]);
+            if (data['status'] === 'archived') {
+              row.remove();
+            } else {
+              var row_data = row.data();
+              row_data[9] = data['status'];
+              row.data(row_data);
+            }
           };
-          for (var i = checkbox_list.length - 1; i >= 0; i--) {
-          var checkbox = checkbox_list[i];
-          var tableRow = $(checkbox).parents("tr");
-          // make sure to treat tableRow as an array and onlu get
-          // the first value (there is only one actually)
-          var aPos = jobsTable.fnGetPosition( tableRow[0] );
-          jobsTable.fnDeleteRow(aPos);
-        };
-        // console.log('Job removed from table');
+          table.draw();
+          $.growl('Job ' + job_ids + ' ' + data['status']);
       });
-    });
-
-    $(document).on(
-      "click",
-      "#job-start, #job-stop, #job-respawn, #job-pause, #job-reset, #job-archive",
-      function(){
-        var jobs = new Array();
-
-        var checkbox_list = $( "tbody input:checked" );
-        for (var i = checkbox_list.length - 1; i >= 0; i--) {
-          var checkbox = checkbox_list[i];
-          jobs.push($(checkbox).val());
-        };
-
-        if (jobs.length == 0) {
-          $.growl("Please select one or more jobs", {
-            type: "warning"
-          });
-          return false;
-        };
-
-        //console.log(jobs);
-        job_ids = jobs.join();
-
-        command = $(this).attr('command');
-        params = { 'id' : job_ids, 'command' : command}
-
-        $.post("/jobs/update", params)
-          .done(function(data) {
-            //console.log('Job ' + job_ids + ' update: ' + command);
-            var table = $('#jobs').DataTable();
-            for (var i = 0; i < data['id'].length; i++) {
-              var row = table.row('#job_' + data['id'][i]);
-              if (data['status'] === 'archived') {
-                row.remove();
-              } else {
-                var row_data = row.data();
-                row_data[9] = data['status'];
-                row.data(row_data);
-              }
-            };
-            table.draw();
-            $.growl('Job ' + job_ids + ' ' + data['status']);
-        });
-    });
-
-    $(document).on("click", ".check-all", function(){
-      $("table input[type=checkbox]").attr('checked', $(this).is(':checked'));
-    });
-
-
-    function display_json(data) {
-      // Recursively traverse an object and display all its properties
-      var content = '<ul>';
-      $.each(data, function(i, post) {
-        if (post !== null && typeof post == 'object') {
-          content += '<li>' + i + '</li>'+display_json(post);
-        } else {
-          content += '<li>' + i + " : " + post + '</li>';
-        }
-      });
-      content += '</ul>';
-      return content;
-    }
-
-    function display_table(data, index_prefix) {
-      index_prefix = typeof index_prefix !== 'undefined' ? index_prefix : null;
-      // Recursively traverse an object and display all its properties
-
-      var index = 1;
-      var content = '';
-      $.each(data, function(i, post) {
-        if (index_prefix) {
-          data_tt_id = index_prefix + '.' + index.toString();
-          data_tt_parent_id = index_prefix;
-        } else {
-          data_tt_id = index.toString();
-          data_tt_parent_id = null;
-        }
-
-        if (data_tt_parent_id) {
-          data_tt_parent_id_tag = ' data-tt-parent-id="' + data_tt_parent_id + '"'
-        } else {
-          data_tt_parent_id_tag = ''
-        };
-
-        if (post !== null && typeof post == 'object') {
-          content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td></td></tr>';
-          content += display_table(post, data_tt_id);
-        } else {
-          content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td>' + post + '</td></tr>';
-        }
-        index++;
-      });
-      return content;
-    }
-
-    $(document).on("click", ".job-details", function() {
-      $.get("/jobs/" + $(this).attr('job_id') + ".json", function( data ) {
-          $("#job-details-table-body").html(display_table(data));
-          $("#job-details-table").treetable({ expandable: true }, force=true);
-        });
-        if ($("#wrapper").hasClass("toggled")) {
-          $("#wrapper").toggleClass("toggled");
-        } else {
-        }
-    });
-
-
   });
+
+  $(document).on("click", ".check-all", function() {
+    $("table input[type=checkbox]").attr('checked', $(this).is(':checked'));
+  });
+
+
+  // Legacy function to be removed in the future
+  //
+  // function display_json(data) {
+  //   // Recursively traverse an object and display all its properties
+  //   var content = '<ul>';
+  //   $.each(data, function(i, post) {
+  //     if (post !== null && typeof post == 'object') {
+  //       content += '<li>' + i + '</li>'+display_json(post);
+  //     } else {
+  //       content += '<li>' + i + " : " + post + '</li>';
+  //     }
+  //   });
+  //   content += '</ul>';
+  //   return content;
+  // }
+
+  function display_table(data, index_prefix) {
+    index_prefix = typeof index_prefix !== 'undefined' ? index_prefix : null;
+    // Recursively traverse an object and display all its properties
+
+    var index = 1;
+    var content = '';
+    $.each(data, function(i, post) {
+      if (index_prefix) {
+        data_tt_id = index_prefix + '.' + index.toString();
+        data_tt_parent_id = index_prefix;
+      } else {
+        data_tt_id = index.toString();
+        data_tt_parent_id = null;
+      }
+
+      if (data_tt_parent_id) {
+        data_tt_parent_id_tag = ' data-tt-parent-id="' + data_tt_parent_id + '"'
+      } else {
+        data_tt_parent_id_tag = ''
+      };
+
+      if (post !== null && typeof post == 'object') {
+        content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td></td></tr>';
+        content += display_table(post, data_tt_id);
+      } else {
+        content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td>' + post + '</td></tr>';
+      }
+      index++;
+    });
+    return content;
+  }
+
+  $(document).on("click", ".job-details", function() {
+    $.get("/jobs/" + $(this).attr('job_id') + ".json", function( data ) {
+        $("#job-details-table-body").html(display_table(data));
+        $("#job-details-table").treetable({ expandable: true }, force=true);
+      });
+      if ($("#wrapper").hasClass("toggled")) {
+        $("#wrapper").toggleClass("toggled");
+      } else {
+      }
+  });
+
+
+
 </script>
 {% endblock %}

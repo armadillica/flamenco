@@ -162,10 +162,6 @@ def add():
         }
 
         http_server_request('post', '/jobs', job_values)
-
-        #  flashing does not work because we use redirect_url
-        #  flash('New job added!')
-
         return redirect(url_for('jobs.index'))
     else:
         render_settings = http_server_request('get', '/settings/render')
