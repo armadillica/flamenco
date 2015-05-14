@@ -19,7 +19,7 @@
       <div id="job-delete" class="btn btn-danger">Delete</div>
     </div>
     <div class="btn-group navbar-btn">
-      <div id="jobs-index-table-reload" class="btn btn-default">Reload</div>
+      <div id="jobs-index-table-reload" class="btn btn-default"> <i id="jobs-index-table-reload-icon" class="fl-spin4"></i> Reload</div>
     </div>
   </li>
 </ul>
@@ -223,6 +223,14 @@
         };
       });
     });
+
+    // Binding for ajax event
+    $(document).bind("ajaxSend", function(){
+      $('#jobs-index-table-reload-icon').addClass('animate-spin');
+    }).bind("ajaxComplete", function(){
+      $('#jobs-index-table-reload-icon').removeClass('animate-spin');
+    });
+
   });
 
   $(document).on(
