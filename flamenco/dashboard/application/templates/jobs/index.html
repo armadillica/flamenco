@@ -140,7 +140,7 @@
       "columnDefs": [
           {
             // We hide the total time
-            "targets": [8,11],
+            "targets": [7, 8, 11],
             "visible": false
           },
           {
@@ -185,17 +185,15 @@
         }
         $('td', row).eq(6).html('<div class="progress"><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"><span class="">' + data.percentage_done + '%</span></div></div>');
 
-        // ETA
-        $('td', row).eq(7).html(data.time_remaining);
 
         // Average Time
-        $('td', row).eq(8).html(data.time_average);
+        $('td', row).eq(7).html(data.time_average);
 
         // Status
-        $('td', row).eq(9).html(parse_status(data.status));
+        $('td', row).eq(8).html(parse_status(data.status));
 
         // Action
-        $('td', row).eq(10).html('<span class="btn btn-default btn-xs load-tasks-index" job_id="' + data.job_id + '">Details</span>');
+        $('td', row).eq(9).html('<span class="btn btn-default btn-xs load-tasks-index" job_id="' + data.job_id + '">Details</span>');
       }
     });
 

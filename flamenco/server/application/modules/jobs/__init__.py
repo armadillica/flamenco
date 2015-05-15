@@ -11,6 +11,7 @@ from os.path import exists
 from shutil import rmtree
 from functools import partial
 from sqlalchemy import or_
+from sqlalchemy.orm import Load
 from zipfile import ZipFile
 
 from flask import jsonify
@@ -24,6 +25,7 @@ from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 
 from werkzeug.datastructures import FileStorage
+
 
 from application import db
 from application import app
@@ -71,6 +73,39 @@ job_fields = {
 }
 
 class jobInfo():
+
+    @staticmethod
+    def get_overview(job):
+        """Simple method to be merged with get. We use this temporarily for the
+        jobs index page."""
+
+        percentage_done = 0
+
+        # Update percentabe value if the job has at least 1 complete task
+        tasks_completed = Task.query\
+            .filter_by(job_id=job.id, status='finished').count()
+
+        if job.tasks and tasks_completed:
+            percentage_done = round(float(tasks_completed) / float(job.tasks.count()) * 100.0, 1)
+
+        job_info = {
+            'id': job.id,
+            'job_name': job.name,
+            'project_id': job.project_id,
+            'status': job.status,
+            'settings': json.loads(job.settings),
+            'time_average': 0,
+            'time_remaining': 0,
+            'time_total': 0,
+            'time_elapsed': 0,
+            'type': job.type,
+            'priority': job.priority,
+            'percentage_done': percentage_done,
+            'creation_date': job.creation_date,
+            'manager': job.manager_list[0].manager.name
+            }
+        return job_info
+
     @staticmethod
     def get(job, embed_tasks=False):
         """Global function to get info about one job"""
@@ -146,7 +181,7 @@ class jobInfo():
         job_managers = JobManagers.query.filter_by(job_id=job.id).first()
 
         job_info = {
-            "id" : job.id,
+            "id": job.id,
             "job_name" : job.name,
             "project_id" : job.project_id,
             "status" : job.status,
@@ -169,8 +204,14 @@ class jobInfo():
 class JobListApi(Resource):
     def get(self):
         jobs = {}
-        for job in Job.query.filter(Job.status != 'archived').all():
-            jobs[job.id] = jobInfo.get(job)
+        # jobs_query = Job.query\
+        #     .filter(Job.status != 'archived')\
+        #     .options(Load(Task).load_only('log'))\
+        #     .all()
+        # Old jobs query (inefficient and to be removed)
+        jobs_query = Job.query.filter(Job.status != 'archived').all()
+        for job in jobs_query :
+            jobs[job.id] = jobInfo.get_overview(job)
 
         return jsonify(jobs)
 

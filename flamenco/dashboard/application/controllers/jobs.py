@@ -29,27 +29,30 @@ def index():
 
 @jobs.route('/index.json')
 def index_json():
+    """Generate DataTable-ready JSON with all non archived jobs. Accepts a 'pretty'
+    argument that will pretty print the list.
+    """
     jobs = http_server_request('get', '/jobs')
     jobs_list = []
 
     for key, val in jobs.iteritems():
 
-        remaining_time = val['remaining_time']
+        remaining_time = val['time_remaining']
         if not remaining_time:
             remaining_time = '-'
         else:
             remaining_time = seconds_to_time(remaining_time)
-        average_time = val['average_time']
+        average_time = val['time_average']
         if not average_time:
             average_time = '-'
         else:
             average_time = seconds_to_time(average_time)
-        total_time = val['total_time']
+        total_time = val['time_total']
         if not total_time:
             total_time = '-'
         else:
             total_time = seconds_to_time(total_time)
-        job_time = val['job_time']
+        job_time = None
         if job_time:
             total_time = "{0} ({1})".format(total_time, seconds_to_time(job_time))
 
@@ -75,7 +78,6 @@ def index_json():
     # For debugging, if we add the pretty arg to the get request, we get a pretty
     # printed version of the jobs_list
     if request.args.get('pretty'):
-        print request.args.get('pretty')
         if request.args.get('pretty') == 'true':
             return jsonify(data=jobs_list)
 
