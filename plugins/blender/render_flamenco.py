@@ -24,7 +24,6 @@ bl_info = {
     "location": "View3D > Tool Shelf > Flamenco",
     "description": "BAM pack current file \
         and send it to the Flamenco Renderfarm",
-    "warning": "Warning!",
     "wiki_url": "",
     "tracker_url": "",
     "category": "Render"}
@@ -59,7 +58,6 @@ class flamencoPreferences(AddonPreferences):
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "flamenco_server")
-
 
 class flamencoUpdate (bpy.types.Operator):
     """Update information about Flamenco Server"""
@@ -147,7 +145,6 @@ class saveManagerSetting (bpy.types.Operator):
 
         return {'FINISHED'}
 
-
 class addManagerSetting (bpy.types.Operator):
     """Add a Manager Setting"""
     bl_idname = "flamenco.add_manager_setting"
@@ -166,7 +163,6 @@ class addManagerSetting (bpy.types.Operator):
         setting.valur = ""
         wm.flamenco_settingsManagerIndex = len(settings_collection)-1
         return {'FINISHED'}
-
 
 class bamToRenderfarm (bpy.types.Operator):
     """Save current file and send it to the Renderfarm using BAM pack"""
@@ -201,7 +197,7 @@ class bamToRenderfarm (bpy.types.Operator):
             'chunk_size': wm.flamenco_chunkSize,
             'filepath': os.path.split(D.filepath)[1],
             'render_settings': "",
-            'format': "PNG",
+            'format': wm.flamenco_file_format,
             'command_name': wm.flamenco_command,
             }
 
@@ -244,7 +240,6 @@ class bamToRenderfarm (bpy.types.Operator):
 
         return {'FINISHED'}
 
-
 class MovPanelControl(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -270,6 +265,7 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'flamenco_project')
         col.prop(wm, 'flamenco_jobName')
         col.prop(wm, 'flamenco_jobType')
+        col.prop(wm, 'flamenco_file_format')
         if wm.flamenco_jobType in ['blender_bake_anim_cache']:
             col.label(text="Objects to Bake:")
             for obj in context.selected_objects:
@@ -327,7 +323,6 @@ class MovPanelControl(bpy.types.Panel):
                 col.prop(setting, "name")
             col.prop(setting, "value")
             col.operator("flamenco.save_manager_setting")"""
-
 
 jobType_list = [
     ('simple_blender_render', 'Simple', '', 1),
@@ -397,7 +392,6 @@ def project_list(self, context):
 
     return project_list
 
-
 def register():
     bpy.utils.register_module(__name__)
     wm = bpy.types.WindowManager
@@ -446,7 +440,10 @@ def register():
     wm.flamenco_settingsManagerIndex = IntProperty(
         name="Manager Setting Index",
         description="Currently selected Flamenco Manager Setting")
-
+    wm.flamenco_file_format = EnumProperty(
+        items=[('PNG', 'PNG', ''), ('EXR', 'EXR', '')],
+        name="File Format",
+        description="File Format")
 
 def unregister():
     bpy.utils.unregister_module(__name__)
