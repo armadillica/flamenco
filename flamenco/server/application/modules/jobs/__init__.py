@@ -56,21 +56,23 @@ job_parser.add_argument('start_job', type=bool, default=False)
 job_parser.add_argument('managers', type=int, action='append')
 job_parser.add_argument('type', type=str)
 job_parser.add_argument('settings', type=str)
-job_parser.add_argument('jobfile', type = FileStorage, location = 'files')
+job_parser.add_argument('jobfile', type=FileStorage, location='files')
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
 
 parser_thumbnail = reqparse.RequestParser()
-parser_thumbnail.add_argument("task_id", type=int)
+parser_thumbnail.add_argument('task_id', type=int)
 
+jobs_list_parser = reqparse.RequestParser()
+jobs_list_parser.add_argument('status', type=str)
 
 job_fields = {
-    'project_id' : fields.Integer,
-    'settings' : fields.String,
-    'name' : fields.String,
-    'type' : fields.String,
-    'priority' : fields.Integer,
+    'project_id': fields.Integer,
+    'settings': fields.String,
+    'name': fields.String,
+    'type': fields.String,
+    'priority': fields.Integer,
 }
 
 class jobInfo():
@@ -209,13 +211,20 @@ class jobInfo():
 
 class JobListApi(Resource):
     def get(self):
+        args = jobs_list_parser.parse_args()
         jobs = {}
         # jobs_query = Job.query\
         #     .filter(Job.status != 'archived')\
         #     .options(Load(Task).load_only('log'))\
         #     .all()
         # Old jobs query (inefficient and to be removed)
-        jobs_query = Job.query.filter(Job.status != 'archived').all()
+
+        # Check if we are requiring a specific job status to use as filter
+        if args['status']:
+             jobs_query = Job.query.filter(Job.status == args['status']).all()
+        else:
+            # Otherwise we provide all jobs that have not been archived
+            jobs_query = Job.query.filter(Job.status != 'archived').all()
         for job in jobs_query :
             jobs[job.id] = jobInfo.get_overview(job)
 

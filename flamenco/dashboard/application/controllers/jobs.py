@@ -32,7 +32,14 @@ def index_json():
     """Generate DataTable-ready JSON with all non archived jobs. Accepts a 'pretty'
     argument that will pretty print the list.
     """
-    jobs = http_server_request('get', '/jobs')
+
+    # Check if we are requesting for a specific status (e.g. archived)
+    if request.args.get('status'):
+        jobs_route = "/jobs?status={0}".format(request.args.get('status'))
+    else:
+        jobs_route = '/jobs'
+
+    jobs = http_server_request('get', jobs_route)
     jobs_list = []
 
     for key, val in jobs.iteritems():
@@ -88,6 +95,7 @@ def index_json():
     if request.args.get('pretty'):
         if request.args.get('pretty') == 'true':
             return jsonify(data=jobs_list)
+
 
     # Default json return
     jobs_list_dict = {'data': jobs_list}
