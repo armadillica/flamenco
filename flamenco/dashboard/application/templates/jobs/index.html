@@ -175,17 +175,20 @@
 
 
       "createdRow": function ( row, data, index ) {
+        // ID
+        $('td', row).eq(1).html('<input size="1" type="text" value="/render/flamenco/manager_storage/1/'+ data.job_id + '"/>');
+
         // Thumbnail
         $('td', row).eq(2).html('<a href="/jobs/' + data.job_id + '"> <img style="width: 50px;" src="' + data.thumbnail + '"/> </a>');
 
         // Name
-        $('td', row).eq(3).html(data.name);
+        // $('td', row).eq(3).html(data.name);
 
         // Manager
-        $('td', row).eq(4).html(data.manager);
+        // $('td', row).eq(4).html(data.manager);
 
         // Priority
-        $('td', row).eq(5).html(data.priority);
+        // $('td', row).eq(5).html(data.priority);
 
         // Completion
         var progress_bar_active = '';
@@ -250,6 +253,11 @@
     // Reload of the current source
     $(document).on("click", "#jobs-index-table-reload", function() {
       jobsTable.ajax.reload( null, false );
+    });
+
+    // Select the content of any form (we use this in the id column)
+    $(document).on("click", "input", function() {
+      $(this).select();
     });
 
   });
