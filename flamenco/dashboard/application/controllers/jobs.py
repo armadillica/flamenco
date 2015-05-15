@@ -58,19 +58,20 @@ def index_json():
 
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
-            "DT_RowId" : "job_" + str(key),
-            "checkbox" : val['checkbox'],
-            "job_id" : key,
-            "thumbnail" : 'http://{0}/jobs/thumbnails/{1}s'.format(FLAMENCO_SERVER, key),
-            "name" : val['job_name'],
-            "percentage_done" : val['percentage_done'],
-            "time_remaining" : remaining_time,
-            "time_average" : average_time,
-            "time_total" : total_time,
-            "status" : val['status'],
-            "date_creation" : val['creation_date'],
-            "priority" : val['priority'],
-            "manager": val['manager']
+            'DT_RowId' : 'job_' + str(key),
+            'checkbox' : val['checkbox'],
+            'job_id' : key,
+            'thumbnail' : 'http://{0}/jobs/thumbnails/{1}s'.format(FLAMENCO_SERVER, key),
+            'name' : val['job_name'],
+            'percentage_done' : val['percentage_done'],
+            'time_remaining' : remaining_time,
+            'time_average' : average_time,
+            'time_total' : total_time,
+            'status' : val['status'],
+            'date_creation' : val['creation_date'],
+            'priority' : val['priority'],
+            'manager': val['manager'],
+            'time_elapsed': val['time_elapsed']
             })
 
     #jobs_list = sorted(jobs_list, key=lambda x: x['1'])

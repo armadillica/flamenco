@@ -4,6 +4,7 @@ import json
 import shutil
 import requests
 import time
+import datetime
 from PIL import Image
 from os import listdir
 from os.path import join
@@ -88,6 +89,14 @@ class jobInfo():
         if job.tasks and tasks_completed:
             percentage_done = round(float(tasks_completed) / float(job.tasks.count()) * 100.0, 1)
 
+        time_elapsed = ""
+        if job.status =='running':
+            time_elapsed = datetime.datetime.now() - job.creation_date
+            time_elapsed = int(time_elapsed.total_seconds())
+            hours, remainder = divmod(time_elapsed, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            time_elapsed = "{0}h:{1}m:{2}s".format(hours, minutes, seconds)
+
         job_info = {
             'id': job.id,
             'job_name': job.name,
@@ -97,7 +106,7 @@ class jobInfo():
             'time_average': 0,
             'time_remaining': 0,
             'time_total': 0,
-            'time_elapsed': 0,
+            'time_elapsed': time_elapsed,
             'type': job.type,
             'priority': job.priority,
             'percentage_done': percentage_done,

@@ -59,8 +59,8 @@
         <th width="10%">Priority</th>
         <th width="10%">Completion</th>
         <th width="10%">ETA</th>
-        <th width="15%">Average Time</th>
-        <th width="15%">Total Time</th>
+        <th width="15%">Time Elapsed</th>
+        <th width="15%">Time Elapsed</th>
         <th>Status</th>
         <th>Creation Time</th>
         <th>Action</th>
@@ -157,11 +157,11 @@
       /*  5 */ {"data": "priority"},
       /*  6 */ {"data": "percentage_done"},
       /*  7 */ {"data": "time_remaining"},
-      /*  8 */ {"data": "time_average"},
+      /*  8 */ {"data": "time_elapsed"},
       /*    */ {"data": "time_total"},
       /*  9 */ {"data": "status"},
       /*    */ {"data": "date_creation"},
-      /* 10 */ {"data": "date_creation"},
+      /* 10 */ {"data": "date_creation"}
       ],
 
 
@@ -186,8 +186,8 @@
         $('td', row).eq(6).html('<div class="progress"><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"><span class="">' + data.percentage_done + '%</span></div></div>');
 
 
-        // Average Time
-        $('td', row).eq(7).html(data.time_average);
+        // Time elapsed
+        $('td', row).eq(7).html(data.time_elapsed);
 
         // Status
         $('td', row).eq(8).html(parse_status(data.status));
