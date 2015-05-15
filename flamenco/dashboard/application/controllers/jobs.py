@@ -56,6 +56,13 @@ def index_json():
         if job_time:
             total_time = "{0} ({1})".format(total_time, seconds_to_time(job_time))
 
+        time_elapsed = val['time_elapsed']
+        if time_elapsed == None:
+            time_elapsed = ''
+        else:
+            time_elapsed = seconds_to_time(time_elapsed)
+
+
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
             'DT_RowId' : 'job_' + str(key),
@@ -71,7 +78,7 @@ def index_json():
             'date_creation' : val['creation_date'],
             'priority' : val['priority'],
             'manager': val['manager'],
-            'time_elapsed': val['time_elapsed']
+            'time_elapsed': time_elapsed
             })
 
     #jobs_list = sorted(jobs_list, key=lambda x: x['1'])
