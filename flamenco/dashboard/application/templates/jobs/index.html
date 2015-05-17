@@ -112,6 +112,9 @@
 {% endblock %}
 
 {% block footer_scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zeroclipboard/2.2.0/ZeroClipboard.min.js"></script>
+{# <script src="{{ url_for('static', filename='js/ZeroClipboard.min.js') }}"></script> #}
 <script src="{{ url_for('static', filename='js/jquery.treetable.js') }}"></script>
 
 <script type="text/javascript">
@@ -131,6 +134,9 @@
   }
 
   $(document).ready(function() {
+
+    // Initialize swfPath for the ZeroClipboard, since we serve it from a CDN
+    ZeroClipboard.config( { swfPath: "{{ url_for('static', filename='js/ZeroClipboard.swf') }}" } );
 
     // Binding for ajax event
     $(document).bind("ajaxSend", function(){
@@ -173,10 +179,9 @@
       /* 10 */ {"data": "date_creation"}
       ],
 
-
       "createdRow": function ( row, data, index ) {
         // ID
-        $('td', row).eq(1).html('<input size="1" type="text" value="/render/flamenco/manager_storage/1/'+ data.job_id + '"/>');
+        $('td', row).eq(1).html('<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/'+ data.job_id + '/output" title="Click to copy">'+ data.job_id + '</div>');
 
         // Thumbnail
         $('td', row).eq(2).html('<a href="/jobs/' + data.job_id + '"> <img style="width: 50px;" src="' + data.thumbnail + '"/> </a>');
@@ -206,15 +211,18 @@
 
         // Action
         $('td', row).eq(9).html('<span class="btn btn-default btn-xs load-tasks-index" job_id="' + data.job_id + '">Details</span>');
+      },
+
+      "initComplete": function () {
+        var clipboard = new ZeroClipboard($('.copy-button'));
       }
+
     });
 
     // Automatic data reload
     setInterval( function () {
       jobsTable.ajax.reload( null, false ); // user paging is not reset on reload
     }, 60000 );
-
-
 
     $(document).on("click", "#job-delete", function() {
       var jobs = new Array();
@@ -253,11 +261,6 @@
     // Reload of the current source
     $(document).on("click", "#jobs-index-table-reload", function() {
       jobsTable.ajax.reload( null, false );
-    });
-
-    // Select the content of any form (we use this in the id column)
-    $(document).on("click", "input", function() {
-      $(this).select();
     });
 
   });
@@ -310,24 +313,6 @@
   });
 
 
-  // Legacy function to be removed in the future
-  //
-  // function display_json(data) {
-  //   // Recursively traverse an object and display all its properties
-  //   var content = '<ul>';
-  //   $.each(data, function(i, post) {
-  //     if (post !== null && typeof post == 'object') {
-  //       content += '<li>' + i + '</li>'+display_json(post);
-  //     } else {
-  //       content += '<li>' + i + " : " + post + '</li>';
-  //     }
-  //   });
-  //   content += '</ul>';
-  //   return content;
-  // }
-
-
-
   function tasks_index_table_rows(data) {
     var content = '';
     $.each(data, function(i, post) {
@@ -339,6 +324,7 @@
     });
     return content;
   }
+
 
   function tasks_view_table_rows(data) {
     var content = '';
