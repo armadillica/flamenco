@@ -441,7 +441,7 @@ def register():
         name="Manager Setting Index",
         description="Currently selected Flamenco Manager Setting")
     wm.flamenco_file_format = EnumProperty(
-        items=[('PNG', 'PNG', ''), ('EXR', 'EXR', '')],
+        items=[('JPEG', 'JPEG', ''), ('PNG', 'PNG', ''), ('EXR', 'EXR', '')],
         name="File Format",
         description="File Format")
 
