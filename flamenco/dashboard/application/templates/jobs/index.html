@@ -179,7 +179,7 @@
       /* 10 */ {"data": "date_creation"}
       ],
 
-      "createdRow": function ( row, data, index ) {
+      "rowCallback": function ( row, data, index ) {
         // ID
         $('td', row).eq(1).html('<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/'+ data.job_id + '/output" title="Click to copy">'+ data.job_id + '</div>');
 
