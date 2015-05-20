@@ -117,6 +117,7 @@ def view_json(job_id):
     job = http_server_request('get', '/jobs/{0}'.format(job_id))
     job['total_time'] = seconds_to_time(job['total_time'])
     job['average_time'] = seconds_to_time(job['average_time'])
+    job['thumbnail'] = 'http://%s/jobs/thumbnails/%s' % (FLAMENCO_SERVER, job_id)
     for task in job['tasks']:
         task['log'] = None
     return jsonify(job)

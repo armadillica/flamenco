@@ -84,28 +84,52 @@
 {% block sidebar %}
 <!-- Sidebar -->
 <div class="col-md-4" id="sidebar-body">
-  <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs-view-table">
-    <thead>
-      <tr>
-        <th>Key</th>
-        <th>Val</th>
-      </th>
-    </thead>
-    <tbody id="jobs-view-table-body">
-    </tbody>
-  </table>
+  <div role="tabpanel">
 
-  <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="tasks-index-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Status</th>
-        <th></th>
-      </th>
-    </thead>
-    <tbody id="tasks-index-table-body">
-    </tbody>
-  </table>
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" role="tablist">
+      <li role="presentation" class="active"><a href="#job-overview" aria-controls="job-overview" role="tab" data-toggle="tab">Overview</a></li>
+      <li role="presentation"><a href="#job-details" aria-controls="job-details" role="tab" data-toggle="tab">Details</a></li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+      <!-- Job Overview -->
+      <div role="tabpanel" class="tab-pane active" id="job-overview">
+        <!-- Container with properties like title, thumbnail and copy path button -->
+        <div id="job-overview-properties"></div>
+        <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="tasks-index-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Status</th>
+              <th></th>
+            </th>
+          </thead>
+          <tbody id="tasks-index-table-body">
+          </tbody>
+        </table>
+      </div>
+      <!-- Job Details -->
+      <div role="tabpanel" class="tab-pane" id="job-details">
+        <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs-view-table">
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Val</th>
+            </th>
+          </thead>
+          <tbody id="jobs-view-table-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+
+
 </div>
 
 <!-- /#sidebar-wrapper -->
@@ -155,7 +179,7 @@
       "columnDefs": [
           {
             // We hide the total time
-            "targets": [7, 8, 11],
+            "targets": [1, 7, 8, 11],
             "visible": false
           },
           {
@@ -165,26 +189,26 @@
       ],
       "columns": [
       /*  0 */ {"data": "checkbox"},
-      /*  1 */ {"data": "job_id"},
-      /*  2 */ {"data": "thumbnail"},
-      /*  3 */ {"data": "name"},
-      /*  4 */ {"data": "manager"},
-      /*  5 */ {"data": "priority"},
-      /*  6 */ {"data": "percentage_done"},
-      /*  7 */ {"data": "time_remaining"},
-      /*  8 */ {"data": "time_elapsed"},
+      /*    */ {"data": "job_id"},
+      /*  1 */ {"data": "thumbnail"},
+      /*  2 */ {"data": "name"},
+      /*  3 */ {"data": "manager"},
+      /*  4 */ {"data": "priority"},
+      /*  5 */ {"data": "percentage_done"},
+      /*  6 */ {"data": "time_remaining"},
+      /*  7 */ {"data": "time_elapsed"},
       /*    */ {"data": "time_total"},
-      /*  9 */ {"data": "status"},
+      /*  8 */ {"data": "status"},
       /*    */ {"data": "date_creation"},
-      /* 10 */ {"data": "date_creation"}
+      /*  9 */ {"data": "date_creation"}
       ],
 
       "rowCallback": function ( row, data, index ) {
         // ID
-        $('td', row).eq(1).html('<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/'+ data.job_id + '/output" title="Click to copy">'+ data.job_id + '</div>');
+        // $('td', row).eq(1).html('<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/'+ data.job_id + '/output" title="Click to copy">'+ data.job_id + '</div>');
 
         // Thumbnail
-        $('td', row).eq(2).html('<a href="/jobs/' + data.job_id + '"> <img style="width: 50px;" src="' + data.thumbnail + '"/> </a>');
+        $('td', row).eq(1).html('<a href="/jobs/' + data.job_id + '"> <img style="width: 50px;" src="' + data.thumbnail + '"/> </a>');
 
         // Name
         // $('td', row).eq(3).html(data.name);
@@ -200,17 +224,17 @@
         if (data.status === 'running') {
           progress_bar_active = 'progress-bar-striped active';
         }
-        $('td', row).eq(6).html('<div class="progress"><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"><span class="">' + data.percentage_done + '%</span></div></div>');
+        $('td', row).eq(5).html('<div class="progress"><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"><span class="">' + data.percentage_done + '%</span></div></div>');
 
 
         // Time elapsed
-        $('td', row).eq(7).html(data.time_elapsed);
+        // $('td', row).eq(7).html(data.time_elapsed);
 
         // Status
-        $('td', row).eq(8).html(parse_status(data.status));
+        $('td', row).eq(7).html(parse_status(data.status));
 
         // Action
-        $('td', row).eq(9).html('<span class="btn btn-default btn-xs load-tasks-index" job_id="' + data.job_id + '">Details</span>');
+        $('td', row).eq(8).html('<span class="btn btn-default btn-xs load-jobs-view" job_id="' + data.job_id + '">Details</span>');
       },
 
       "initComplete": function () {
@@ -317,7 +341,8 @@
     var content = '';
     $.each(data, function(i, post) {
       if (post !== null && typeof post == 'object') {
-        content += '<tr><td>' + post.name + '</td>';
+        content += '<tr><td>' + post.id + '</td>';
+        content += '<td>' + post.name + '</td>';
         content += '<td>' + parse_status(post.status) + '</td>';
         content += '<td><span class="btn btn-default btn-xs load-tasks-view" task_id="' + post.id + '">View</span></td></tr>';
       }
@@ -370,12 +395,21 @@
     return content;
   }
 
-  $(document).on("click", ".load-tasks-index", function() {
-    $.get("/jobs/" + $(this).attr('job_id') + ".json", function( data ) {
+  $(document).on("click", ".load-jobs-view", function() {
+    // Load job details in the sidebar
+    $.get("/jobs/" + $(this).attr('job_id') + ".json", function(data) {
       $("#jobs-view-table-body").html(jobs_view_table_rows(data));
-      $("#jobs-view-table").treetable({ expandable: true }, force=true);
+      $("#jobs-view-table").treetable({expandable: true}, force=true);
       $("#tasks-index-table-body").html(tasks_index_table_rows(data.tasks));
+      job_overview = '';
+      job_overview += '<img class="img-responsive" src="' + data['thumbnail'] + '"/>'
+      job_overview += '<h2> '+ data['job_name'] + '</h2>';
+      job_overview += '<p>' + data['creation_date'] + '</p>';
+      job_overview += '<p>' + data['average_time'] + '</p>';
+      job_overview += '<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/' + data['id'] + '/output" title="Click to copy">' + data['id'] + '</div>';
 
+      $("#job-overview-properties").html(job_overview);
+      clipboard = new ZeroClipboard($('.copy-button'));
     });
   });
 
