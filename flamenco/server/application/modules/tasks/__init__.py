@@ -442,6 +442,7 @@ class TaskGeneratorApi(Resource):
         """Upon request from a manager, picks the first task available and returns
         it in JSON format.
         """
+        task = None
         tasks = {}
         percentage_done = 0
 
@@ -465,38 +466,51 @@ class TaskGeneratorApi(Resource):
             db.session.add(task)
             db.session.commit()
 
-        tasks = Task.query.filter(
-            or_(Task.status == 'ready',
-                Task.status=='aborted'),
-            Task.manager_id == manager.id).with_for_update().\
-            order_by(Task.priority.desc(), Task.id.asc())
-        task = None
-        for t in tasks:
-            job = Job.query.filter_by(id=t.job_id, status='running').count()
-            if not job > 0:
-                continue
-            # All the parents are finished?
-            unfinished_parents = Task.query\
-                .filter(Task.child_id == t.id, Task.status != 'finished')\
-                .count()
-            if unfinished_parents > 0:
-                continue
+        # Get running Jobs
+        running_jobs = Job.query.filter_by(
+            status='running'). \
+            order_by(Job.priority.desc(), Job.id.asc()).all()
+        for job in running_jobs:
             # Are the tasks failing?
             failing_tasks = Task.query\
-                .filter(Task.job_id == t.job_id, Task.status == 'failed')\
+                .filter(Task.job_id == job.id, Task.status == 'failed')\
                 .count()
+            # If True set status to failed
             if failing_tasks > 3:
-                job = Job.query.get(t.job_id)
+                job = Job.query.get(job.id)
                 job.status = 'failed'
                 db.session.add(job)
                 db.session.commit()
                 continue
-            task = t
-            break
+            # Get job tasks (locking Task table)
+            tasks = Task.query.filter(
+                Task.job_id == job.id,
+                or_(Task.status == 'ready',
+                    Task.status == 'aborted'),
+                Task.manager_id == manager.id).with_for_update().\
+                order_by(Task.priority.desc(), Task.id.asc())
+            task = None
+            for t in tasks:
+                # All the parents are finished?
+                unfinished_parents = Task.query\
+                    .filter(Task.child_id == t.id, Task.status != 'finished')\
+                    .count()
+                # If False skip this task
+                if unfinished_parents > 0:
+                    continue
+                task = t
+                break
+            # Task found? Then break
+            if task:
+                break
 
         if not task:
+            # Closing session should not be needed
+            # but just in case I do it
+            db.session.close()
             return '', 404
 
+        # Unlocking Task table on UPDATE
         task.status = "running"
         task.last_activity = datetime.now()
         db.session.add(task)
