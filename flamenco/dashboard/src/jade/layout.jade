@@ -19,13 +19,13 @@ html(lang="en")
 	body
 		| {% block modal %}
 
-		#brenderModal.modal.fade(tab-index="-1", role="dialog", aria-labelledby="brenderModalLabel", aria-hidden="true")
+		#flamencoModal.modal.fade(tab-index="-1", role="dialog", aria-labelledby="flamencoModalLabel", aria-hidden="true")
 			.modal-dialog
 				.modal-content
 					.modal-header
 						button.close(type="button", data-dismiss="modal", aria-hidden="true")
 							| &times;
-						h4#brenderModallabel.modal-title Modal title
+						h4#flamencoModallabel.modal-title Modal title
 					.modal-body
 					.modal-footer
 						input#modal_variable(type="hidden", name="modal_variable", value="")
@@ -45,7 +45,7 @@ html(lang="en")
 						span.icon-bar
 						span.icon-bar
 
-				nav#brender-navbar-collapse-1.navbar-collapse.collapse
+				nav#flamenco-navbar-collapse-1.navbar-collapse.collapse
 					| {% block nav %}{% endblock %}
 					ul.nav.navbar-nav.navbar-right
 						li
@@ -92,7 +92,7 @@ html(lang="en")
 		script(src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js", type="text/javascript")
 		script(src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js", type="text/javascript")
 		script(src="{{ url_for('static', filename='js/dataTables.bootstrap.min.js') }}", type="text/javascript")
-		script(src="{{url_for('static', filename='js/jquery.brender.js')}}", type="text/javascript")
+		script(src="{{url_for('static', filename='js/jquery.flamenco.js')}}", type="text/javascript")
 		script(src="{{ url_for('static', filename='js/jquery.readmore-readless.js') }}", type="text/javascript")
 		script(src="{{ url_for('static', filename='js/bootstrap-growl.min.js') }}", type="text/javascript")
 
@@ -121,7 +121,7 @@ html(lang="en")
 					});
 
 					$('.modal-footer').children('.btn-primary').text('Add Job');
-					$('#brenderModal').modal('show');
+					$('#flamencoModal').modal('show');
 				});
 
 			});

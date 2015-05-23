@@ -9,7 +9,7 @@ class Task(db.Model):
     * Check out SVN revision 1954
     * Clean the /tmp folder
     * Render frames 1 to 5 of scene_1.blend
-    * Send email with results to user@brender-farm.org
+    * Send email with results to user@flamenco-farm.org
     """
     id = db.Column(db.Integer, primary_key=True)
     job_id = db.Column(db.Integer, db.ForeignKey('job.id'))

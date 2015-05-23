@@ -1,7 +1,7 @@
 from application import db
 
 class Setting(db.Model):
-    """General brender settings
+    """General flamenco settings
 
     At the moment the structure of this table is very generic. This could
     even be turned into a config file later on.

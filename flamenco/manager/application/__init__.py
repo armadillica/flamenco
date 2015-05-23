@@ -46,7 +46,7 @@ try:
             logging.error("The server {0} seems be unavailable.".format(app.config['FLAMENCO_SERVER']))
             exit(3)
         except KeyError:
-            logging.error("Please, configure Brender Paths browsing Dashboard->Server->Settings")
+            logging.error("Please, configure Flamenco Paths browsing Dashboard->Server->Settings")
             exit(3)"""
     else:
         app.config.update(
@@ -85,7 +85,7 @@ except ImportError:
         logging.error("The server {0} seems be unavailable.".format(app.config['FLAMENCO_SERVER']))
         exit(3)
     except KeyError:
-        logging.error("Please, configure Brender Paths browsing Dashboard->Server->Settings")
+        logging.error("Please, configure Flamenco Paths browsing Dashboard->Server->Settings")
         exit(3)"""
 
 

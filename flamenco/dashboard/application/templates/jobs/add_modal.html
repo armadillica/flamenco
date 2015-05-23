@@ -94,9 +94,9 @@
 
   $(document).ready(function() {
   {% if projects %}
-    $('#brenderModalLabel').text('Add job for {{projects[settings['active_project']]['name']}}');
+    $('#flamencoModalLabel').text('Add job for {{projects[settings['active_project']]['name']}}');
   {% else %}
-    $('#brenderModalLabel').text('Error');
+    $('#flamencoModalLabel').text('Error');
     $('#addJob').html('Currently no project has been created. Go to the settings section and add one.');
     $('.modal-footer').children('.btn-primary').hide();
   {% endif %}

@@ -13,12 +13,12 @@
     <link href="{{ url_for('static', filename='ico/favicon.ico') }}" rel="shortcut icon">{% block header_scripts %}{% endblock %}
   </head>
   <body>{% block modal %}
-    <div id="brenderModal" tab-index="-1" role="dialog" aria-labelledby="brenderModalLabel" aria-hidden="true" class="modal fade">
+    <div id="flamencoModal" tab-index="-1" role="dialog" aria-labelledby="flamencoModalLabel" aria-hidden="true" class="modal fade">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" data-dismiss="modal" aria-hidden="true" class="close">&times;</button>
-            <h4 id="brenderModallabel" class="modal-title">Modal title</h4>
+            <h4 id="flamencoModallabel" class="modal-title">Modal title</h4>
           </div>
           <div class="modal-body"></div>
           <div class="modal-footer">
@@ -34,7 +34,7 @@
         <div class="navbar-header">
           <button data-target=".navbar-collapse" data-toggle="collapse" type="button" class="navbar-toggle"><span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button>
         </div>
-        <nav id="brender-navbar-collapse-1" class="navbar-collapse collapse">{% block nav %}{% endblock %}
+        <nav id="flamenco-navbar-collapse-1" class="navbar-collapse collapse">{% block nav %}{% endblock %}
           <ul class="nav navbar-nav navbar-right">
             <li><a href="{{ url_for('managers.index') }}">Managers</a></li>
             <li><a href="{{ url_for('workers.index') }}">Workers</a></li>
@@ -67,7 +67,7 @@
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js" type="text/javascript"></script>
     <script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/dataTables.bootstrap.min.js') }}" type="text/javascript"></script>
-    <script src="{{url_for('static', filename='js/jquery.brender.js')}}" type="text/javascript"></script>
+    <script src="{{url_for('static', filename='js/jquery.flamenco.js')}}" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/jquery.readmore-readless.js') }}" type="text/javascript"></script>
     <script src="{{ url_for('static', filename='js/bootstrap-growl.min.js') }}" type="text/javascript"></script>{% block footer_scripts %}{% endblock %}
     <script>
@@ -93,7 +93,7 @@
       		});
       
       		$('.modal-footer').children('.btn-primary').text('Add Job');
-      		$('#brenderModal').modal('show');
+      		$('#flamencoModal').modal('show');
       	});
       
       });

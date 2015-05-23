@@ -73,7 +73,7 @@ def frame_percentage(item):
 #     Create the required databases during installation.
 
 #     Based on the classes specified above. This function is embedded in
-#     the install_brender function.
+#     the install_flamenco function.
 #     """
 #     Workers.create_table()
 #     Shows.create_table()
@@ -106,7 +106,7 @@ def frame_percentage(item):
 #     Checks if the database exists
 
 #     We check for the existence of the file on disc. If the file is not
-#     found we create one and we populate it with the brender schema from
+#     found we create one and we populate it with the flamenco schema from
 #     this file.
 
 #     """
@@ -115,7 +115,7 @@ def frame_percentage(item):
 #             # connect to database found in DATABASE
 #             db.init(DATABASE)
 #     except IOError:
-#         print('[Info] Creating brender.sqlite database')
+#         print('[Info] Creating server.sqlite database')
 #         open(DATABASE, 'a').close()
 #         # before creating tables we should connect to it
 #         db.init(DATABASE)
