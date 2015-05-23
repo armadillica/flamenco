@@ -128,7 +128,7 @@ def relink(out, new_out):
     
 #MAIN
 
-tiles_path='/render/brender/render_test/137/tiled_{0}_0001.exr'
+tiles_path='/render/flamenco/render_test/137/tiled_{0}_0001.exr'
 tiles=4
 
 ##VARS_INSERTED_HERE##

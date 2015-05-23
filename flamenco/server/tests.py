@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Welcome to the brender test suite. Simply run python test.py and check
+Welcome to the flamenco test suite. Simply run python test.py and check
 that all tests pass.
 
 Individual tests can be run with the following syntax:
@@ -109,13 +109,13 @@ class ServerTestCase(unittest.TestCase):
     def test_settings_create(self):
         cr = self.app.post('/settings',
             data=dict(
-                blender_path_linux='/home/brender/blender',
-                render_settings_path_linux='/home/brender/render'))
+                blender_path_linux='/home/flamenco/blender',
+                render_settings_path_linux='/home/flamenco/render'))
         assert cr.status_code == 204
         ed = self.app.get('/settings')
         settings = json.loads(ed.data)
-        assert settings['blender_path_linux'] == '/home/brender/blender'
-        assert settings['render_settings_path_linux'] == '/home/brender/render'
+        assert settings['blender_path_linux'] == '/home/flamenco/blender'
+        assert settings['render_settings_path_linux'] == '/home/flamenco/render'
 
     def test_job_create(self):
         project_id = self.utils.add_project(is_active=True)

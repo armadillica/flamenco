@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Welcome to the brender test suite. Simply run python test.py and check
+Welcome to the flamenco test suite. Simply run python test.py and check
 that all tests pass.
 
 Individual tests can be run with the following syntax:
