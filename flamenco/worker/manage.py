@@ -46,7 +46,7 @@ def runserver(port_number=None):
 
     while True:
         controllers.worker_loop()
-        time.sleep(1)
+        time.sleep(5)
 
     """if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         #controllers.register_worker(PORT)
