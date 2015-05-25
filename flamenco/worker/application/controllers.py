@@ -88,7 +88,6 @@ def http_request(ip_address, command, method, params=None, files=None):
 
     return r.json()
 
-
 def register_worker():
     """This is going to be an HTTP request to the server with all the info
     for registering the render node.
@@ -156,7 +155,6 @@ def getZipFile(url, tmpfile, zippath, force=False):
 
     return unzipok
 
-
 def update():
     global PROCESS
     global LOCK
@@ -178,9 +176,6 @@ def update():
 
 global LOOP_THREAD
 def worker_loop():
-    print ("Worker Loop")
-    #from application import config
-    print ("Registering")
     register_worker()
     print ("Quering for a new task")
     manager_url = "http://{0}/tasks/compiled/0".format(
