@@ -178,7 +178,7 @@
       "columnDefs": [
           {
             // We hide the total time
-            "targets": [1, 7, 8, 11],
+            "targets": [1, 7, 9],
             "visible": false
           },
           {
@@ -233,7 +233,7 @@
         $('td', row).eq(7).html(parse_status(data.status));
 
         // Action
-        $('td', row).eq(8).html('<span class="btn btn-default btn-xs load-jobs-view" job_id="' + data.job_id + '">Details</span>');
+        $('td', row).eq(9).html('<span class="btn btn-default btn-xs load-jobs-view" job_id="' + data.job_id + '">Details</span>');
       },
 
       "initComplete": function () {
