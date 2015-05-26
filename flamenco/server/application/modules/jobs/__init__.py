@@ -85,11 +85,12 @@ class jobInfo():
         percentage_done = 0
 
         # Update percentabe value if the job has at least 1 complete task
-        tasks_completed = Task.query\
-            .filter_by(job_id=job.id, status='finished').count()
+        # tasks_completed = Task.query\
+        #    .filter_by(job_id=job.id, status='finished').count()
 
-        if job.tasks and tasks_completed:
-            percentage_done = round(float(tasks_completed) / float(job.tasks.count()) * 100.0, 1)
+        if job.tasks_completed and job.tasks_count:
+            percentage_done = round(float(job.tasks_completed)
+                                    / float(job.tasks_count) * 100.0, 1)
 
         time_elapsed = None
         if job.status =='running':

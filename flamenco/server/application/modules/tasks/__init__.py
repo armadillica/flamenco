@@ -366,6 +366,13 @@ class TaskApi(Resource):
 
             os.remove(taskfile)
 
+        tasks_completed = Task.query\
+            .filter_by(job_id=job.id, status='finished').count()
+        tasks_count = job.tasks.count()
+        job.tasks_completed = tasks_completed
+        job.tasks_count = tasks_count
+        db.session.add(job)
+
         status_old = task.status
         task.status = status
         task.log = log
@@ -376,7 +383,6 @@ class TaskApi(Resource):
         db.session.commit()
 
         if status != status_old:
-            job = Job.query.get(task.job_id)
             # manager = Manager.query.get(task.manager_id)
             logging.info('Task {0} changed from {1} to {2}'.format(task_id, status_old, status))
 
