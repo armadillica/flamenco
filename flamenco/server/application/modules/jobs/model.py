@@ -21,8 +21,7 @@ class Job(db.Model):
     settings = db.Column(db.Text())
     creation_date = db.Column(db.DateTime(), default=datetime.datetime.now)
     type = db.Column(db.String(64))
-    tasks_completed = db.Column(db.Integer())
-    tasks_count = db.Column(db.Integer())
+    tasks_status = db.Column(db.String(256))
 
     def __repr__(self):
         return '<Job %r>' % self.name

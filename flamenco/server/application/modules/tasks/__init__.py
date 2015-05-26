@@ -366,11 +366,20 @@ class TaskApi(Resource):
 
             os.remove(taskfile)
 
-        tasks_completed = Task.query\
+        tasks_finished = Task.query\
             .filter_by(job_id=job.id, status='finished').count()
+        tasks_failed = Task.query\
+            .filter_by(job_id=job.id, status='failed').count()
+        tasks_aborted = Task.query\
+            .filter_by(job_id=job.id, status='aborted').count()
         tasks_count = job.tasks.count()
-        job.tasks_completed = tasks_completed
-        job.tasks_count = tasks_count
+
+        tasks_status = {'count': tasks_count,
+                        'finished': tasks_finished,
+                        'failed': tasks_failed,
+                        'aborted': tasks_aborted}
+
+        job.tasks_status = json.dumps(tasks_status)
         db.session.add(job)
 
         status_old = task.status

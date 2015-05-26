@@ -83,17 +83,27 @@ class jobInfo():
         jobs index page."""
 
         percentage_done = 0
+        tasks_status = None
 
         # Update percentabe value if the job has at least 1 complete task
         # tasks_completed = Task.query\
         #    .filter_by(job_id=job.id, status='finished').count()
 
-        if job.tasks_completed and job.tasks_count:
-            percentage_done = round(float(job.tasks_completed)
-                                    / float(job.tasks_count) * 100.0, 1)
+        if job.tasks_status:
+            try:
+                tasks_status = json.loads(job.tasks_status)
+            except:
+                raise
+
+        if tasks_status:
+            tasks_finished = tasks_status.get('finished')
+            tasks_count = tasks_status.get('count')
+            if tasks_finished and tasks_count:
+                percentage_done = round(float(tasks_finished)
+                                        / float(tasks_count) * 100.0, 1)
 
         time_elapsed = None
-        if job.status =='running':
+        if job.status == 'running':
             time_elapsed = datetime.datetime.now() - job.creation_date
             time_elapsed = int(time_elapsed.total_seconds())
 
