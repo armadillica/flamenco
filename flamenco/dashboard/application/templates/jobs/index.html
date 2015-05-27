@@ -403,7 +403,7 @@
 
   $(document).on("click", ".load-jobs-view", function() {
 
-    var details_button = $(this)
+    var details_button = $(this);
 
     // Remove 'active' class from all buttons
     $(".load-jobs-view").removeClass('active');
@@ -435,7 +435,7 @@
 
     })
     .done(function() {
-      $(details_button).html('Details');<
+      $(details_button).html('Details');
     });
 
   });
