@@ -403,8 +403,14 @@
 
   $(document).on("click", ".load-jobs-view", function() {
 
+    var details_button = $(this)
+
+    // Remove 'active' class from all buttons
     $(".load-jobs-view").removeClass('active');
-    $(this).addClass('active');
+
+    // Add 'active' class and icon to the current button
+    $(details_button).addClass('active');
+    $(details_button).html('<i class="fl-spin4 animate-spin"></i>');
 
     // Load job details in the sidebar
     $.get("/jobs/" + $(this).attr('job_id') + ".json", function(data) {
@@ -427,7 +433,11 @@
       // Only add it to the current one
       $('#jobs').DataTable().row('#job_' + data['id']).nodes().to$().addClass('active');
 
+    })
+    .done(function() {
+      $(details_button).html('Details');<
     });
+
   });
 
 
