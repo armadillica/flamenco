@@ -414,6 +414,11 @@
 
     // Load job details in the sidebar
     $.get("/jobs/" + $(this).attr('job_id') + ".json", function(data) {
+
+      // Remove class active from rows, and add to current one
+      $('#jobs').DataTable().rows('.active').nodes().to$().removeClass('active');
+      $('#jobs').DataTable().row('#job_' + data['id']).nodes().to$().addClass('active');
+
       $("#jobs-view-table-body").html(jobs_view_table_rows(data));
       $("#jobs-view-table").treetable({expandable: true}, force=true);
       $("#tasks-index-table-body").html(tasks_index_table_rows(data.tasks));
@@ -426,12 +431,6 @@
 
       $("#job-overview-properties").html(job_overview);
       clipboard = new ZeroClipboard($('.copy-button'));
-
-      // Remove class active
-      $('#jobs').DataTable().rows('.active').nodes().to$().removeClass('active');
-
-      // Only add it to the current one
-      $('#jobs').DataTable().row('#job_' + data['id']).nodes().to$().addClass('active');
 
     })
     .done(function() {
