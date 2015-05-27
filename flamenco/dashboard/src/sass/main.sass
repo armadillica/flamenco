@@ -1,5 +1,7 @@
 @import url(../css/font_flamenco.css)
 
+$color_text-default: #444
+
 $color_status-active: #337ab7
 
 // Kept in sync with attract
@@ -12,7 +14,7 @@ body
 	padding: 50px 0 0 0
 	font-size: 13px
 	line-height: 18px
-	color: #333333
+	color: $color_text-default
 	background: #eee
 	-webkit-font-smoothing: antialiased
 
@@ -163,8 +165,13 @@ table.dataTable th
 .table.dataTable tbody tr.active:nth-child(even) td,
 .table.dataTable tbody tr.active:nth-child(odd) th,
 .table.dataTable tbody tr.active:nth-child(even) th
-	background-color: rgba($color_status-active, .9) !important
+	background-color: desaturate(rgba($color_status-active, .1), 15%) !important
+	border-top: thin solid desaturate(rgba($color_status-active, .25), 15%) !important
+	border-bottom: thin solid desaturate(rgba($color_status-active, .25), 15%) !important
+	color: $color_text-default
 
+.btn.active
+	box-shadow: none !important
 
 /* Labels */
 .table td .label
@@ -201,7 +208,7 @@ table.dataTable th
 	&.active
 		border: 2px dashed darken($color_status-review, 25%)
 
-.label-final, .label-completed
+.label-final, .label-completed, .label-finished
 	background-color: $color_status-done
 	border: thin solid darken($color_status-done, 10%)
 	color: #38761d
