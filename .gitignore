@@ -15,7 +15,6 @@ config.py
 /flamenco/manager/application/static/storage/*
 /flamenco/server/application/static/storage/*
 
-/flamenco/dashboard/application/templates/layout.html
 /flamenco/dashboard/application/static/css/main.css
 /flamenco/dashboard/node_modules/
 /flamenco/dashboard/.sass-cache/
