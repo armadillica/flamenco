@@ -61,9 +61,9 @@
   <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-hover table-condensed" id="jobs" width="100%">
     <thead>
       <tr>
-        <th width="1%"><input class="check-all" type="checkbox"></th>
+        <th><input class="check-all" type="checkbox"></th>
         <th>ID</th>
-        <th width="1%"></th>
+        <th></th>
         <th>Name</th>
         <th>Manager</th>
         <th>Priority</th>
@@ -181,12 +181,12 @@
       /* Matches table markup above */
       "columns": [
       // The numbers are used for the callback below
-      /*  0 */ {"data": "checkbox"},
+      /*  0 */ {"data": "checkbox", "width" : "1px"},
       /*    */ {"data": "job_id"},
-      /*  1 */ {"data": "thumbnail"},
+      /*  1 */ {"data": "thumbnail", "width" : "1%"},
       /*  2 */ {"data": "name"},
-      /*  3 */ {"data": "manager"},
-      /*  4 */ {"data": "priority"},
+      /*  3 */ {"data": "manager", "width" : "1%"},
+      /*  4 */ {"data": "priority", "width" : "1%"},
       /*  5 */ {"data": "percentage_done"},
       /*    */ {"data": "time_remaining"},
       /*    */ {"data": "time_elapsed"},
