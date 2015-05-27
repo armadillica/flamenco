@@ -400,6 +400,10 @@
   }
 
   $(document).on("click", ".load-jobs-view", function() {
+
+    $(".load-jobs-view").removeClass('active');
+    $(this).addClass('active');
+
     // Load job details in the sidebar
     $.get("/jobs/" + $(this).attr('job_id') + ".json", function(data) {
       $("#jobs-view-table-body").html(jobs_view_table_rows(data));
