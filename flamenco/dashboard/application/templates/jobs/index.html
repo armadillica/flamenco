@@ -143,16 +143,18 @@
 <script type="text/javascript">
 
   function parse_status(status) {
-    var job_status_label = '';
-    if (status === 'completed') {
-      job_status_label = '<span class="label label-success">' + status + '</label>';
-    } else if (status === 'failed') {
-      job_status_label = '<span class="label label-danger">' + status + '</label>';
-    } else if (status === 'running') {
-      job_status_label = '<span class="label label-primary">' + status + '</label>';
-    } else {
-      job_status_label = '<span class="label label-default">' + status + '</label>';
-    }
+    var job_status_label = '<span title=' + status + ' class="label label-' + status + '"> ' + status +  ' </label>';
+    // if (status === 'completed') {
+    //   job_status_label = '<span class="label label-' + status + '"> Completed! </label>';
+    // } else if (status === 'failed') {
+    //   job_status_label = '<span class="label label-' + status + '"> Failed </label>';
+    // } else if (status === 'running') {
+    //   job_status_label = '<span class="label label-primary">' + status + '</label>';
+    // } else if (status === 'stopped') {
+    //   job_status_label = '<span class="label label-' + status + '">' + status + '</label>';
+    // } else {
+    //   job_status_label = '<span class="label label-default">' + status + '</label>';
+    // }
     return job_status_label;
   }
 
@@ -418,6 +420,9 @@
 
       $("#job-overview-properties").html(job_overview);
       clipboard = new ZeroClipboard($('.copy-button'));
+
+      $('#jobs').DataTable().row('#job_' + data['id']).nodes().to$().addClass('active');
+
     });
   });
 

@@ -1,5 +1,13 @@
 @import url(../css/font_flamenco.css)
 
+$color_status-active: #337ab7
+
+// Kept in sync with attract
+$color_status-todo: lightgray
+$color_status-in-progress: #fff2cc
+$color_status-review: #e4f5f9
+$color_status-done: #e7f5d3
+
 body
 	padding: 50px 0 0 0
 	font-size: 13px
@@ -146,3 +154,72 @@ h2
 table.dataTable td,
 table.dataTable th
 	white-space: nowrap
+
+.table.dataTable tbody tr.active:nth-child(odd) td,
+.table.dataTable tbody tr.active:nth-child(even) td,
+.table.dataTable tbody tr.active:nth-child(odd) th,
+.table.dataTable tbody tr.active:nth-child(even) th
+	background-color: rgba($color_status-active, .9) !important
+
+
+/* Labels */
+.table td .label
+	display: block
+	font-weight: 400
+	width: 90%
+	font-size: 0.9em
+	font-weight: 400
+	line-height: 1.4em
+	text-transform: capitalize
+	cursor: default
+
+.label-default
+	background-color: lightgray
+	border: thin solid darken(lightgray, 10%)
+	color: #444
+
+	&.active
+		border: 2px dashed darken(lightgray, 15%)
+
+.label-in-progress, .label-in_progress, .label-on_hold
+	background-color: $color_status-in-progress
+	border: thin solid darken($color_status-in-progress, 20%)
+	color: #b86811
+
+	&.active
+		border: 2px dashed darken($color_status-in-progress, 25%)
+
+.label-review, .label-running
+	background-color: $color_status-review
+	border: thin solid darken($color_status-review, 10%)
+	color: #174773
+
+	&.active
+		border: 2px dashed darken($color_status-review, 25%)
+
+.label-final, .label-completed
+	background-color: $color_status-done
+	border: thin solid darken($color_status-done, 10%)
+	color: #38761d
+
+	&.active
+		border: 2px dashed darken($color_status-done, 15%)
+
+.label-cbb, .label-stopped
+	border: thin solid #A7CA98
+	color: #38761d
+
+	&.active
+		border: 2px dashed darken(#A7CA98, 5%)
+
+.label-danger, .label-failed
+	border: thin solid crimson !important
+	color: crimson !important
+	font-weight: bold
+	background-color: white !important
+
+	&:hover
+		opacity: 1.0 !important
+
+	&.active
+		border: 2px dashed crimson !important
