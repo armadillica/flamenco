@@ -164,9 +164,9 @@ table.dataTable th
 .table.dataTable tbody tr.active:nth-child(even) td,
 .table.dataTable tbody tr.active:nth-child(odd) th,
 .table.dataTable tbody tr.active:nth-child(even) th
-	background-color: desaturate(rgba($color_status-active, .1), 15%) !important
-	border-top: thin solid desaturate(rgba($color_status-active, .25), 15%) !important
-	border-bottom: thin solid desaturate(rgba($color_status-active, .25), 15%) !important
+	background-color: desaturate(rgba($color_status-active, .07), 15%) !important
+	border-top: thin solid desaturate(rgba($color_status-active, .2), 15%) !important
+	border-bottom: thin solid desaturate(rgba($color_status-active, .2), 15%) !important
 	color: $color_text-default
 
 .btn.active
@@ -183,7 +183,7 @@ table.dataTable th
 	text-transform: capitalize
 	cursor: default
 
-.label-default, .label-aborted, .label-ready
+.label-default, .label-ready
 	background-color: lightgray
 	border: thin solid darken(lightgray, 10%)
 	color: #444
@@ -222,7 +222,7 @@ table.dataTable th
 	&.active
 		border: 2px dashed darken(#A7CA98, 5%)
 
-.label-danger, .label-failed
+.label-danger, .label-failed, .label-aborted
 	border: thin solid crimson !important
 	color: crimson !important
 	font-weight: bold
