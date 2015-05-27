@@ -250,9 +250,9 @@
     });
 
     // Automatic data reload
-    setInterval( function () {
-      jobsTable.ajax.reload( null, false ); // user paging is not reset on reload
-    }, 60000 );
+    // setInterval( function () {
+    //   jobsTable.ajax.reload( null, false ); // user paging is not reset on reload
+    // }, 60000 );
 
     $(document).on("click", "#job-delete", function() {
       var jobs = new Array();
