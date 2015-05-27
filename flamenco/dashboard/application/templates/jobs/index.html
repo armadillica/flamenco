@@ -421,6 +421,10 @@
       $("#job-overview-properties").html(job_overview);
       clipboard = new ZeroClipboard($('.copy-button'));
 
+      // Remove class active
+      $('#jobs').DataTable().rows('.active').nodes().to$().removeClass('active');
+
+      // Only add it to the current one
       $('#jobs').DataTable().row('#job_' + data['id']).nodes().to$().addClass('active');
 
     });
