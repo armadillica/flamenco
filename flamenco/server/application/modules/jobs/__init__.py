@@ -375,8 +375,8 @@ class JobListApi(Resource):
             'format' : args['format'],
             }"""
 
-        status = "stopped"
-        if args['start_job']:
+        status = 'ready'
+        if args['start_job'] and args['start_job'] == True:
             status = 'running'
 
         job = Job(
