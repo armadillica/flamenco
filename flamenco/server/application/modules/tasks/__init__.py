@@ -505,13 +505,14 @@ class TaskGeneratorApi(Resource):
                 Task.manager_id == manager.id).with_for_update().\
                 order_by(Task.priority.desc(), Task.id.asc())
             task = None
+            unfinished_parents = False
             for t in tasks:
                 # All the parents are finished?
-                unfinished_parents = Task.query\
-                    .filter(Task.child_id == t.id, Task.status != 'finished')\
-                    .count()
+                for tt in tasks:
+                    if tt.child_id == t.id and tt.status != 'finished':
+                        unfinished_parents = True
                 # If False skip this task
-                if unfinished_parents > 0:
+                if unfinished_parents:
                     continue
                 task = t
                 break
@@ -520,9 +521,8 @@ class TaskGeneratorApi(Resource):
                 break
 
         if not task:
-            # Closing session should not be needed
-            # but just in case I do it
-            db.session.close()
+            # Unlocking Task table on ROLLBACK
+            db.session.rollback()
             return '', 404
 
         # Unlocking Task table on UPDATE
