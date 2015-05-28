@@ -5,6 +5,7 @@ import subprocess
 import platform
 import os
 import json
+import shutil
 import select
 import requests
 import logging
@@ -581,9 +582,16 @@ def run_blender_in_thread(options):
                 filepath = os.path.join(dirpath, fname)
                 taskzip.write(filepath, fname)
 
-    tfiles = [
-        ('taskfile', (
-            'taskfile.zip', open(taskfile, 'rb'), 'application/zip'))]
+    send_method = None
+    if send_method == None:
+        tfiles = [
+            ('taskfile', (
+                'taskfile.zip', open(taskfile, 'rb'), 'application/zip'))]
+    elif send_method == 'folder':
+        try:
+            shutil.copyfile(taskfile, '')
+        except IOError:
+            print ("Error")
 
     params = {
         'status': status,
