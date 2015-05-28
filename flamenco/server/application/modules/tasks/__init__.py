@@ -511,6 +511,7 @@ class TaskGeneratorApi(Resource):
                 for tt in tasks:
                     if tt.child_id == t.id and tt.status != 'finished':
                         unfinished_parents = True
+                        break
                 # If False skip this task
                 if unfinished_parents:
                     continue
