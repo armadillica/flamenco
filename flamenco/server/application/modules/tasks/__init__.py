@@ -457,6 +457,7 @@ class TaskGeneratorApi(Resource):
         """Upon request from a manager, picks the first task available and returns
         it in JSON format.
         """
+        task_nolocked = None
         task = None
         tasks = {}
         percentage_done = 0
@@ -497,36 +498,44 @@ class TaskGeneratorApi(Resource):
                 db.session.add(job)
                 db.session.commit()
                 continue
-            # Get job tasks (locking Task table)
+            # Get job tasks
             tasks = Task.query.filter(
                 Task.job_id == job.id,
                 or_(Task.status == 'ready',
                     Task.status == 'aborted'),
-                Task.manager_id == manager.id).with_for_update().\
+                Task.manager_id == manager.id). \
                 order_by(Task.priority.desc(), Task.id.asc())
-            task = None
-            unfinished_parents = False
             for t in tasks:
                 # All the parents are finished?
+                unfinished_parents = False
                 for tt in tasks:
                     if tt.child_id == t.id and tt.status != 'finished':
                         unfinished_parents = True
                         break
-                # If False skip this task
+                # If unfinished parents skip this task
                 if unfinished_parents:
                     continue
-                task = t
+                task_nolocked = t
                 break
             # Task found? Then break
-            if task:
+            if task_nolocked:
                 break
 
-        if not task:
-            # Unlocking Task table on ROLLBACK
-            db.session.rollback()
+        if not task_nolocked:
+            # No task
             return '', 404
 
-        # Unlocking Task table on UPDATE
+        # Locking Task row
+        # Verifying status again but this time
+        # we get the very last status after all updates
+        # this is needed to be sure we are not assigning
+        # the same task to more than one Worker
+        task = Task.query.with_for_update().get(task_nolocked.id)
+        if task.status != task.status:
+            # Status changed, we release the lock and abort
+            db.session.rollback()
+            return '', 404
+        # Unlocking Task row on UPDATE (commit)
         task.status = "running"
         task.last_activity = datetime.now()
         db.session.add(task)
@@ -534,7 +543,6 @@ class TaskGeneratorApi(Resource):
 
         job = Job.query.get(task.job_id)
 
-        #tasks = {}
         frame_count = 1
         current_frame = 0
         percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
