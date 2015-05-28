@@ -492,12 +492,13 @@ class TaskGeneratorApi(Resource):
                 .filter(Task.job_id == job.id, Task.status == 'failed')\
                 .count()
             # If True set status to failed
+            """
             if failing_tasks > 3:
                 job = Job.query.get(job.id)
                 job.status = 'failed'
                 db.session.add(job)
                 db.session.commit()
-                continue
+                continue"""
             # Get job tasks
             tasks = Task.query.filter(
                 Task.job_id == job.id,
