@@ -182,24 +182,24 @@
       "columns": [
       // The numbers are used for the callback below
       /*  0 */ {"data": "checkbox", "width" : "1px"},
-      /*    */ {"data": "job_id"},
-      /*  1 */ {"data": "thumbnail", "width" : "1%"},
-      /*  2 */ {"data": "name"},
-      /*  3 */ {"data": "manager", "width" : "1%"},
-      /*  4 */ {"data": "priority", "width" : "1%"},
-      /*  5 */ {"data": "percentage_done"},
+      /*  1 */ {"data": "job_id"},
+      /*  2 */ {"data": "thumbnail", "width" : "1%"},
+      /*  3 */ {"data": "name"},
+      /*  4 */ {"data": "manager", "width" : "1%"},
+      /*  5 */ {"data": "priority", "width" : "1%"},
+      /*  6 */ {"data": "percentage_done"},
       /*    */ {"data": "time_remaining"},
       /*    */ {"data": "time_elapsed"},
       /*    */ {"data": "time_total"},
-      /*  6 */ {"data": "status"},
-      /*  7 */ {"data": "date_creation"},
-      /*  8 */ {"data": null }
+      /*  7 */ {"data": "status"},
+      /*  8 */ {"data": "date_creation"},
+      /*  9 */ {"data": null }
       ],
       "columnDefs": [
           {
             // Hide using the numbers above
             // This refers to the "columns" array
-            "targets": [1, 7, 8, 9],
+            "targets": [7, 8, 9],
             "visible": false
           },
           {
@@ -214,7 +214,7 @@
         // $('td', row).eq(1).html('<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/'+ data.job_id + '/output" title="Click to copy">'+ data.job_id + '</div>');
 
         // Thumbnail
-        $('td', row).eq(1).html('<a href="/jobs/' + data.job_id + '"> <img class="jobs-index-table-thumbnail" src="' + data.thumbnail + '"/> </a>');
+        $('td', row).eq(2).html('<a href="/jobs/' + data.job_id + '"> <img class="jobs-index-table-thumbnail" src="' + data.thumbnail + '"/> </a>');
 
         // Name
         // $('td', row).eq(3).html(data.name);
@@ -230,17 +230,17 @@
         if (data.status === 'running') {
           progress_bar_active = 'progress-bar-striped active';
         }
-        $('td', row).eq(5).html('<div class="progress"><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"><span class="">' + data.percentage_done + '%</span></div></div>');
+        $('td', row).eq(6).html('<div class="progress"><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"><span class="">' + data.percentage_done + '%</span></div></div>');
 
 
         // Time elapsed
         // $('td', row).eq(7).html(data.time_elapsed);
 
         // Status
-        $('td', row).eq(6).html(parse_status(data.status));
+        $('td', row).eq(7).html(parse_status(data.status));
 
         // Action
-        $('td', row).eq(8).html('<span class="btn btn-default btn-xs load-jobs-view" job_id="' + data.job_id + '">Details</span>');
+        $('td', row).eq(9).html('<span class="btn btn-default btn-xs load-jobs-view" job_id="' + data.job_id + '">Details</span>');
       },
 
       "initComplete": function () {
