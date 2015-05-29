@@ -66,6 +66,7 @@
         <th></th>
         <th>Name</th>
         <th>Man.</th>
+        <th></th>
         <th>Prio.</th>
         <th>Completion</th>
         <th>ETA</th>
@@ -186,7 +187,8 @@
       /*  1 */ {"data": "job_id"},
       /*  2 */ {"data": "thumbnail", "width" : "1%"},
       /*  3 */ {"data": "name"},
-      /*  4 */ {"data": "manager", "width" : "1%"},
+      /*  4 */ {"data": "manager.logo", "width" : "1%"},
+      /*    */ {"data": "manager.name"},
       /*  5 */ {"data": "priority", "width" : "1%"},
       /*  6 */ {"data": "percentage_done"},
       /*    */ {"data": "time_remaining"},
@@ -200,7 +202,7 @@
           {
             // Hide using the numbers above
             // This refers to the "columns" array
-            "targets": [7, 8, 9],
+            "targets": [5, 7, 8, 9],
             "visible": false
           },
           {
