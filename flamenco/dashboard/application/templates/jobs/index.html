@@ -65,8 +65,8 @@
         <th>ID</th>
         <th></th>
         <th>Name</th>
-        <th>Manager</th>
-        <th>Priority</th>
+        <th>Man.</th>
+        <th>Prio.</th>
         <th>Completion</th>
         <th>ETA</th>
         <th>Time Elapsed</th>
@@ -144,18 +144,19 @@
 
   function parse_status(status) {
     var job_status_label = '<span title=' + status + ' class="label label-' + status + '"> ' + status +  ' </label>';
-    // if (status === 'completed') {
-    //   job_status_label = '<span class="label label-' + status + '"> Completed! </label>';
-    // } else if (status === 'failed') {
-    //   job_status_label = '<span class="label label-' + status + '"> Failed </label>';
-    // } else if (status === 'running') {
-    //   job_status_label = '<span class="label label-primary">' + status + '</label>';
-    // } else if (status === 'stopped') {
-    //   job_status_label = '<span class="label label-' + status + '">' + status + '</label>';
-    // } else {
-    //   job_status_label = '<span class="label label-default">' + status + '</label>';
-    // }
     return job_status_label;
+  }
+
+  function parse_manager(manager) {
+    var manager_view = '';
+    if (manager.logo) {
+      manager_view = '<img  height="16" width="16" src="' + manager.logo + '"/>'
+      manager_view += '<span class="hidden"> ' + manager.name +  ' </span>';
+    } else {
+      manager_view = '<span> ' + manager.name +  ' </span>';
+    }
+
+    return manager_view;
   }
 
   $(document).ready(function() {
@@ -220,7 +221,7 @@
         // $('td', row).eq(3).html(data.name);
 
         // Manager
-        // $('td', row).eq(4).html(data.manager);
+        $('td', row).eq(4).html(parse_manager(data.manager));
 
         // Priority
         // $('td', row).eq(5).html(data.priority);

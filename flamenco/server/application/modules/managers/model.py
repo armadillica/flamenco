@@ -20,6 +20,7 @@ class Manager(db.Model):
     ip_address = db.Column(db.String(15))
     port = db.Column(db.Integer)
     name = db.Column(db.String(50), nullable=True)
+    logo = db.Column(db.String(128), nullable=True)
 
     has_virtual_workers = db.Column(db.SmallInteger(), default=0)
 

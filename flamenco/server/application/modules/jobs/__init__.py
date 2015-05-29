@@ -121,7 +121,10 @@ class jobInfo():
             'priority': job.priority,
             'percentage_done': percentage_done,
             'creation_date': job.creation_date,
-            'manager': job.manager_list[0].manager.name
+            'manager': {
+                'name': job.manager_list[0].manager.name,
+                'logo': job.manager_list[0].manager.logo
+                }
             }
         return job_info
 
