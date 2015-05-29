@@ -582,16 +582,106 @@ def run_blender_in_thread(options):
                 filepath = os.path.join(dirpath, fname)
                 taskzip.write(filepath, fname)
 
-    send_method = None
-    if send_method == None:
+    tfiles = []
+    no_storage = False
+    workeroutputpath = os.path.join(
+        taskpath,
+        'output'
+    )
+    if 'storage' in compiler_settings and \
+            'type' in compiler_settings['storage']:
+        storage_settings = compiler_settings['storage']
+        if storage_settings['type'] == 'filesystem':
+            # filesystem
+            # path: Path to store files
+            destination_path = "{0}/{1}".format(
+                storage_settings['path'],
+                options['job_id'])
+            try:
+                shutil.copytree(workeroutputpath, destination_path)
+            except IOError:
+                print ("Error storing output to Filesystem")
+        elif storage_settings['type'] == 'ftp':
+            # ftp
+            # server: server domain (ftp.blender.org)
+            # path: path on FTP server (/renders)
+            # TODO test!
+            server = storage_settings['server']
+            path = storage_settings['path']
+            from ftplib import FTP
+            ftp = FTP(server)
+            ftp.login()
+            ftp.cwd(path)
+            for dirpath, dirnames, filenames in os.walk(zippath):
+                for fname in filenames:
+                    filepath = os.path.join(dirpath, fname)
+                    # TODO crossplataform?:
+                    serverpath = os.path.join(path, str(options['job_id']))
+                    file_ = open(filepath, 'rb')
+                    ftp.storbinary('STOR '+str(fname), file_)
+                    file_.close()
+            ftp.quit()
+        elif storage_settings['type'] == 'scp':
+            # scp
+            # server: server domain
+            # user
+            # password
+            # path: path in server (if "system_keys" will use keys, must exist)
+            # port
+            from paramiko import SSHClient
+            from paramiko import AutoAddPolicy
+            from paramiko import ssh_exception
+            from scp import SCPClient
+            server = storage_settings['server']
+            user = storage_settings['user']
+            password = storage_settings['password']
+            path = storage_settings['path']
+            port = storage_settings.get('port')
+            ssh = SSHClient()
+            ssh.set_missing_host_key_policy(AutoAddPolicy())
+            if password == 'system_keys':
+                ssh.load_system_host_keys()
+                try:
+                    ssh.connect(server,
+                                username=user,
+                                port=port)
+                except socket.error:
+                    print ("Error uploading via SCP, socket error")
+                except ssh_exception.SSHException:
+                    print ("Error uploading via SCP, SSHException")
+            else:
+                try:
+                    ssh.connect(server,
+                                username=user,
+                                password=password,
+                                port=port)
+                except socket.error:
+                    print ("Error uploading via SCP, socket error")
+                except ssh_exception.SSHException:
+                    print ("Error uploading via SCP, SSHException")
+
+            # TODO crossplataform?:
+            filepath_remote = os.path.join(path,
+                                            str(options['job_id']))
+            with SCPClient(ssh.get_transport()) as scp:
+                print ("Uploading via SCP")
+                try:
+                    scp.put(workeroutputpath,
+                            filepath_remote,
+                            recursive = True,
+                            preserve_times = True)
+                except scp.SCPException:
+                    print ("Error uploading via SCP, SCPException")
+            scp.close()
+        else:
+            no_storage = True
+    else:
+        no_storage = True
+
+    if no_storage:
         tfiles = [
             ('taskfile', (
                 'taskfile.zip', open(taskfile, 'rb'), 'application/zip'))]
-    elif send_method == 'folder':
-        try:
-            shutil.copyfile(taskfile, '')
-        except IOError:
-            print ("Error")
 
     params = {
         'status': status,
