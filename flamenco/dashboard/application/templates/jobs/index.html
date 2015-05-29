@@ -178,7 +178,8 @@
       //"bProcessing": true,
       "ajax": "{{url_for('jobs.index_json')}}",
       "iDisplayLength": 25,
-      "order": [[ 11, "desc" ]],
+      "order": [[ 12, "desc" ]],
+      // "scrollX": true,
 
       /* Matches table markup above */
       "columns": [
@@ -207,7 +208,7 @@
           },
           {
             // This refers to the "columns" array
-            "targets": [0, 2, 12],
+            "targets": [0, 2, 13],
             "sortable": false
           }
       ],
@@ -245,10 +246,6 @@
         // Action
         $('td', row).eq(9).html('<span class="btn btn-default btn-xs load-jobs-view" job_id="' + data.job_id + '">Details</span>');
       },
-
-      "initComplete": function () {
-        var clipboard = new ZeroClipboard($('.copy-button'));
-      }
 
     });
 
