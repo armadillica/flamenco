@@ -51,7 +51,7 @@ script.
 	$(document).ready(function() {
 	    var workersTable = $('#workers').DataTable({
 	        "ajax": "{{url_for('workers.index_json')}}",
-	        "iDisplayLength": 25,
+	        "iDisplayLength": 50,
 	        "order": [[ 1, "desc" ]],
 	        "columnDefs": [
 	            // {
