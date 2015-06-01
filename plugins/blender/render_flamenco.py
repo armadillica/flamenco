@@ -328,6 +328,7 @@ jobType_list = [
     ('simple_blender_render', 'Simple', '', 1),
     ('tiled_blender_render', 'Tiled', '', 2),
     ('blender_bake_anim_cache', 'Bake Anim Cache', '', 3),
+    ('blender_opengl_render', 'OpenGL Render', '', 4),
     ]
 
 manager_list = [
