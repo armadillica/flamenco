@@ -52,7 +52,7 @@ job_parser = reqparse.RequestParser()
 job_parser.add_argument('project_id', type=int)
 job_parser.add_argument('name', type=str)
 job_parser.add_argument('priority', type=int)
-job_parser.add_argument('start_job', type=bool, default=False)
+job_parser.add_argument('start_job', type=str) # Casting to bool does not work
 job_parser.add_argument('managers', type=int, action='append')
 job_parser.add_argument('type', type=str)
 job_parser.add_argument('settings', type=str)
@@ -379,7 +379,7 @@ class JobListApi(Resource):
             }"""
 
         status = 'ready'
-        if args['start_job'] and args['start_job'] == True:
+        if args['start_job'] and args['start_job'] == 'True':
             status = 'running'
 
         job = Job(
