@@ -41,6 +41,7 @@ from application.modules.jobs.model import Job
 from application.modules.jobs.model import JobManagers
 from application.modules.managers.model import Manager
 from application.modules.log import log_to_database
+from application.modules.log import log_from_database
 
 id_list = reqparse.RequestParser()
 id_list.add_argument('id', type=str)
@@ -202,23 +203,29 @@ class jobInfo():
         # TODO: incorporate this in the original job query
         job_managers = JobManagers.query.filter_by(job_id=job.id).first()
 
+        job_log_items = log_from_database(job.id, 'job')
+        job_log = []
+        for item in job_log_items:
+            job_log.append([item.creation_date, item.log])
+
         job_info = {
             "id": job.id,
-            "job_name" : job.name,
-            "project_id" : job.project_id,
-            "status" : job.status,
-            "settings" : json.loads(job.settings),
-            "activity" : activity,
-            "remaining_time" : remaining_time,
-            "average_time" : average_time,
-            "total_time" : total_time,
-            "job_time" : job_time,
-            "type" : job.type,
-            "priority" : job.priority,
-            "percentage_done" : percentage_done,
-            "creation_date" : job.creation_date,
-            "tasks" : embedded_tasks,
-            "manager": job_managers.manager.name
+            "job_name": job.name,
+            "project_id": job.project_id,
+            "status": job.status,
+            "settings": json.loads(job.settings),
+            "activity": activity,
+            "remaining_time": remaining_time,
+            "average_time": average_time,
+            "total_time": total_time,
+            "job_time": job_time,
+            "type": job.type,
+            "priority": job.priority,
+            "percentage_done": percentage_done,
+            "creation_date": job.creation_date,
+            "tasks": embedded_tasks,
+            "manager": job_managers.manager.name,
+            "log": job_log
             }
         return job_info
 
@@ -243,58 +250,6 @@ class JobListApi(Resource):
             jobs[job.id] = jobInfo.get_overview(job)
 
         return jsonify(jobs)
-
-    def start(self, job_id):
-        job = Job.query.get(job_id)
-        if job:
-            if job.status not in ['running', 'completed']:
-                job.status = 'running'
-                db.session.add(job)
-
-                db.session.query(Task).filter(Task.job_id == job_id)\
-                        .filter(or_(Task.status == 'aborted',
-                                Task.status == 'failed'))\
-                        .update({'status' : 'ready'})
-                db.session.commit()
-        else:
-            logging.error("Job {0} not found".format(job_id))
-            raise KeyError
-
-    def stop(self, job_id):
-        logging.info("Stopped job {0}".format(job_id))
-        # first we stop the associated tasks (no foreign keys)
-        job = Job.query.get(job_id)
-        if job:
-            if job.status not in ['stopped', 'completed', 'failed']:
-                job.status = 'stopped'
-                db.session.add(job)
-                db.session.commit()
-                TaskApi.stop_tasks(job.id)
-        else:
-            logging.error("Job {0} not found".format(job_id))
-            raise KeyError
-
-    def reset(self, job_id):
-        job = Job.query.get(job_id)
-        if job:
-            if job.status == 'running':
-                logging.error("Job {0} is_running".format(job_id))
-                raise KeyError
-            else:
-                job.status = 'ready'
-                db.session.add(job)
-                db.session.commit()
-
-                TaskApi.delete_tasks(job.id)
-                TaskApi.create_tasks(job)
-
-                path = join(
-                    job.project.render_path_server, str(job.id))
-                if exists(path):
-                    rmtree(path)
-        else:
-            logging.error("Job {0} not found".format(job_id))
-            raise KeyError
 
     def respawn(self, job_id):
         job = Job.query.get(job_id)
@@ -332,13 +287,13 @@ class JobListApi(Resource):
         # Set a status variable, for returning a status to display in the UI
         status = None
         if args['command'] == "start":
-            fun = self.start
+            fun = JobApi.start
             status = "running"
         elif args['command'] == "stop":
-            fun = self.stop
+            fun = JobApi.stop
             status = "stopped"
         elif args['command'] == "reset":
-            fun = self.reset
+            fun = JobApi.reset
             status = "reset"
         elif args['command'] == "respawn":
             fun = self.respawn
@@ -475,54 +430,71 @@ class JobApi(Resource):
     @staticmethod
     def start(job_id):
         job = Job.query.get(job_id)
-        if job.status != 'running':
-            job.status = 'running'
-            db.session.add(job)
-            db.session.commit()
-            logging.info('Dispatching tasks')
+        if job:
+            if job.status not in ['running', 'completed']:
+                log = "Status changed from {0} to {1}".format(job.status, 'running')
+                job.status = 'running'
+                db.session.query(Task)\
+                    .filter(Task.job_id == job_id)\
+                    .filter(or_(Task.status == 'aborted',
+                                Task.status == 'failed'))\
+                    .update({'status': 'ready'})
+                db.session.commit()
+                log_to_database(job_id, 'job', log)
+
         else:
-            pass
-            # TODO (fsiddi): proper error message if jobs is already running
-        #TaskApi.dispatch_tasks()
+            logging.error("Job {0} not found".format(job_id))
+            raise KeyError
 
     @staticmethod
     def stop(job_id):
-        logging.info('Stopping job {0}'.format(job_id))
+        logging.info("Stopped job {0}".format(job_id))
+        # first we stop the associated tasks (no foreign keys)
         job = Job.query.get(job_id)
-        if job.status != 'stopped':
-            job.status = 'stopped'
-            db.session.add(job)
-            db.session.commit()
+        if job:
+            if job.status not in ['stopped', 'completed', 'failed']:
+                log = "Status changed from {0} to {1}".format(job.status, 'stopped')
+                job.status = 'stopped'
+                db.session.add(job)
+                db.session.commit()
+                log_to_database(job_id, 'job', log)
+                TaskApi.stop_tasks(job.id)
         else:
-            pass
-            # TODO (fsiddi): proper error message if jobs is already stopped
+            logging.error("Job {0} not found".format(job_id))
+            raise KeyError
 
     @staticmethod
     def reset(job_id):
         job = Job.query.get(job_id)
-        if job.status == 'running':
-            logging.error('Job {0} is running'.format(job_id))
-            response = jsonify({
-                'code' : 400,
-                'message': 'This job is running, stop it first.'})
-            response.status_code = 400
-            return response
+        if job:
+            if job.status == 'running':
+                logging.error("Job {0} is running".format(job_id))
+                response = jsonify({
+                    'code' : 400,
+                    'message': "This job is running, stop it first."})
+                response.status_code = 400
+                return response
+            else:
+                log = "Status changed from {0} to {1}".format(job.status, 'ready')
+                job.status = 'ready'
+                db.session.commit()
+                log_to_database(job_id, 'job', log)
+
+                TaskApi.delete_tasks(job.id)
+                TaskApi.create_tasks(job)
+
+                # Security check
+                # insecure_names = [None, "", "/", "\\", ".", ".."]
+                # path = join(job.project.render_path_server, str(job.id))
+                # if job.project.render_path_server not in insecure_names and str(job.id) not in insecure_names:
+                #     if exists(path):
+                #         rmtree(path)
+                logging.info('Job {0} reset end ready'.format(job_id))
+
         else:
-            job.current_frame = job.frame_start
-            job.status = 'ready'
-            db.session.add(job)
-            db.session.commit()
+            logging.error("Job {0} not found".format(job_id))
+            raise KeyError
 
-            TaskApi.delete_tasks(job.id)
-            TaskApi.create_tasks(job)
-
-            #Security check
-            insecure_names=[None, "", "/", "\\", ".", ".."]
-            path = join(job.project.render_path_server, str(job.id))
-            if job.project.render_path_server not in insecure_names and str(job.id) not in insecure_names:
-                if exists(path):
-                    rmtree(path)
-            logging.info('Job {0} reset end ready'.format(job_id))
 
     @staticmethod
     def archive(job_id):

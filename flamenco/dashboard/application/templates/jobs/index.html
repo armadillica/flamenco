@@ -92,6 +92,7 @@
     <ul class="nav nav-tabs" role="tablist">
       <li role="presentation" class="active"><a href="#job-overview" aria-controls="job-overview" role="tab" data-toggle="tab">Overview</a></li>
       <li role="presentation"><a href="#job-details" aria-controls="job-details" role="tab" data-toggle="tab">Details</a></li>
+      <li role="presentation"><a href="#job-history" aria-controls="job-history" role="tab" data-toggle="tab">History</a></li>
     </ul>
 
     <!-- Tab panes -->
@@ -123,6 +124,19 @@
             </th>
           </thead>
           <tbody id="jobs-view-table-body">
+          </tbody>
+        </table>
+      </div>
+      <!-- Job Details -->
+      <div role="tabpanel" class="tab-pane" id="job-history">
+        <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs-history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Event</th>
+            </th>
+          </thead>
+          <tbody id="jobs-log-table-body">
           </tbody>
         </table>
       </div>
@@ -292,7 +306,6 @@
     $(document).on("click", "#jobs-index-table-reload", function() {
       jobsTable.ajax.reload( null, false );
     });
-
   });
 
   $(document).on(
@@ -329,7 +342,7 @@
               row.remove();
             } else {
               var row_data = row.data();
-              row_data[9] = data['status'];
+              row_data.status = data['status'];
               row.data(row_data);
             }
           };
@@ -341,7 +354,6 @@
   $(document).on("click", ".check-all", function() {
     $("table input[type=checkbox]").attr('checked', $(this).is(':checked'));
   });
-
 
   function tasks_index_table_rows(data) {
     var content = '';
@@ -356,10 +368,8 @@
     return content;
   }
 
-
   function tasks_view_table_rows(data) {
     var content = '';
-    console.log(data);
     $.each(data, function(i, post) {
       content += '<tr><td>' + i + '</td>';
       content += '<td>' + post + '</td></tr>';
@@ -368,6 +378,17 @@
     return content;
   }
 
+  function jobs_view_log_table_rows(log_data) {
+    var content = '';
+    $.each(log_data, function() {
+      event_item = $(this);
+
+      content += '<tr><td>' + event_item[0] + '</td>';
+      content += '<td>' + event_item[1] + '</td></tr>';
+    });
+    console.log(content);
+    return content;
+  }
 
   function jobs_view_table_rows(data, index_prefix) {
     index_prefix = typeof index_prefix !== 'undefined' ? index_prefix : null;
@@ -432,13 +453,13 @@
       $("#job-overview-properties").html(job_overview);
       clipboard = new ZeroClipboard($('.copy-button'));
 
+      $("#jobs-log-table-body").html(jobs_view_log_table_rows(data['log']));
+
     })
     .done(function() {
       $(details_button).html('Details');
     });
-
   });
-
 
   $(document).on("click", ".load-tasks-view", function() {
     $.get("/tasks/" + $(this).attr('task_id') + ".json", function( data ) {
