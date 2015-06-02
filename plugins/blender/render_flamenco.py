@@ -18,12 +18,11 @@
 
 bl_info = {
     "name": "Flamenco Integration",
-    "author": "Eibriel",
+    "author": "Eibriel, Francesco Siddi",
     "version": (0, 5),
     "blender": (2, 73, 0),
     "location": "View3D > Tool Shelf > Flamenco",
-    "description": "BAM pack current file \
-        and send it to the Flamenco Renderfarm",
+    "description": "BAM pack current file and send it to the Flamenco Renderfarm",
     "wiki_url": "",
     "tracker_url": "",
     "category": "Render"}
