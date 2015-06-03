@@ -535,15 +535,21 @@ class TaskGeneratorApi(Resource):
         # all updates this is needed to be sure we are not assigning the same
         # task to more than one Worker
 
-        task = Task.query.with_for_update().filter(Task.id == task_nolocked.id).first()
+        print "reading task {0}".format(task.id)
+        task = Task.query.with_for_update(read=True).filter(Task.id == task_nolocked.id).first()
+        print "task status          : {0}".format(task.status)
+        print "task_nonlocked status: {0}".format(task.status)
+        print task_nolocked.status
         if not task or task_nolocked.status != task.status:
             # Status changed, we release the lock and abort
+            print "task status changed"
             db.session.rollback()
             return '', 404
         # Unlocking Task row on UPDATE (commit)
         task.status = "running"
         task.last_activity = datetime.now()
         db.session.commit()
+        print "status change committed"
 
         job = Job.query.get(task.job_id)
 
