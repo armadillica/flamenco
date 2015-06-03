@@ -483,22 +483,26 @@ class TaskGeneratorApi(Resource):
             db.session.commit()
 
         # Get running Jobs
-        running_jobs = Job.query.filter_by(
-            status='running'). \
-            order_by(Job.priority.desc(), Job.id.asc()).all()
+        running_jobs = Job.query\
+            .filter_by(status='running')\
+            .order_by(Job.priority.desc(), Job.id.asc())\
+            .all()
+
         for job in running_jobs:
-            # Are the tasks failing?
-            failing_tasks = Task.query\
-                .filter(Task.job_id == job.id, Task.status == 'failed')\
-                .count()
-            # If True set status to failed
-            """
-            if failing_tasks > 3:
-                job = Job.query.get(job.id)
-                job.status = 'failed'
-                db.session.add(job)
-                db.session.commit()
-                continue"""
+            # Temporarily commented logic for disabling potentially failing jobs
+            # # Are the tasks failing?
+            # failing_tasks = Task.query\
+            #     .filter(Task.job_id == job.id, Task.status == 'failed')\
+            #     .count()
+            # # If True set status to failed
+
+            # if failing_tasks > 3:
+            #     job = Job.query.get(job.id)
+            #     job.status = 'failed'
+            #     db.session.add(job)
+            #     db.session.commit()
+            #     continue
+
             # Get job tasks
             tasks = Task.query.filter(
                 Task.job_id == job.id,
@@ -527,11 +531,11 @@ class TaskGeneratorApi(Resource):
             return '', 404
 
         # Locking Task row
-        # Verifying status again but this time
-        # we get the very last status after all updates
-        # this is needed to be sure we are not assigning
-        # the same task to more than one Worker
-        task = Task.query.filter(Task.id == task_nolocked.id).with_for_update().one()
+        # Verifying status again but this time we get the very last status after
+        # all updates this is needed to be sure we are not assigning the same
+        # task to more than one Worker
+
+        task = Task.query.with_for_update().filter(Task.id == task_nolocked.id).first()
         if not task or task_nolocked.status != task.status:
             # Status changed, we release the lock and abort
             db.session.rollback()
@@ -539,7 +543,6 @@ class TaskGeneratorApi(Resource):
         # Unlocking Task row on UPDATE (commit)
         task.status = "running"
         task.last_activity = datetime.now()
-        db.session.add(task)
         db.session.commit()
 
         job = Job.query.get(task.job_id)
