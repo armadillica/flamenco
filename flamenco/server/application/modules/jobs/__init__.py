@@ -4,7 +4,7 @@ import json
 import shutil
 import requests
 import time
-import datetime
+from datetime import datetime
 from PIL import Image
 from os import listdir
 from os.path import join
@@ -105,7 +105,7 @@ class jobInfo():
 
         time_elapsed = None
         if job.status == 'running':
-            time_elapsed = datetime.datetime.now() - job.creation_date
+            time_elapsed = datetime.now() - job.creation_date
             time_elapsed = int(time_elapsed.total_seconds())
 
         job_info = {
@@ -122,6 +122,7 @@ class jobInfo():
             'priority': job.priority,
             'percentage_done': percentage_done,
             'creation_date': job.creation_date,
+            'date_edit': job.date_edit,
             'manager': {
                 'name': job.manager_list[0].manager.name,
                 'logo': job.manager_list[0].manager.logo
@@ -223,6 +224,7 @@ class jobInfo():
             "priority": job.priority,
             "percentage_done": percentage_done,
             "creation_date": job.creation_date,
+            "date_edit": job.date_edit,
             "tasks": embedded_tasks,
             "manager": job_managers.manager.name,
             "log": job_log
@@ -433,6 +435,7 @@ class JobApi(Resource):
         if job:
             if job.status not in ['running', 'completed']:
                 log = "Status changed from {0} to {1}".format(job.status, 'running')
+                job.date_edit = datetime.now()
                 job.status = 'running'
                 db.session.query(Task)\
                     .filter(Task.job_id == job_id)\
@@ -455,6 +458,7 @@ class JobApi(Resource):
             if job.status not in ['stopped', 'completed', 'failed']:
                 log = "Status changed from {0} to {1}".format(job.status, 'stopped')
                 job.status = 'stopped'
+                job.date_edit = datetime.now()
                 db.session.add(job)
                 db.session.commit()
                 log_to_database(job_id, 'job', log)
@@ -477,6 +481,7 @@ class JobApi(Resource):
             else:
                 log = "Status changed from {0} to {1}".format(job.status, 'ready')
                 job.status = 'ready'
+                job.date_edit = datetime.now()
                 db.session.commit()
                 log_to_database(job_id, 'job', log)
 

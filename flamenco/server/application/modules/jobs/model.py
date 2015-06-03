@@ -20,6 +20,7 @@ class Job(db.Model):
     priority = db.Column(db.Integer())
     settings = db.Column(db.Text())
     creation_date = db.Column(db.DateTime(), default=datetime.datetime.now)
+    date_edit = db.Column(db.DateTime())
     type = db.Column(db.String(64))
     tasks_status = db.Column(db.String(256))
 

@@ -83,6 +83,7 @@ def index_json():
             'time_total' : total_time,
             'status' : val['status'],
             'date_creation' : val['creation_date'],
+            'date_edit' : val['date_edit'],
             'priority' : val['priority'],
             'manager': val['manager'],
             'time_elapsed': time_elapsed
