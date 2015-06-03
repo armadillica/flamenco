@@ -225,9 +225,11 @@ class bamToRenderfarm (bpy.types.Operator):
             self.report({'ERROR'}, "Error running BAM, is it installed?")
             return {'CANCELLED'}
 
-        render_file = [('jobfile',
-                        ('jobfile.zip', open(zippath, 'rb'),
-                        'application/zip'))]
+        render_file = None
+        if wm.flamenco_submit_archive:
+            render_file = [('jobfile',
+                            ('jobfile.zip', open(zippath, 'rb'),
+                            'application/zip'))]
 
         postserverurl = "{0}/jobs".format(serverurl)
 
@@ -283,6 +285,7 @@ class MovPanelControl(bpy.types.Panel):
             col.prop(wm, 'flamenco_chunkSize')
         col.prop(wm, 'flamenco_priority')
         col.prop(wm, 'flamenco_startJob')
+        col.prop(wm, 'flamenco_submit_archive')
         col.operator("flamenco.send_job")
 
 
@@ -444,6 +447,10 @@ def register():
         items=[('JPEG', 'JPEG', ''), ('PNG', 'PNG', ''), ('EXR', 'EXR', '')],
         name="File Format",
         description="File Format")
+    wm.flamenco_submit_archive = BoolProperty(
+        name="Submit Archive",
+        options={'HIDDEN', 'SKIP_SAVE'},
+        default=True)
 
 def unregister():
     bpy.utils.unregister_module(__name__)
