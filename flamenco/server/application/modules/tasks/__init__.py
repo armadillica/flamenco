@@ -503,53 +503,38 @@ class TaskGeneratorApi(Resource):
             #     db.session.commit()
             #     continue
 
-            # Get job tasks
+            # Get job tasks (locking Task table)
             tasks = Task.query.filter(
                 Task.job_id == job.id,
                 or_(Task.status == 'ready',
                     Task.status == 'aborted'),
-                Task.manager_id == manager.id). \
+                Task.manager_id == manager.id).with_for_update().\
                 order_by(Task.priority.desc(), Task.id.asc())
+            task = None
+            unfinished_parents = False
             for t in tasks:
                 # All the parents are finished?
-                unfinished_parents = False
                 for tt in tasks:
                     if tt.child_id == t.id and tt.status != 'finished':
                         unfinished_parents = True
                         break
-                # If unfinished parents skip this task
+                # If False skip this task
                 if unfinished_parents:
                     continue
-                task_nolocked = t
+                task = t
                 break
             # Task found? Then break
-            if task_nolocked:
+            if task:
                 break
 
-        if not task_nolocked:
-            # No task
-            return '', 404
-
-        # Locking Task row
-        # Verifying status again but this time we get the very last status after
-        # all updates this is needed to be sure we are not assigning the same
-        # task to more than one Worker
-
-        print "reading task {0}".format(task.id)
-        task = Task.query.with_for_update(read=True).filter(Task.id == task_nolocked.id).first()
-        print "task status          : {0}".format(task.status)
-        print "task_nonlocked status: {0}".format(task.status)
-        print task_nolocked.status
-        if not task or task_nolocked.status != task.status:
-            # Status changed, we release the lock and abort
-            print "task status changed"
+        if not task:
+            # Unlocking Task table on ROLLBACK
             db.session.rollback()
             return '', 404
-        # Unlocking Task row on UPDATE (commit)
+
         task.status = "running"
         task.last_activity = datetime.now()
         db.session.commit()
-        print "status change committed"
 
         job = Job.query.get(task.job_id)
 
