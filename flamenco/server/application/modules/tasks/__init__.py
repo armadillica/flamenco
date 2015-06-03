@@ -531,7 +531,7 @@ class TaskGeneratorApi(Resource):
         # we get the very last status after all updates
         # this is needed to be sure we are not assigning
         # the same task to more than one Worker
-        task = Task.query.with_for_update().get(task_nolocked.id)
+        task = Task.query.filter(Task.id == task_nolocked.id).with_for_update()
         if not task or task_nolocked.status != task.status:
             # Status changed, we release the lock and abort
             db.session.rollback()
