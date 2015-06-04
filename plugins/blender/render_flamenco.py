@@ -45,6 +45,17 @@ from requests.exceptions import Timeout
 
 from bpy.types import AddonPreferences
 
+# TODO move into proper utils module
+suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+def humansize(nbytes):
+    if nbytes == 0: return '0 B'
+    i = 0
+    while nbytes >= 1024 and i < len(suffixes)-1:
+        nbytes /= 1024.
+        i += 1
+    f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
+    return '%s %s' % (f, suffixes[i])
+
 
 class flamencoPreferences(AddonPreferences):
     bl_idname = __name__
@@ -185,11 +196,6 @@ class bamToRenderfarm (bpy.types.Operator):
             self.report({'ERROR'}, "Name your Job")
             return {'CANCELLED'}
 
-
-        # filepath = D.filepath
-
-        # args = None
-
         job_settings = {
             'frame_start': scn.frame_start,
             'frame_end': scn.frame_end,
@@ -216,7 +222,7 @@ class bamToRenderfarm (bpy.types.Operator):
         C.scene.render.use_file_extension = use_extension
 
         tmppath = C.user_preferences.filepaths.temporary_directory
-        zipname = "job"
+        zipname = "jobfile_"
         zippath = os.path.join(tmppath, "%s.zip" % zipname)
 
         try:
@@ -227,6 +233,11 @@ class bamToRenderfarm (bpy.types.Operator):
                 command.extend(["--exclude", '"*.abc"'])
 
             subprocess.call(command)
+
+            # We give feedback abouth the end of the packing
+            statinfo = os.stat(zippath)
+            print ("Created a {0} BAM archive".format(humansize(statinfo.st_size)))
+
         except:
             self.report({'ERROR'}, "Error running BAM. Is it installed?")
             return {'CANCELLED'}
