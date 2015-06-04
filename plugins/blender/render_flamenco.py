@@ -220,9 +220,15 @@ class bamToRenderfarm (bpy.types.Operator):
         zippath = os.path.join(tmppath, "%s.zip" % zipname)
 
         try:
-            subprocess.call(["bam", "pack", D.filepath, '-o', zippath])
+            command = ["bam", "pack", D.filepath, '-o', zippath]
+
+            # If we do not want to pack large files
+            if wm.flamenco_pack_alembic_caches is False:
+                command.extend(["--ignore", "*.abc"])
+
+            subprocess.call(command)
         except:
-            self.report({'ERROR'}, "Error running BAM, is it installed?")
+            self.report({'ERROR'}, "Error running BAM. Is it installed?")
             return {'CANCELLED'}
 
         render_file = None
@@ -255,9 +261,9 @@ class MovPanelControl(bpy.types.Panel):
         col = layout.column()
         col.operator("flamenco.update")
 
-        if len(project_list(self, context))==0:
+        if len(project_list(self, context)) == 0:
             return
-        if len(wm.flamenco_managers)==0:
+        if len(wm.flamenco_managers) == 0:
             return
 
         if wm.flamenco_jobName == "" and D.filepath != "":
@@ -286,55 +292,14 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'flamenco_priority')
         col.prop(wm, 'flamenco_startJob')
         col.prop(wm, 'flamenco_submit_archive')
+        col.prop(wm, 'flamenco_pack_alembic_caches')
         col.operator("flamenco.send_job")
-
-
-        """col.label(text="Server Settings")
-        col.template_list(
-            "UI_UL_list",
-            "ui_lib_list_propp",
-            wm,
-            "flamenco_settingsServer",
-            wm,
-            "flamenco_settingsServerIndex",
-            rows=5,
-        )
-        if len(wm.flamenco_settingsServer) > 0:
-            setting = wm.flamenco_settingsServer[
-                wm.flamenco_settingsServerIndex]
-            col.prop(setting, "value")
-
-        col.label(text="Manager Settings")
-        col.template_list(
-            "UI_UL_list",
-            "ui_lib_list_proppp",
-            wm,
-            "flamenco_settingsManagers",
-            wm,
-            "flamenco_settingsManagerIndex",
-            rows=5,
-        )
-
-        col.operator("flamenco.add_manager_setting")
-
-        if len(wm.flamenco_settingsManagers) > 0:
-            setting = wm.flamenco_settingsManagers[
-                wm.flamenco_settingsManagerIndex]
-            col.label(text=setting.manager_name)
-            if setting.new:
-                col.prop(setting, "name")
-            col.prop(setting, "value")
-            col.operator("flamenco.save_manager_setting")"""
 
 jobType_list = [
     ('simple_blender_render', 'Simple', '', 1),
     ('tiled_blender_render', 'Tiled', '', 2),
     ('blender_bake_anim_cache', 'Bake Anim Cache', '', 3),
     ('blender_opengl_render', 'OpenGL Render', '', 4),
-    ]
-
-manager_list = [
-    ('1', 'Manager Dell', '', 1),
     ]
 
 command_names = [
@@ -399,36 +364,63 @@ def register():
     bpy.utils.register_module(__name__)
     wm = bpy.types.WindowManager
 
+    # Project
     wm.flamenco_project = EnumProperty(
         items=project_list, name="Projects", description="Flamenco Projects")
     wm.flamenco_projectCache = StringProperty(
         name="Project list cache", default="", options={'HIDDEN', 'SKIP_SAVE'})
+    # Job Name
     wm.flamenco_jobName = StringProperty(
         name="Job Name", default="", options={'HIDDEN', 'SKIP_SAVE'})
+    # Job Type
     wm.flamenco_jobType = EnumProperty(
-        items=jobType_list, name="Job type", description="Flamenco Projects")
+        items=jobType_list, name="Job type", description="Type of job available")
+    # File Format
+    wm.flamenco_file_format = EnumProperty(
+        items=[('JPEG', 'JPEG', ''), ('PNG', 'PNG', ''), ('EXR', 'EXR', '')],
+        name="File Format",
+        description="Output file format for the job")
+    # Chunk Size
     wm.flamenco_chunkSize = IntProperty(
         name="Chunk Size",
         default=5,
-        #hard_min=1,
-        #hard_max=20,
         soft_min=1,
-        #soft_max=20,
         options={'HIDDEN', 'SKIP_SAVE'})
+    # Managers
     wm.flamenco_managers = CollectionProperty(
         type=flamencoManagers, name="Managers", description="Flamenco Managers")
     wm.flamenco_managersIndex = IntProperty(
         name="Manager Index", description="Currently selected Flamenco Manager")
+    # Command (Blender Version)
     wm.flamenco_command = EnumProperty(
         items=command_names, name="Command", description="Flamenco Command")
+    # Priority
     wm.flamenco_priority = IntProperty(
         name="Priority",
         default=50,
         soft_min=0,
+        soft_max=100,
         options={'HIDDEN', 'SKIP_SAVE'})
+    # Start Job
     wm.flamenco_startJob = BoolProperty(
         name="Start Job",
+        description="As soon the file is sent to the server, the job will be started.",
         options={'HIDDEN', 'SKIP_SAVE'})
+    # Send Packed file
+    wm.flamenco_submit_archive = BoolProperty(
+        name="Send Packed File",
+        description="If unchecked, the file will be BAM packed, but not sent to the server. \
+This will have to be done by hand.",
+        options={'HIDDEN', 'SKIP_SAVE'},
+        default=True)
+    # Pack Alembic Caches
+    wm.flamenco_pack_alembic_caches = BoolProperty(
+        name="Pack Alembic Caches",
+        description="If checked, .abc caches will be added to the bam archive. \
+This can generate very large files.",
+        options={'HIDDEN', 'SKIP_SAVE'},
+        default=False)
+
     wm.flamenco_settingsServer = CollectionProperty(
         type=flamencoSettingsServer,
         name="Server Settings",
@@ -443,14 +435,6 @@ def register():
     wm.flamenco_settingsManagerIndex = IntProperty(
         name="Manager Setting Index",
         description="Currently selected Flamenco Manager Setting")
-    wm.flamenco_file_format = EnumProperty(
-        items=[('JPEG', 'JPEG', ''), ('PNG', 'PNG', ''), ('EXR', 'EXR', '')],
-        name="File Format",
-        description="File Format")
-    wm.flamenco_submit_archive = BoolProperty(
-        name="Submit Archive",
-        options={'HIDDEN', 'SKIP_SAVE'},
-        default=True)
 
 def unregister():
     bpy.utils.unregister_module(__name__)
