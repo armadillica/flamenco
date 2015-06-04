@@ -57,7 +57,7 @@ job_parser.add_argument('start_job', type=str) # Casting to bool does not work
 job_parser.add_argument('managers', type=int, action='append')
 job_parser.add_argument('type', type=str)
 job_parser.add_argument('settings', type=str)
-job_parser.add_argument('jobfile', type=FileStorage, location='files')
+job_parser.add_argument('jobfile', type=FileStorage, location=['files', 'form'])
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
@@ -74,6 +74,7 @@ job_fields = {
     'name': fields.String,
     'type': fields.String,
     'priority': fields.Integer,
+    'id': fields.Integer,
 }
 
 class jobInfo():
@@ -345,7 +346,8 @@ class JobListApi(Resource):
            name=args['name'],
            status=status,
            type=args['type'],
-           priority=args['priority'])
+           priority=args['priority'],
+           date_edit=datetime.now())
 
         db.session.add(job)
         db.session.commit()
@@ -358,12 +360,15 @@ class JobListApi(Resource):
         except:
             pass
 
+        # Try to make a folder for the job
+        jobpath = join(projectpath, str(job.id))
+        try:
+            os.mkdir(jobpath)
+        except:
+            pass
+
+        # If we provided a file with the request, we save it there
         if args['jobfile']:
-            jobpath = join(projectpath, str(job.id))
-            try:
-                os.mkdir(jobpath)
-            except:
-                pass
             args['jobfile'].save(join(jobpath, 'jobfile_{0}.zip'.format(job.id)))
 
 
