@@ -13,8 +13,9 @@ from application import controllers
 
 
 @manager.command
-@manager.option('-p', '--port', help='The port')
-def runserver(port_number=None):
+@manager.option('-p', '--port', help='The port', default=None)
+@manager.option('-m', '--manager', help='Manager address. Default is localhost:7777', default=None)
+def runserver(port_number=None, manager=None):
     # global LOOP_THREAD
     # try:
     #     from application import config
@@ -31,6 +32,9 @@ def runserver(port_number=None):
     # at runtime with the --port argument.
     # if port_number:
     #     PORT = int(port_number)
+
+    if manager:
+        app.config['FLAMENCO_MANAGER'] = manager
 
 
     if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
