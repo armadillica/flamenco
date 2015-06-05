@@ -272,14 +272,11 @@ class TaskManagementApi(Resource):
         uuid = Setting.query.filter_by(name='uuid').first()
         # Currently this is implemented as a GET, with the uuid argument optional.
         # In the future the uuid will be sent in the headers.
-        # r = http_request(
-        #     app.config['FLAMENCO_SERVER'],
-        #     '/tasks/generate?uuid={0}'.format(uuid.value),
-        #     'get')
         r = http_request(
             app.config['FLAMENCO_SERVER'],
-            '/tasks/generate',
+            '/tasks/generate?uuid={0}'.format(uuid.value),
             'get')
+
         return r, 200
 
     #@marshal_with(task_fields)
