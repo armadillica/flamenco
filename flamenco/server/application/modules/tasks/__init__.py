@@ -462,8 +462,13 @@ class TaskGeneratorApi(Resource):
         tasks = {}
         percentage_done = 0
 
-        ip_address = request.remote_addr
-        manager = Manager.query.filter_by(ip_address=ip_address).first()
+        manager_uuid = request.args.get('uuid', None)
+
+        if manager_uuid:
+            manager = Manager.query.filter_by(uuid=manager_uuid).one()
+        else:
+            ip_address = request.remote_addr
+            manager = Manager.query.filter_by(ip_address=ip_address).first()
 
         if not manager:
             return '', 404

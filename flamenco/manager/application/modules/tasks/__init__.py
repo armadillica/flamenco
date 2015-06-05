@@ -1,31 +1,26 @@
+import os
+import json
+import requests
+import logging
+from threading import Thread
+from datetime import datetime
+from zipfile import ZipFile
+from requests.exceptions import ConnectionError
+
+from flask import request
+from flask import send_from_directory
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
-
-from flask import request
-from flask import send_from_directory
-
 from werkzeug.datastructures import FileStorage
 from werkzeug import secure_filename
-
-from zipfile import ZipFile
 
 from application import http_request
 from application import db
 from application import app
 from application.modules.workers.model import Worker
-
-import os
-import json
-import requests
-
-import logging
-from threading import Thread
-
-from datetime import datetime
-
-from requests.exceptions import ConnectionError
+from application.modules.settings.model import Setting
 
 
 parser = reqparse.RequestParser()
@@ -273,7 +268,18 @@ class TaskManagementApi(Resource):
         return task, 202
 
     def get(self):
-        r = http_request(app.config['FLAMENCO_SERVER'], '/tasks/generate', 'get')
+        # Get the worker UUID as identification for asking tasks
+        uuid = Setting.query.filter_by(name='uuid').first()
+        # Currently this is implemented as a GET, with the uuid argument optional.
+        # In the future the uuid will be sent in the headers.
+        # r = http_request(
+        #     app.config['FLAMENCO_SERVER'],
+        #     '/tasks/generate?uuid={0}'.format(uuid.value),
+        #     'get')
+        r = http_request(
+            app.config['FLAMENCO_SERVER'],
+            '/tasks/generate',
+            'get')
         return r, 200
 
     #@marshal_with(task_fields)
