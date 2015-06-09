@@ -34,7 +34,8 @@ class task_compiler():
         output_path = os.path.join("==outputpath==", "####")
 
         task_command = [
-        'DISPLAY=:0.0',
+        # TODO: make this optional for OSX vs Linux
+        #'DISPLAY=:0.0',
         str( blender_path ),
         '-noaudio',
         # note: not running in background here, because we need OpenGL
