@@ -133,8 +133,11 @@ h2
 	max-height: 20px
 
 // "Details" button
-.load-jobs-view
-	width: 100%
+.load-jobs-view,
+.load-tasks-view
+	cursor: pointer
+	&:hover
+		opacity: 0.9
 
 #sidebar-body
 	background-color: white
@@ -152,9 +155,12 @@ h2
 		border-bottom: 2px solid #337ab7
 
 #job-overview-properties
+	& h2
+		margin-bottom: 10px
+
 	& img
-		max-width: 100%
-		margin: 10px auto
+		width: 100%
+		margin: 0 auto 5px auto
 
 table.dataTable td,
 table.dataTable th
@@ -169,9 +175,22 @@ table.dataTable th
 	border-bottom: thin solid desaturate(rgba($color_status-active, .2), 15%) !important
 	color: $color_text-default
 
+
+/* Bootstrap Override */
 .btn:active, .btn.active, .btn.active:active,
 .btn:focus, .btn.active:focus
 	box-shadow: none !important
+
+
+/* Jobs Index */
+
+.jobs-view-sidebar-thumbnail
+	width: 100%
+
+.copy-button
+	min-width: 50px
+	span
+		color: lighten($color_text-default, 25%)
 
 /* Labels */
 .table td .label
@@ -182,7 +201,6 @@ table.dataTable th
 	font-weight: 400
 	line-height: 1.2em
 	text-transform: capitalize
-	cursor: default
 
 .label-default, .label-ready
 	background-color: lightgray
@@ -190,7 +208,7 @@ table.dataTable th
 	color: #444
 
 	&.active
-		border: 2px dashed darken(lightgray, 15%)
+		border: thin dashed darken(lightgray, 15%)
 
 .label-in-progress, .label-in_progress, .label-on_hold
 	background-color: $color_status-in-progress
@@ -198,7 +216,7 @@ table.dataTable th
 	color: #b86811
 
 	&.active
-		border: 2px dashed darken($color_status-in-progress, 25%)
+		border: thin dashed darken($color_status-in-progress, 25%)
 
 .label-review, .label-running
 	background-color: $color_status-review
@@ -206,7 +224,7 @@ table.dataTable th
 	color: #174773
 
 	&.active
-		border: 2px dashed darken($color_status-review, 25%)
+		border: thin dashed darken($color_status-review, 25%)
 
 .label-final, .label-completed, .label-finished
 	background-color: $color_status-done
@@ -214,14 +232,14 @@ table.dataTable th
 	color: #38761d
 
 	&.active
-		border: 2px dashed darken($color_status-done, 15%)
+		border: thin dashed darken($color_status-done, 15%)
 
 .label-cbb, .label-stopped
 	border: thin solid #A7CA98
 	color: #38761d
 
 	&.active
-		border: 2px dashed darken(#A7CA98, 5%)
+		border: thin dashed darken(#A7CA98, 5%)
 
 .label-danger, .label-failed, .label-aborted
 	border: thin solid crimson !important
@@ -233,4 +251,4 @@ table.dataTable th
 		opacity: 1.0 !important
 
 	&.active
-		border: 2px dashed crimson !important
+		border: thin dashed crimson !important
