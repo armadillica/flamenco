@@ -262,7 +262,7 @@ class bamToRenderfarm (bpy.types.Operator):
             server_job_file_url = "{0}/jobs/file/{1}".format(
                 serverurl,  r['id'])
             # Stream the data to the server
-            with open(filepath, 'rb') as f:
+            with open(zippath, 'rb') as f:
                 print ("Sending {0} file to server...".format(
                     humansize(statinfo.st_size)))
                 p = requests.post(server_job_file_url, data=f)
