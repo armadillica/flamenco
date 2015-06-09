@@ -21,6 +21,7 @@ class Worker(db.Model):
     log = db.Column(db.Text())
     time_cost = db.Column(db.Integer())
     last_activity = db.Column(db.DateTime())
+    job_types = db.relationship("WorkerJobType", backref="worker")
 
     __table_args__ = (UniqueConstraint('ip_address', 'port', name='connection_uix'),)
 
@@ -66,3 +67,21 @@ class Worker(db.Model):
 
     def __repr__(self):
         return '<Worker %r>' % self.id
+
+    @property
+    def job_types_list(self):
+        """We search for Job Types associated with the worker and deliver a list
+        with the names"""
+        return [j.job_type.name for j in self.job_types]
+
+
+class WorkerJobType(db.Model):
+    """Association table that connects Job Types with workers, so that once a
+    worker is free, the manager can ask the server for the right task type
+    according to the worker's capabilities.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    worker_id = db.Column(db.Integer, db.ForeignKey('worker.id'), primary_key=True)
+    job_type_id = db.Column(db.Integer, db.ForeignKey('job_type.id'), primary_key=True)
+    # TODO: add slots for each job type
+    job_type = db.relationship("JobType", backref="worker_job_type")

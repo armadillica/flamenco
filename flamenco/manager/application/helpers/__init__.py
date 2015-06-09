@@ -2,6 +2,13 @@ import os
 import time
 import requests
 import logging
+import re
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode
+
 from hashlib import md5
 from threading import Thread
 from werkzeug import secure_filename
@@ -95,3 +102,43 @@ def async(f):
         thr = Thread(target = f, args = args, kwargs = kwargs)
         thr.start()
     return wrapper
+
+
+def join_url(url, *paths):
+    """Joins individual URL strings together, and returns a single string.
+
+    Usage::
+
+        >>> utils.join_url("flamenco:9999", "jobs")
+        flamenco:9999/jobs
+    """
+    for path in paths:
+        url = re.sub(r'/?$', re.sub(r'^/?', '/', path), url)
+    return url
+
+
+def join_url_params(url, params):
+    """Constructs a query string from a dictionary and appends it to a url.
+
+    Usage::
+
+        >>> utils.join_url_params("flamenco:9999/jobs", {"id": 2, "job_type": "render"})
+        flamenco:9999/jobs?d=2&job_type=render
+    """
+    return url + "?" + urlencode(params)
+
+
+def merge_dict(data, *override):
+    """
+    Merges any number of dictionaries together, and returns a single dictionary.
+
+    Usage::
+
+        >>> utils.merge_dict({"foo": "bar"}, {1: 2}, {"foo1": "bar2"})
+        {1: 2, 'foo': 'bar', 'foo1': 'bar2'}
+    """
+    result = {}
+    for current_dict in (data,) + override:
+        result.update(current_dict)
+    return result
+

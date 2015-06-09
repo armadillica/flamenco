@@ -28,6 +28,7 @@ bl_info = {
     "category": "Render"}
 
 import bpy
+import sys
 import os
 import json
 import requests
@@ -55,7 +56,6 @@ def humansize(nbytes):
         i += 1
     f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
     return '%s %s' % (f, suffixes[i])
-
 
 class flamencoPreferences(AddonPreferences):
     bl_idname = __name__
@@ -236,7 +236,8 @@ class bamToRenderfarm (bpy.types.Operator):
 
             # We give feedback abouth the end of the packing
             statinfo = os.stat(zippath)
-            print ("Created a {0} BAM archive".format(humansize(statinfo.st_size)))
+            print ("Created a {0} BAM archive".format(
+                humansize(statinfo.st_size)))
 
         except:
             self.report({'ERROR'}, "Error running BAM. Is it installed?")
@@ -248,13 +249,24 @@ class bamToRenderfarm (bpy.types.Operator):
                             ('jobfile.zip', open(zippath, 'rb'),
                             'application/zip'))]
 
-        postserverurl = "{0}/jobs".format(serverurl)
+        server_job_url = "{0}/jobs".format(serverurl)
 
         try:
-            requests.post(
-                postserverurl, files=render_file, data=job_properties)
+            r = requests.post(server_job_url, data=job_properties)
+            r = r.json()
         except ConnectionError:
-            print ("Connection Error: {0}".format(postserverurl))
+            print ("Connection Error: {0}".format(server_job_url))
+
+        # If we are submitting the archived file (can be serveral GB large)
+        if wm.flamenco_submit_archive:
+            server_job_file_url = "{0}/jobs/file/{1}".format(
+                serverurl,  r['id'])
+            # Stream the data to the server
+            with open(filepath, 'rb') as f:
+                print ("Sending {0} file to server...".format(
+                    humansize(statinfo.st_size)))
+                p = requests.post(server_job_file_url, data=f)
+            print ("Done")
 
         return {'FINISHED'}
 

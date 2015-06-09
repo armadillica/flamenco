@@ -252,7 +252,7 @@ def worker_loop():
 
         # Get compiler settings
         r = None
-        url = 'http://' + app.config['FLAMENCO_MANAGER']+'/settings/'
+        url = 'http://' + app.config['FLAMENCO_MANAGER'] + '/job-types/'
         try:
             r = requests.get(
                 url + task['type'],
@@ -717,7 +717,7 @@ def execute_task(task, files):
     #global LOCK
 
     if PROCESS:
-        return '{error:Processus failed}', 500
+        return "Error: Process failed", 500
 
     options = {
         'task_id': task['task_id'],

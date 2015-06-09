@@ -19,6 +19,8 @@ from werkzeug import secure_filename
 from application import http_request
 from application import db
 from application import app
+
+from application.helpers import join_url_params
 from application.modules.workers.model import Worker
 from application.modules.settings.model import Setting
 
@@ -95,7 +97,7 @@ class TaskCompiledApi(Resource):
         """Entry point for a worker to require a task, which will be compiled
         on the fly according to the worker specs.
         """
-        logging.info("Scheduling")
+        logging.debug("Scheduling")
 
         # TODO we will need to make this more robust, and give each worker a uuid
         ip_address = request.remote_addr
@@ -110,7 +112,7 @@ class TaskCompiledApi(Resource):
         worker.status = 'enabled'
         db.session.commit()
 
-        tasks = TaskManagementApi().get()
+        tasks = TaskManagementApi().get(job_types=",".join(worker.job_types_list))
         if tasks[0] == ('', 404):
             return '', 400
         if not len(tasks) or not len(tasks[0]):
@@ -229,7 +231,7 @@ class TaskCompiledApi(Resource):
             jflist.append([jf[0],jf[1][0]])
 
 
-        return {"options": options, "files": {"jobfiles":jflist}}, 200
+        return {"options": options, "files": {"jobfiles": jflist}}, 200
 
 
 class TaskManagementApi(Resource):
@@ -267,14 +269,22 @@ class TaskManagementApi(Resource):
 
         return task, 202
 
-    def get(self):
+    def get(self, job_types=None):
+        # TODO: stop referring to job_types using the name and start using a UUID
         # Get the worker UUID as identification for asking tasks
         uuid = Setting.query.filter_by(name='uuid').first()
         # Currently this is implemented as a GET, with the uuid argument optional.
         # In the future the uuid will be sent in the headers.
+
+        task_generate_params = {'uuid': uuid.value}
+        if job_types and job_types != "":
+            task_generate_params['job_types'] = job_types
+
+        joined_tasks_generate_url = join_url_params(
+            '/tasks/generate', task_generate_params)
+
         r = http_request(
-            app.config['FLAMENCO_SERVER'],
-            '/tasks/generate?uuid={0}'.format(uuid.value),
+            app.config['FLAMENCO_SERVER'], joined_tasks_generate_url,
             'get')
 
         return r, 200

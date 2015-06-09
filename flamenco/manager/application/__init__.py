@@ -120,6 +120,11 @@ from modules.settings import SettingApi
 api.add_resource(SettingsListApi, '/settings')
 api.add_resource(SettingApi, '/settings/<string:name>')
 
+from modules.job_types import JobTypeListApi
+from modules.job_types import JobTypeApi
+api.add_resource(JobTypeListApi, '/job-types')
+api.add_resource(JobTypeApi, '/job-types/<string:name>')
+
 def register_manager(port, name, has_virtual_workers):
     """This is going to be an HTTP request to the server with all the info for
     registering the render node. This is called by the runserver script.

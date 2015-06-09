@@ -17,7 +17,7 @@ from application import app
 from application import db
 from application import register_manager
 
-from application.modules.settings.model import Setting
+from application.modules.job_types.model import JobType
 
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
@@ -54,7 +54,7 @@ def runserver():
 
     # TODO: search for the task_compilers and ask for required commands accordigly
     # Render Config
-    render_config = Setting.query.filter_by(name='simple_blender_render').first()
+    render_config = JobType.query.filter_by(name='simple_blender_render').first()
     if not render_config:
         configuration = {'commands' : {
             'default' : {
@@ -63,21 +63,18 @@ def runserver():
                 'Windows' : ''
             }
         }}
+        print("Please enter the shared blender path for the simple_blender_render command")
         configuration['commands']['default']['Linux'] = raw_input('Linux path: ')
         configuration['commands']['default']['Darwin'] = raw_input('OSX path: ')
         configuration['commands']['default']['Windows'] = raw_input('Windows path: ')
 
-        render_config = Setting(
+        render_config = JobType(
             name='simple_blender_render',
             value=json.dumps(configuration))
-        bake_config = Setting(
-            name='blender_bake_anim_cache',
-            value=json.dumps(configuration))
         db.session.add(render_config)
-        db.session.add(bake_config)
         db.session.commit()
     # Bake config
-    bake_config = Setting.query.filter_by(name='blender_bake_anim_cache').first()
+    bake_config = JobType.query.filter_by(name='blender_bake_anim_cache').first()
     if not bake_config:
         configuration = {'commands' : {
             'default' : {
@@ -86,11 +83,12 @@ def runserver():
                 'Windows' : ''
             }
         }}
+        print("Please enter the shared blender path for the blender_bake_anim_cache command")
         configuration['commands']['default']['Linux'] = raw_input('Linux path: ')
         configuration['commands']['default']['Darwin'] = raw_input('OSX path: ')
         configuration['commands']['default']['Windows'] = raw_input('Windows path: ')
 
-        bake_config = Setting(
+        bake_config = JobType(
             name='blender_bake_anim_cache',
             value=json.dumps(configuration))
         db.session.add(bake_config)

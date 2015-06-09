@@ -57,7 +57,7 @@ job_parser.add_argument('start_job', type=str) # Casting to bool does not work
 job_parser.add_argument('managers', type=int, action='append')
 job_parser.add_argument('type', type=str)
 job_parser.add_argument('settings', type=str)
-job_parser.add_argument('jobfile', type=FileStorage, location=['files', 'form'])
+job_parser.add_argument('jobfile', type=FileStorage, location='files')
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
@@ -505,7 +505,6 @@ class JobApi(Resource):
             logging.error("Job {0} not found".format(job_id))
             raise KeyError
 
-
     @staticmethod
     def archive(job_id):
         logging.info('Archiving job {0}'.format(job_id))
@@ -678,6 +677,8 @@ class JobThumbnailApi(Resource):
 
 
 class JobFileApi(Resource):
+
+
     def get(self, job_id):
         """Given a job_id returns the jobzip file
         """
@@ -686,6 +687,24 @@ class JobFileApi(Resource):
         projectpath = join(serverstorage, str(job.project_id))
         jobpath = join(projectpath, str(job_id))
         return send_from_directory(jobpath, 'jobfile_{0}.zip'.format(job_id))
+
+    def post(self, job_id):
+        CHUNK_SIZE = 32 * 1024 * 1024
+        job = Job.query.get_or_404(job_id)
+        serverstorage = app.config['SERVER_STORAGE']
+        filepath = join(
+            serverstorage,
+            str(job.project_id),
+            str(job_id),
+            'jobfile_{0}.zip'.format(job_id))
+
+        with open(filepath, 'wb') as f:
+            chunk_data = request.stream.read(size=CHUNK_SIZE)
+            while chunk_data:
+                f.write(chunk_data)
+                chunk_data = request.stream.read(size=CHUNK_SIZE)
+        print 'file saved'
+        return ''
 
 
 class JobFileOutputApi(Resource):

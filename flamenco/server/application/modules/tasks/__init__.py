@@ -382,6 +382,7 @@ class TaskGeneratorApi(Resource):
         percentage_done = 0
 
         manager_uuid = request.args.get('uuid', None)
+        job_types = request.args.get('job_types', None)
 
         if manager_uuid:
             manager = Manager.query.filter_by(uuid=manager_uuid).one()
@@ -407,10 +408,19 @@ class TaskGeneratorApi(Resource):
             db.session.commit()
 
         # Get running Jobs
-        running_jobs = Job.query\
-            .filter_by(status='running')\
-            .order_by(Job.priority.desc(), Job.id.asc())\
-            .all()
+        if job_types:
+            job_types_list = job_types.split(',')
+            job_type_clauses = or_(*[Job.type == j for j in job_types_list])
+            running_jobs = Job.query\
+                .filter(job_type_clauses)\
+                .filter_by(status='running')\
+                .order_by(Job.priority.desc(), Job.id.asc())\
+                .all()
+        else:
+            running_jobs = Job.query\
+                .filter_by(status='running')\
+                .order_by(Job.priority.desc(), Job.id.asc())\
+                .all()
 
         for job in running_jobs:
             # Temporarily commented logic for disabling potentially failing jobs
