@@ -20,5 +20,6 @@ config.py
 /flamenco/dashboard/.sass-cache/
 *.css.map
 
+/flamenco/dashboard/application/templates/layout.html
 /flamenco/dashboard/application/templates/workers/index.html
 /flamenco/dashboard/application/templates/managers/index.html

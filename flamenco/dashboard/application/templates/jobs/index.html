@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+| {% block page_title %}Jobs - {% endblock %}
 {% block header_scripts %}
 <link href="{{ url_for('static', filename='css/jquery.treetable.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/jquery.treetable.theme.default.css') }}" rel="stylesheet">
@@ -144,8 +145,7 @@
 
   </div>
 </div>
-</div>
-
+</div> <!-- row -->
 <!-- /#sidebar-wrapper -->
 {% endblock %}
 
