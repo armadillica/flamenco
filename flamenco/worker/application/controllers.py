@@ -174,8 +174,8 @@ def update():
     #LOCK.release()
     return '', 204
 
-
 global LOOP_THREAD
+
 def worker_loop():
     register_worker()
     print ("Quering for a new task")
@@ -467,7 +467,6 @@ def run_blender_in_thread(options):
     global TIME_INIT
     global CONNECTIVITY
 
-    print(options)
     render_command = json.loads(options['task_command'])
 
     workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
@@ -495,8 +494,6 @@ def run_blender_in_thread(options):
     else:
         # Backward compatibility
         command_name = "default"
-
-
 
     for cmd, val in enumerate(render_command):
         render_command[cmd] = render_command[cmd].replace(
@@ -710,7 +707,6 @@ def run_blender_in_thread(options):
     ACTIVITY = None
     LOG = None
     TIME_INIT = None
-
 
 def execute_task(task, files):
     global PROCESS

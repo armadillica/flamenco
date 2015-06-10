@@ -250,7 +250,14 @@
         }
 
         // This data has to exist, since we use it to generate the percentage
-        progress_label = data.tasks_status.finished + '/' + data.tasks_status.count
+
+        // Nevertheless, we do a check for old jobs. Should be removed soon
+        if (data.tasks_status) {
+          progress_label = data.tasks_status.finished + '/' + data.tasks_status.count;
+        } else {
+          progress_label = data.percentage_done;
+        };
+
 
         $('td', row).eq(6).html('<div class="progress"><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"><span class="">' + progress_label + '</span></div></div>');
 
