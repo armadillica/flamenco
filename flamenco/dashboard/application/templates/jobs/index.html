@@ -75,7 +75,6 @@
         <th>Time Total</th>
         <th>Status</th>
         <th>Edit Time</th>
-        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -215,7 +214,6 @@
       /*    */ {"data": "time_total"},
       /*  7 */ {"data": "status"},
       /*  8 */ {"data": "date_edit"},
-      /*  9 */ {"data": null }
       ],
       "columnDefs": [
           {
@@ -226,7 +224,7 @@
           },
           {
             // This refers to the "columns" array
-            "targets": [0, 2, 13],
+            "targets": [0, 2, 12],
             "sortable": false
           }
       ],
@@ -272,8 +270,6 @@
         // Status
         $('td', row).eq(7).html(parse_status(data.status));
 
-        // Action
-        $('td', row).eq(9).html('<span class="btn btn-default btn-xs load-jobs-view" job_id="' + data.job_id + '">Details</span>');
       },
 
     });
@@ -436,19 +432,12 @@
     return content;
   }
 
-  $(document).on("click", ".load-jobs-view", function() {
+  $('#jobs tbody').on( 'click', 'tr', function () {
 
-    var details_button = $(this);
-
-    // Remove 'active' class from all buttons
-    $(".load-jobs-view").removeClass('active');
-
-    // Add 'active' class and icon to the current button
-    $(details_button).addClass('active');
-    $(details_button).html('<i class="fl-spin4 animate-spin"></i>');
+    job_id = $(this).attr('id').replace('job_', '');
 
     // Load job details in the sidebar
-    $.get("/jobs/" + $(this).attr('job_id') + ".json", function(data) {
+    $.get("/jobs/" + job_id + ".json", function(data) {
 
       // Remove class active from rows, and add to current one
       $('#jobs').DataTable().rows('.active').nodes().to$().removeClass('active');
@@ -470,10 +459,8 @@
       $("#jobs-log-table-body").html(jobs_view_log_table_rows(data['log']));
 
     })
-    .done(function() {
-      $(details_button).html('Details');
-    });
-  });
+
+  } );
 
   $(document).on("click", ".load-tasks-view", function() {
     $.get("/tasks/" + $(this).attr('task_id') + ".json", function( data ) {
