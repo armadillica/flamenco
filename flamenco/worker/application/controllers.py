@@ -121,7 +121,7 @@ def get_task():
 def getZipFile(url, tmpfile, zippath, force=False):
     if not os.path.exists(tmpfile) or force:
         try:
-            r = requests.get(url)
+            r = requests.get(url, stream=True)
         except KeyboardInterrupt:
             return
 
