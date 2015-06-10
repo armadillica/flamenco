@@ -150,6 +150,8 @@ class jobInfo():
 
         # Define other default values
         remaining_time = None
+        #: For renders
+        average_time_frame = None
         average_time = None
         total_time = 0
         job_time = 0
@@ -160,6 +162,16 @@ class jobInfo():
         frame_remaining = None
         activity = ""
 
+        # Load job settings
+        job_settings = json.loads(job.settings)
+
+        # Search for chunk size (which means a frame)
+        try:
+            chunk_size = job_settings['chunk_size']
+        except KeyError:
+            chunk_size = None
+
+
         for task in tasks:
             try:
                 task_activity = json.loads(task.activity)
@@ -169,7 +181,7 @@ class jobInfo():
 
             if task.status == 'finished':
                 if task.time_cost:
-                    finished_time = finished_time + task.time_cost
+                    finished_time += task.time_cost
                 finished_tasks += 1
             if task.status == 'running':
                 running_tasks += 1
@@ -185,17 +197,26 @@ class jobInfo():
 
         if job.status == 'running':
             if finished_tasks > 0:
+                # Calculate average time per task
                 average_time = finished_time / finished_tasks
-            if finished_tasks > 0:
+                # If this is a render, get the frame render time
+                if chunk_size:
+                    average_time_frame = average_time / chunk_size
+                # Estimate remaining time for the whole job
                 remaining_time = (average_time * len(tasks)) - total_time
+            # If there are running tasks, refine the remaining_time var by taking
+            # into account the currently running task
             if remaining_time and running_tasks > 0:
                 remaining_time = remaining_time / running_tasks
             activity = "Rendering: {0}.".format(frames_rendering)
         elif job.status == 'completed':
             average_time = finished_time / finished_tasks
+            # If this is a render, get the frame render time
+            if chunk_size:
+                average_time_frame = average_time / chunk_size
 
         if running_tasks > 0:
-            job_time = total_time/running_tasks
+            job_time = total_time / running_tasks
 
         if embed_tasks:
             embedded_tasks = TaskListApi.get_tasks_list(tasks)
@@ -215,7 +236,7 @@ class jobInfo():
             "job_name": job.name,
             "project_id": job.project_id,
             "status": job.status,
-            "settings": json.loads(job.settings),
+            "settings": job_settings,
             "activity": activity,
             "remaining_time": remaining_time,
             "average_time": average_time,
@@ -228,7 +249,8 @@ class jobInfo():
             "date_edit": job.date_edit,
             "tasks": embedded_tasks,
             "manager": job_managers.manager.name,
-            "log": job_log
+            "log": job_log,
+            "average_time_frame": average_time_frame
             }
         return job_info
 
@@ -486,6 +508,11 @@ class JobApi(Resource):
             else:
                 log = "Status changed from {0} to {1}".format(job.status, 'ready')
                 job.status = 'ready'
+                job.tasks_status = json.dumps({
+                    'count': job.tasks.count(),
+                    'finished': 0,
+                    'failed': 0,
+                    'aborted': 0})
                 job.date_edit = datetime.now()
                 db.session.commit()
                 log_to_database(job_id, 'job', log)

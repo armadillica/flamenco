@@ -69,7 +69,6 @@ def index_json():
         else:
             time_elapsed = seconds_to_time(time_elapsed)
 
-
         val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
         jobs_list.append({
             'DT_RowId' : 'job_' + str(key),
@@ -86,7 +85,7 @@ def index_json():
             'date_edit' : val['date_edit'],
             'priority' : val['priority'],
             'manager': val['manager'],
-            'time_elapsed': time_elapsed
+            'time_elapsed': time_elapsed,
             })
 
     #jobs_list = sorted(jobs_list, key=lambda x: x['1'])
@@ -118,6 +117,7 @@ def view_json(job_id):
     job = http_server_request('get', '/jobs/{0}'.format(job_id))
     job['total_time'] = seconds_to_time(job['total_time'])
     job['average_time'] = seconds_to_time(job['average_time'])
+    job['average_time_frame'] = seconds_to_time(job['average_time_frame'])
     job['thumbnail'] = 'http://%s/jobs/thumbnails/%s' % (FLAMENCO_SERVER, job_id)
     for task in job['tasks']:
         task['log'] = None

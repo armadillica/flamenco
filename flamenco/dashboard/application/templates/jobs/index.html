@@ -445,8 +445,8 @@
       job_overview = '';
       job_overview += '<img class="img-responsive" src="' + data['thumbnail'] + '"/>'
       job_overview += '<h2> '+ data['job_name'] + '</h2>';
-      job_overview += '<p>' + data['creation_date'] + '</p>';
-      job_overview += '<p>' + data['average_time'] + '</p>';
+      job_overview += '<p> Creation time: ' + data['creation_date'] + '</p>';
+      job_overview += '<p> Average frame time:' + data['average_time_frame'] + '</p>';
       job_overview += '<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/' + data['id'] + '/output" title="Click to copy">' + data['id'] + '</div>';
 
       $("#job-overview-properties").html(job_overview);

@@ -138,7 +138,6 @@ class TaskApi(Resource):
             db.session.commit()
         # TODO  get a reply from the worker (running, error, etc)
 
-
     @staticmethod
     def delete_task(task_id):
         # At the moment this function is not used anywhere
@@ -231,6 +230,21 @@ class TaskApi(Resource):
                 thumbnail_path = os.path.join(thumbnail_dir, '{0:05d}'.format(i) + '.thumb')
                 img.save(thumbnail_path, job.format)
 
+    def generate_job_tasks_status(self, job):
+        tasks_finished = Task.query\
+            .filter_by(job_id=job.id, status='finished').count()
+        tasks_failed = Task.query\
+            .filter_by(job_id=job.id, status='failed').count()
+        tasks_aborted = Task.query\
+            .filter_by(job_id=job.id, status='aborted').count()
+        tasks_count = job.tasks.count()
+
+        return {'count': tasks_count,
+                'finished': tasks_finished,
+                'failed': tasks_failed,
+                'aborted': tasks_aborted}
+
+
     def post(self, task_id):
         args = parser.parse_args()
         task_id = args['id']
@@ -246,10 +260,10 @@ class TaskApi(Resource):
         if job is None:
             return '', 404
 
-        if status=="running" and task.status!="running":
+        if status == 'running' and task.status != 'running':
             return '', 403
 
-        if job.status!="running" and status!="aborted":
+        if job.status != 'running' and status != 'aborted':
             return '', 403
 
         serverstorage = app.config['SERVER_STORAGE']
@@ -285,21 +299,7 @@ class TaskApi(Resource):
 
             os.remove(taskfile)
 
-        tasks_finished = Task.query\
-            .filter_by(job_id=job.id, status='finished').count()
-        tasks_failed = Task.query\
-            .filter_by(job_id=job.id, status='failed').count()
-        tasks_aborted = Task.query\
-            .filter_by(job_id=job.id, status='aborted').count()
-        tasks_count = job.tasks.count()
-
-        tasks_status = {'count': tasks_count,
-                        'finished': tasks_finished,
-                        'failed': tasks_failed,
-                        'aborted': tasks_aborted}
-
-        job.tasks_status = json.dumps(tasks_status)
-        db.session.add(job)
+        job.tasks_status = json.dumps(self.generate_job_tasks_status(job))
 
         status_old = task.status
         task.status = status
@@ -307,7 +307,7 @@ class TaskApi(Resource):
         task.time_cost = time_cost
         task.activity = activity
         task.last_activity = datetime.now()
-        db.session.add(task)
+
         db.session.commit()
 
         if status != status_old:
@@ -317,12 +317,15 @@ class TaskApi(Resource):
             # Check if all tasks have been completed
             if all((lambda t : t.status in ['finished', 'failed'])(t) for t in Task.query.filter_by(job_id=job.id).all()):
                 failed_tasks = Task.query.filter_by(job_id=job.id, status='failed').count()
-                print ('[Debug] %d tasks failed before') % failed_tasks
+                logging.debug("{0} tasks failed before".format(failed_tasks))
                 if failed_tasks > 0 or status == 'failed':
                     job.status = 'failed'
                 else:
                     job.status = 'completed'
-                db.session.add(job)
+                # Final update of the job tasks summary
+                # TODO optimize amount of requests going on here. We ask for part
+                # of this content a few lines above
+                job.tasks_status = json.dumps(self.generate_job_tasks_status(job))
                 db.session.commit()
 
         return '', 204
