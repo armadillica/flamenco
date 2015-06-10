@@ -86,6 +86,7 @@ def index_json():
             'priority' : val['priority'],
             'manager': val['manager'],
             'time_elapsed': time_elapsed,
+            'tasks_status': val['tasks_status']
             })
 
     #jobs_list = sorted(jobs_list, key=lambda x: x['1'])

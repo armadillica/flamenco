@@ -87,10 +87,16 @@ class jobInfo():
         percentage_done = 0
         tasks_status = None
 
-        # Update percentabe value if the job has at least 1 complete task
-        # tasks_completed = Task.query\
-        #    .filter_by(job_id=job.id, status='finished').count()
+        # Load job settings
+        job_settings = json.loads(job.settings)
 
+        # Variable to be used if the job type is divided in frames
+        try:
+            chunk_size_frames = job_settings['chunk_size']
+        except KeyError:
+            chunk_size_frames = None
+
+        # Load tasks status to calculate percentage of completion
         if job.tasks_status:
             try:
                 tasks_status = json.loads(job.tasks_status)
@@ -98,6 +104,9 @@ class jobInfo():
                 raise
 
         if tasks_status:
+            if chunk_size_frames:
+                for k, v in tasks_status.items():
+                    tasks_status[k] = v * chunk_size_frames
             tasks_finished = tasks_status.get('finished')
             tasks_count = tasks_status.get('count')
             if tasks_finished and tasks_count:
@@ -114,7 +123,7 @@ class jobInfo():
             'job_name': job.name,
             'project_id': job.project_id,
             'status': job.status,
-            'settings': json.loads(job.settings),
+            'settings': job_settings,
             'time_average': 0,
             'time_remaining': 0,
             'time_total': 0,
@@ -127,7 +136,8 @@ class jobInfo():
             'manager': {
                 'name': job.manager_list[0].manager.name,
                 'logo': job.manager_list[0].manager.logo
-                }
+                },
+            'tasks_status': tasks_status
             }
         return job_info
 

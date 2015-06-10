@@ -244,7 +244,6 @@ class TaskApi(Resource):
                 'failed': tasks_failed,
                 'aborted': tasks_aborted}
 
-
     def post(self, task_id):
         args = parser.parse_args()
         task_id = args['id']
