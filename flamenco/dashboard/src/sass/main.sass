@@ -125,7 +125,8 @@ h2
 	display: none
 
 
-#jobs-index
+#jobs-index,
+#tasks-view
 	padding-top: 15px
 
 .jobs-index-table-thumbnail
@@ -183,6 +184,22 @@ table.dataTable th
 
 
 /* Jobs Index */
+.dataTables_scrollHead
+	thead
+		th.sorting:after
+			opacity: 0
+
+	thead
+		th.sorting:hover
+			&:after
+				opacity: 0.4
+
+.dataTables_scrollBody
+	thead
+		/* Hack to hide sorting buttons when having ScrollY */
+		th.sorting:after,
+		th.sorting_desc:after
+			content: ''
 
 .jobs-view-sidebar-thumbnail
 	width: 100%
