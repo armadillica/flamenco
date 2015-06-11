@@ -31,7 +31,7 @@ class task_compiler():
         script_path = os.path.join(
             "==jobpath==", "bake_anim_cache.py")
 
-        output_path = os.path.join("==outputpath==", "####")
+        output_path = os.path.join("==outputpath==", "#####")
 
         task_command = [
         str( blender_path ),

@@ -31,7 +31,7 @@ class task_compiler():
         script_path = os.path.join(
             "==jobpath==", "blender_opengl_render.py")
 
-        output_path = os.path.join("==outputpath==", "####")
+        output_path = os.path.join("==outputpath==", "#####")
 
         task_command = [
         # TODO: make this optional for OSX vs Linux

@@ -26,7 +26,7 @@ class task_compiler():
         script_path = os.path.join(
             "==jobpath==", "pre_render.py")
 
-        output_path = os.path.join("==outputpath==", "####")
+        output_path = os.path.join("==outputpath==", "#####")
 
         task_command = [
         str(blender_path),
