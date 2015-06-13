@@ -260,7 +260,7 @@ class TaskManagementApi(Resource):
             # Reject Task
             params = {
                 'id': task['task_id'],
-                'status':'ready',
+                'status':'waiting',
                 'time_cost':None,
                 'log':None,
                 'activity':None
@@ -335,7 +335,7 @@ class TaskApi(Resource):
             db.session.add(other)
             db.session.commit()"""
 
-        if args['status'] == 'running':
+        if args['status'] == 'active':
             if args['task_id']:
                 worker.current_task = args['task_id']
             worker.time_cost = args['time_cost']

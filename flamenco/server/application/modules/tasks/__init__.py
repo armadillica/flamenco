@@ -60,7 +60,7 @@ class TaskApi(Resource):
             name=name,
             type=task_type,
             settings=json.dumps(task_settings),
-            status='ready',
+            status='waiting',
             priority=job.priority,
             manager_id = manager.manager_id,
             log=None,
@@ -104,7 +104,7 @@ class TaskApi(Resource):
             'settings':task.settings}
 
 
-        task.status = 'running'
+        task.status = 'active'
         task.manager_id = manager.id
         db.session.add(task)
         db.session.commit()
@@ -132,7 +132,7 @@ class TaskApi(Resource):
             r = http_rest_request(manager.host, '/tasks', 'post', params)
 
         if not u'status' in r:
-            task.status = 'running'
+            task.status = 'active'
             task.manager_id = manager.id
             db.session.add(task)
             db.session.commit()
@@ -183,7 +183,7 @@ class TaskApi(Resource):
                 logging.info("Error deleting task from Manager")
                 return
                 pass
-            task.status = 'ready'
+            task.status = 'waiting'
             db.session.add(task)
             db.session.commit()
         #print "Task %d stopped" % task_id
@@ -192,10 +192,10 @@ class TaskApi(Resource):
     def stop_tasks(job_id):
         """We stop all the tasks for a specific job
         """
-        tasks = Task.query.\
-            filter_by(job_id = job_id).\
-            filter_by(status = 'running').\
-            all()
+        tasks = Task.query\
+            .filter_by(job_id=job_id)\
+            .filter(or_(Task.status == 'active', Task.status == 'waiting'))\
+            .all()
 
         # print tasks
         tasklist = []
@@ -231,18 +231,18 @@ class TaskApi(Resource):
                 img.save(thumbnail_path, job.format)
 
     def generate_job_tasks_status(self, job):
-        tasks_finished = Task.query\
-            .filter_by(job_id=job.id, status='finished').count()
+        tasks_completed = Task.query\
+            .filter_by(job_id=job.id, status='completed').count()
         tasks_failed = Task.query\
             .filter_by(job_id=job.id, status='failed').count()
-        tasks_aborted = Task.query\
-            .filter_by(job_id=job.id, status='aborted').count()
+        tasks_canceled = Task.query\
+            .filter_by(job_id=job.id, status='canceled').count()
         tasks_count = job.tasks.count()
 
         return {'count': tasks_count,
-                'finished': tasks_finished,
+                'completed': tasks_completed,
                 'failed': tasks_failed,
-                'aborted': tasks_aborted}
+                'canceled': tasks_canceled}
 
     def post(self, task_id):
         args = parser.parse_args()
@@ -252,6 +252,7 @@ class TaskApi(Resource):
         time_cost = args['time_cost']
         activity = args['activity']
         task = Task.query.get(task_id)
+
         if task is None:
             return '', 404
 
@@ -259,10 +260,10 @@ class TaskApi(Resource):
         if job is None:
             return '', 404
 
-        if status == 'running' and task.status != 'running':
+        if status == 'waiting' and task.status != 'waiting':
             return '', 403
 
-        if job.status != 'running' and status != 'aborted':
+        if job.status != 'active' and status != 'canceled':
             return '', 403
 
         serverstorage = app.config['SERVER_STORAGE']
@@ -314,7 +315,7 @@ class TaskApi(Resource):
             logging.info('Task {0} changed from {1} to {2}'.format(task_id, status_old, status))
 
             # Check if all tasks have been completed
-            if all((lambda t : t.status in ['finished', 'failed'])(t) for t in Task.query.filter_by(job_id=job.id).all()):
+            if all((lambda t : t.status in ['completed', 'failed'])(t) for t in Task.query.filter_by(job_id=job.id).all()):
                 failed_tasks = Task.query.filter_by(job_id=job.id, status='failed').count()
                 logging.debug("{0} tasks failed before".format(failed_tasks))
                 if failed_tasks > 0 or status == 'failed':
@@ -391,13 +392,13 @@ class TaskGeneratorApi(Resource):
         else:
             ip_address = request.remote_addr
             manager = Manager.query.filter_by(ip_address=ip_address).first()
-
         if not manager:
             return '', 404
 
+        """
         ten_minutes = datetime.now() - timedelta(minutes=10)
         tasks = Task.query\
-            .filter(Task.last_activity < ten_minutes, Task.status == 'running')\
+            .filter(Task.last_activity < ten_minutes, Task.status == 'failed')\
             .all()
         for task in tasks:
             manager_count = Manager.query\
@@ -405,57 +406,46 @@ class TaskGeneratorApi(Resource):
                 .count()
             if not manager_count > 0:
                 continue
-            task.status = 'ready'
-            db.session.add(task)
+            task.status = 'waiting'
             db.session.commit()
+        """
 
-        # Get running Jobs
+        # Get active Jobs
         if job_types:
             job_types_list = job_types.split(',')
             job_type_clauses = or_(*[Job.type == j for j in job_types_list])
-            running_jobs = Job.query\
+            active_jobs = Job.query\
                 .filter(job_type_clauses)\
-                .filter_by(status='running')\
+                .filter(or_(
+                    Job.status == 'waiting',
+                    Job.status == 'active'))\
                 .order_by(Job.priority.desc(), Job.id.asc())\
                 .all()
         else:
-            running_jobs = Job.query\
-                .filter_by(status='running')\
+            active_jobs = Job.query\
+                .filter(or_(
+                    Job.status == 'waiting',
+                    Job.status == 'active'))\
                 .order_by(Job.priority.desc(), Job.id.asc())\
                 .all()
 
-        for job in running_jobs:
-            # Temporarily commented logic for disabling potentially failing jobs
-            # # Are the tasks failing?
-            # failing_tasks = Task.query\
-            #     .filter(Task.job_id == job.id, Task.status == 'failed')\
-            #     .count()
-            # # If True set status to failed
-
-            # if failing_tasks > 3:
-            #     job = Job.query.get(job.id)
-            #     job.status = 'failed'
-            #     db.session.add(job)
-            #     db.session.commit()
-            #     continue
-
-            # Get job tasks (locking Task table)
+        for job in active_jobs:
             tasks = Task.query.filter(
                 Task.job_id == job.id,
-                or_(Task.status == 'ready',
-                    Task.status == 'aborted'),
+                or_(Task.status == 'waiting',
+                    Task.status == 'canceled'),
                 Task.manager_id == manager.id).with_for_update().\
                 order_by(Task.priority.desc(), Task.id.asc())
             task = None
-            unfinished_parents = False
+            incomplete_parents = False
             for t in tasks:
-                # All the parents are finished?
+                # All the parents are completed?
                 for tt in tasks:
-                    if tt.child_id == t.id and tt.status != 'finished':
-                        unfinished_parents = True
+                    if tt.child_id == t.id and tt.status != 'completed':
+                        incomplete_parents = True
                         break
                 # If False skip this task
-                if unfinished_parents:
+                if incomplete_parents:
                     continue
                 task = t
                 break
@@ -468,11 +458,12 @@ class TaskGeneratorApi(Resource):
             db.session.rollback()
             return '', 404
 
-        task.status = "running"
+        task.status = 'active'
+        job.status = 'active'
         task.last_activity = datetime.now()
         db.session.commit()
 
-        job = Job.query.get(task.job_id)
+        #job = Job.query.get(task.job_id)
 
         frame_count = 1
         current_frame = 0

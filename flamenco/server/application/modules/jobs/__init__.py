@@ -107,14 +107,14 @@ class jobInfo():
             if chunk_size_frames:
                 for k, v in tasks_status.items():
                     tasks_status[k] = v * chunk_size_frames
-            tasks_finished = tasks_status.get('finished')
+            tasks_completed = tasks_status.get('completed')
             tasks_count = tasks_status.get('count')
-            if tasks_finished and tasks_count:
-                percentage_done = round(float(tasks_finished)
+            if tasks_completed and tasks_count:
+                percentage_done = round(float(tasks_completed)
                                         / float(tasks_count) * 100.0, 1)
 
         time_elapsed = None
-        if job.status == 'running':
+        if job.status == 'active':
             time_elapsed = datetime.now() - job.creation_date
             time_elapsed = int(time_elapsed.total_seconds())
 
@@ -147,9 +147,9 @@ class jobInfo():
 
         # Collect all tasks related to the job
         tasks = Task.query.filter_by(job_id=job.id).all()
-        # Query again, but filtering only for finished jobs (refactor this!)
+        # Query again, but filtering only for completed jobs (refactor this!)
         tasks_completed = Task.query\
-            .filter_by(job_id=job.id, status='finished').count()
+            .filter_by(job_id=job.id, status='completed').count()
 
         # Default completion value
         percentage_done = 0
@@ -165,8 +165,8 @@ class jobInfo():
         average_time = None
         total_time = 0
         job_time = 0
-        finished_time = 0
-        finished_tasks = 0
+        completed_time = 0
+        completed_tasks = 0
         running_tasks = 0
         frames_rendering = ""
         frame_remaining = None
@@ -189,11 +189,11 @@ class jobInfo():
                 # If the task status is not in JSON format, or any other error
                 task_activity = None
 
-            if task.status == 'finished':
+            if task.status == 'completed':
                 if task.time_cost:
-                    finished_time += task.time_cost
-                finished_tasks += 1
-            if task.status == 'running':
+                    completed_time += task.time_cost
+                completed_tasks += 1
+            if task.status == 'active':
                 running_tasks += 1
                 if task_activity and task_activity.get('current_frame'):
                     frames_rendering = "{0} {1}".format(
@@ -205,10 +205,10 @@ class jobInfo():
             if task.time_cost:
                 total_time += task.time_cost
 
-        if job.status == 'running':
-            if finished_tasks > 0:
+        if job.status == 'active':
+            if completed_tasks > 0:
                 # Calculate average time per task
-                average_time = finished_time / finished_tasks
+                average_time = completed_time / completed_tasks
                 # If this is a render, get the frame render time
                 if chunk_size:
                     average_time_frame = average_time / chunk_size
@@ -220,7 +220,7 @@ class jobInfo():
                 remaining_time = remaining_time / running_tasks
             activity = "Rendering: {0}.".format(frames_rendering)
         elif job.status == 'completed':
-            average_time = finished_time / finished_tasks
+            average_time = completed_time / completed_tasks
             # If this is a render, get the frame render time
             if chunk_size:
                 average_time_frame = average_time / chunk_size
@@ -289,12 +289,12 @@ class JobListApi(Resource):
     def respawn(self, job_id):
         job = Job.query.get(job_id)
         if job:
-            if job.status == 'running':
+            if job.status == 'active':
                 self.stop(job_id)
 
             tasks = db.session.query(Task).filter(
                 Task.job_id == job_id, Task.status.notin_(
-                    ['finished','failed'])).all()
+                    ['completed','failed'])).all()
             best_managers = db.session.query(Manager).join(
                 JobManagers, Manager.id == JobManagers.manager_id)\
                     .filter(JobManagers.job_id == job_id)\
@@ -305,7 +305,7 @@ class JobListApi(Resource):
                 fun = partial(TaskApi.start_task, best_managers)
                 map(fun, tasks)
             else:
-                map(lambda t : setattr(t, 'status', 'ready'), tasks)
+                map(lambda t : setattr(t, 'status', 'waiting'), tasks)
                 db.session.commit()
                 TaskApi.dispatch_tasks()
         else:
@@ -323,10 +323,10 @@ class JobListApi(Resource):
         status = None
         if args['command'] == "start":
             fun = JobApi.start
-            status = "running"
+            status = "waiting"
         elif args['command'] == "stop":
             fun = JobApi.stop
-            status = "stopped"
+            status = "canceled"
         elif args['command'] == "reset":
             fun = JobApi.reset
             status = "reset"
@@ -352,7 +352,7 @@ class JobListApi(Resource):
         except KeyError:
             return args, 404
 
-        args['status'] = 'running'
+        args['status'] = 'waiting'
         return args, 200
 
     @marshal_with(job_fields)
@@ -368,9 +368,9 @@ class JobListApi(Resource):
             'format' : args['format'],
             }"""
 
-        status = 'ready'
+        status = 'paused'
         if args['start_job'] and args['start_job'] == 'True':
-            status = 'running'
+            status = 'waiting'
 
         job = Job(
            project_id=args['project_id'],
@@ -470,15 +470,15 @@ class JobApi(Resource):
     def start(job_id):
         job = Job.query.get(job_id)
         if job:
-            if job.status not in ['running', 'completed']:
-                log = "Status changed from {0} to {1}".format(job.status, 'running')
+            if job.status not in ['active', 'waiting', 'completed']:
+                log = "Status changed from {0} to {1}".format(job.status, 'waiting')
                 job.date_edit = datetime.now()
-                job.status = 'running'
+                job.status = 'waiting'
                 db.session.query(Task)\
                     .filter(Task.job_id == job_id)\
-                    .filter(or_(Task.status == 'aborted',
+                    .filter(or_(Task.status == 'canceled',
                                 Task.status == 'failed'))\
-                    .update({'status': 'ready'})
+                    .update({'status': 'waiting'})
                 db.session.commit()
                 log_to_database(job_id, 'job', log)
 
@@ -492,9 +492,9 @@ class JobApi(Resource):
         # first we stop the associated tasks (no foreign keys)
         job = Job.query.get(job_id)
         if job:
-            if job.status not in ['stopped', 'completed', 'failed']:
-                log = "Status changed from {0} to {1}".format(job.status, 'stopped')
-                job.status = 'stopped'
+            if job.status not in ['canceled', 'completed', 'failed']:
+                log = "Status changed from {0} to {1}".format(job.status, 'canceled')
+                job.status = 'canceled'
                 job.date_edit = datetime.now()
                 db.session.add(job)
                 db.session.commit()
@@ -508,7 +508,7 @@ class JobApi(Resource):
     def reset(job_id):
         job = Job.query.get(job_id)
         if job:
-            if job.status == 'running':
+            if job.status in ['active', 'waiting']:
                 logging.error("Job {0} is running".format(job_id))
                 response = jsonify({
                     'code' : 400,
@@ -516,13 +516,13 @@ class JobApi(Resource):
                 response.status_code = 400
                 return response
             else:
-                log = "Status changed from {0} to {1}".format(job.status, 'ready')
-                job.status = 'ready'
+                log = "Status changed from {0} to {1}".format(job.status, 'waiting')
+                job.status = 'waiting'
                 job.tasks_status = json.dumps({
                     'count': job.tasks.count(),
-                    'finished': 0,
+                    'completed': 0,
                     'failed': 0,
-                    'aborted': 0})
+                    'canceled': 0})
                 job.date_edit = datetime.now()
                 db.session.commit()
                 log_to_database(job_id, 'job', log)
@@ -546,7 +546,7 @@ class JobApi(Resource):
     def archive(job_id):
         logging.info('Archiving job {0}'.format(job_id))
         job = Job.query.get(job_id)
-        if job.status != 'running':
+        if job.status not in ['running', 'waiting']:
             log = "Status changed from {0} to {1}".format(job.status, 'archived')
             job.status = 'archived'
             db.session.commit()

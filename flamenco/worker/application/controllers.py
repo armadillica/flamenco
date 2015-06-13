@@ -196,7 +196,7 @@ def worker_loop():
 
         print ("New Task Found {0}, job {1}".format(task['task_id'], task['job_id']))
         params = {
-            'status': 'running',
+            'status': 'active',
             'log': None,
             'activity': None,
             'time_cost': 0,
@@ -367,7 +367,7 @@ def _parse_output(tmp_buffer, options):
         time_cost = None
 
     params = {
-        'status': 'running',
+        'status': 'active',
         'log': LOG,
         'activity': ACTIVITY,
         'time_cost': time_cost,
@@ -543,11 +543,11 @@ def run_blender_in_thread(options):
         f.write(full_output)
 
     if retcode == -9:
-        status='aborted'
+        status='canceled'
     elif retcode != 0:
         status='failed'
     else:
-        status='finished'
+        status='completed'
 
     logging.debug(status)
 

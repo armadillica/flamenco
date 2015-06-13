@@ -247,7 +247,7 @@
 
         // Completion
         var progress_bar_active = '';
-        if (data.status === 'running') {
+        if (data.status === 'active') {
           progress_bar_active = 'progress-bar-striped active';
         }
 
@@ -255,7 +255,7 @@
 
         // Nevertheless, we do a check for old jobs. Should be removed soon
         if (data.tasks_status) {
-          progress_label = data.tasks_status.finished + '/' + data.tasks_status.count;
+          progress_label = data.tasks_status.completed + '/' + data.tasks_status.count;
         } else {
           progress_label = data.percentage_done;
         };

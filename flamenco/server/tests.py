@@ -175,7 +175,7 @@ class ServerTestCase(unittest.TestCase):
         data = { 'command' : 'stop'}
         up = self.app.put('/jobs/{0}'.format(job_id), data=data)
         job = json.loads(up.data)
-        assert 'stopped' == job['status']
+        assert 'canceled' == job['status']
 
 
 if __name__ == '__main__':

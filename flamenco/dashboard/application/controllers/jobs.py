@@ -175,7 +175,7 @@ def add():
             'filepath': request.form['filepath'],
             'render_settings': request.form['render_settings'],
             'format' : request.form['format'],
-            'status': 'stopped',
+            'status': 'waiting',
             'priority': 10,
             'managers' : request.form.getlist('managers'),
             'job_type' : request.form['job_type'],

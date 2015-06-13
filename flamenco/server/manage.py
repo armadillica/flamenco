@@ -29,14 +29,14 @@ def compute_tasks_status():
             .filter_by(job_id=job.id, status='finished').count()
         tasks_failed = Task.query\
             .filter_by(job_id=job.id, status='failed').count()
-        tasks_aborted = Task.query\
-            .filter_by(job_id=job.id, status='aborted').count()
+        tasks_canceled = Task.query\
+            .filter_by(job_id=job.id, status='canceled').count()
         tasks_count = job.tasks.count()
 
         tasks_status = {'count': tasks_count,
                         'finished': tasks_finished,
                         'failed': tasks_failed,
-                        'aborted': tasks_aborted}
+                        'canceled': tasks_canceled}
 
         job.tasks_status = json.dumps(tasks_status)
         db.session.add(job)

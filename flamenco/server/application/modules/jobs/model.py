@@ -10,6 +10,15 @@ class Job(db.Model):
     * within Flamenco (using the job creation form)
     * via a query from an external software (e.g. Attract)
     * withing Blender itself
+
+    Possible statuses for a job are:
+    * Waiting (tasks for this job are ready to be dispatched)
+    * Active
+    * Canceled
+    * Failed
+    * Paused (will be added later)
+    * Completed
+    * Waiting
     """
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
