@@ -279,6 +279,7 @@ class MovPanelControl(bpy.types.Panel):
     def draw(self, context):
         D = bpy.data
         wm = bpy.context.window_manager
+        scene = context.scene
 
         layout = self.layout
         col = layout.column()
@@ -289,8 +290,20 @@ class MovPanelControl(bpy.types.Panel):
         if len(wm.flamenco_managers) == 0:
             return
 
+        # Try to build a nice name for the job (this is done only once, then
+        # the user has to update it himself). The name looks like this:
+        # JOB_NAME | RENDER_RESOLUTION | SAMPLES
+
         if wm.flamenco_jobName == "" and D.filepath != "":
-            wm.flamenco_jobName = os.path.split(D.filepath)[1]
+            file_name = os.path.split(D.filepath)[1]
+            job_name = os.path.splitext(file_name)[0]
+            render_size = scene.render.resolution_percentage
+            if scene.render.engine == 'CYCLES':
+                samples_count = "{0}S".format(scene.cycles.samples)
+            else:
+                samples_count = ""
+            wm.flamenco_jobName = u"{0} | {1}% | {2}".format(
+                job_name, render_size, samples_count)
 
         col.prop(wm, 'flamenco_project')
         col.prop(wm, 'flamenco_jobName')
@@ -312,7 +325,15 @@ class MovPanelControl(bpy.types.Panel):
             rows=5)
         if not wm.flamenco_jobType in ['blender_bake_anim_cache']:
             col.prop(wm, 'flamenco_chunkSize')
+        # Show info to help the user to determine a good chunk size
+        count_frames = scene.frame_end - scene.frame_start
+        col.label("Frames Count: {0}".format(count_frames))
+        count_chunks = int(count_frames / wm.flamenco_chunkSize)
+        if count_chunks < 1: count_chunks = 1
+        col.label("Chunks Count: {0}".format(count_chunks))
+        # Set the job priority (betweeen 0 and 100)
         col.prop(wm, 'flamenco_priority')
+        # Automatically start the job
         col.prop(wm, 'flamenco_startJob')
         col.prop(wm, 'flamenco_submit_archive')
         col.prop(wm, 'flamenco_pack_alembic_caches')
@@ -406,6 +427,7 @@ def register():
     # Chunk Size
     wm.flamenco_chunkSize = IntProperty(
         name="Chunk Size",
+        description="Number of chunks in which the render will be divided.",
         default=5,
         soft_min=1,
         options={'HIDDEN', 'SKIP_SAVE'})
@@ -420,6 +442,7 @@ def register():
     # Priority
     wm.flamenco_priority = IntProperty(
         name="Priority",
+        description="A value between 0 and 100. The closer to 100, the higher the priority.",
         default=50,
         soft_min=0,
         soft_max=100,
