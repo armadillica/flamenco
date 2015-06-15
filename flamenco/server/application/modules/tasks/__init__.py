@@ -260,10 +260,15 @@ class TaskApi(Resource):
         if job is None:
             return '', 404
 
-        if status == 'waiting' and task.status != 'waiting':
-            return '', 403
+        # This causes problems when a manager acquires a task and puts it in own
+        # queue and keeps reporting the status as waiting until it becomes active.
+        # if status == 'waiting' and task.status != 'waiting':
+        #     return '', 403
 
-        if job.status != 'active' and status != 'canceled':
+        # Check if the job has been canceled or paused. If the task is active or
+        # waiting, we return 403, starting the cancellation process. I the task
+        # is being canceled, we proceed with updating the task status.
+        if job.status not in ['waiting', 'active'] and status != 'canceled':
             return '', 403
 
         serverstorage = app.config['SERVER_STORAGE']
