@@ -238,7 +238,7 @@ table.dataTable th
 	&.active
 		border: thin dashed darken(lightgray, 15%)
 
-.label-in-progress, .label-in_progress, .label-on_hold
+.label-in-progress, .label-in_progress, .label-on_hold, .label-waiting
 	background-color: $color_status-in-progress
 	border: thin solid darken($color_status-in-progress, 20%)
 	color: #b86811
@@ -246,7 +246,7 @@ table.dataTable th
 	&.active
 		border: thin dashed darken($color_status-in-progress, 25%)
 
-.label-review, .label-running
+.label-review, .label-running, .label-active
 	background-color: $color_status-review
 	border: thin solid darken($color_status-review, 10%)
 	color: #174773
@@ -262,14 +262,14 @@ table.dataTable th
 	&.active
 		border: thin dashed darken($color_status-done, 15%)
 
-.label-cbb, .label-stopped
+.label-cbb, .label-stopped,
 	border: thin solid #A7CA98
 	color: #38761d
 
 	&.active
 		border: thin dashed darken(#A7CA98, 5%)
 
-.label-danger, .label-failed, .label-aborted
+.label-danger, .label-failed, .label-aborted, .label-canceled
 	border: thin solid crimson !important
 	color: crimson !important
 	font-weight: bold
