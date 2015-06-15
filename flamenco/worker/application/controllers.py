@@ -271,6 +271,8 @@ def worker_loop():
 
     elif rtask.status_code == 403:
         print ("Worker is disabled")
+    elif rtask.status_code == 404:
+        print ("No task available")
     #LOOP_THREAD = Timer(5, worker_loop)
     #LOOP_THREAD.start()
 
