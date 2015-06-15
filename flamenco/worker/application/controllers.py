@@ -269,6 +269,8 @@ def worker_loop():
         if unzipok:
             execute_task(task, files)
 
+    elif rtask.status_code == 403:
+        print ("Worker is disabled")
     #LOOP_THREAD = Timer(5, worker_loop)
     #LOOP_THREAD.start()
 
