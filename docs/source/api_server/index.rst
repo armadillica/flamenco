@@ -12,8 +12,8 @@ Server API
 Project
 =======
 
-Get Projects list
------------------
+[GET] /projects
+---------------
 
 Display the full list of a projects. By default, inactive projects are not included. Pagination will come in the future.
 
@@ -47,11 +47,11 @@ Response
         "name": "Project Gooseberry",
         "description": "One Berry"
       },
-      
+
     }
 
 
-View single project
+[GET] /projects/:id
 -------------------
 
 View details regarding a single project.
@@ -81,14 +81,14 @@ Response
     "id", "integer", "The id of a project"
     "is_active", "boolean", "Flag to display if the project is active"
     "name", "string", "The name of a project"
-    "path_linux", "string", 
-    "path_osx", "string", 
-    "path_server", "string", 
-    "path_win", "string", 
-    "render_path_linux", "string", 
-    "render_path_osx", "string" 
-    "render_path_server", "string", 
-    "render_path_win", "string", 
+    "path_linux", "string",
+    "path_osx", "string",
+    "path_server", "string",
+    "path_win", "string",
+    "render_path_linux", "string",
+    "render_path_osx", "string"
+    "render_path_server", "string",
+    "render_path_win", "string",
 
 .. sourcecode:: http
 
@@ -97,16 +97,16 @@ Response
     Content-Type: text/javascript
 
     {
-      "id": 1, 
-      "is_active": true, 
-      "name": "Encoded cube", 
-      "path_linux": "", 
-      "path_osx": "/Users/fsiddi/pampa/shots", 
-      "path_server": "/Users/fsiddi/pampa/shots", 
-      "path_win": "", 
-      "render_path_linux": "", 
-      "render_path_osx": "/Volumes/PROJECTS/storage/render", 
-      "render_path_server": "/Volumes/PROJECTS/storage/render", 
+      "id": 1,
+      "is_active": true,
+      "name": "Encoded cube",
+      "path_linux": "",
+      "path_osx": "/Users/fsiddi/pampa/shots",
+      "path_server": "/Users/fsiddi/pampa/shots",
+      "path_win": "",
+      "render_path_linux": "",
+      "render_path_osx": "/Volumes/PROJECTS/storage/render",
+      "render_path_server": "/Volumes/PROJECTS/storage/render",
       "render_path_win": ""
     }
 
@@ -114,9 +114,16 @@ Response
 Worker
 ======
 
-    - /workers
-    - GET : returns all informations about workers (JSON) => 200
-    - POST : Modify status of a worker => 204
+[GET] /workers
+--------------------------------------
+
+View workers list (JSON) => 200
+
+[POST] /workers
+---------------
+
+Modify status of a worker => 204
+
     - /workers/{int : id}
     - GET : returns worker’s informations (JSON) => 200
 
