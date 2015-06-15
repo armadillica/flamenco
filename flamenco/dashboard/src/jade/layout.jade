@@ -49,11 +49,11 @@ html(lang="en")
 					| {% block nav %}{% endblock %}
 					ul.nav.navbar-nav.navbar-right
 						li
-							a(href="{{ url_for('managers.index') }}") Managers
+							a(href="{{ url_for('jobs.index') }}") Jobs
 						li
 							a(href="{{ url_for('workers.index') }}") Workers
 						li
-							a(href="{{ url_for('jobs.index') }}") Jobs
+							a(href="{{ url_for('managers.index') }}") Managers
 
 						//- li
 						//-	a(href="#", data-toggle="modal", modal="{{ url_for('jobs.add') }}", data-target="#addJobModal")
