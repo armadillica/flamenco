@@ -103,10 +103,12 @@ class TaskCompiledApi(Resource):
         ip_address = request.remote_addr
         worker = Worker.query.filter_by(ip_address=ip_address).one()
         if not worker:
+            logging.debug("Worker is not registered")
             return 'Worker is not registered', 403
         worker.last_activity = datetime.now()
         db.session.commit()
         if worker.status == 'disabled':
+            logging.debug("Worker is disabled")
             return 'Worker is disabled', 403
         worker.current_task = None
         worker.status = 'enabled'
