@@ -438,21 +438,6 @@ class TaskGeneratorApi(Resource):
         if not manager:
             return '', 404
 
-        """
-        ten_minutes = datetime.now() - timedelta(minutes=10)
-        tasks = Task.query\
-            .filter(Task.last_activity < ten_minutes, Task.status == 'failed')\
-            .all()
-        for task in tasks:
-            manager_count = Manager.query\
-                .filter_by(id=task.manager_id, has_virtual_workers=0)\
-                .count()
-            if not manager_count > 0:
-                continue
-            task.status = 'waiting'
-            db.session.commit()
-        """
-
         # Get active Jobs
         if job_types:
             job_types_list = job_types.split(',')
