@@ -268,7 +268,7 @@ class TaskApi(Resource):
         # Check if the job has been canceled or paused. If the task is active or
         # waiting, we return 403, starting the cancellation process. I the task
         # is being canceled, we proceed with updating the task status.
-        if job.status not in ['waiting', 'active'] and status != 'canceled':
+        if job.status not in ['waiting', 'active', 'processing'] and status != 'canceled':
             return '', 403
 
         serverstorage = app.config['SERVER_STORAGE']

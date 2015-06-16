@@ -546,7 +546,7 @@ class JobApi(Resource):
     def archive(job_id):
         logging.info('Archiving job {0}'.format(job_id))
         job = Job.query.get(job_id)
-        if job.status not in ['running', 'waiting']:
+        if job.status not in ['active', 'waiting']:
             log = "Status changed from {0} to {1}".format(job.status, 'archived')
             job.status = 'archived'
             db.session.commit()
