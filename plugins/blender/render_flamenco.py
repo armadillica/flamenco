@@ -33,6 +33,7 @@ import os
 import json
 import requests
 import subprocess
+import uuid
 # from time import strftime
 
 from bpy.props import IntProperty
@@ -188,11 +189,14 @@ class bamToRenderfarm (bpy.types.Operator):
         addon_prefs = user_preferences.addons[__name__].preferences
         serverurl = addon_prefs.flamenco_server
 
+
+        job_name = wm.flamenco_jobName
+
         if not D.filepath:
             self.report({'ERROR'}, "Save your blend file first")
             return {'CANCELLED'}
 
-        if wm.flamenco_jobName == "":
+        if job_name == "":
             self.report({'ERROR'}, "Name your Job")
             return {'CANCELLED'}
 
@@ -209,7 +213,7 @@ class bamToRenderfarm (bpy.types.Operator):
         job_properties = {
             'project_id': int(wm.flamenco_project),
             'settings': json.dumps(job_settings),
-            'name': wm.flamenco_jobName,
+            'name': job_name,
             'type': wm.flamenco_jobType,
             'managers': wm.flamenco_managers[wm.flamenco_managersIndex].id,
             'priority': wm.flamenco_priority,
@@ -222,10 +226,13 @@ class bamToRenderfarm (bpy.types.Operator):
         C.scene.render.use_file_extension = use_extension
 
         tmppath = C.user_preferences.filepaths.temporary_directory
-        zipname = "jobfile_"
-        zippath = os.path.join(tmppath, "%s.zip" % zipname)
+
+        # Generate a UUID and attach it to the zipfile
+        zipname = "jobfile_{0}".format(str(uuid.uuid1()))
+        zippath = os.path.join(tmppath, "{0}.zip".format(zipname))
 
         try:
+            print("Creating BAM archive at {0}".format(zippath))
             command = ["bam", "pack", D.filepath, '-o', zippath]
 
             # If we do not want to pack large files
@@ -267,6 +274,12 @@ class bamToRenderfarm (bpy.types.Operator):
                     humansize(statinfo.st_size)))
                 p = requests.post(server_job_file_url, data=f)
             print ("Done")
+            # Cleanup the temp file
+            try:
+                print("Removing BAM archive")
+                os.remove(zippath)
+            except OSError:
+                print("Failed to removed BAM archive")
 
         return {'FINISHED'}
 
