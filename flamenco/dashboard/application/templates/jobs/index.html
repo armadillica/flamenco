@@ -473,9 +473,21 @@
     });
   });
 
+  function load_jobs_index() {
+    if ($("#jobs-index").is(':hidden')){
+      $("#jobs-index").show();
+      $("#tasks-view").hide();
+    };
+  };
+
+  $(document).keyup(function(e) {
+    if (e.keyCode == 27) {
+      load_jobs_index();
+    };
+  });
+
   $(document).on("click", ".load-jobs-index", function() {
-    $("#jobs-index").show();
-    $("#tasks-view").hide();
+    load_jobs_index();
   });
 
 </script>
