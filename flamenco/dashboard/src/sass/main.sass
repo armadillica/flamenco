@@ -268,7 +268,15 @@ table.dataTable th
 	&.active
 		border: thin dashed darken(lightgray, 15%)
 
-.label-in-progress, .label-in_progress, .label-on_hold, .label-waiting
+.label-processing
+	background-color: transparent
+	border: thin solid #b86811
+	color: #b86811
+
+	&.active
+		border: thin dashed darken($color_status-in-progress, 25%)
+
+.label-waiting
 	background-color: $color_status-in-progress
 	border: thin solid darken($color_status-in-progress, 20%)
 	color: #b86811
