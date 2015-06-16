@@ -77,12 +77,19 @@ api.add_resource(JobFileApi, '/jobs/file/<int:job_id>')
 api.add_resource(JobFileOutputApi, '/jobs/file/output/<int:job_id>')
 
 from modules.tasks import TaskApi
+from modules.tasks import TaskStatusApi
 from modules.tasks import TaskListApi
 from modules.tasks import TaskGeneratorApi
 from modules.tasks import TaskFileOutputApi
+# Endpoint for generic task editing and log retrieval
 api.add_resource(TaskApi, '/tasks/<int:task_id>')
+# Temporary endpoint to edit the staus of a job (mainly via dashboard)
+api.add_resource(TaskStatusApi, '/tasks/<int:task_id>/status')
+# Listing of all tasks (usually filtered by job_id)
 api.add_resource(TaskListApi, '/tasks')
+# Endpoint queried by the managers to obtain new tasks
 api.add_resource(TaskGeneratorApi, '/tasks/generate')
+# Serves static path to download task files
 api.add_resource(TaskFileOutputApi, '/task/file/output/<int:task_id>')
 
 from modules.main import main

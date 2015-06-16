@@ -48,6 +48,9 @@ parser.add_argument('taskfile', type=FileStorage, location='files')
 tasks_list_parser = reqparse.RequestParser()
 tasks_list_parser.add_argument('job_id', type=int)
 
+task_status_parser = reqparse.RequestParser()
+task_status_parser.add_argument('status')
+
 class TaskApi(Resource):
     @staticmethod
     def create_task(job_id, task_type, task_settings, name, child_id, parser):
@@ -109,7 +112,10 @@ class TaskApi(Resource):
         db.session.add(task)
         db.session.commit()
 
-        r = http_rest_request(manager.host, '/tasks/file/{0}'.format(task.job_id), 'get')
+        r = http_rest_request(
+            manager.host,
+            '/tasks/file/{0}'.format(task.job_id),
+            'get')
         # print ('testing file')
         # print (r)
         if not r['file']:
@@ -119,7 +125,8 @@ class TaskApi(Resource):
             jobpath = os.path.join(projectpath, str(job.id))
             zippath = os.path.join(jobpath, "jobfile_{0}.zip".format(job.id))
             try:
-                jobfile = [('jobfile', ('jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
+                jobfile = [('jobfile',
+                    ('jobfile.zip', open(zippath, 'rb'), 'application/zip'))]
             except IOError, e:
                 logging.error(e)
             try:
@@ -209,7 +216,10 @@ class TaskApi(Resource):
         # FIXME problem with PIL (string index out of range)
         #thumb_dir = RENDER_PATH + "/" + str(job.id)
         project = Project.query.get(job.project_id)
-        thumbnail_dir = os.path.join(project.render_path_server, str(job.id), 'thumbnails')
+        thumbnail_dir = os.path.join(
+            project.render_path_server,
+            str(job.id),
+            'thumbnails')
         if not os.path.exists(thumbnail_dir):
             print '[Debug] ' + os.path.abspath(thumbnail_dir) + " does not exist"
             os.makedirs(thumbnail_dir)
@@ -290,7 +300,8 @@ class TaskApi(Resource):
             except:
                 pass
             taskfile = os.path.join(
-                    app.config['TMP_FOLDER'], 'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
+                    app.config['TMP_FOLDER'],
+                    'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
             args['taskfile'].save( taskfile )
 
             zippath = os.path.join(jobpath, 'output')
@@ -317,10 +328,12 @@ class TaskApi(Resource):
 
         if status != status_old:
             # manager = Manager.query.get(task.manager_id)
-            logging.info('Task {0} changed from {1} to {2}'.format(task_id, status_old, status))
+            logging.info('Task {0} changed from {1} to {2}'.format(
+                task_id, status_old, status))
 
             # Check if all tasks have been completed
-            if all((lambda t : t.status in ['completed', 'failed'])(t) for t in Task.query.filter_by(job_id=job.id).all()):
+            tasks = Task.query.filter_by(job_id=job.id).all()
+            if all((lambda t : t.status in ['completed', 'failed'])(t) for t in tasks):
                 failed_tasks = Task.query.filter_by(job_id=job.id, status='failed').count()
                 logging.debug("{0} tasks failed before".format(failed_tasks))
                 if failed_tasks > 0 or status == 'failed':
@@ -351,6 +364,26 @@ class TaskApi(Resource):
             'parser': task.parser
         }
         return jsonify(task_info)
+
+
+class TaskStatusApi(Resource):
+    """Entry point to set the status of a task. Exposes one property of a task
+    and accepts only a PUT request to it.
+    This is tipically used by the dashboard to allow a user to arbitrarly change
+    the status of a task.
+    """
+
+    def put(self, task_id):
+        # Validate request
+        args = task_status_parser.parse_args()
+        # Query for task
+        task = Task.query.get_or_404(task_id)
+        status = args['status']
+        if task.status in ['active', 'waiting', 'processing'] and status == 'waiting':
+            return "Task is {0} and can't be set to waiting".format(task.status), 400
+        else:
+            task.status = status
+            return '', 204
 
 
 class TaskListApi(Resource):
@@ -508,4 +541,5 @@ class TaskFileOutputApi(Resource):
         job = Job.query.get(task.job_id)
         projectpath = os.path.join(serverstorage, str(job.project_id))
         jobpath = os.path.join(projectpath, str(job.id), 'output')
-        return send_from_directory(jobpath, 'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
+        return send_from_directory(jobpath, 'taskfileout_{0}_{1}.zip'.format(
+            job.id, task_id))

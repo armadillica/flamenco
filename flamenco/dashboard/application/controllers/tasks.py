@@ -36,7 +36,16 @@ def view_json(task_id):
         # If there is a log but we are not downloadig it, we trim it and append
         # the link to dowload the whole file
         log_trimmed = task['log'][-256:]
-        log_trimmed = "{0} <a href=\"{1}\">Download</a>".format(log_trimmed, url_for('tasks.view_json', task_id=task['id'], log_dl=True))
+        log_trimmed = "{0} <a href=\"{1}\">Download</a>".format(
+            log_trimmed,
+            url_for('tasks.view_json', task_id=task['id'], log_dl=True))
         task['log'] = log_trimmed
 
     return jsonify(task)
+
+
+@tasks.route('/<int:task_id>/status', methods=['POST'])
+def edit_status(task_id):
+    params = {"status": request.form['status']}
+    task = http_server_request('put', '/tasks/{0}/status'.format(task_id), params)
+    return task
