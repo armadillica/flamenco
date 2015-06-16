@@ -379,12 +379,13 @@ class TaskStatusApi(Resource):
         # Query for task
         task = Task.query.get_or_404(task_id)
         status = args['status']
-        if task.status in ['active', 'waiting', 'processing'] and status == 'waiting':
-            return "Task is {0} and can't be set to waiting".format(task.status), 400
-        else:
-            task.status = status
-            db.session.commit()
-            return '', 204
+        # Temporarily ignore current task status
+        # if task.status in ['active', 'waiting', 'processing'] and status == 'waiting':
+        #     return "Task is {0} and can't be set to waiting".format(task.status), 400
+        # else:
+        task.status = status
+        db.session.commit()
+        return '', 204
 
 
 class TaskListApi(Resource):
