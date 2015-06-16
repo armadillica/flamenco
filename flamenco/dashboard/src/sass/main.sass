@@ -58,12 +58,16 @@ hr
 .progress
 	height: 14px
 	margin-top: 3px
+	text-align: center
+	background-color: lighten($color_text-default, 10%)
+
+	span
+		font-size: .8em
+		padding: 0 5px
 
 .progress-bar
 	line-height: 13px
 
-.progress span
-	font-size: .8em
 
 footer p
 	font-size: 11px
@@ -129,7 +133,7 @@ h2
 #jobs-index,
 #tasks-view,
 #workers_wrapper
-	padding-top: 15px
+	padding: 15px 0 0 0
 
 .jobs-index-table-thumbnail
 	max-width: 100%
@@ -193,6 +197,9 @@ table.dataTable th
 			cursor: pointer
 			color: $color_link-default
 
+			.progress
+				background-color: lighten($color_text-default, 20%)
+
 		td
 			border: none
 
@@ -209,6 +216,18 @@ table.dataTable th
 
 .dataTables_paginate
 	padding-top: 5px
+
+.dataTables_info, div.dataTables_info
+	padding: 15px 0 0 15px
+	color: lighten($color_text-default, 20%)
+
+.dataTables_length, div.dataTables_length
+	padding: 0 0 0 15px
+	color: lighten($color_text-default, 20%)
+
+.dataTables_filter, div.dataTables_filter
+	padding: 0 15px 0 0
+	color: lighten($color_text-default, 20%)
 
 /* Bootstrap Override */
 .btn:active, .btn.active, .btn.active:active,
@@ -237,6 +256,12 @@ table.dataTable th
 
 .jobs-view-sidebar-thumbnail
 	width: 100%
+
+.jobs-index-table-checkbox,
+.jobs-index-table-priority,
+.jobs-index-table-manager,
+.jobs-index-table-thumbnail
+	text-align: center
 
 .copy-button
 	min-width: 50px
