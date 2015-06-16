@@ -332,6 +332,9 @@ class TaskApi(Resource):
                 # of this content a few lines above
                 job.tasks_status = json.dumps(self.generate_job_tasks_status(job))
                 db.session.commit()
+            if job.status == 'waiting' and status == 'active':
+                job.status = 'active'
+                db.session.commit()
 
         return '', 204
 
