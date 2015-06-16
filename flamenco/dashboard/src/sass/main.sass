@@ -183,21 +183,32 @@ table.dataTable td,
 table.dataTable th
 	white-space: nowrap
 
-.table.dataTable tr:hover
-	cursor: pointer
+.table.dataTable
+	tr
+		border: none
+		padding: 8px 5px
+		color: lighten($color_text-default, 10%)
+
+		&:hover
+			cursor: pointer
+			color: $color_link-default
+
+		td
+			border: none
 
 .table.dataTable tbody tr.active:nth-child(odd) td,
 .table.dataTable tbody tr.active:nth-child(even) td,
 .table.dataTable tbody tr.active:nth-child(odd) th,
 .table.dataTable tbody tr.active:nth-child(even) th
-	background-color: desaturate(rgba($color_status-active, .3), 10%) !important
-	border-top: thin solid desaturate(rgba($color_status-active, .2), 15%) !important
-	border-bottom: thin solid desaturate(rgba($color_status-active, .2), 15%) !important
+	background-color: adjust-hue(hsl(hue($color_status-active), 60%, 90%), -8) !important
+	border: none
 	color: $color_text-default
 
 	a
 		color: $color_text-default
 
+.dataTables_paginate
+	padding-top: 5px
 
 /* Bootstrap Override */
 .btn:active, .btn.active, .btn.active:active,
