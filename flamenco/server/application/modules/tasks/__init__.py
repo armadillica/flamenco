@@ -383,6 +383,7 @@ class TaskStatusApi(Resource):
             return "Task is {0} and can't be set to waiting".format(task.status), 400
         else:
             task.status = status
+            db.session.commit()
             return '', 204
 
 

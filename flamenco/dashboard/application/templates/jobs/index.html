@@ -373,7 +373,9 @@
         content += '<tr><td>' + post.id + '</td>';
         content += '<td>' + post.name + '</td>';
         content += '<td>' + parse_status(post.status) + '</td>';
-        content += '<td><span class="btn btn-default btn-xs load-tasks-view" task_id="' + post.id + '">View</span></td></tr>';
+        content += '<td><span class="btn btn-default btn-xs load-tasks-view" task_id="' + post.id + '">View</span>';
+        content += '<span class="btn btn-default btn-xs retry-task" task_id="' + post.id + '">Retry</span>';
+        content += '</td></tr>';
       }
     });
     return content;
@@ -470,6 +472,14 @@
       // $.each(data, function(i, post) {
       //   $("#tasks-view").append(post);
       // });
+    });
+  });
+
+  $(document).on("click", ".retry-task", function() {
+    var btn = $(this);
+    $.post("/tasks/" + btn.attr('task_id') + "/status", {"status": "waiting"}, function() {
+        // Please fix this horror
+        btn.text('Done');
     });
   });
 
