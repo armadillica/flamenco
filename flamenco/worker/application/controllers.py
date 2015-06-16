@@ -550,6 +550,10 @@ def run_blender_in_thread(options):
         status='canceled'
     elif retcode != 0:
         status='failed'
+        if retcode == -11:
+            segfault_text = "\nBlender Segmentation Fault\n"
+            print(segfault_text)
+            log += segfault_text
     else:
         status='completed'
 
