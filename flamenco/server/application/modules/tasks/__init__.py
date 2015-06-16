@@ -463,7 +463,7 @@ class TaskGeneratorApi(Resource):
             db.session.rollback()
             return '', 404
 
-        task.status = 'active'
+        task.status = 'processing'
         job.status = 'active'
         task.last_activity = datetime.now()
         db.session.commit()
@@ -491,7 +491,6 @@ class TaskGeneratorApi(Resource):
                 "chunk_start": 0,
                 "chunk_end": 0,
                 "current_frame": 0,
-                "status": task.status,
                 "percentage_done": percentage_done}
 
         return jsonify(**task)
