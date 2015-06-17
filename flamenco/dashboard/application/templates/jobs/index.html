@@ -40,16 +40,15 @@
 <div class="col-md-8" id="tasks-view">
   <div class="row">
     <div class="col-md-12">
-      <div class="btn btn-default load-jobs-index pull-right">Back</div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-12">
+      <div class="tasks-view-tools">
+        <div class="btn btn-default load-jobs-index ">Back</div>
+      </div>
+
       <table id="tasks-view-table" cellpadding="0" cellspacing="0" border="0" class="table table-striped" width="100%">
         <thead>
           <tr>
             <th>Key</th>
-            <th>Val</th>
+            <th>Value</th>
           </th>
         </thead>
         <tbody id="tasks-view-table-body">
@@ -104,8 +103,8 @@
         <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-hover table-condensed" id="tasks-index-table">
           <thead>
             <tr>
-              <th></th>
-              <th>Name</th>
+              <th class="tasks-index-table-id">ID</th>
+              <th>Frames</th>
               <th>Status</th>
               <th></th>
             </th>
@@ -451,8 +450,18 @@
       job_overview = '';
       job_overview += '<img class="img-responsive" src="' + data['thumbnail'] + '"/>'
       job_overview += '<h2> '+ data['job_name'] + '</h2>';
-      job_overview += '<p> Creation time: ' + data['creation_date'] + '</p>';
-      job_overview += '<p> Average frame time:' + data['average_time_frame'] + '</p>';
+
+      job_overview += '<p>';
+      job_overview += 'Created on: ' + data['creation_date'];
+      if (data['date_edit'] != data['creation_date']){
+        job_overview += '<br> Last edited: ' + data['date_edit'];
+      };
+      job_overview += '</p>';
+
+      if (data['average_time_frame']){
+        job_overview += '<p> Average frame time:' + data['average_time_frame'] + '</p>';
+      };
+
       job_overview += '<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/' + data['id'] + '/output" title="Click to copy">' + data['id'] + '</div>';
 
       $("#job-overview-properties").html(job_overview);

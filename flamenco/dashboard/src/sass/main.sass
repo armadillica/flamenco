@@ -57,7 +57,7 @@ hr
 
 .progress
 	height: 15px
-	margin-top: 3px
+	top: 3px
 	text-align: center
 	background-color: lighten($color_text-default, 15%)
 	position: relative
@@ -65,15 +65,11 @@ hr
 	span
 		font-size: .8em
 		position: absolute
-		top: 2px
 		color: white
 		font-weight: 600
 		display: block
 		text-align: center
 		width: 100%
-
-.progress-bar
-	line-height: 13px
 
 
 footer p
@@ -153,12 +149,24 @@ h2
 	&:hover
 		opacity: 0.9
 
+.load-tasks-view
+	width: 50%
+
+.retry-task
+	position: relative
+	left: 25%
+
+.tasks-view-tools
+	padding: 0 15px 0 0
+	float: right
+	display: block
+
 #sidebar-body
 	background-color: white
 	top: 0
 	bottom: 0
 	right: 0
-	padding-top: 40px
+	padding: 40px 0 0 0
 	position: fixed
 	overflow-y: auto
 	overflow-x: hidden
@@ -182,19 +190,35 @@ h2
 #job-overview-properties,
 #job-details,
 #job-history
-	padding-top: 70px
+	padding: 70px 10px 0
 	& h2
 		margin-bottom: 10px
+		font-size: 1.4em
 
 	& img
 		width: 100%
 		margin: 0 auto 5px auto
 
+.tasks-index-table-id
+	text-align: center
+	width: 40px
+
+#tasks-index-table
+	position: relative
+	top: 15px
+
+#tasks-view-table-body td,
+#tasks-index-table-body td
+	padding: 5px 15px
+
+#tasks-view-table-body td
+	padding: 10px 20px
+
 table.dataTable td,
 table.dataTable th
 	white-space: nowrap
 
-.table.dataTable
+.table.dataTable, #tasks-index-table
 	tr
 		border: none
 		padding: 8px 5px
@@ -221,8 +245,8 @@ table.dataTable th
 	a
 		color: $color_text-default
 
-.dataTables_paginate
-	padding-top: 5px
+.dataTables_paginate, div.dataTables_paginate
+	padding: 5px 15px 0 0
 
 .dataTables_info, div.dataTables_info
 	padding: 15px 0 0 15px
