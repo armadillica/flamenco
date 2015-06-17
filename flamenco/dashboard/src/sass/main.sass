@@ -211,20 +211,32 @@ h2
 #tasks-index-table-body td
 	padding: 5px 15px
 
+#tasks-view-table
+	padding: 15px
+
+	td[class^= "task_key_"]
+		text-transform: capitalize
+		font-weight: 600
+
+	td[class^= "task_val_"]
+		white-space: pre-line
+		font-family: monospace
+		color: lighten($color_text-default, 20%)
+
+	.task_val_log,
+	.task_val_activity
+		font-size: 1.1em
+		color: $color_text-default !important
+
+		a
+			display: block
+			font-weight: 600
+			font-family: sans-serif
+			padding: 10px 15px 5px 0
+			float: right
+
 #tasks-view-table-body td
 	padding: 10px 20px
-
-#tasks-view-table tr:nth-child(3)
-	white-space: pre-line
-	font-size: 1.1em
-	font-family: monospace
-
-	a
-		display: block
-		font-weight: 600
-		font-family: sans-serif
-		padding: 10px 15px 5px 0
-		float: right
 
 table.dataTable td,
 table.dataTable th

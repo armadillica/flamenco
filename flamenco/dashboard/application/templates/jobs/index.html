@@ -383,8 +383,10 @@
   function tasks_view_table_rows(data) {
     var content = '';
     $.each(data, function(i, post) {
-      content += '<tr><td>' + i + '</td>';
-      content += '<td>' + post + '</td></tr>';
+      content += '<tr ' + 'class="task_'+ i +'">'
+      content += '<td ' + 'class="task_key_'+ i +'">' + i + '</td>';
+      content += '<td ' + 'class="task_val_'+ i +'">' + post + '</td>';
+      content += '</tr>';
       // content += '<td><span class="btn btn-default btn-xs load-tasks-view" task_id="' + post.id + '">View</span></td></tr>';
     });
     return content;
