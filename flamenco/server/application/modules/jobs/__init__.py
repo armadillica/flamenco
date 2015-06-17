@@ -360,8 +360,9 @@ class JobListApi(Resource):
         args = job_parser.parse_args()
 
         """job_settings = {
-            'frame_start' : args['frame_start'],
-            'frame_end' : args['frame_end'],
+            # 'frame_start' : args['frame_start'],
+            # 'frame_end' : args['frame_end'],
+            'frames': args['frames'],
             'chunk_size' : args['chunk_size'],
             'filepath' : args['filepath'],
             'render_settings' : args['render_settings'],
