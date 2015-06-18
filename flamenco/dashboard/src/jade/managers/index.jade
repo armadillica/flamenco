@@ -119,18 +119,20 @@ script.
 	        });
 	    });
 
-			$('#workers tbody').on( 'click', 'tr', function () {
-				$(this).find('input[type=checkbox]').trigger('click');
-			});
+		$('#workers tbody').on( 'click', 'tr', function () {
+			$(this).find('input[type=checkbox]').trigger('click');
+		});
 
-			$(document).on("click", "table input[type=checkbox]", function(){
-				$(this).closest('tr').toggleClass('active');
-				$(this).trigger('click');
-			});
+		$(document).on("click", "#workers tbody input[type=checkbox]", function(){
+			$(this).closest('tr').toggleClass('active');
+			$(this).trigger('click');
+		});
 
-	    $(document).on("click", ".check-all", function(){
-	        $("table input[type=checkbox]").attr('checked', $(this).is(':checked'));
-	    });
+		$(document).on("click", ".check-all", function(){
+			$("#workers tbody input[type=checkbox]").each(function(){
+				$(this).attr('checked', $('.check-all').is(':checked'));
+			});
+		});
 
 	});
 

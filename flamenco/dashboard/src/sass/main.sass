@@ -208,21 +208,41 @@ h2
 	position: relative
 	top: 15px
 
+#jobs-view-table-body
+	font-size: 1.1em
+
+#jobs-view-table-body td,
 #tasks-view-table-body td,
 #tasks-index-table-body td
 	padding: 5px 15px
 
+#jobs-view-table,
 #tasks-view-table
 	padding: 15px
 
-	td[class^= "task_key_"]
+	tr.branch.collapsed
+		background-color: #E8E8E8
+	tr.branch.expanded
+		background-color: #555
+		color: white
+
+
+	td[class^= "task_key_"],
+	td[class^= "job_key_"]
 		text-transform: capitalize
 		font-weight: 600
 
-	td[class^= "task_val_"]
+	td[class^= "task_val_"],
+	td[class^= "job_val_"]
 		white-space: pre-line
 		font-family: monospace
 		color: lighten($color_text-default, 20%)
+
+	td[class^= "job_key_"]
+		white-space: pre
+
+	td[class^= "job_val_"]
+		color: $color_text-default
 
 	.task_val_log,
 	.task_val_activity

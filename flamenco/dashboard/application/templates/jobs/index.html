@@ -126,7 +126,7 @@
           </tbody>
         </table>
       </div>
-      <!-- Job Details -->
+      <!-- Job History -->
       <div role="tabpanel" class="tab-pane" id="job-history">
         <table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-condensed" id="jobs-history-table">
           <thead>
@@ -394,11 +394,13 @@
 
   function jobs_view_log_table_rows(log_data) {
     var content = '';
-    $.each(log_data, function() {
+    $.each(log_data, function(i) {
       event_item = $(this);
 
-      content += '<tr><td>' + event_item[0] + '</td>';
-      content += '<td>' + event_item[1] + '</td></tr>';
+      content += '<tr ' + 'class="job_log-'+ i +'">'
+      content += '<td ' + 'class="job_log_date">' + event_item[0] + '</td>';
+      content += '<td ' + 'class="job_log_event">' + event_item[1] + '</td>';
+      content += '</tr>';
     });
     return content;
   }
@@ -424,11 +426,19 @@
         data_tt_parent_id_tag = ''
       };
 
+      console.log(i);
+
       if (post !== null && typeof post == 'object') {
-        content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td></td></tr>';
+        content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '">';
+        content += '<td class="job_key_' + i + '">' + i + '</td>';
+        content += '<td class="job_val_' + i + '"></td>';
+        content += '</tr>';
         content += jobs_view_table_rows(post, data_tt_id);
       } else {
-        content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '"><td>' + i + '</td><td>' + post + '</td></tr>';
+        content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '">';
+        content += '<td class="job_key_' + i + '">' + i + '</td>';
+        content += '<td class="job_val_' + i + '">' + post + '</td>';
+        content += '</tr>';
       }
       index++;
     });
