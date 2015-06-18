@@ -25,6 +25,7 @@ from datetime import timedelta
 
 from application.utils import http_rest_request
 from application.utils import get_file_ext
+from application.utils import pretty_date
 
 from application.modules.tasks.model import Task
 from application.modules.managers.model import Manager
@@ -49,7 +50,12 @@ tasks_list_parser = reqparse.RequestParser()
 tasks_list_parser.add_argument('job_id', type=int)
 
 task_status_parser = reqparse.RequestParser()
-task_status_parser.add_argument('status')
+task_status_parser.add_argument('status', type=str)
+
+task_generator_parser = reqparse.RequestParser()
+task_generator_parser.add_argument('uuid', type=str)
+task_generator_parser.add_argument('job_types', type=str)
+task_generator_parser.add_argument('worker', type=str)
 
 class TaskApi(Resource):
     @staticmethod
@@ -361,7 +367,10 @@ class TaskApi(Resource):
             'type': task.type,
             'log': task.log,
             'activity': task.activity,
-            'parser': task.parser
+            'parser': task.parser,
+            'worker': task.worker,
+            'last_activity': "{0} ({1})".format(
+                task.last_activity, pretty_date(task.last_activity))
         }
         return jsonify(task_info)
 
@@ -422,13 +431,18 @@ class TaskGeneratorApi(Resource):
         """Upon request from a manager, picks the first task available and returns
         it in JSON format.
         """
+
+        # Validate request
+        args = task_generator_parser.parse_args()
+
         task_nolocked = None
         task = None
         tasks = {}
         percentage_done = 0
 
-        manager_uuid = request.args.get('uuid', None)
-        job_types = request.args.get('job_types', None)
+        manager_uuid = args['uuid']
+        job_types = args['job_types']
+        worker = args['worker']
 
         if manager_uuid:
             manager = Manager.query.filter_by(uuid=manager_uuid).one()
@@ -488,6 +502,8 @@ class TaskGeneratorApi(Resource):
 
         task.status = 'processing'
         job.status = 'active'
+        if worker:
+            task.worker = worker
         task.last_activity = datetime.now()
         db.session.commit()
 
@@ -497,24 +513,25 @@ class TaskGeneratorApi(Resource):
         current_frame = 0
         percentage_done = Decimal(current_frame) / Decimal(frame_count) * Decimal(100)
         percentage_done = round(percentage_done, 1)
-        task = {"id": task.id,
-                "job_id": task.job_id,
-                "name": task.name,
-                "status": task.status,
-                "type": task.type,
-                "settings": json.loads(task.settings),
-                "log": task.log,
-                "activity": task.activity,
-                "manager_id": task.manager_id,
-                "priority": task.priority,
-                "child_id": task.child_id,
-                "parser": task.parser,
-                "time_cost": task.time_cost,
-                "project_id": job.project_id,
-                "chunk_start": 0,
-                "chunk_end": 0,
-                "current_frame": 0,
-                "percentage_done": percentage_done}
+        task = {
+            "id": task.id,
+            "job_id": task.job_id,
+            "name": task.name,
+            "status": task.status,
+            "type": task.type,
+            "settings": json.loads(task.settings),
+            "log": task.log,
+            "activity": task.activity,
+            "manager_id": task.manager_id,
+            "priority": task.priority,
+            "child_id": task.child_id,
+            "parser": task.parser,
+            "time_cost": task.time_cost,
+            "project_id": job.project_id,
+            "chunk_start": 0,
+            "chunk_end": 0,
+            "current_frame": 0,
+            "percentage_done": percentage_done}
 
         return jsonify(**task)
 

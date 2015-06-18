@@ -27,6 +27,9 @@ class Task(db.Model):
     parser = db.Column(db.String(64))
     time_cost = db.Column(db.Integer())
     last_activity = db.Column(db.DateTime())
+    # Currently the hostname, later will be a serialized dictionary, storing
+    # id and hostname of a worker
+    worker = db.Column(db.String(128))
 
 
     def __repr__(self):

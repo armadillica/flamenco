@@ -49,6 +49,9 @@ parser_thumbnail.add_argument('task_id', type=int)
 parser_delete = reqparse.RequestParser()
 parser_delete.add_argument('tasks', type=str, action='append', required=True)
 
+task_management_parser = reqparse.RequestParser()
+task_management_parser.add_argument('worker', type=str)
+
 task_fields = {
     'id': fields.Integer,
     'worker_id': fields.Integer,
@@ -278,9 +281,14 @@ class TaskManagementApi(Resource):
         # Currently this is implemented as a GET, with the uuid argument optional.
         # In the future the uuid will be sent in the headers.
 
+        args = task_management_parser.parse_args()
+        worker = args['worker']
+
         task_generate_params = {'uuid': uuid.value}
         if job_types and job_types != "":
             task_generate_params['job_types'] = job_types
+        if worker:
+            task_generate_params['worker'] = worker
 
         joined_tasks_generate_url = join_url_params(
             '/tasks/generate', task_generate_params)

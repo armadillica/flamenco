@@ -179,10 +179,13 @@ global LOOP_THREAD
 def worker_loop():
     register_worker()
     print ("Quering for a new task")
+
+    params = {'worker': HOSTNAME}
     manager_url = "http://{0}/tasks/compiled/0".format(
         app.config['FLAMENCO_MANAGER'])
     try:
-        rtask = requests.get(manager_url)
+        # Send a request to the manager, specifying our hostname
+        rtask = requests.get(manager_url, params=params)
     except KeyboardInterrupt:
         return
 
