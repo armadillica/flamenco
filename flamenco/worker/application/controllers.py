@@ -547,20 +547,20 @@ def run_blender_in_thread(options):
         f.write(full_output)
 
     if retcode == -9:
-        status='canceled'
+        status = 'canceled'
     elif retcode != 0:
-        status='failed'
+        status = 'failed'
         if retcode == -11:
             segfault_text = "\nBlender Segmentation Fault\n"
-            print(segfault_text)
+            print (segfault_text)
             log += segfault_text
     else:
-        status='completed'
+        status = 'completed'
 
     logging.debug(status)
 
     if time_init:
-        time_cost=int(time.time())-time_init
+        time_cost = int(time.time())-time_init
     else:
         time_cost = 0
         logging.error("time_init is None")

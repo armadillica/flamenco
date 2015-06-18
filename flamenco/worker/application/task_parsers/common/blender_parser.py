@@ -7,6 +7,20 @@ from application import app
 class blender_parser():
 
     @staticmethod
+    def unable_to_open(output):
+        # Check if blender is unable to open blendfile
+        # Warning: Unable to open
+        re_path = re.compile(
+            r"Warning: Unable to open"
+        )
+        unable_to_open = False
+        match = re_path.findall(output)
+        if len(match):
+            unable_to_open = True
+        return unable_to_open
+
+
+    @staticmethod
     def path_not_found(output):
         #Get missing paths
         # Warning: Path 'path' not found
