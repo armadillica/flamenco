@@ -58,6 +58,7 @@ job_parser.add_argument('managers', type=int, action='append')
 job_parser.add_argument('type', type=str)
 job_parser.add_argument('settings', type=str)
 job_parser.add_argument('jobfile', type=FileStorage, location='files')
+job_parser.add_argument('notes', type=str)
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
@@ -75,6 +76,7 @@ job_fields = {
     'type': fields.String,
     'priority': fields.Integer,
     'id': fields.Integer,
+    'notes': fields.String
 }
 
 class jobInfo():
@@ -260,7 +262,8 @@ class jobInfo():
             "tasks": embedded_tasks,
             "manager": job_managers.manager.name,
             "log": job_log,
-            "average_time_frame": average_time_frame
+            "average_time_frame": average_time_frame,
+            "notes": job.notes
             }
         return job_info
 
@@ -715,7 +718,6 @@ class JobThumbnailApi(Resource):
 
 
 class JobFileApi(Resource):
-
 
     def get(self, job_id):
         """Given a job_id returns the jobzip file

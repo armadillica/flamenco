@@ -32,6 +32,7 @@ class Job(db.Model):
     date_edit = db.Column(db.DateTime())
     type = db.Column(db.String(64))
     tasks_status = db.Column(db.String(256))
+    notes = db.Column(db.Text())
 
     def __repr__(self):
         return '<Job %r>' % self.name

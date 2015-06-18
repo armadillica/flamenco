@@ -92,6 +92,7 @@
       <li role="presentation" class="active"><a href="#job-overview" aria-controls="job-overview" role="tab" data-toggle="tab">Overview</a></li>
       <li role="presentation"><a href="#job-details" aria-controls="job-details" role="tab" data-toggle="tab">Details</a></li>
       <li role="presentation"><a href="#job-history" aria-controls="job-history" role="tab" data-toggle="tab">History</a></li>
+      <li role="presentation"><a href="#job-edit" aria-controls="job-edit" role="tab" data-toggle="tab">Edit</a></li>
     </ul>
 
     <!-- Tab panes -->
@@ -138,6 +139,10 @@
           <tbody id="jobs-log-table-body">
           </tbody>
         </table>
+      </div>
+      <!-- Job Edit -->
+      <div role="tabpanel" class="tab-pane" id="job-edit">
+
       </div>
     </div>
 
@@ -396,7 +401,6 @@
     var content = '';
     $.each(log_data, function(i) {
       event_item = $(this);
-
       content += '<tr ' + 'class="job_log-'+ i +'">'
       content += '<td ' + 'class="job_log_date">' + event_item[0] + '</td>';
       content += '<td ' + 'class="job_log_event">' + event_item[1] + '</td>';
@@ -426,8 +430,6 @@
         data_tt_parent_id_tag = ''
       };
 
-      console.log(i);
-
       if (post !== null && typeof post == 'object') {
         content += '<tr' + data_tt_parent_id_tag + ' data-tt-id="' + data_tt_id + '">';
         content += '<td class="job_key_' + i + '">' + i + '</td>';
@@ -445,6 +447,22 @@
     return content;
   }
 
+  function jobs_edit(data) {
+    fields = ['notes', 'job_name', 'priority', 'type'];
+    var content = '<form id="form_jobs_edit">';
+    $.each(data, function(i, post) {
+      if (fields.indexOf(i) > -1) {
+        content += '<div class="form-group">';
+        content += '<label>' + i + '</label>';
+        content += '<input name="'+ i + '" class="form-control" value="' + post + '" type="text" />';
+        content += '</div>';
+      }
+    });
+    content += '<div class="btn btn-default" job_id="' + data.id + '" id="action-job-edit">Edit</div>';
+    content += '</form>';
+    return content;
+  }
+
   $('#jobs tbody').on( 'click', 'tr', function () {
 
     job_id = $(this).attr('id').replace('job_', '');
@@ -458,10 +476,16 @@
 
       $("#jobs-view-table-body").html(jobs_view_table_rows(data));
       $("#jobs-view-table").treetable({expandable: true}, force=true);
+      $("#job-edit").html(jobs_edit(data));
       $("#tasks-index-table-body").html(tasks_index_table_rows(data.tasks));
       job_overview = '';
       job_overview += '<img class="img-responsive" src="' + data['thumbnail'] + '"/>'
-      job_overview += '<h2> '+ data['job_name'] + '</h2>';
+      job_overview += '<h2>';
+      job_overview += '<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/' + data['id'] + '/output" title="Click to copy">' + data['id'] + '</div> ';
+      job_overview += data['job_name'];
+      job_overview += '</h2>';
+
+      if (data['notes']){job_overview += '<p>' + data['notes'] + '</p>';};
 
       job_overview += '<p>';
       job_overview += 'Created on: ' + data['creation_date'];
@@ -474,7 +498,7 @@
         job_overview += '<p> Average frame time:' + data['average_time_frame'] + '</p>';
       };
 
-      job_overview += '<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/' + data['id'] + '/output" title="Click to copy">' + data['id'] + '</div>';
+
 
       $("#job-overview-properties").html(job_overview);
       clipboard = new ZeroClipboard($('.copy-button'));
@@ -519,6 +543,14 @@
 
   $(document).on("click", ".load-jobs-index", function() {
     load_jobs_index();
+  });
+
+  $(document).on("click", "#action-job-edit", function() {
+    var params = $('#form_jobs_edit').serialize();
+    $.post("/jobs/" + $(this).attr('job_id') + "/edit", params, function(data) {
+      //TODO update rows in datatable if needed
+      //console.log(data);
+    });
   });
 
 </script>
