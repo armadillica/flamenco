@@ -259,7 +259,10 @@ h2
 			float: right
 
 #tasks-view-table-body td
-	padding: 0 20px
+	padding: 5px 20px
+
+.tasks-index-table-id
+	text-align: center
 
 table.dataTable td,
 table.dataTable th
@@ -282,23 +285,34 @@ table.dataTable th
 			border: none
 			padding: 3px 0
 
-	tr[data-job-status ~= "completed"]
+	tr[data-job-status ~= "completed"],
+	tr[data-task-status ~= "completed"]
 		background-color: $color_status-done !important
 		color: #38761d !important
-	tr[data-job-status ~= "active"]
+	tr[data-job-status ~= "active"],
+	tr[data-task-status ~= "active"]
 		background-color: $color_status-review !important
 		color: #174773 !important
-	tr[data-job-status ~= "waiting"]
+	tr[data-job-status ~= "waiting"],
+	tr[data-task-status ~= "waiting"]
 		background-color: $color_status-in_progress !important
 		color: #b86811 !important
-	tr[data-job-status ~= "ready"]
+	tr[data-job-status ~= "ready"],
+	tr[data-task-status ~= "ready"]
 		background-color: $color_status-todo !important
-	tr[data-job-status ~= "canceled"]
+	tr[data-job-status ~= "canceled"],
+	tr[data-task-status ~= "canceled"]
 		background-color: white !important
 		color: crimson !important
-	tr[data-job-status ~= "failed"]
+	tr[data-job-status ~= "failed"],
+	tr[data-task-status ~= "failed"]
 		background-color: rgb(255, 223, 229) !important
 		color: crimson !important
+
+	tr[data-task-status ~= "processing"]
+		background-color: white
+		border: thin solid #b86811
+		color: #b86811
 
 
 .table.dataTable tbody tr.active:nth-child(odd) td,
@@ -307,7 +321,7 @@ table.dataTable th
 .table.dataTable tbody tr.active:nth-child(even) th,
 #tasks-index-table tbody tr.active:nth-child(odd) td,
 #tasks-index-table tbody tr.active:nth-child(even) td
-	background-color: rgba(white,.5) !important
+	background-color: rgba(black,.1) !important
 	border: none
 	color: inherit
 
@@ -362,10 +376,12 @@ table.dataTable th
 .jobs-index-table-manager,
 .jobs-index-table-thumbnail,
 .jobs-index-table-job_id,
-.jobs-index-table-status
+.jobs-index-table-status,
+.tasks-index-table-status
 	text-align: center
 
-.jobs-index-table-status
+.jobs-index-table-status,
+.tasks-index-table-status
 	text-transform: capitalize
 
 .jobs-index-table-name

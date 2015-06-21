@@ -106,7 +106,7 @@
             <tr>
               <th class="tasks-index-table-id">ID</th>
               <th>Frames</th>
-              <th>Status</th>
+              <th class="tasks-index-table-status">Status</th>
               <th></th>
             </th>
           </thead>
@@ -376,12 +376,14 @@
     var content = '';
     $.each(data, function(i, post) {
       if (post !== null && typeof post == 'object') {
-        content += '<tr><td>' + post.id + '</td>';
+        content += '<tr data-task-status="' + post.status + '">';
+        content += '<td class="tasks-index-table-id">' + post.id + '</td>';
         content += '<td>' + post.name + '</td>';
-        content += '<td>' + parse_status(post.status) + '</td>';
+        content += '<td class="tasks-index-table-status">' + post.status + '</td>';
         content += '<td><span class="btn btn-default btn-xs load-tasks-view" task_id="' + post.id + '">View</span>';
         content += '<span class="btn btn-default btn-xs retry-task" task_id="' + post.id + '">Retry</span>';
-        content += '</td></tr>';
+        content += '</td>';
+        content += '</tr>';
       }
     });
     return content;
