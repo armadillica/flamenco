@@ -8,6 +8,7 @@ from sqlalchemy import func
 from sqlalchemy import or_
 from decimal import Decimal
 from zipfile import ZipFile
+from lockfile import LockFile
 
 from flask import abort
 from flask import jsonify
@@ -471,12 +472,15 @@ class TaskGeneratorApi(Resource):
                 .order_by(Job.priority.desc(), Job.id.asc())\
                 .all()
 
+        lock = LockFile("{0}server.lock".format(app.config['TMP_FOLDER']))
+
+        lock.acquire()
         for job in active_jobs:
             tasks = Task.query.filter(
                 Task.job_id == job.id,
                 or_(Task.status == 'waiting',
                     Task.status == 'canceled'),
-                Task.manager_id == manager.id).with_for_update().\
+                Task.manager_id == manager.id).\
                 order_by(Task.priority.desc(), Task.id.asc())
             task = None
             incomplete_parents = False
@@ -498,6 +502,7 @@ class TaskGeneratorApi(Resource):
         if not task:
             # Unlocking Task table on ROLLBACK
             db.session.rollback()
+            lock.release()
             return '', 404
 
         task.status = 'processing'
@@ -506,6 +511,7 @@ class TaskGeneratorApi(Resource):
             task.worker = worker
         task.last_activity = datetime.now()
         db.session.commit()
+        lock.release()
 
         #job = Job.query.get(task.job_id)
 

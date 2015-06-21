@@ -22,3 +22,4 @@ requests==2.6.0
 scp==0.10.2
 six==1.9.0
 wsgiref==0.1.2
+lockfile==0.10.2
