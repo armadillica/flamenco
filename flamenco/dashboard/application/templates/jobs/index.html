@@ -491,14 +491,29 @@
 
       job_overview += '<p>';
       if (data['date_edit'] != data['creation_date']){
-        job_overview += 'Last edited: ' + data['date_edit'] + '<br/>';
+        job_overview += 'Last edited: <strong>' + data['date_edit'] + '</strong><br/>';
       };
-      job_overview += 'Created on: ' + data['creation_date'];
-      job_overview += '</p>';
+      job_overview += 'Created on: <strong>' + data['creation_date'] + '</strong>';
 
       if (data['average_time_frame']){
-        job_overview += '<p> Average frame time:' + data['average_time_frame'] + '</p>';
+        job_overview += '<br/> Average Render Time: <strong>' + data['average_time_frame'] + '</strong>';
       };
+
+      job_overview += '</p>';
+
+      job_overview += '<div class="row">'
+      job_overview += '<div class="col-md-6">Tasks: <strong>' + data['tasks'].length + '</strong></div>';
+      job_overview += '<div class="col-md-6">Chunk Size: <strong>' + data['settings']['chunk_size'] + '</strong></div>';
+      job_overview += '</div>'
+
+      job_overview += '<div class="row">'
+      job_overview += '<div class="col-md-6">Start/End Frames: <strong>';
+      job_overview +=  data['settings']['frame_start'] + ' / ' + data['settings']['frame_end'];
+      job_overview += '</strong></div>';
+      job_overview += '<div class="col-md-6">Total Frames: <strong>';
+      job_overview += (data['settings']['frame_end'] - data['settings']['frame_start']);
+      job_overview += '</strong></div>';
+      job_overview += '</div>';
 
       $("#job-overview-properties").html(job_overview);
       clipboard = new ZeroClipboard($('.copy-button'));
