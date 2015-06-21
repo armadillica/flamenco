@@ -343,7 +343,15 @@ table.dataTable th
 	text-align: center
 
 .copy-button
-	min-width: 50px
+	min-width: 40px
+	background-color: #eee
+	margin-right: 4px
+	font-family: monospace
+	&:hover
+		background-color: white
+	&:active, &:focus
+		background-color: #ccc
+
 	span
 		color: lighten($color_text-default, 25%)
 
