@@ -60,7 +60,7 @@ hr
 	height: 15px
 	top: 3px
 	text-align: center
-	background-color: lighten($color_text-default, 15%)
+	background-color: rgba(0,60,100,.3)
 	position: relative
 
 	span
@@ -204,7 +204,9 @@ h2
 
 .tasks-index-table-id
 	text-align: center
-	width: 40px
+	padding-left: 10px
+	padding-right: 10px
+
 
 #tasks-index-table
 	position: relative
@@ -277,9 +279,10 @@ table.dataTable th
 		&:hover
 			cursor: pointer
 			color: $color_link-default
+			background-color: rgba(white, .2)
 
 			.progress
-				background-color: lighten($color_text-default, 20%)
+				background-color: rgba(0,60,100,.5)
 
 		td
 			border: none
@@ -289,30 +292,67 @@ table.dataTable th
 	tr[data-task-status ~= "completed"]
 		background-color: $color_status-done !important
 		color: #38761d !important
+
+		& .progress
+			background-color: rgba(#38761d, .3)
+
+		& .progress-bar
+			background-color: #38761d
+
 	tr[data-job-status ~= "active"],
 	tr[data-task-status ~= "active"]
 		background-color: $color_status-review !important
 		color: #174773 !important
+
+		& .progress-bar
+			background-color: #2395F7
+
 	tr[data-job-status ~= "waiting"],
 	tr[data-task-status ~= "waiting"]
-		background-color: $color_status-in_progress !important
-		color: #b86811 !important
+		background-color: $color_status-in_progress
+		color: #b86811
+
+		& .progress
+			background-color: rgba(#b86811, .3)
+
+		& .progress-bar
+			background-color: #b86811
+
 	tr[data-job-status ~= "ready"],
 	tr[data-task-status ~= "ready"]
 		background-color: $color_status-todo !important
+
+		& .progress-bar
+			background-color: $color_status-todo
+
 	tr[data-job-status ~= "canceled"],
 	tr[data-task-status ~= "canceled"]
 		background-color: white !important
 		color: crimson !important
+
+		& .progress-bar
+			background-color: crimson
+
 	tr[data-job-status ~= "failed"],
 	tr[data-task-status ~= "failed"]
 		background-color: rgb(255, 223, 229) !important
 		color: crimson !important
 
+		& .progress
+			background-color: rgba(crimson, .3)
+
+		& .progress-bar
+			background-color: crimson
+
 	tr[data-task-status ~= "processing"]
 		background-color: white
-		border: thin solid #b86811
 		color: #b86811
+
+		& .progress
+			background-color: rgba(#b86811, .3)
+
+		& .progress-bar
+			background-color: #b86811
 
 
 .table.dataTable tbody tr.active:nth-child(odd) td,
