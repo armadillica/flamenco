@@ -8,7 +8,7 @@ from sqlalchemy import func
 from sqlalchemy import or_
 from decimal import Decimal
 from zipfile import ZipFile
-from lockfile import LockFile
+from lockfile import LockFile, LockTimeout
 
 from flask import abort
 from flask import jsonify
@@ -474,7 +474,13 @@ class TaskGeneratorApi(Resource):
 
         lock = LockFile("{0}server.lock".format(app.config['TMP_FOLDER']))
 
-        lock.acquire()
+        while not lock.i_am_locking():
+            try:
+                lock.acquire(timeout=60)    # wait up to 60 seconds
+            except LockTimeout:
+                lock.break_lock()
+                lock.acquire()
+
         for job in active_jobs:
             tasks = Task.query.filter(
                 Task.job_id == job.id,
