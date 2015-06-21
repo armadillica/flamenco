@@ -485,20 +485,20 @@
       job_overview += data['job_name'];
       job_overview += '</h2>';
 
-      if (data['notes']){job_overview += '<p>' + data['notes'] + '</p>';};
+      if (data['notes'] && data['notes'] != 'null'){
+        job_overview += '<p>' + data['notes'] + '</p>';
+      };
 
       job_overview += '<p>';
-      job_overview += 'Created on: ' + data['creation_date'];
       if (data['date_edit'] != data['creation_date']){
-        job_overview += '<br> Last edited: ' + data['date_edit'];
+        job_overview += 'Last edited: ' + data['date_edit'] + '<br/>';
       };
+      job_overview += 'Created on: ' + data['creation_date'];
       job_overview += '</p>';
 
       if (data['average_time_frame']){
         job_overview += '<p> Average frame time:' + data['average_time_frame'] + '</p>';
       };
-
-
 
       $("#job-overview-properties").html(job_overview);
       clipboard = new ZeroClipboard($('.copy-button'));
@@ -511,9 +511,13 @@
 
   $(document).on("click", ".load-tasks-view", function() {
 
+    var load_button = $(this);
+
     // Style as active row
     $('#tasks-index-table-body tr').removeAttr('class');
     $(this).closest('tr').addClass('active');
+
+    load_button.html('<i class="fl-spin4 animate-spin"></i>');
 
     $.get("/tasks/" + $(this).attr('task_id') + ".json", function( data ) {
       $("#jobs-index").hide();
@@ -522,6 +526,8 @@
       // $.each(data, function(i, post) {
       //   $("#tasks-view").append(post);
       // });
+    }).done(function(data) {
+      load_button.text('View');
     });
   });
 
