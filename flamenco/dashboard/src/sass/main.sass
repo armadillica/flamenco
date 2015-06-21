@@ -355,7 +355,7 @@ table.dataTable th
 	line-height: 1.2em
 	text-transform: capitalize
 
-.label-default, .label-ready
+.label-default, .label-ready, .label-reset
 	background-color: lightgray
 	border: thin solid darken(lightgray, 10%)
 	color: #444
@@ -364,6 +364,7 @@ table.dataTable th
 		border: thin dashed darken(lightgray, 15%)
 
 .label-archived, .label-paused
+	background-color: white
 	border: thin solid darken(lightgray, 10%)
 	color: #444
 
@@ -371,7 +372,7 @@ table.dataTable th
 		border: thin dashed darken(lightgray, 15%)
 
 .label-processing
-	background-color: transparent
+	background-color: white
 	border: thin solid #b86811
 	color: #b86811
 
@@ -402,7 +403,8 @@ table.dataTable th
 	&.active
 		border: thin dashed darken($color_status-done, 15%)
 
-.label-cbb, .label-stopped,
+.label-cbb, .label-stopped
+	background-color: white
 	border: thin solid #A7CA98
 	color: #38761d
 
