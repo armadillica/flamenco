@@ -510,6 +510,11 @@
   } );
 
   $(document).on("click", ".load-tasks-view", function() {
+
+    // Style as active row
+    $('#tasks-index-table-body tr').removeAttr('class');
+    $(this).closest('tr').addClass('active');
+
     $.get("/tasks/" + $(this).attr('task_id') + ".json", function( data ) {
       $("#jobs-index").hide();
       $("#tasks-view").show();
