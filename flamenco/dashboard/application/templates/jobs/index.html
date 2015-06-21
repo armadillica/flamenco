@@ -208,7 +208,7 @@
       /*  0 */ {"data": "checkbox", "width" : "1px", "className": "jobs-index-table-checkbox"},
       /*  1 */ {"data": "job_id", "width" : "1px", "className": "jobs-index-table-job_id"},
       /*  2 */ {"data": "thumbnail", "className": "jobs-index-table-thumbnail"},
-      /*  3 */ {"data": "name"},
+      /*  3 */ {"data": "name", "className": "jobs-index-table-name"},
       /*  4 */ {"data": "manager.logo", "width" : "1px", "className": "jobs-index-table-manager"},
       /*    */ {"data": "manager.name", },
       /*  5 */ {"data": "priority", "width" : "1px", "className": "jobs-index-table-priority"},
@@ -216,7 +216,7 @@
       /*    */ {"data": "time_remaining"},
       /*    */ {"data": "time_elapsed"},
       /*    */ {"data": "time_total"},
-      /*  7 */ {"data": "status"},
+      /*  7 */ {"data": "status", "className": "jobs-index-table-status"},
       /*  8 */ {"data": "date_edit"},
       ],
       "columnDefs": [
@@ -228,7 +228,7 @@
           },
           {
             // This refers to the "columns" array
-            "targets": [0, 2, 12],
+            "targets": [0, 2],
             "sortable": false
           }
       ],
@@ -236,6 +236,8 @@
       "rowCallback": function ( row, data, index ) {
         // ID
         // $('td', row).eq(1).html('<div class="btn btn-default btn-xs copy-button" data-clipboard-text="/render/flamenco/manager_storage/1/'+ data.job_id + '/output" title="Click to copy">'+ data.job_id + '</div>');
+
+        $(row).attr('data-job-status', data.status);
 
         // Thumbnail
         $('td', row).eq(2).html('<a href="/jobs/' + data.job_id + '"> <img class="jobs-index-table-thumbnail" src="' + data.thumbnail + '"/> </a>');
@@ -272,7 +274,7 @@
         // $('td', row).eq(7).html(data.time_elapsed);
 
         // Status
-        $('td', row).eq(7).html(parse_status(data.status));
+        $('td', row).eq(7).html(data.status);
 
       },
 

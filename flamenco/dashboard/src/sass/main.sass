@@ -9,6 +9,7 @@ $color_status-active: #337ab7
 $color_status-todo: lightgray
 $color_status-in-progress: #fff2cc
 $color_status-review: #e4f5f9
+$color_status-failed: #e7f5d3
 $color_status-done: #e7f5d3
 
 body
@@ -258,7 +259,7 @@ h2
 			float: right
 
 #tasks-view-table-body td
-	padding: 10px 20px
+	padding: 0 20px
 
 table.dataTable td,
 table.dataTable th
@@ -266,8 +267,8 @@ table.dataTable th
 
 .table.dataTable, #tasks-index-table
 	tr
-		border: none
-		padding: 8px 5px
+		border-bottom: thin solid rgba(0,0,0,.05)
+		padding: 0 3px
 		color: lighten($color_text-default, 10%)
 
 		&:hover
@@ -279,6 +280,26 @@ table.dataTable th
 
 		td
 			border: none
+			padding: 3px 0
+
+	tr[data-job-status ~= "completed"]
+		background-color: $color_status-done !important
+		color: #38761d !important
+	tr[data-job-status ~= "active"]
+		background-color: $color_status-review !important
+		color: #174773 !important
+	tr[data-job-status ~= "waiting"]
+		background-color: $color_status-in_progress !important
+		color: #b86811 !important
+	tr[data-job-status ~= "ready"]
+		background-color: $color_status-todo !important
+	tr[data-job-status ~= "canceled"]
+		background-color: white !important
+		color: crimson !important
+	tr[data-job-status ~= "failed"]
+		background-color: rgb(255, 223, 229) !important
+		color: crimson !important
+
 
 .table.dataTable tbody tr.active:nth-child(odd) td,
 .table.dataTable tbody tr.active:nth-child(even) td,
@@ -286,9 +307,9 @@ table.dataTable th
 .table.dataTable tbody tr.active:nth-child(even) th,
 #tasks-index-table tbody tr.active:nth-child(odd) td,
 #tasks-index-table tbody tr.active:nth-child(even) td
-	background-color: adjust-hue(hsl(hue($color_status-active), 60%, 90%), -8) !important
+	background-color: rgba(white,.5) !important
 	border: none
-	color: $color_text-default
+	color: inherit
 
 	a
 		color: $color_text-default
@@ -340,8 +361,15 @@ table.dataTable th
 .jobs-index-table-priority,
 .jobs-index-table-manager,
 .jobs-index-table-thumbnail,
-.jobs-index-table-job_id
+.jobs-index-table-job_id,
+.jobs-index-table-status
 	text-align: center
+
+.jobs-index-table-status
+	text-transform: capitalize
+
+.jobs-index-table-name
+	padding-left: 10px !important //override global padding 0
 
 .copy-button
 	min-width: 40px
