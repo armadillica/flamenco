@@ -178,7 +178,7 @@ class addManagerSetting (bpy.types.Operator):
 class bamToRenderfarm (bpy.types.Operator):
     """Save current file and send it to the Renderfarm using BAM pack"""
     bl_idname = "flamenco.send_job"
-    bl_label = "Save and send"
+    bl_label = "Save and Send"
 
     def execute(self, context):
         C = context
@@ -299,7 +299,9 @@ class MovPanelControl(bpy.types.Panel):
 
         layout = self.layout
         col = layout.column()
-        col.operator("flamenco.update")
+        col.operator("flamenco.update", icon="FILE_REFRESH")
+
+        col.separator()
 
         if len(project_list(self, context)) == 0:
             return
@@ -331,6 +333,9 @@ class MovPanelControl(bpy.types.Panel):
                 if obj.cache_library:
                     col.label(text="- {0}".format(obj.name))
         col.prop(wm, 'flamenco_command')
+
+        col.separator()
+
         col.template_list(
             "UI_UL_list",
             "ui_lib_list_prop",
@@ -339,22 +344,36 @@ class MovPanelControl(bpy.types.Panel):
             wm,
             "flamenco_managersIndex",
             rows=5)
+
+        col.separator()
+
+        # Set the job priority (betweeen 0 and 100)
+        col.prop(wm, 'flamenco_priority')
+
         if not wm.flamenco_jobType in ['blender_bake_anim_cache']:
             col.prop(wm, 'flamenco_chunkSize')
         # Show info to help the user to determine a good chunk size
+
+        row = col.row(align=True)
+
         count_frames = scene.frame_end - scene.frame_start + 1
-        col.label("Frames Count: {0}".format(count_frames))
+        row.label("Frames Count: {0}".format(count_frames))
         count_chunks = int(count_frames / wm.flamenco_chunkSize)
         if count_chunks < 1: count_chunks = 1
-        col.label("Chunks Count: {0}".format(count_chunks))
-        # Set the job priority (betweeen 0 and 100)
-        col.prop(wm, 'flamenco_priority')
+        row.label("Chunks Count: {0}".format(count_chunks))
+
         # Automatically start the job. Currenlty commented, since we create a job
         # and could set it to started even before the actual file is uploaded
         # col.prop(wm, 'flamenco_startJob')
+
+        col.separator()
+
         col.prop(wm, 'flamenco_submit_archive')
         col.prop(wm, 'flamenco_pack_alembic_caches')
-        col.operator("flamenco.send_job")
+
+        col.separator()
+
+        col.operator("flamenco.send_job", icon="APPEND_BLEND")
 
 jobType_list = [
     ('simple_blender_render', 'Simple', '', 1),
