@@ -217,7 +217,10 @@ class bamToRenderfarm (bpy.types.Operator):
             'type': wm.flamenco_jobType,
             'managers': wm.flamenco_managers[wm.flamenco_managersIndex].id,
             'priority': wm.flamenco_priority,
-            'start_job': wm.flamenco_startJob,
+            #'start_job': wm.flamenco_startJob,
+            # We always submit the job as not started, until we fix the server
+            # behavior. See comments belo about startJob.
+            'start_job': False
         }
 
         use_extension = C.scene.render.use_file_extension
@@ -346,8 +349,9 @@ class MovPanelControl(bpy.types.Panel):
         col.label("Chunks Count: {0}".format(count_chunks))
         # Set the job priority (betweeen 0 and 100)
         col.prop(wm, 'flamenco_priority')
-        # Automatically start the job
-        col.prop(wm, 'flamenco_startJob')
+        # Automatically start the job. Currenlty commented, since we create a job
+        # and could set it to started even before the actual file is uploaded
+        # col.prop(wm, 'flamenco_startJob')
         col.prop(wm, 'flamenco_submit_archive')
         col.prop(wm, 'flamenco_pack_alembic_caches')
         col.operator("flamenco.send_job")
