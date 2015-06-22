@@ -342,7 +342,7 @@ class MovPanelControl(bpy.types.Panel):
         if not wm.flamenco_jobType in ['blender_bake_anim_cache']:
             col.prop(wm, 'flamenco_chunkSize')
         # Show info to help the user to determine a good chunk size
-        count_frames = scene.frame_end - scene.frame_start
+        count_frames = scene.frame_end - scene.frame_start + 1
         col.label("Frames Count: {0}".format(count_frames))
         count_chunks = int(count_frames / wm.flamenco_chunkSize)
         if count_chunks < 1: count_chunks = 1
