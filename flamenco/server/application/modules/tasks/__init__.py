@@ -288,6 +288,10 @@ class TaskApi(Resource):
         if job.status not in ['waiting', 'active', 'processing'] and status != 'canceled':
             return '', 403
 
+        # In case the task has been manually canceled or marked as completed
+        if task.status in ['canceled', 'completed']:
+            return '', 403
+
         serverstorage = app.config['SERVER_STORAGE']
         projectpath = os.path.join(serverstorage, str(job.project_id))
 
