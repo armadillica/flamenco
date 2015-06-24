@@ -2,6 +2,7 @@ import os
 import json
 import requests
 import logging
+from tempfile import mkdtemp
 from threading import Thread
 from datetime import datetime
 from zipfile import ZipFile
@@ -318,6 +319,9 @@ class TaskManagementApi(Resource):
 class TaskApi(Resource):
 
     def patch(self, task_id):
+        """Send updates to the server regarding the status of a task.
+        TODO: update the function to be a PUT, it is more consistent and also
+        follows the server"""
         args = status_parser.parse_args()
         ip_address = request.remote_addr
         worker = Worker.query.filter_by(ip_address=ip_address).first()
@@ -372,8 +376,9 @@ class TaskApi(Resource):
                 os.mkdir(jobpath)
             except:
                 pass
+            tmp_path = mkdtemp()
             zippath = os.path.join(
-                    jobpath,
+                    tmp_path,
                     'taskfileout_{0}_{1}.zip'.format(args['job_id'], task_id))
             args['taskfile'].save(zippath)
 
@@ -410,7 +415,7 @@ class TaskApi(Resource):
         r = http_request(
             app.config['FLAMENCO_SERVER'],
             '/tasks/{0}'.format(task_id),
-            'post',
+            'put',
             params=params,
             files=jobfile)
 
