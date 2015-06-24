@@ -599,17 +599,16 @@ class JobThumbnailListApi(Resource):
         """Accepts a thumbnail file and a task_id and stores it.
         """
         args = parser_thumbnail.parse_args()
-        task = Task.query.get(args['task_id'])
-        if not task:
-            return
-        thumbnail_filename = "thumbnail_%s.png" % task.job_id
-
-        file = request.files['file']
-        if file and self.allowed_file(file.filename):
-            filepath=join( app.config['TMP_FOLDER'] , thumbnail_filename)
-            filepath_last=join( app.config['TMP_FOLDER'] , 'thumbnail_0.png')
-            file.save(filepath)
+        task = Task.query.get_or_404(args['task_id'])
+        thumbnail_filename = "thumbnail_{0}.png".format(task.job_id)
+        thumbnail_file = request.files['file']
+        if thumbnail_file and self.allowed_file(thumbnail_file.filename):
+            filepath = join( app.config['TMP_FOLDER'] , thumbnail_filename)
+            filepath_last = join( app.config['TMP_FOLDER'] , 'thumbnail_0.png')
+            thumbnail_file.save(filepath)
             shutil.copy2(filepath, filepath_last)
+        else:
+            return '', 404
 
 
 class JobThumbnailApi(Resource):
