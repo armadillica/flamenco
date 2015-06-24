@@ -82,11 +82,15 @@ class flamencoUpdate (bpy.types.Operator):
         wm = bpy.context.window_manager
 
         try:
-            projects = requests.get('{0}/projects'.format(serverurl), timeout=1)
-            settings_server = requests.get('{0}/settings'.format(serverurl), timeout=1)
+            timeout = 5
+            projects = requests.get(
+                '{0}/projects'.format(serverurl), timeout=timeout)
+            settings_server = requests.get(
+                '{0}/settings'.format(serverurl), timeout=timeout)
             settings_managers = requests.get(
-                '{0}/settings/managers'.format(serverurl), timeout=1)
-            managers = requests.get('{0}/managers'.format(serverurl), timeout=1)
+                '{0}/settings/managers'.format(serverurl), timeout=timeout)
+            managers = requests.get(
+                '{0}/managers'.format(serverurl), timeout=timeout)
         except ConnectionError:
             self.report( {'ERROR'}, "Can't connect to server on {0}".format(serverurl) )
             return {'CANCELLED'}
