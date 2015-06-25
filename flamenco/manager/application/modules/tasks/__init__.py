@@ -2,7 +2,6 @@ import os
 import json
 import requests
 import logging
-from tempfile import mkdtemp
 from threading import Thread
 from datetime import datetime
 from zipfile import ZipFile
@@ -376,9 +375,9 @@ class TaskApi(Resource):
                 os.mkdir(jobpath)
             except:
                 pass
-            tmp_path = mkdtemp()
+
             zippath = os.path.join(
-                    tmp_path,
+                    jobpath,
                     'taskfileout_{0}_{1}.zip'.format(args['job_id'], task_id))
             args['taskfile'].save(zippath)
 
@@ -421,10 +420,6 @@ class TaskApi(Resource):
 
         if r[1] == 403:
             return '', 403
-
-        # This can be improved by wrapping all this in a with
-        if jobfile and os.path.isfile(zippath):
-            os.remove(zippath)
 
         return '', 204
 
