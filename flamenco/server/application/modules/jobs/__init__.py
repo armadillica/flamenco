@@ -124,6 +124,10 @@ class jobInfo():
             time_elapsed = datetime.now() - job.creation_date
             time_elapsed = int(time_elapsed.total_seconds())
 
+        username = None
+        if job.user:
+            username = job.user.username
+
         job_info = {
             'id': job.id,
             'job_name': job.name,
@@ -143,7 +147,8 @@ class jobInfo():
                 'name': job.manager_list[0].manager.name,
                 'logo': job.manager_list[0].manager.logo
                 },
-            'tasks_status': tasks_status
+            'tasks_status': tasks_status,
+            'username': username,
             }
         return job_info
 
@@ -247,6 +252,11 @@ class jobInfo():
         for item in job_log_items:
             job_log.append([item.creation_date, item.log])
 
+        user = {}
+        if job.user:
+            user['username'] = job.user.username
+            user['email'] = job.user.email
+
         job_info = {
             "id": job.id,
             "job_name": job.name,
@@ -267,7 +277,8 @@ class jobInfo():
             "manager": job_managers.manager.name,
             "log": job_log,
             "average_time_frame": average_time_frame,
-            "notes": job.notes
+            "notes": job.notes,
+            "user": user
             }
         return job_info
 

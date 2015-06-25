@@ -65,6 +65,7 @@
         <th>ID</th>
         <th></th>
         <th>Name</th>
+        <th>User</th>
         <th>Man.</th>
         <th></th>
         <th>Prio.</th>
@@ -198,7 +199,7 @@
       //"bProcessing": true,
       "ajax": "{{url_for('jobs.index_json')}}",
       "iDisplayLength": 25,
-      "order": [[ 12, "desc" ]],
+      "order": [[ 13, "desc" ]],
       "scrollY": jobsTable_height,
       //"scrollX": true,
 
@@ -209,21 +210,22 @@
       /*  1 */ {"data": "job_id", "width" : "1px", "className": "jobs-index-table-job_id"},
       /*  2 */ {"data": "thumbnail", "className": "jobs-index-table-thumbnail"},
       /*  3 */ {"data": "name", "className": "jobs-index-table-name"},
-      /*  4 */ {"data": "manager.logo", "width" : "1px", "className": "jobs-index-table-manager"},
+      /*  4 */ {"data": "username"},
+      /*  5 */ {"data": "manager.logo", "width" : "1px", "className": "jobs-index-table-manager"},
       /*    */ {"data": "manager.name", },
-      /*  5 */ {"data": "priority", "width" : "1px", "className": "jobs-index-table-priority"},
-      /*  6 */ {"data": "percentage_done"},
+      /*  6 */ {"data": "priority", "width" : "1px", "className": "jobs-index-table-priority"},
+      /*  7 */ {"data": "percentage_done"},
       /*    */ {"data": "time_remaining"},
       /*    */ {"data": "time_elapsed"},
       /*    */ {"data": "time_total"},
-      /*  7 */ {"data": "status", "className": "jobs-index-table-status"},
-      /*  8 */ {"data": "date_edit"},
+      /*  8 */ {"data": "status", "className": "jobs-index-table-status"},
+      /*  9 */ {"data": "date_edit"},
       ],
       "columnDefs": [
           {
             // Hide using the numbers above
             // This refers to the "columns" array
-            "targets": [5, 7, 8, 9],
+            "targets": [6, 8, 9, 10],
             "visible": false
           },
           {
@@ -246,7 +248,7 @@
         // $('td', row).eq(3).html(data.name);
 
         // Manager
-        $('td', row).eq(4).html(parse_manager(data.manager));
+        $('td', row).eq(5).html(parse_manager(data.manager));
 
         // Priority
         // $('td', row).eq(5).html(data.priority);
@@ -267,14 +269,14 @@
         };
 
 
-        $('td', row).eq(6).html('<div class="progress"><span class="">' + progress_label + '</span><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"></div></div>');
+        $('td', row).eq(7).html('<div class="progress"><span class="">' + progress_label + '</span><div class="progress-bar ' + progress_bar_active +'" role="progressbar" aria-valuenow="' + data.percentage_done + '" aria-valuemin="0" aria-valuemax="100" style="width: ' + data.percentage_done + '%;"></div></div>');
 
 
         // Time elapsed
         // $('td', row).eq(7).html(data.time_elapsed);
 
         // Status
-        $('td', row).eq(7).html(data.status);
+        $('td', row).eq(8).html(data.status);
 
       },
 
