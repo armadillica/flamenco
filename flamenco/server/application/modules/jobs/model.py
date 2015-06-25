@@ -2,6 +2,7 @@ import datetime
 from application import db
 
 from application.modules.managers.model import Manager
+from application.modules.users.model import User
 
 class Job(db.Model):
     """A Job is the basic work unit of Flamenco
@@ -33,6 +34,8 @@ class Job(db.Model):
     type = db.Column(db.String(64))
     tasks_status = db.Column(db.String(256))
     notes = db.Column(db.Text())
+    user_id = db.Column(db.Integer(), db.ForeignKey('user.id'))
+    user = db.relationship('User', backref=db.backref('job', lazy='dynamic'))
 
     def __repr__(self):
         return '<Job %r>' % self.name

@@ -47,6 +47,58 @@ from requests.exceptions import Timeout
 
 from bpy.types import AddonPreferences
 
+class ProfilesUtility():
+    """Class that leverages the blender-id authentication system"""
+    def __new__(cls, *args, **kwargs):
+        raise TypeError("Base class may not be instantiated")
+
+    @staticmethod
+    def get_profiles_file():
+        """Returns the profiles.json filepath from a .blender_id folder in the user
+        home directory. If the file does not exist we create one with the basic data
+        structure.
+        """
+        profiles_path = os.path.join(os.path.expanduser('~'), '.blender_id')
+        profiles_file = os.path.join(profiles_path, 'profiles.json')
+        if not os.path.exists(profiles_file):
+            profiles = [{
+                "username" : "",
+                "token" : "",
+                "is_active" : False}]
+            try:
+                os.makedirs(profiles_path)
+            except FileExistsError:
+                pass
+            except Exception as e:
+                raise e
+
+            import json
+            with open(profiles_file, 'w') as outfile:
+                json.dump(profiles, outfile)
+        return profiles_file
+
+    @classmethod
+    def credentials_load(cls):
+        """Loads the credentials from a profile file. TODO: add a username
+        arg so that one out of many identities can be retrieved.
+        """
+        import json
+        profiles_file = cls.get_profiles_file()
+        with open(profiles_file) as f:
+            return json.load(f)
+
+    @classmethod
+    def get_active_profile(cls):
+        """Pick the active profile from the profiles.json. If no active
+        profile is found we return None.
+        """
+        profiles = ProfilesUtility.credentials_load()
+        index = next((index for (index, d) in enumerate(profiles) if d["is_active"] == True), None)
+        if index is not None:
+            return profiles[index]
+        else:
+            return None
+
 # TODO move into proper utils module
 suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
 def humansize(nbytes):
@@ -204,6 +256,14 @@ class bamToRenderfarm (bpy.types.Operator):
             self.report({'ERROR'}, "Name your Job")
             return {'CANCELLED'}
 
+        # We retrieve the username via the .blender_id profiles file. If no file
+        # is available we fail silently and set the username to ""
+        profile = ProfilesUtility.get_active_profile()
+        if profile:
+            username = profile['username']
+        else:
+            username = ""
+
         job_settings = {
             'frame_start': scn.frame_start,
             'frame_end': scn.frame_end,
@@ -221,6 +281,7 @@ class bamToRenderfarm (bpy.types.Operator):
             'type': wm.flamenco_jobType,
             'managers': wm.flamenco_managers[wm.flamenco_managersIndex].id,
             'priority': wm.flamenco_priority,
+            'username': username,
             #'start_job': wm.flamenco_startJob,
             # We always submit the job as not started, until we fix the server
             # behavior. See comments belo about startJob.
@@ -357,7 +418,6 @@ class MovPanelControl(bpy.types.Panel):
         if not wm.flamenco_jobType in ['blender_bake_anim_cache']:
             col.prop(wm, 'flamenco_chunkSize')
         # Show info to help the user to determine a good chunk size
-
         row = col.row(align=True)
 
         count_frames = scene.frame_end - scene.frame_start + 1

@@ -4,6 +4,8 @@ import json
 import shutil
 import requests
 import time
+import random
+import string
 from datetime import datetime
 from PIL import Image
 from os import listdir
@@ -42,6 +44,7 @@ from application.modules.jobs.model import JobManagers
 from application.modules.managers.model import Manager
 from application.modules.log import log_to_database
 from application.modules.log import log_from_database
+from application.modules.users.model import User
 
 id_list = reqparse.RequestParser()
 id_list.add_argument('id', type=str)
@@ -59,6 +62,7 @@ job_parser.add_argument('type', type=str)
 job_parser.add_argument('settings', type=str)
 job_parser.add_argument('jobfile', type=FileStorage, location='files')
 job_parser.add_argument('notes', type=str)
+job_parser.add_argument('username', type=str)
 
 command_parser = reqparse.RequestParser()
 command_parser.add_argument('command', type=str)
@@ -376,6 +380,27 @@ class JobListApi(Resource):
         if args['start_job'] and args['start_job'] == 'True':
             status = 'waiting'
 
+        if args['username']:
+            user_id = None
+            user = User.query.filter_by(email=args['username']).first()
+            if user:
+                user_id = user.id
+            else:
+                # TODO move this in a more appropriate location. Right now we
+                # create the user if missing. This should be done on the auth
+                # headers level (and hooked up with a real auth system).
+                user = User(
+                    email=args['username'],
+                    password=''.join(random.choice(
+                        string.ascii_uppercase + string.digits) for _ in range(5)),
+                    active=True,
+                    current_login_at=datetime.now(),
+                    current_login_ip=request.remote_addr,
+                    login_count=1)
+                db.session.add(user)
+                db.session.commit()
+                user_id = user.id
+
         job = Job(
            project_id=args['project_id'],
            settings=args['settings'],
@@ -383,7 +408,8 @@ class JobListApi(Resource):
            status=status,
            type=args['type'],
            priority=args['priority'],
-           date_edit=datetime.now())
+           date_edit=datetime.now(),
+           user_id=user_id)
 
         db.session.add(job)
         db.session.commit()
