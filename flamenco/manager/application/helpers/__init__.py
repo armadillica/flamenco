@@ -24,7 +24,7 @@ def http_request(ip_address, command, method, params=None, files=None):
     elif method == 'get':
         r = requests.get('http://' + ip_address + command)
     elif method == 'put':
-        r = requests.put('http://' + ip_address + command, data=params)
+        r = requests.put('http://' + ip_address + command, data=params, files=files)
     elif method == 'patch':
         r = requests.patch('http://' + ip_address + command, data=params)
 

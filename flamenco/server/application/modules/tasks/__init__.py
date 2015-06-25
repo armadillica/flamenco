@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+from tempfile import mkdtemp
 from PIL import Image
 from platform import system
 from threading import Thread
@@ -310,10 +311,11 @@ class TaskApi(Resource):
                 os.mkdir(os.path.join(jobpath, 'output'))
             except:
                 pass
+            tmp_path = mkdtemp()
             taskfile = os.path.join(
-                    app.config['TMP_FOLDER'],
+                    tmp_path,
                     'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
-            args['taskfile'].save( taskfile )
+            args['taskfile'].save(taskfile)
 
             zippath = os.path.join(jobpath, 'output')
 
@@ -321,7 +323,8 @@ class TaskApi(Resource):
                 with ZipFile(taskfile, 'r') as jobzip:
                     jobzip.extractall(path=zippath)
             except:
-                os.remove(zippath)
+                logging.error("Unable to extract zipfile.")
+                #os.remove(zippath)
                 return '', 404
 
             os.remove(taskfile)

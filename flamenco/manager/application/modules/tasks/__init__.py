@@ -422,6 +422,10 @@ class TaskApi(Resource):
         if r[1] == 403:
             return '', 403
 
+        # This can be improved by wrapping all this in a with
+        if jobfile and os.path.isfile(zippath):
+            os.remove(zippath)
+
         return '', 204
 
 
