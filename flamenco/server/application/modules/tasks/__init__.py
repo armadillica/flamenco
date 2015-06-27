@@ -311,23 +311,30 @@ class TaskApi(Resource):
                 os.mkdir(os.path.join(jobpath, 'output'))
             except:
                 pass
-            tmp_path = mkdtemp()
-            taskfile = os.path.join(
-                    tmp_path,
-                    'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
-            args['taskfile'].save(taskfile)
 
-            zippath = os.path.join(jobpath, 'output')
+            taskfile = args['taskfile']
+            # If the taskfile is a zip
+            if taskfile.filename.endswith('.zip'):
+                tmp_path = mkdtemp()
+                taskfile = os.path.join(
+                        tmp_path,
+                        'taskfileout_{0}_{1}.zip'.format(job.id, task_id))
+                args['taskfile'].save(taskfile)
 
-            try:
-                with ZipFile(taskfile, 'r') as jobzip:
-                    jobzip.extractall(path=zippath)
-            except:
-                logging.error("Unable to extract zipfile.")
-                #os.remove(zippath)
-                return '', 404
+                zippath = os.path.join(jobpath, 'output')
 
-            os.remove(taskfile)
+                try:
+                    with ZipFile(taskfile, 'r') as jobzip:
+                        jobzip.extractall(path=zippath)
+                except:
+                    logging.error("Unable to extract zipfile.")
+                    #os.remove(zippath)
+                    return '', 404
+
+                os.remove(taskfile)
+            else:
+                taskfile_dest = os.path.join(jobpath, 'output', taskfile.filename)
+                args['taskfile'].save(taskfile_dest)
 
         job.tasks_status = json.dumps(self.generate_job_tasks_status(job))
 

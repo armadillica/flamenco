@@ -351,13 +351,13 @@ def _parse_output(tmp_buffer, options):
         print('Cant find module {0}: {1}'.format(module_name, e))
 
     if not LOG:
-        LOG=""
+        LOG = ""
 
     if task_parser:
-        parser_output = task_parser.parse(tmp_buffer,options, ACTIVITY)
+        parser_output = task_parser.parse(tmp_buffer, options, ACTIVITY)
         if parser_output:
             ACTIVITY = parser_output
-            activity=json.loads(parser_output)
+            activity = json.loads(parser_output)
 
         if activity.get('thumbnail'):
             params = dict(task_id=task_id)
@@ -375,7 +375,7 @@ def _parse_output(tmp_buffer, options):
 
     params = {
         'status': 'active',
-        'log': LOG,
+        'log': LOG[-256:],
         'activity': ACTIVITY,
         'time_cost': time_cost,
         'job_id': options['job_id'],
@@ -406,7 +406,7 @@ def _parse_output(tmp_buffer, options):
     logpath = os.path.join(app.config['TMP_FOLDER'],
                            'flamenco-worker',
                            "{0}.log".format(task_id))
-    f = open(logpath,"a")
+    f = open(logpath, 'a')
     f.write(tmp_buffer)
     f.close()
     return action
@@ -693,7 +693,7 @@ def run_blender_in_thread(options):
 
     params = {
         'status': status,
-        'log': log,
+        'log': log[-256:],
         'activity': activity,
         'time_cost': time_cost,
         'job_id': options['job_id'],

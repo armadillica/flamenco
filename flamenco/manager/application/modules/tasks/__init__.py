@@ -408,7 +408,7 @@ class TaskApi(Resource):
             'id': task_id,
             'status': args['status'],
             'time_cost': args['time_cost'],
-            'log': "", # TODO send a trimmed version of the log
+            'log': args['log'], # we the trimmed version of the log
             'activity': args['activity']}
 
         r = http_request(
