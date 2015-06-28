@@ -333,8 +333,10 @@ class TaskApi(Resource):
 
                 os.remove(taskfile)
             else:
-                taskfile_dest = os.path.join(jobpath, 'output', taskfile.filename)
-                args['taskfile'].save(taskfile_dest)
+                # The filename could be an absolute path
+                filename = os.path.split(taskfile.filename)[1]
+                taskfile_dest = os.path.join(jobpath, 'output', filename)
+                taskfile.save(taskfile_dest)
 
         job.tasks_status = json.dumps(self.generate_job_tasks_status(job))
 
