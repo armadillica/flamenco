@@ -88,6 +88,7 @@ def evacuate_task_logs(tasks_count):
         print "{0}/{1}".format(index, tasks_count)
         index += 1
         task = Task.query.get(index)
+        print "Processing task {0} - {1}".format(task.id, task.name)
 
         if task and task.log:
             path_job = os.path.join(
