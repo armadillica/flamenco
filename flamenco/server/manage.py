@@ -83,10 +83,11 @@ def evacuate_task_logs():
     tasks_count = Task.query.count()
     index = 1
 
-    for task in Task.query.all():
+    while index < tasks_count:
         print "{0}/{1}".format(index, tasks_count)
         index += 1
-        if task.log:
+        task = Task.query.get(index)
+        if task and task.log:
             path_logs = os.path.join(
                 app.config['SERVER_STORAGE'],
                 str(task.job.project.id),
