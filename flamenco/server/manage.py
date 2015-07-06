@@ -74,5 +74,39 @@ def runserver():
         host=HOST,
         threaded=True)
 
+
+@manager.command
+def evacuate_task_logs():
+    import os
+    import tarfile
+
+    for task in Task.query.all():
+        path_logs = os.path.join(
+            app.config['SERVER_STORAGE'],
+            str(task.job.project.id),
+            str(task.job.id),
+            'logs'
+            )
+        try:
+            os.makedirs(path_logs)
+        except Exception, e:
+            print e
+            pass
+        print path_logs
+        logfile_name = "{0}.txt".format(task.id)
+        tarfile_name = "{0}.tar.gz".format(task.id)
+        path_logfile = os.path.join(path_logs, logfile_name)
+        path_tarfile = os.path.join(path_logs, tarfile_name)
+        if not os.path.isfile(path_logfile) and not os.path.isfile(tarfile_name):
+            with open(path_logfile, "w") as text_file:
+                text_file.write(task.log)
+            with tarfile.open(path_tarfile, "w:gz") as tar:
+                tar.add(path_logfile, arcname=os.path.basename(path_tarfile))
+            os.remove(path_logfile)
+
+            print "Written log for task {0}".format(task.id)
+            task.log = None
+            db.session.commit()
+
 if __name__ == "__main__":
     manager.run()
