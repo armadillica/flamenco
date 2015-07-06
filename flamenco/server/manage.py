@@ -112,7 +112,7 @@ def evacuate_task_logs(tasks_count):
                     with open(path_logfile, "w") as text_file:
                         text_file.write(task.log)
                     with tarfile.open(path_tarfile, "w:gz") as tar:
-                        tar.add(path_logfile, arcname=os.path.basename(path_tarfile))
+                        tar.add(path_logfile, arcname=logfile_name)
                     os.remove(path_logfile)
 
                     print "Written log for task {0}".format(task.id)
