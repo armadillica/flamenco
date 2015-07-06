@@ -548,7 +548,7 @@ class TaskGeneratorApi(Resource):
             "status": task.status,
             "type": task.type,
             "settings": json.loads(task.settings),
-            "log": task.log,
+            "log": None,
             "activity": task.activity,
             "manager_id": task.manager_id,
             "priority": task.priority,
@@ -556,8 +556,6 @@ class TaskGeneratorApi(Resource):
             "parser": task.parser,
             "time_cost": task.time_cost,
             "project_id": job.project_id,
-            "chunk_start": 0,
-            "chunk_end": 0,
             "current_frame": 0,
             "percentage_done": percentage_done}
 
