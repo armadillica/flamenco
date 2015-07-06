@@ -514,7 +514,14 @@
 
       job_overview += '<div class="row">'
       job_overview += '<div class="col-md-6">Start/End Frames: <strong>';
-      job_overview +=  data['settings']['frame_start'] + ' / ' + data['settings']['frame_end'];
+
+      // Support for blender_simple_render simple_blender_render jobs
+      if (data['settings']['frames']) {
+        job_overview +=  data['settings']['frames'];
+      } else {
+        job_overview +=  data['settings']['frame_start'] + ' / ' + data['settings']['frame_end'];
+      };
+
       job_overview += '</strong></div>';
       job_overview += '<div class="col-md-6">Total Frames: <strong>';
       job_overview += (data['settings']['frame_end'] - data['settings']['frame_start'] + 1);

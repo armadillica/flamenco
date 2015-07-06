@@ -425,7 +425,7 @@ class TaskListApi(Resource):
                 'status': task.status,
                 'priority': task.priority,
                 'type': task.type,
-                'log': task.log,
+                'log': None,
                 'activity': task.activity,
                 'parser': task.parser
             }
