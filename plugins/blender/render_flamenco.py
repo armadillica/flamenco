@@ -521,7 +521,7 @@ def register():
         items=jobType_list, name="Job type", description="Type of job available")
     # File Format
     wm.flamenco_file_format = EnumProperty(
-        items=[('JPEG', 'JPEG', ''), ('PNG', 'PNG', ''), ('EXR', 'EXR', '')],
+        items=[('EXR', 'EXR', ''), ('JPEG', 'JPEG', ''), ('PNG', 'PNG', '') ],
         name="File Format",
         description="Output file format for the job")
     # Chunk Size
