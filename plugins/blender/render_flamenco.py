@@ -265,8 +265,7 @@ class bamToRenderfarm (bpy.types.Operator):
             username = ""
 
         job_settings = {
-            'frame_start': scn.frame_start,
-            'frame_end': scn.frame_end,
+            'frames': "{0}-{1}".format(scn.frame_start, scn.frame_end),
             'chunk_size': wm.flamenco_chunkSize,
             'filepath': os.path.split(D.filepath)[1],
             'render_settings': "",
@@ -440,7 +439,7 @@ class MovPanelControl(bpy.types.Panel):
         col.operator("flamenco.send_job", icon="APPEND_BLEND")
 
 jobType_list = [
-    ('simple_blender_render', 'Simple', '', 1),
+    ('blender_simple_render', 'Simple', '', 1),
     ('tiled_blender_render', 'Tiled', '', 2),
     ('blender_bake_anim_cache', 'Bake Anim Cache', '', 3),
     ('blender_opengl_render', 'OpenGL Render', '', 4),
