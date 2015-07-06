@@ -40,13 +40,15 @@ from requests.exceptions import ConnectionError
 
 from werkzeug.datastructures import FileStorage
 
-parser = reqparse.RequestParser()
-parser.add_argument('id', type=int)
-parser.add_argument('status', type=str)
-parser.add_argument('log', type=str)
-parser.add_argument('time_cost', type=int)
-parser.add_argument('activity', type=str)
-parser.add_argument('taskfile', type=FileStorage, location='files')
+task_parser = reqparse.RequestParser()
+task_parser.add_argument('id', type=int)
+task_parser.add_argument('status', type=str)
+task_parser.add_argument('log', type=str)
+task_parser.add_argument('time_cost', type=int)
+task_parser.add_argument('activity', type=str)
+task_parser.add_argument('taskfile', type=FileStorage, location='files')
+# Used on PUT request when sending individual frames
+task_parser.add_argument('frame', type=int)
 
 tasks_list_parser = reqparse.RequestParser()
 tasks_list_parser.add_argument('job_id', type=int)
@@ -263,7 +265,7 @@ class TaskApi(Resource):
                 'canceled': tasks_canceled}
 
     def put(self, task_id):
-        args = parser.parse_args()
+        args = task_parser.parse_args()
         task_id = args['id']
         status = args['status'].lower()
         log = args['log']
@@ -337,6 +339,7 @@ class TaskApi(Resource):
                 filename = os.path.split(taskfile.filename)[1]
                 taskfile_dest = os.path.join(jobpath, 'output', filename)
                 taskfile.save(taskfile_dest)
+
 
         #job.tasks_status = json.dumps(self.generate_job_tasks_status(job))
 
