@@ -338,7 +338,7 @@ class TaskApi(Resource):
                 taskfile_dest = os.path.join(jobpath, 'output', filename)
                 taskfile.save(taskfile_dest)
 
-        job.tasks_status = json.dumps(self.generate_job_tasks_status(job))
+        #job.tasks_status = json.dumps(self.generate_job_tasks_status(job))
 
         status_old = task.status
         task.status = status
