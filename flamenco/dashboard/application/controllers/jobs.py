@@ -168,6 +168,7 @@ def edit(job_id):
     params = {}
     for f in  request.form:
         params[f] = request.form[f]
+
     job = http_server_request('put', '/jobs/{0}'.format(job_id), params)
     return jsonify(job)
 

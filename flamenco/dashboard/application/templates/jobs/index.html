@@ -460,11 +460,16 @@
       if (fields.indexOf(i) > -1) {
         content += '<div class="form-group">';
         content += '<label>' + i + '</label>';
-        content += '<input name="'+ i + '" class="form-control" value="' + post + '" type="text" />';
+        if (i == 'notes'){
+          content += '<textarea rows=3 name="'+ i + '" class="form-control" value="' + post + '">' + post + '</textarea>';
+        } else {
+          content += '<input name="'+ i + '" class="form-control" value="' + post + '" type="text" />';
+        };
+
         content += '</div>';
       }
     });
-    content += '<div class="btn btn-default" job_id="' + data.id + '" id="action-job-edit">Edit</div>';
+    content += '<div class="btn btn-success btn-block" job_id="' + data.id + '" id="action-job-edit">Update</div>';
     content += '</form>';
     return content;
   }
@@ -587,9 +592,16 @@
 
   $(document).on("click", "#action-job-edit", function() {
     var params = $('#form_jobs_edit').serialize();
-    $.post("/jobs/" + $(this).attr('job_id') + "/edit", params, function(data) {
+    var job_id = $(this).attr('job_id');
+    $.post("/jobs/" + job_id + "/edit", params, function(data) {
       //TODO update rows in datatable if needed
       //console.log(data);
+    })
+    .done(function() {
+      $.growl('Job ' + job_id + ' updated', {type: "success"});
+    })
+    .fail(function() {
+      $.growl('Updating ' + job_id + ' failed', {type: "danger"});
     });
   });
 
