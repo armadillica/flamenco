@@ -28,6 +28,8 @@ from datetime import timedelta
 from application.utils import http_rest_request
 from application.utils import get_file_ext
 from application.utils import pretty_date
+from application.utils import frame_range_parse
+from application.utils import frame_range_merge
 
 from application.modules.tasks.model import Task
 from application.modules.managers.model import Manager
@@ -47,8 +49,10 @@ task_parser.add_argument('log', type=str)
 task_parser.add_argument('time_cost', type=int)
 task_parser.add_argument('activity', type=str)
 task_parser.add_argument('taskfile', type=FileStorage, location='files')
-# Used on PUT request when sending individual frames
-task_parser.add_argument('frame', type=int)
+# Used on PUT request when sending individual frames. Will also be used to report
+# multiple frames statuses (or when sending multiple frames in a zip file).
+task_parser.add_argument('frames', type=str)
+task_parser.add_argument('frames_status', type=str)
 
 tasks_list_parser = reqparse.RequestParser()
 tasks_list_parser.add_argument('job_id', type=int)
@@ -264,6 +268,49 @@ class TaskApi(Resource):
                 'failed': tasks_failed,
                 'canceled': tasks_canceled}
 
+    @staticmethod
+    def frames_update_statuses(task, frames, status):
+        """Update frame statuses
+
+        :param task: the task object
+        :param frames: the frame interval
+        :type frame: string
+        :param status: the status of the frames
+        :type frame: string
+
+        """
+
+        settings = json.loads(task.settings)
+        # Expand frame ranges into lists
+        frame_statuses = {
+            'frames_completed': frame_range_parse(settings.get('frames_completed')),
+            'frames_waiting': frame_range_parse(settings.get('frames_waiting')),
+            'frames_failed': frame_range_parse(settings.get('frames_failed')),
+            'frames_active': frame_range_parse(settings.get('frames_active'))
+        }
+
+        frames = frame_range_parse(frames)
+
+        # Generate the proper index depending on the frames we are updating
+        if status == 'completed':
+            index = 'frames_completed'
+
+        frame_statuses[index].extend(frames)
+        # Remove duplicate frames
+        frames_changed = list(set(frame_statuses[index]))
+        settings[index] = frame_range_merge(frames_changed)
+
+        # Loop through the other frame_statuses and remove the frames we just updated
+        for k, v in frame_statuses.items():
+            if k != index:
+                frames_shuffled = list(set(v) - set(frames_changed))
+                settings[k] = frame_range_merge(frames_shuffled)
+
+        # Push changes to database
+        task.settings = json.dumps(settings)
+        db.session.commit()
+
+
     def put(self, task_id):
         args = task_parser.parse_args()
         task_id = args['id']
@@ -339,6 +386,9 @@ class TaskApi(Resource):
                 filename = os.path.split(taskfile.filename)[1]
                 taskfile_dest = os.path.join(jobpath, 'output', filename)
                 taskfile.save(taskfile_dest)
+
+        if args['frames']:
+            TaskApi.frames_update_statuses(task, args['frames'], 'completed')
 
 
         #job.tasks_status = json.dumps(self.generate_job_tasks_status(job))
