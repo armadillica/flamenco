@@ -231,10 +231,11 @@ class jobInfo():
                 remaining_time = remaining_time / running_tasks
             activity = "Rendering: {0}.".format(frames_rendering)
         elif job.status == 'completed':
-            average_time = completed_time / completed_tasks
-            # If this is a render, get the frame render time
-            if chunk_size:
-                average_time_frame = average_time / chunk_size
+            if completed_tasks > 0:
+                average_time = completed_time / completed_tasks
+                # If this is a render, get the frame render time
+                if chunk_size:
+                    average_time_frame = average_time / chunk_size
 
         if running_tasks > 0:
             job_time = total_time / running_tasks
