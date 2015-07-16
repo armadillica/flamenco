@@ -556,7 +556,7 @@ class TaskGeneratorApi(Resource):
                 or_(Task.status == 'waiting',
                     Task.status == 'canceled'),
                 Task.manager_id == manager.id).\
-                order_by(Task.priority.desc(), Task.id.asc())
+                order_by(Task.priority.desc(), Task.id.desc())
             task = None
             incomplete_parents = False
             for t in tasks:
