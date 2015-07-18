@@ -45,7 +45,7 @@ class task_compiler():
         '--enable-autoexec',
         '-noaudio',
         '--background',
-        str( file_path ),
+        str(file_path),
         '--render-output',
         str(output_path),
         '--python',
