@@ -142,6 +142,13 @@ class TaskCompiledApi(Resource):
             jobpath, 'jobfile_{0}.lock'.format(task['job_id']))
 
         if os.path.isfile(lockfile):
+            # Try and set the task back to wating
+            params = dict(id=task_id, status='waiting')
+            r = http_request(
+                app.config['FLAMENCO_SERVER'],
+                '/tasks/{0}'.format(task_id),
+                'put',
+                params=params)
             return '', 400
 
         zipok = True
