@@ -304,9 +304,9 @@ class bamToRenderfarm (bpy.types.Operator):
 
             # If we do not want to pack large files
             if wm.flamenco_pack_alembic_caches is False:
-                command.extend(["--exclude", '"*.abc"'])
+                command.extend(["--exclude", "*.abc"])
 
-            os.system(" ".join(command))
+            subprocess.call(command)
 
             # We give feedback abouth the end of the packing
             statinfo = os.stat(zippath)
