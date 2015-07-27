@@ -361,8 +361,11 @@ def _parse_output(tmp_buffer, options):
 
         if activity.get('thumbnail'):
             params = dict(task_id=task_id)
-            manager_url = "http://{0}/tasks/thumbnails".format(app.config['FLAMENCO_MANAGER'])
-            request_thread = Thread(target=send_thumbnail, args=(manager_url, activity.get('thumbnail'), params))
+            manager_url = "http://{0}/tasks/thumbnails".format(
+                app.config['FLAMENCO_MANAGER'])
+            request_thread = Thread(
+                target=send_thumbnail,
+                args=(manager_url, activity.get('thumbnail'), params))
             request_thread.start()
 
     time_init = TIME_INIT

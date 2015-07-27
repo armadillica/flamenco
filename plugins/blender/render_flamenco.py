@@ -308,6 +308,9 @@ class bamToRenderfarm (bpy.types.Operator):
                 exclude_pattern.append('*.abc')
             if wm.flamenco_pack_exr_sequences is False:
                 exclude_pattern.append('*.exr')
+            if wm.flamenco_pack_movie_files is False:
+                exclude_pattern.append('*.mov')
+                exclude_pattern.append('*.avi')
 
             if exclude_pattern:
                 pattern = ";".join(exclude_pattern)
@@ -440,6 +443,7 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'flamenco_submit_archive')
         col.prop(wm, 'flamenco_pack_alembic_caches')
         col.prop(wm, 'flamenco_pack_exr_sequences')
+        col.prop(wm, 'flamenco_pack_movie_files')
 
         col.separator()
 
@@ -572,11 +576,17 @@ This will have to be done by hand.",
 This can generate very large files.",
         options={'HIDDEN', 'SKIP_SAVE'},
         default=False)
-
-    # Pack Alembic Caches
+    # Pack EXR files
     wm.flamenco_pack_exr_sequences = BoolProperty(
         name="Pack EXR sequences",
-        description="If checked, .exr image sequences will be included in the edit. \
+        description="If checked, .exr image sequences will be included in the bam archive. \
+This can generate very large files.",
+        options={'HIDDEN', 'SKIP_SAVE'},
+        default=False)
+    # Pack movie files
+    wm.flamenco_pack_movie_files = BoolProperty(
+        name="Pack movie files",
+        description="If checked, .mov and .avi files will be included in the bam archive. \
 This can generate very large files.",
         options={'HIDDEN', 'SKIP_SAVE'},
         default=False)
