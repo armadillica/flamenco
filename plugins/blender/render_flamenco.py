@@ -303,10 +303,16 @@ class bamToRenderfarm (bpy.types.Operator):
             command = ["bam", "pack", D.filepath, '-o', zippath]
 
             # If we do not want to pack large files
+            exclude_pattern = []
             if wm.flamenco_pack_alembic_caches is False:
-                command.extend(["--exclude", '"*.abc"'])
+                exclude_pattern.append('*.abc')
+            if wm.flamenco_pack_exr_sequences is False:
+                exclude_pattern.append('*.exr')
 
-            os.system(" ".join(command))
+            if exclude_pattern:
+                pattern = ";".join(exclude_pattern)
+                command.extend(["--exclude", pattern])
+            subprocess.call(command)
 
             # We give feedback abouth the end of the packing
             statinfo = os.stat(zippath)
@@ -433,6 +439,7 @@ class MovPanelControl(bpy.types.Panel):
 
         col.prop(wm, 'flamenco_submit_archive')
         col.prop(wm, 'flamenco_pack_alembic_caches')
+        col.prop(wm, 'flamenco_pack_exr_sequences')
 
         col.separator()
 
@@ -562,6 +569,14 @@ This will have to be done by hand.",
     wm.flamenco_pack_alembic_caches = BoolProperty(
         name="Pack Alembic Caches",
         description="If checked, .abc caches will be added to the bam archive. \
+This can generate very large files.",
+        options={'HIDDEN', 'SKIP_SAVE'},
+        default=False)
+
+    # Pack Alembic Caches
+    wm.flamenco_pack_exr_sequences = BoolProperty(
+        name="Pack EXR sequences",
+        description="If checked, .exr image sequences will be included in the edit. \
 This can generate very large files.",
         options={'HIDDEN', 'SKIP_SAVE'},
         default=False)
