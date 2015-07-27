@@ -596,10 +596,12 @@ def run_blender_in_thread(options):
         taskpath,
         'output'
     )
+
     if 'storage' in compiler_settings and \
             'type' in compiler_settings['storage']:
         storage_settings = compiler_settings['storage']
         if storage_settings['type'] == 'filesystem':
+            logging.info("Copying files via filesystem")
             # filesystem
             # path: Path to store files
             destination_path = "{0}/{1}".format(
@@ -700,6 +702,7 @@ def run_blender_in_thread(options):
         }
 
     try:
+        # Send results of the task to the server
         requests.patch(
             'http://{0}/tasks/{1}'.format(
                 FLAMENCO_MANAGER, options['task_id']),

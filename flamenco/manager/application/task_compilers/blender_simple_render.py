@@ -53,6 +53,4 @@ class task_compiler():
         '--render-format',
         str(settings['format'])] + parse(settings['frames'])
 
-        print task_command
-
         return task_command
