@@ -72,6 +72,10 @@ def runserver():
             name='simple_blender_render',
             properties=json.dumps(configuration))
         db.session.add(render_config)
+        render_config = JobType(
+            name='blender_simple_render',
+            properties=json.dumps(configuration))
+        db.session.add(render_config)
         db.session.commit()
     # Bake config
     bake_config = JobType.query.filter_by(name='blender_bake_anim_cache').first()
