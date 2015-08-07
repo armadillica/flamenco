@@ -1,6 +1,8 @@
+import tempfile
+
 class Config(object):
     DEBUG = False
     FLAMENCO_MANAGER = 'localhost:7777'
     HOST = '0.0.0.0' # or localhost
     PORT = 5000
-    TMP_FOLDER = '/tmp/'
+    TMP_FOLDER = tempfile.gettempdir()
