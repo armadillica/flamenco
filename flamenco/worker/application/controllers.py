@@ -231,7 +231,7 @@ def worker_loop():
         zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
             jobpath, 'taskfile_{0}.zip'.format(task['job_id']))
-        url = "http://{0}/static/storage/{1}/jobfile_{1}.zip".format(
+        url = "http://{0}/tasks/zip/{1}".format(
                 app.config['FLAMENCO_MANAGER'], task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath)
 
@@ -240,7 +240,7 @@ def worker_loop():
         zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
             jobpath, 'tasksupportfile_{0}.zip'.format(task['job_id']))
-        url = "http://{0}/static/storage/{1}/jobsupportfile_{1}.zip".format(
+        url = "http://{0}/tasks/zip/sup/{1}".format(
                 app.config['FLAMENCO_MANAGER'], task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath, True)
 
@@ -248,7 +248,7 @@ def worker_loop():
         zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
             jobpath, 'dependencies.zip'.format(task['job_id']))
-        url = "http://{0}/static/storage/{1}/dependencies_{2}.zip".format(
+        url = "http://{0}/tasks/zip/dep/{1}".format(
                 app.config['FLAMENCO_MANAGER'], task['job_id'], task['task_id'])
         print ("Fetching dependency {0}".format(url))
         unzipdepok = getZipFile(url, tmpfile, zippath)
