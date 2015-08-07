@@ -736,7 +736,7 @@ class JobThumbnailApi(Resource):
                 return thumb_file.read()
             # If no resized file is available (job did not start or is running)
             else:
-                with app.open_resource(join(app.config['SERVER_STORAGE'], 'missing_thumbnail.png')) as thumb_file:
+                with app.open_resource(join(app.config['SERVER_STORAGE'], '..', 'missing_thumbnail.png')) as thumb_file:
                     return thumb_file.read()
             return False
 
