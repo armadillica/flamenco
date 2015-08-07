@@ -15,10 +15,12 @@ import sqlalchemy as sa
 
 
 def upgrade():
-    op.add_column('job', sa.Column('user_id', sa.Integer(), nullable=True))
-    op.create_foreign_key(None, 'job', 'user', ['user_id'], ['id'])
+    with op.batch_alter_table('job') as batch_op:
+        batch_op.add_column(sa.Column('user_id', sa.Integer(), nullable=True))
+        batch_op.create_foreign_key('job-user_id', 'user', ['user_id'], ['id'])
 
 
 def downgrade():
-    op.drop_constraint(None, 'job', type_='foreignkey')
-    op.drop_column('job', 'user_id')
+    with op.batch_alter_table('job') as batch_op:
+        batch_op.drop_constraint('job-user_id', type_='foreignkey')
+        batch_op.drop_column('user_id')
