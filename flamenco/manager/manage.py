@@ -70,7 +70,11 @@ def runserver():
 
         render_config = JobType(
             name='simple_blender_render',
-            value=json.dumps(configuration))
+            properties=json.dumps(configuration))
+        db.session.add(render_config)
+        render_config = JobType(
+            name='blender_simple_render',
+            properties=json.dumps(configuration))
         db.session.add(render_config)
         db.session.commit()
     # Bake config
@@ -90,7 +94,7 @@ def runserver():
 
         bake_config = JobType(
             name='blender_bake_anim_cache',
-            value=json.dumps(configuration))
+            properties=json.dumps(configuration))
         db.session.add(bake_config)
         db.session.commit()
 

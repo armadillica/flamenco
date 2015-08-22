@@ -1,5 +1,7 @@
 import os
+import tempfile
 import socket
+
 class Config(object):
     DEBUG = True
     PORT = 7777
@@ -20,7 +22,7 @@ class Config(object):
     SETTINGS_PATH_LINUX = ""
     SETTINGS_PATH_OSX = ""
     SETTINGS_PATH_WIN = ""
-    TMP_FOLDER = '/tmp/'
+    TMP_FOLDER = tempfile.gettempdir()
     THUMBNAIL_EXTENSIONS = set(['png'])
     MANAGER_STORAGE = '{0}/static/storage'.format(
         os.path.join(os.path.dirname(__file__)))

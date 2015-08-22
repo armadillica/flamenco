@@ -257,12 +257,12 @@ class bamToRenderfarm (bpy.types.Operator):
             return {'CANCELLED'}
 
         # We retrieve the username via the .blender_id profiles file. If no file
-        # is available we fail silently and set the username to ""
+        # is available we fail silently and set the username to "default"
         profile = ProfilesUtility.get_active_profile()
         if profile:
             username = profile['username']
         else:
-            username = ""
+            username = "default"
 
         job_settings = {
             'frames': "{0}-{1}".format(scn.frame_start, scn.frame_end),

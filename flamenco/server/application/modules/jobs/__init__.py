@@ -296,7 +296,7 @@ class JobListApi(Resource):
 
         # Check if we are requiring a specific job status to use as filter
         if args['status']:
-             jobs_query = Job.query.filter(Job.status == args['status']).all()
+            jobs_query = Job.query.filter(Job.status == args['status']).all()
         else:
             # Otherwise we provide all jobs that have not been archived
             jobs_query = Job.query.filter(Job.status != 'archived').all()
