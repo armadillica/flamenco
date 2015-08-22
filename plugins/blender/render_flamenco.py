@@ -308,9 +308,14 @@ class bamToRenderfarm (bpy.types.Operator):
                 exclude_pattern.append('*.abc')
             if wm.flamenco_pack_exr_sequences is False:
                 exclude_pattern.append('*.exr')
+                exclude_pattern.append('*.jpg')
+                exclude_pattern.append('*.png')
             if wm.flamenco_pack_movie_files is False:
                 exclude_pattern.append('*.mov')
                 exclude_pattern.append('*.avi')
+            if wm.flamenco_pack_audio_files is False:
+                exclude_pattern.append('*.wav')
+                exclude_pattern.append('*.mp3')
 
             if exclude_pattern:
                 pattern = ";".join(exclude_pattern)
@@ -444,6 +449,7 @@ class MovPanelControl(bpy.types.Panel):
         col.prop(wm, 'flamenco_pack_alembic_caches')
         col.prop(wm, 'flamenco_pack_exr_sequences')
         col.prop(wm, 'flamenco_pack_movie_files')
+        col.prop(wm, 'flamenco_pack_audio_files')
 
         col.separator()
 
@@ -459,6 +465,7 @@ jobType_list = [
 command_names = [
     ('default', 'Default', '', 1),
     ('multiview', 'Multiview', '', 2),
+    ('latest', 'Latest', '', 3),
     ]
 
 class flamencoManagers(bpy.types.PropertyGroup):
@@ -531,7 +538,8 @@ def register():
         items=jobType_list, name="Job type", description="Type of job available")
     # File Format
     wm.flamenco_file_format = EnumProperty(
-        items=[('EXR', 'EXR', ''), ('JPEG', 'JPEG', ''), ('PNG', 'PNG', '') ],
+        items=[('EXR', 'EXR', ''), ('JPEG', 'JPEG', ''), ('PNG', 'PNG', ''),
+            ('JPEG2000', 'JPEG2000', '') ],
         name="File Format",
         description="Output file format for the job")
     # Chunk Size
@@ -588,6 +596,13 @@ This can generate very large files.",
         name="Pack movie files",
         description="If checked, .mov and .avi files will be included in the bam archive. \
 This can generate very large files.",
+        options={'HIDDEN', 'SKIP_SAVE'},
+        default=False)
+    # Pack movie files
+    wm.flamenco_pack_audio_files = BoolProperty(
+        name="Pack audio files",
+        description="If checked, .wav and .mp3 files will be included in the bam archive. \
+    This can generate very large files.",
         options={'HIDDEN', 'SKIP_SAVE'},
         default=False)
 
