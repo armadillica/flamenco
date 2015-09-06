@@ -541,7 +541,8 @@ class TaskGeneratorApi(Resource):
                 .order_by(Job.priority.desc(), Job.id.asc())\
                 .all()
 
-        lock = LockFile("{0}server.lock".format(app.config['TMP_FOLDER']))
+        lock_file_path = os.path.join(app.config['TMP_FOLDER'], "server.lock")
+        lock = LockFile(lock_file_path)
 
         while not lock.i_am_locking():
             try:
