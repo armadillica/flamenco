@@ -641,8 +641,8 @@ class JobThumbnailListApi(Resource):
         thumbnail_filename = "thumbnail_{0}.png".format(task.job_id)
         thumbnail_file = request.files['file']
         if thumbnail_file and self.allowed_file(thumbnail_file.filename):
-            filepath = join( app.config['TMP_FOLDER'] , thumbnail_filename)
-            filepath_last = join( app.config['TMP_FOLDER'] , 'thumbnail_0.png')
+            filepath = join(app.config['TMP_FOLDER'], thumbnail_filename)
+            filepath_last = join(app.config['TMP_FOLDER'], 'thumbnail_0.png')
             thumbnail_file.save(filepath)
             shutil.copy2(filepath, filepath_last)
         else:
