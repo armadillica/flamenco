@@ -1,6 +1,7 @@
 # Flamenco 2.0
 
-Development repo for Flamenco 2.0 (originally known as brender). Flamenco is a Free and Open Source Job distribution system for render farms.
+Development repo for Flamenco 2.0 (originally known as brender). Flamenco is a
+Free and Open Source Job distribution system for render farms.
 
 Warning: currently Flamenco is in beta stage, testing welcome!
 
@@ -27,19 +28,23 @@ New python executable in venv/bin/python
 Installing distribute............done.
 ```
 
-Now, whenever you want to work on a project, you only have to activate the corresponding environment. On OS X and Linux, do the following:
+Now, whenever you want to work on a project, you only have to activate the
+corresponding environment. On OS X and Linux, do the following:
 
 ```
 $ . venv/bin/activate
 ```
 
-Now you can just enter the following command to get Flask activated in your virtualenv:
+Now you can just enter the following command to get Flask activated in your
+virtualenv:
 
 ## Core dependencies
 
-The project has been developed for `python2.7`. We will move to `python3` eventually.
+The project has been developed for `python2.7`. We will move to `python3`
+eventually.
 
-On Unix systems, to install python dependencies, you may need to install `python-dev` package.
+On Unix systems, to install python dependencies, you may need to install
+`python-dev` package.
 
 On OSX, in order to prevent some warnings, you might need to run:
 
@@ -56,14 +61,45 @@ $ pip install -r requirements.txt
 Databases are managed by `MySQL` or `SQLite` (for testing only, don't use in production).
 
 
+### Grunt file for the Dashboard
+In order to streamline UI development of the Dashboard, we use Jade templating
+and Sass for the CSS generation. In oder to generate the templates and CSS needed
+by the dashboard, you need to install [NodeJS](https://nodejs.org/en/) and run
+the following commands.
+
+#### OSX
+```
+cd flamenco/dashboard
+npm install -g grunt-cli
+npm install
+grunt
+```
+
+#### Debian Linux
+On linux you can install NodeJS using the package manager.
+```
+cd flamenco/dashboard
+echo "deb http://ftp.us.debian.org/debian wheezy-backports main" >> /etc/apt/sources.list
+apt-get update
+apt-get install nodejs nodejs-legacy curl
+curl -L --insecure https://www.npmjs.org/install.sh | bash
+npm install -g grunt-cli
+apt-get install ruby
+gem install sass
+npm install
+grunt
+```
+
 ## Running Flamenco
-It's pretty simple. Move into each folder (dashboard, server, manager or worker) and run:
+It's pretty simple. Move into each folder (dashboard, server, manager or worker)
+and run:
 
 ```
 $ ./manage.py runserver # will start the different components
 ```
 
-When running this command for the Manager for the first time, you will be prompted for some configuration parameters.
+When running this command for the Manager for the first time, you will be
+prompted for some configuration parameters.
 
 If you now visit `http://localhost:8888` with your web browser you should see the dashboard!
 
@@ -77,8 +113,11 @@ The important subfolders are:
 * `manager` containing the manager files (manage clusters)
 * `dashboard` containing the dashboard (web interface to talk to the server)
 
-This structure explains also the naming conventions adopted to distinguish the different parts of Flamenco.
-Each folder contains an individual Flask application (except for the worker). Server, Manager and Worker exchange JSON formatted messages between each other via a REST API.
+This structure explains also the naming conventions adopted to distinguish the
+different parts of Flamenco.
+Each folder contains an individual Flask application (except for the worker).
+Server, Manager and Worker exchange JSON formatted messages between each other
+via a REST API.
 Dashboard connects to the Server only and accepts connections from clients (Browsers).
 
 
@@ -91,8 +130,10 @@ Frameworks and tools used by the interface are:
 
 ### User and Developer documentation
 
-The documentation is built with Sphinx and uses the readthedocs.org theme, so make sure you have it installed. Instructions are available here:
+The documentation is built with Sphinx and uses the readthedocs.org theme, so
+make sure you have it installed. Instructions are available here:
 
 `https://github.com/snide/sphinx_rtd_theme`
 
-The `_build` contains the locally compiled documentation, which does not need to be committed to the branch.
+The `_build` contains the locally compiled documentation, which does not need
+to be committed to the branch.
