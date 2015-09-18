@@ -51,4 +51,3 @@ Network Architecture Use cases
 		On the main network the 'Server', and 'Dashboard' components are needed at a minimum.
 
 		On any other networks that will be running 'Workers', one 'Manager' is needed and any 'Workers' connect to that 'Manger'.
-
