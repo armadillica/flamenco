@@ -1,7 +1,7 @@
 .. _installing:
 
 Getting Started with Flamenco
------------------------------
+=============================
 
 Flamenco is a Network Renderer for Blender that can leverage Cycles and GPU rendering.
 
