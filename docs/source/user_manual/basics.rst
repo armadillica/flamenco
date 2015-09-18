@@ -1,12 +1,7 @@
-
-******
-Basics
-******
-
 .. _installing:
 
 Getting Started with Flamenco
-=============================
+-----------------------------
 
 Flamenco is a Network Renderer for Blender that can leverage Cycles and GPU rendering.
 
@@ -18,8 +13,8 @@ All Flamenco components can run on Windows, OS X, and Linux.
 Flamenco has also been designed to work on a single network or multiple networks. There are two major use cases; running a render farm in one physical location, and running a render farm in multiple physical locations. 
 Which components are needed differ based on the use case, and that information is explained below. 
 
-Brief description of the five major components:
-==========================================================
+Flamenco components
+-------------------
 
 - **Worker**
 	The 'Worker' is the one service that is ran on all of the computers that will do any rendering. This can include the main server computer as well. 
@@ -39,8 +34,8 @@ Brief description of the five major components:
 	This Blender Add-on runs on the instance of Blender that the animation was created on and it connects to the single 'Server'. This is used to send a job to the render farm.
 
 
-Network Architecture Use cases:
-===============================
+Network Architecture Use cases
+------------------------------
 
 **Use case 1: Running Flamenco on one network**
 	This use case is for a either a single home render farm or a render farm in a single datacenter.
