@@ -28,7 +28,6 @@ from application import app
 from application import clean_dir
 from requests.exceptions import ConnectionError
 
-# Can we remove MAC_ADDRESS?  It's not used anywhere. SMM - 09/18/2015 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 HOSTNAME = socket.gethostname()  # the hostname of the worker
 PLATFORM = platform.system()
@@ -195,7 +194,6 @@ def worker_loop():
             files = rtask.json()['files']
             task = rtask.json()['options']
         except:
-	    print ("Is there were we get the OS not found error?")
             raise
             pass
 
@@ -503,7 +501,6 @@ def run_blender_in_thread(options):
     compiler_settings = options['compiler_settings']
     if 'command_name' in options['settings']:
         command_name = str(options['settings']['command_name'])
-
     else:
         # Backward compatibility
         command_name = "default"
@@ -522,230 +519,220 @@ def run_blender_in_thread(options):
     os.environ['WORKER_JOBPATH'] = jobpath
 
     print ( "Running:")
+    for cmd in render_command:
+        print (cmd)
+
     TIME_INIT = int(time.time())
 
-    # Putting a try/except OSError block here.  The Worker crashed if it could not find 
-    # the path to the Blender binary (which is specified in the Manager config).  
-    # Now the Worker will keep trying, but it does not crash anymore.
-    # SMM - 09/19/2015
     try:
-    	PROCESS = subprocess.Popen(render_command,
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE)
+        PROCESS = subprocess.Popen(render_command,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+    except OSError:
+        for cmd, val in enumerate(render_command):
+            if cmd == 0:
+                blender_binary = render_command[cmd]
 
-    	# Make I/O non blocking for unix
-    	if platform.system() is not 'Windows':
-            flags = fcntl(PROCESS.stdout, F_GETFL)
-            fcntl(PROCESS.stdout, F_SETFL, flags | os.O_NONBLOCK)
-            flags = fcntl(PROCESS.stderr, F_GETFL)
-            fcntl(PROCESS.stderr, F_SETFL, flags | os.O_NONBLOCK)
+        print ("\nCould not find the path to the Blender binary.  Please check Manager configuration.")
+        print ("This is the path that the Manager currently has specificied: %s\n" % blender_binary)
 
-        #flask.g.blender_process = process
-        (retcode, full_output) =  _interactiveReadProcess(PROCESS, options) \
-            if (platform.system() is not "Windows") \
-            else _interactiveReadProcessWin(PROCESS, options)
+    # Make I/O non blocking for unix
+    if platform.system() is not 'Windows':
+        flags = fcntl(PROCESS.stdout, F_GETFL)
+        fcntl(PROCESS.stdout, F_SETFL, flags | os.O_NONBLOCK)
+        flags = fcntl(PROCESS.stderr, F_GETFL)
+        fcntl(PROCESS.stderr, F_SETFL, flags | os.O_NONBLOCK)
 
-        log = LOG
-        activity = ACTIVITY
-        time_init = TIME_INIT
+    #flask.g.blender_process = process
+    (retcode, full_output) =  _interactiveReadProcess(PROCESS, options) \
+        if (platform.system() is not "Windows") \
+        else _interactiveReadProcessWin(PROCESS, options)
 
-        #flask.g.blender_process = None
-        #print(full_output)
-        script_dir = os.path.dirname(__file__)
-        rel_path = 'render_log_' + HOSTNAME + '.log'
-        abs_file_path = os.path.join(script_dir, rel_path)
-        with open(abs_file_path, 'w') as f:
-            f.write(full_output)
-    
-        if retcode == -9:
-            status = 'canceled'
-        elif retcode != 0:
-            status = 'failed'
-            if retcode == -11:
-                segfault_text = "\nBlender Segmentation Fault\n"
-                print (segfault_text)
-                log += segfault_text
-        else:
-            status = 'completed'
+    log = LOG
+    activity = ACTIVITY
+    time_init = TIME_INIT
 
-        logging.debug(status)
-    
-        if time_init:
-            time_cost = int(time.time())-time_init
-        else:
-            time_cost = 0
-            logging.error("time_init is None")
 
-        workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
-        taskpath = os.path.join(
-            workerstorage,
-            str(options['job_id']),
-        )
-        taskfile = os.path.join(
-            taskpath,
-            'taskfileout_{0}_{1}.zip'.format(options['job_id'], options['task_id'])
-        )
-        zippath = os.path.join(
-            taskpath,
-            'output',
-            str(options['task_id']),
-        )
+    #flask.g.blender_process = None
+    #print(full_output)
+    script_dir = os.path.dirname(__file__)
+    rel_path = 'render_log_' + HOSTNAME + '.log'
+    abs_file_path = os.path.join(script_dir, rel_path)
+    with open(abs_file_path, 'w') as f:
+        f.write(full_output)
 
-        with ZipFile(taskfile, 'w') as taskzip:
-            f = []
+    if retcode == -9:
+        status = 'canceled'
+    elif retcode != 0:
+        status = 'failed'
+        if retcode == -11:
+            segfault_text = "\nBlender Segmentation Fault\n"
+            print (segfault_text)
+            log += segfault_text
+    else:
+        status = 'completed'
+
+    logging.debug(status)
+
+    if time_init:
+        time_cost = int(time.time())-time_init
+    else:
+        time_cost = 0
+        logging.error("time_init is None")
+
+    workerstorage = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
+    taskpath = os.path.join(
+        workerstorage,
+        str(options['job_id']),
+    )
+    taskfile = os.path.join(
+        taskpath,
+        'taskfileout_{0}_{1}.zip'.format(options['job_id'], options['task_id'])
+    )
+    zippath = os.path.join(
+        taskpath,
+        'output',
+        str(options['task_id']),
+    )
+
+    with ZipFile(taskfile, 'w') as taskzip:
+        f = []
+        for dirpath, dirnames, filenames in os.walk(zippath):
+            for fname in filenames:
+                filepath = os.path.join(dirpath, fname)
+                taskzip.write(filepath, fname)
+
+    tfiles = []
+    no_storage = False
+    workeroutputpath = os.path.join(
+        taskpath,
+        'output'
+    )
+
+    if 'storage' in compiler_settings and \
+            'type' in compiler_settings['storage']:
+        storage_settings = compiler_settings['storage']
+        if storage_settings['type'] == 'filesystem':
+            logging.info("Copying files via filesystem")
+            # filesystem
+            # path: Path to store files
+            destination_path = "{0}/{1}".format(
+                storage_settings['path'],
+                options['job_id'])
+            try:
+                shutil.copytree(workeroutputpath, destination_path)
+            except IOError:
+                print ("Error storing output to Filesystem")
+        elif storage_settings['type'] == 'ftp':
+            # ftp
+            # server: server domain (ftp.blender.org)
+            # path: path on FTP server (/renders)
+            # TODO test!
+            server = storage_settings['server']
+            path = storage_settings['path']
+            from ftplib import FTP
+            ftp = FTP(server)
+            ftp.login()
+            ftp.cwd(path)
             for dirpath, dirnames, filenames in os.walk(zippath):
                 for fname in filenames:
                     filepath = os.path.join(dirpath, fname)
-                    taskzip.write(filepath, fname)
-
-        tfiles = []
-        no_storage = False
-        workeroutputpath = os.path.join(
-            taskpath,
-            'output'
-        )
-
-        if 'storage' in compiler_settings and \
-                'type' in compiler_settings['storage']:
-            storage_settings = compiler_settings['storage']
-            if storage_settings['type'] == 'filesystem':
-                logging.info("Copying files via filesystem")
-                # filesystem
-                # path: Path to store files
-                destination_path = "{0}/{1}".format(
-                    storage_settings['path'],
-                    options['job_id'])
+                    # TODO crossplataform?:
+                    serverpath = os.path.join(path, str(options['job_id']))
+                    file_ = open(filepath, 'rb')
+                    ftp.storbinary('STOR '+str(fname), file_)
+                    file_.close()
+            ftp.quit()
+        elif storage_settings['type'] == 'scp':
+            # scp
+            # server: server domain
+            # user
+            # password
+            # path: path in server (if "system_keys" will use keys, must exist)
+            # port
+            from paramiko import SSHClient
+            from paramiko import AutoAddPolicy
+            from paramiko import ssh_exception
+            from scp import SCPClient
+            server = storage_settings['server']
+            user = storage_settings['user']
+            password = storage_settings['password']
+            path = storage_settings['path']
+            port = storage_settings.get('port')
+            ssh = SSHClient()
+            ssh.set_missing_host_key_policy(AutoAddPolicy())
+            if password == 'system_keys':
+                ssh.load_system_host_keys()
                 try:
-                    shutil.copytree(workeroutputpath, destination_path)
-                except IOError:
-                    print ("Error storing output to Filesystem")
-            elif storage_settings['type'] == 'ftp':
-                # ftp
-                # server: server domain (ftp.blender.org)
-                # path: path on FTP server (/renders)
-                # TODO test!
-                server = storage_settings['server']
-                path = storage_settings['path']
-                from ftplib import FTP
-                ftp = FTP(server)
-                ftp.login()
-                ftp.cwd(path)
-                for dirpath, dirnames, filenames in os.walk(zippath):
-                    for fname in filenames:
-                        filepath = os.path.join(dirpath, fname)
-                        # TODO crossplataform?:
-                        serverpath = os.path.join(path, str(options['job_id']))
-                        file_ = open(filepath, 'rb')
-                        ftp.storbinary('STOR '+str(fname), file_)
-                        file_.close()
-                ftp.quit()
-            elif storage_settings['type'] == 'scp':
-                # scp
-                # server: server domain
-                # user
-                # password
-                # path: path in server (if "system_keys" will use keys, must exist)
-                # port
-                from paramiko import SSHClient
-                from paramiko import AutoAddPolicy
-                from paramiko import ssh_exception
-                from scp import SCPClient
-                server = storage_settings['server']
-                user = storage_settings['user']
-                password = storage_settings['password']
-                path = storage_settings['path']
-                port = storage_settings.get('port')
-                ssh = SSHClient()
-                ssh.set_missing_host_key_policy(AutoAddPolicy())
-                if password == 'system_keys':
-                    ssh.load_system_host_keys()
-                    try:
-                        ssh.connect(server,
-                                    username=user,
-                                    port=port)
-                    except socket.error:
-                        print ("Error uploading via SCP, socket error")
-                    except ssh_exception.SSHException:
-                        print ("Error uploading via SCP, SSHException")
-                else:
-                    try:
-                        ssh.connect(server,
-                                    username=user,
-                                    password=password,
-                                    port=port)
-                    except socket.error:
-                        print ("Error uploading via SCP, socket error")
-                    except ssh_exception.SSHException:
-                        print ("Error uploading via SCP, SSHException")
-
-                # TODO crossplataform?:
-                filepath_remote = os.path.join(path,
-                                                str(options['job_id']))
-                with SCPClient(ssh.get_transport()) as scp:
-                    print ("Uploading via SCP")
-                    try:
-                        scp.put(workeroutputpath,
-                                filepath_remote,
-                                recursive = True,
-                                preserve_times = True)
-                    except scp.SCPException:
-                        print ("Error uploading via SCP, SCPException")
-                scp.close()
+                    ssh.connect(server,
+                                username=user,
+                                port=port)
+                except socket.error:
+                    print ("Error uploading via SCP, socket error")
+                except ssh_exception.SSHException:
+                    print ("Error uploading via SCP, SSHException")
             else:
-                no_storage = True
+                try:
+                    ssh.connect(server,
+                                username=user,
+                                password=password,
+                                port=port)
+                except socket.error:
+                    print ("Error uploading via SCP, socket error")
+                except ssh_exception.SSHException:
+                    print ("Error uploading via SCP, SSHException")
+
+            # TODO crossplataform?:
+            filepath_remote = os.path.join(path,
+                                            str(options['job_id']))
+            with SCPClient(ssh.get_transport()) as scp:
+                print ("Uploading via SCP")
+                try:
+                    scp.put(workeroutputpath,
+                            filepath_remote,
+                            recursive = True,
+                            preserve_times = True)
+                except scp.SCPException:
+                    print ("Error uploading via SCP, SCPException")
+            scp.close()
         else:
             no_storage = True
+    else:
+        no_storage = True
 
-        if no_storage:
-            tfiles = [
-                ('taskfile', (
-                    'taskfile.zip', open(taskfile, 'rb'), 'application/zip'))]
+    if no_storage:
+        tfiles = [
+            ('taskfile', (
+                'taskfile.zip', open(taskfile, 'rb'), 'application/zip'))]
 
-        params = {
-            'status': status,
-            'log': log[-256:],
-            'activity': activity,
-            'time_cost': time_cost,
-            'job_id': options['job_id'],
-            }
+    params = {
+        'status': status,
+        'log': log[-256:],
+        'activity': activity,
+        'time_cost': time_cost,
+        'job_id': options['job_id'],
+        }
 
-        try:
-            # Send results of the task to the server
-            requests.patch(
-                'http://{0}/tasks/{1}'.format(
-                    FLAMENCO_MANAGER, options['task_id']),
-                data=params,
-                files=tfiles,
-            )
-            CONNECTIVITY = True
-        except ConnectionError:
-            logging.error(
-                'Cant connect with the Manager {0}'.format(FLAMENCO_MANAGER))
-            CONNECTIVITY = False
+    try:
+        # Send results of the task to the server
+        requests.patch(
+            'http://{0}/tasks/{1}'.format(
+                FLAMENCO_MANAGER, options['task_id']),
+            data=params,
+            files=tfiles,
+        )
+        CONNECTIVITY = True
+    except ConnectionError:
+        logging.error(
+            'Cant connect with the Manager {0}'.format(FLAMENCO_MANAGER))
+        CONNECTIVITY = False
 
-        logging.debug( 'Return code: {0}'.format(retcode) )
+    logging.debug( 'Return code: {0}'.format(retcode) )
 
-        PROCESS = None
-        ACTIVITY = None
-        LOG = None
-        TIME_INIT = None
-
-    except OSError:
-        # If we got to here, chances are we could not find the path to the Blender binary.
-        # This code is getting the path that we think where the Blender binary is located 
-        # at so we can show it in the output and hhen printing a message and continuting on.
-        #
-        # render_command[0] works, but thinking it is a little more understandable 
-        # to get it this way.  Although it's a loop so it's O(N), but 
-        # this is only ran on error (not normal usage), and the contenets in render_command are small,
-        # so it should not affect the performance negatively.  
-        # SMM - 09/19/2015
-        for cmd, val in enumerate(render_command):
-            if cmd == 0:
-                    blender_binary = render_command[cmd]
-            
-        print ("\nCould not find the path to the Blender binary.  Please check Manager configuration.")
-        print ("This is the path that the Manager currently has specificied: %s\n" % blender_binary)
+    PROCESS = None
+    ACTIVITY = None
+    LOG = None
+    TIME_INIT = None
 
 def execute_task(task, files):
     global PROCESS
