@@ -75,14 +75,17 @@ npm install
 grunt
 ```
 
-#### Debian Linux
-On linux you can install NodeJS using the package manager.
+#### Debian Linux Wheezy
+
 ```
-aptitude install python3-pip libmysqlclient-dev build-essential python-dev libjpeg-dev
+aptitude install python3-pip libmysqlclient-dev build-essential python-dev libjpeg8 libjpeg8-dev libfreetype6 libfreetype6-dev zlib1g-dev
+
+# install blender BAM using pip3
 pip3 install blender-bam
 
 # dashboard dependencies
 cd flamenco/dashboard
+# On linux you can install NodeJS using the package manager.
 echo "deb http://ftp.us.debian.org/debian wheezy-backports main" >> /etc/apt/sources.list
 apt-get update
 apt-get install nodejs nodejs-legacy curl
