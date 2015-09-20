@@ -83,6 +83,9 @@ aptitude install python3-pip libmysqlclient-dev build-essential python-dev libjp
 # install blender BAM using pip3
 pip3 install blender-bam
 
+# install python deps (remember to `source bin/activate` first!)
+install -r $FLAMENCODIR/requirements.txt
+
 # dashboard dependencies
 cd flamenco/dashboard
 # On linux you can install NodeJS using the package manager.
