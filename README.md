@@ -78,7 +78,7 @@ grunt
 #### Debian Linux
 On linux you can install NodeJS using the package manager.
 ```
-aptitude install python3-pip libmysqlclient-dev build-essential python-dev
+aptitude install python3-pip libmysqlclient-dev build-essential python-dev libjpeg-dev
 pip3 install blender-bam
 
 # dashboard dependencies
