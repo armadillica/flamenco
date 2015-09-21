@@ -11,6 +11,11 @@ venv/
 *.ropeproject*
 config.py
 /flamenco/config.py
+/flamenco/server/application/config.py
+/flamenco/manager/application/config.py
+/flamenco/dashboard/application/config.py
+/flamenco/worker/application/config.py
+
 /flamenco/server/render
 /flamenco/manager/application/static/storage/*
 /flamenco/server/application/static/storage/*
