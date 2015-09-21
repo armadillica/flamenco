@@ -6,3 +6,5 @@ class Config(object):
     HOST = '0.0.0.0' # or localhost
     PORT = 5000
     TMP_FOLDER = tempfile.gettempdir()
+    HOSTNAME = socket.gethostname()
+    WORKER_STORAGE_DIR = ''.join(('flamenco-worker-', HOSTNAME))
