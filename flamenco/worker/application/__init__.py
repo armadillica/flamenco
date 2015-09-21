@@ -24,6 +24,8 @@ try:
         FLAMENCO_MANAGER = config.Config.FLAMENCO_MANAGER,
         TMP_FOLDER = config.Config.TMP_FOLDER,
         PORT = config.Config.PORT,
+	HOSTNAME = config.Config.HOSTNAME,
+        WORKER_STORAGE_DIR = config.Config.WORKER_STORAGE_DIR,
     )
 except ImportError:
     # If we don't find the config.py we use the following defaults

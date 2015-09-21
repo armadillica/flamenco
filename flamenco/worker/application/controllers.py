@@ -29,7 +29,6 @@ from application import clean_dir
 from requests.exceptions import ConnectionError
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
-HOSTNAME = app.config['HOSTNAME']
 PLATFORM = platform.system()
 SYSTEM = PLATFORM + ' ' + platform.release()
 PROCESS = None
@@ -39,6 +38,8 @@ LOG = None
 TIME_INIT = None
 CONNECTIVITY = False
 FLAMENCO_MANAGER = app.config['FLAMENCO_MANAGER']
+HOSTNAME = app.config['HOSTNAME']
+#HOSTNAME = app.config['']
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
