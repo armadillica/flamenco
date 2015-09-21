@@ -75,16 +75,18 @@ npm install
 grunt
 ```
 
-#### Debian Linux Wheezy
+#### Debian Linux Wheezy and Ubuntu 14.04
 
 ```
-aptitude install python3-pip libmysqlclient-dev build-essential python-dev libjpeg8 libjpeg8-dev libfreetype6 libfreetype6-dev zlib1g-dev
+sudo aptitude install python3-pip libmysqlclient-dev build-essential python-dev libjpeg8 libjpeg8-dev libfreetype6 libfreetype6-dev zlib1g-dev python-pip
 
+sudo pip install virtualenv
 # install blender BAM using pip3
-pip3 install blender-bam
+sudo pip3 install blender-bam
 
 # install python deps (remember to `source bin/activate` first!)
-pip install -r $FLAMENCODIR/requirements.txt
+# you have to sudo because of mako-render script, it installs to /usr/local/bin as many other dependencies stuffs
+sudo pip install -r $FLAMENCODIR/requirements.txt
 
 # dashboard dependencies
 cd flamenco/dashboard
