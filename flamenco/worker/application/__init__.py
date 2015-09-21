@@ -33,7 +33,7 @@ except ImportError:
     app.config['PORT'] = 5000
 
 # Clean the temp folder from previous sessions
-tmp_folder = os.path.join(app.config['TMP_FOLDER'], 'flamenco-worker')
+tmp_folder = os.path.join(app.config['TMP_FOLDER'], app.config['WORKER_STORAGE_DIR'])
 if not os.path.exists(tmp_folder):
     os.mkdir(tmp_folder)
 
