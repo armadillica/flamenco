@@ -39,7 +39,6 @@ LOG = None
 TIME_INIT = None
 CONNECTIVITY = False
 FLAMENCO_MANAGER = app.config['FLAMENCO_MANAGER']
-WORKER_STORAGE_DIR = ''.join(('flamenco-worker-', HOSTNAME))
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
