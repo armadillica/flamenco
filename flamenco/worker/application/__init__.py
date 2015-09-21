@@ -24,10 +24,7 @@ try:
         FLAMENCO_MANAGER = config.Config.FLAMENCO_MANAGER,
         TMP_FOLDER = config.Config.TMP_FOLDER,
         PORT = config.Config.PORT,
-<<<<<<< HEAD
 	HOSTNAME = config.Config.HOSTNAME,
-=======
->>>>>>> 7666a26d9c8e1a4ca46c20eeebced269b7225952
         WORKER_STORAGE_DIR = config.Config.WORKER_STORAGE_DIR,
     )
 except ImportError:
