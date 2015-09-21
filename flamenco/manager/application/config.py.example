@@ -24,5 +24,8 @@ class Config(object):
     SETTINGS_PATH_WIN = ""
     TMP_FOLDER = tempfile.gettempdir()
     THUMBNAIL_EXTENSIONS = set(['png'])
+    
+    # Don't change this variable until the worker's code will have costant declaration of this path
+    # see controllers.py line 243 to understand
     MANAGER_STORAGE = '{0}/static/storage'.format(
         os.path.join(os.path.dirname(__file__)))
