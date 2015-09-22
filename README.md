@@ -85,8 +85,7 @@ sudo pip install virtualenv
 sudo pip3 install blender-bam
 
 # install python deps (remember to `source bin/activate` first!)
-# you have to sudo because of mako-render script, it installs to /usr/local/bin as many other dependencies stuffs
-sudo pip install -r $FLAMENCODIR/requirements.txt
+pip install -r $FLAMENCODIR/requirements.txt
 
 # dashboard dependencies
 cd flamenco/dashboard
