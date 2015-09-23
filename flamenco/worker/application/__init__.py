@@ -33,6 +33,7 @@ except ImportError:
     app.config['FLAMENCO_MANAGER'] = 'localhost:7777'
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
     app.config['PORT'] = 5000
+    app.config['WORKER_STORAGE_DIR'] = 'flamenco-worker'
 
 # Clean the temp folder from previous sessions
 tmp_folder = os.path.join(app.config['TMP_FOLDER'], app.config['WORKER_STORAGE_DIR'])
