@@ -7,5 +7,6 @@ class Config(object):
     HOST = '0.0.0.0' # or localhost
     PORT = 5000
     TMP_FOLDER = tempfile.gettempdir()
+    BLENDER_PATH = '/opt/blender-2.75a-linux-glibc211-x86_64/blender'
     HOSTNAME = socket.gethostname()
     WORKER_STORAGE_DIR = ''.join(('flamenco-worker-', HOSTNAME))
