@@ -29,13 +29,18 @@ try:
         BLENDER_PATH = config.Config.BLENDER_PATH,
 
     )
-except ImportError:
+except ImportError as e:
+    print e   
+    import socket
     # If we don't find the config.py we use the following defaults
     logging.info("Configuration file not found, using defaults")
     app.config['FLAMENCO_MANAGER'] = 'localhost:7777'
     app.config['TMP_FOLDER'] = tempfile.gettempdir()
     app.config['PORT'] = 5000
     app.config['WORKER_STORAGE_DIR'] = 'flamenco-worker'
+    app.config['HOSTNAME'] = socket.gethostname()
+    app.config['BLENDER_PATH'] = '/usr/bin/blender'
+
 
 # Clean the temp folder from previous sessions
 tmp_folder = os.path.join(app.config['TMP_FOLDER'], app.config['WORKER_STORAGE_DIR'])
