@@ -511,8 +511,8 @@ def run_blender_in_thread(options):
         render_command[cmd] = render_command[cmd].replace(
             "==outputpath==",outputpath)
         render_command[cmd] = render_command[cmd].replace(
-            "==command==",
-            compiler_settings['commands'][command_name][PLATFORM])
+            "==command==", app.config['BLENDER_PATH'])
+            #compiler_settings['commands'][command_name][PLATFORM])
 
     os.environ['WORKER_DEPENDPATH'] = dependpath
     os.environ['WORKER_OUTPUTPATH'] = outputpath
