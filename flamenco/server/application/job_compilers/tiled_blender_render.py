@@ -25,8 +25,8 @@ class job_compiler():
         task_settings['output_path_osx'] = os.path.join(project.render_path_osx, str(job.id))
         task_settings['priority'] = job.priority
 
-        task_settings['frame_start']=job_settings['frame_start']
-        task_settings['frame_end']=job_settings['frame_start']
+        task_settings['frame_start']=job_settings['frames'].split('-')[0]
+        task_settings['frame_end']=job_settings['frames'].split('-')[0]
 
         tiles = 4
         task_settings['tiles']=tiles
