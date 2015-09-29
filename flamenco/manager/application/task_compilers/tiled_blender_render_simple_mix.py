@@ -38,7 +38,7 @@ class task_compiler():
             logging.warning("Render settings path not set!")
             return None"""
 
-        tiles_path = "tiled_{{0}}_{0:04d}.exr".format(settings['frame_start'])
+        tiles_path = "tiled_{{0}}_{0:04d}.exr".format(int(settings['frame_start']))
 
         # render_settings = os.path.join(
         #     setting_render_settings,

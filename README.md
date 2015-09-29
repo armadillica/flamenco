@@ -75,33 +75,37 @@ npm install
 grunt
 ```
 
-#### Debian Linux Wheezy
+#### Debian Linux Wheezy and Ubuntu 14.04
 
 ```
-aptitude install python3-pip libmysqlclient-dev build-essential python-dev libjpeg8 libjpeg8-dev libfreetype6 libfreetype6-dev zlib1g-dev
+sudo aptitude install python3-pip libmysqlclient-dev build-essential python-dev libjpeg8 libjpeg8-dev libfreetype6 libfreetype6-dev zlib1g-dev python-pip
 
+sudo pip install virtualenv
 # install blender BAM using pip3
-pip3 install blender-bam
+sudo pip3 install blender-bam
 
 # install python deps (remember to `source bin/activate` first!)
 pip install -r $FLAMENCODIR/requirements.txt
 
 # dashboard dependencies
 cd flamenco/dashboard
+
+# this is needed only on wheezy distribution
+sudo echo "deb http://ftp.us.debian.org/debian wheezy-backports main" >> /etc/apt/sources.list
+sudo apt-get update
+
 # On linux you can install NodeJS using the package manager.
-echo "deb http://ftp.us.debian.org/debian wheezy-backports main" >> /etc/apt/sources.list
-apt-get update
-apt-get install nodejs nodejs-legacy curl
-curl -L --insecure https://www.npmjs.org/install.sh | bash
-npm install -g grunt-cli
-apt-get install ruby
-gem install sass
-npm install
+sudo apt-get install nodejs nodejs-legacy curl
+sudo curl -L --insecure https://www.npmjs.org/install.sh | bash
+sudo npm install -g grunt-cli
+sudo apt-get install ruby
+sudo gem install sass
+sudo npm install
 grunt
 ```
 
 ## Running Flamenco
-It's pretty simple. Move into each folder (dashboard, server, manager or worker)
+It's pretty simple. Move into each folder ( server, manager, dashboard, worker)
 and run:
 
 ```
