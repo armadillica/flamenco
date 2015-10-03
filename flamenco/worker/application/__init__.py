@@ -24,13 +24,12 @@ try:
         FLAMENCO_MANAGER = config.Config.FLAMENCO_MANAGER,
         TMP_FOLDER = config.Config.TMP_FOLDER,
         PORT = config.Config.PORT,
-	HOSTNAME = config.Config.HOSTNAME,
+        HOSTNAME = config.Config.HOSTNAME,
         WORKER_STORAGE_DIR = config.Config.WORKER_STORAGE_DIR,
         BLENDER_PATH = config.Config.BLENDER_PATH,
 
     )
 except ImportError as e:
-    print e   
     import socket
     # If we don't find the config.py we use the following defaults
     logging.info("Configuration file not found, using defaults")
