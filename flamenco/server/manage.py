@@ -12,7 +12,6 @@ from alembic.migration import MigrationContext
 
 from application import app
 from application import db
-# from tests import unittest
 
 from application.modules.jobs.model import Job
 from application.modules.tasks.model import Task
@@ -73,51 +72,6 @@ def runserver():
         debug=DEBUG,
         host=HOST,
         threaded=True)
-
-
-@manager.command
-def evacuate_task_logs(tasks_count):
-    import os
-    import tarfile
-
-    tasks_count = int(tasks_count)
-
-    index = 1
-
-    while index < tasks_count:
-        print "{0}/{1}".format(index, tasks_count)
-        index += 1
-        task = Task.query.get(index)
-        if task and task.log:
-            print "Processing task {0} - {1}".format(task.id, task.name)
-            path_job = os.path.join(
-                    app.config['SERVER_STORAGE'],
-                    str(task.job.project.id),
-                    str(task.job.id))
-            if os.path.isdir(path_job):
-                path_logs = os.path.join(
-                    path_job,
-                    'logs'
-                    )
-                try:
-                    os.makedirs(path_logs)
-                except Exception, e:
-                    pass
-                print path_logs
-                logfile_name = "{0}.txt".format(task.id)
-                tarfile_name = "{0}.tar.gz".format(task.id)
-                path_logfile = os.path.join(path_logs, logfile_name)
-                path_tarfile = os.path.join(path_logs, tarfile_name)
-                if not os.path.isfile(path_logfile) and not os.path.isfile(tarfile_name):
-                    with open(path_logfile, "w") as text_file:
-                        text_file.write(task.log)
-                    with tarfile.open(path_tarfile, "w:gz") as tar:
-                        tar.add(path_logfile, arcname=logfile_name)
-                    os.remove(path_logfile)
-
-                    print "Written log for task {0}".format(task.id)
-                    task.log = None
-                    db.session.commit()
 
 if __name__ == "__main__":
     manager.run()
