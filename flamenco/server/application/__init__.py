@@ -22,12 +22,13 @@ try:
     app.config['THUMBNAIL_EXTENSIONS']= config.Config.THUMBNAIL_EXTENSIONS
     app.config['SERVER_STORAGE'] = config.Config.SERVER_STORAGE
 except ImportError:
-    #from modules.managers.model import Manager
+
     app.config.update(
-        SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(os.path.dirname(__file__), '../server.sqlite'),
+        SQLALCHEMY_DATABASE_URI='sqlite:///{0}'.format(
+            os.path.join(os.path.dirname(__file__), '../server.sqlite')),
         TMP_FOLDER=tempfile.gettempdir(),
         THUMBNAIL_EXTENSIONS=set(['png']),
-        SERVER_STORAGE = '{0}/static/storage'.format(
+        SERVER_STORAGE='{0}/static/storage'.format(
             os.path.join(os.path.dirname(__file__)))
     )
 
