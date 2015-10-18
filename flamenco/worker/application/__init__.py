@@ -22,11 +22,9 @@ try:
     import config
     app.config.update(
         FLAMENCO_MANAGER = config.Config.FLAMENCO_MANAGER,
-        TMP_FOLDER = config.Config.TMP_FOLDER,
+        STORAGE_DIR = config.Config.STORAGE_DIR,
         PORT = config.Config.PORT,
         HOSTNAME = config.Config.HOSTNAME,
-        WORKER_STORAGE_DIR = config.Config.WORKER_STORAGE_DIR,
-        BLENDER_PATH = config.Config.BLENDER_PATH,
 
     )
 except ImportError as e:
@@ -34,15 +32,14 @@ except ImportError as e:
     # If we don't find the config.py we use the following defaults
     logging.info("Configuration file not found, using defaults")
     app.config['FLAMENCO_MANAGER'] = 'localhost:7777'
-    app.config['TMP_FOLDER'] = tempfile.gettempdir()
     app.config['PORT'] = 5000
-    app.config['WORKER_STORAGE_DIR'] = 'flamenco-worker'
     app.config['HOSTNAME'] = socket.gethostname()
-    app.config['BLENDER_PATH'] = '/usr/bin/blender'
-
+    app.config['STORAGE_DIR'] = os.path.join(tempfile.gettempdir(),
+                                            'flamenco-worker',
+                                            app.config['HOSTNAME'])
 
 # Clean the temp folder from previous sessions
-tmp_folder = os.path.join(app.config['TMP_FOLDER'], app.config['WORKER_STORAGE_DIR'])
+tmp_folder = app.config['STORAGE_DIR']
 if not os.path.exists(tmp_folder):
     os.mkdir(tmp_folder)
 

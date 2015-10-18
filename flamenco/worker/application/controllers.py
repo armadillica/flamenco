@@ -39,7 +39,6 @@ TIME_INIT = None
 CONNECTIVITY = False
 FLAMENCO_MANAGER = app.config['FLAMENCO_MANAGER']
 HOSTNAME = app.config['HOSTNAME']
-#HOSTNAME = app.config['']
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
@@ -216,12 +215,9 @@ def worker_loop():
                 'Cant connect with the Manager {0}'.format(app.config['FLAMENCO_MANAGER']))
             CONNECTIVITY = False
 
+        clean_dir(app.config['STORAGE_DIR'], task['job_id'])
 
-        tmp_folder = os.path.join(app.config['TMP_FOLDER'], app.config['WORKER_STORAGE_DIR'])
-        clean_dir(tmp_folder, task['job_id'])
-
-        jobpath = os.path.join(app.config['TMP_FOLDER'],
-                               app.config['WORKER_STORAGE_DIR'],
+        jobpath = os.path.join(app.config['STORAGE_DIR'],
                                str(task['job_id']))
         if not os.path.exists(jobpath):
             os.mkdir(jobpath)
@@ -406,8 +402,7 @@ def _parse_output(tmp_buffer, options):
     #    # action.append('stop')
 
     LOG = "{0}{1}".format(LOG, tmp_buffer)
-    logpath = os.path.join(app.config['TMP_FOLDER'],
-                           app.config['WORKER_STORAGE_DIR'],
+    logpath = os.path.join(app.config['STORAGE_DIR'],
                            "{0}.log".format(task_id))
     f = open(logpath, 'a')
     f.write(tmp_buffer)
@@ -479,7 +474,7 @@ def run_blender_in_thread(options):
 
     render_command = json.loads(options['task_command'])
 
-    workerstorage = os.path.join(app.config['TMP_FOLDER'], app.config['WORKER_STORAGE_DIR'])
+    workerstorage = app.config['STORAGE_DIR']
     tmppath = os.path.join(
         workerstorage, str(options['job_id']))
     outpath = os.path.join(tmppath, 'output')
@@ -511,16 +506,15 @@ def run_blender_in_thread(options):
         render_command[cmd] = render_command[cmd].replace(
             "==outputpath==",outputpath)
         render_command[cmd] = render_command[cmd].replace(
-            "==command==", app.config['BLENDER_PATH'])
-            #compiler_settings['commands'][command_name][PLATFORM])
+            "==command==", compiler_settings['commands'][command_name][PLATFORM])
 
     os.environ['WORKER_DEPENDPATH'] = dependpath
     os.environ['WORKER_OUTPUTPATH'] = outputpath
     os.environ['WORKER_JOBPATH'] = jobpath
 
-    print ( "Running:")
+    print("Running:")
     for cmd in render_command:
-        print (cmd)
+        print(cmd)
 
     TIME_INIT = int(time.time())
     PROCESS = subprocess.Popen(render_command,
@@ -571,7 +565,7 @@ def run_blender_in_thread(options):
         time_cost = 0
         logging.error("time_init is None")
 
-    workerstorage = os.path.join(app.config['TMP_FOLDER'], app.config['WORKER_STORAGE_DIR'])
+    workerstorage = app.config['STORAGE_DIR']
     taskpath = os.path.join(
         workerstorage,
         str(options['job_id']),
@@ -741,8 +735,7 @@ def execute_task(task, files):
         'compiler_settings': task['compiler_settings'],
     }
 
-    workerstorage = os.path.join(app.config['TMP_FOLDER'], app.config['WORKER_STORAGE_DIR'])
-    taskpath = os.path.join(workerstorage, str(options['job_id']))
+    taskpath = os.path.join(app.config['STORAGE_DIR'], str(options['job_id']))
     zippath = os.path.join(taskpath, str(options['job_id']))
 
     options['jobpath'] = taskpath
