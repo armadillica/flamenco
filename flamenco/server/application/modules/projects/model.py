@@ -1,25 +1,19 @@
-from datetime import date
+import datetime
 from application import db
 from application.modules.settings.model import Setting
 
 
 class Project(db.Model):
-    """Production project folders
-
-    This is a temporary table to get quickly up and running with project
-    support in flamenco. In the future, project definitions could come from
-    attract or it could be defined in another way.
+    """The project model is used mostly for overview queries on jobs. Most of
+    the configuration values that were originally associated with a project
+    have been moved to the managers.
     """
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120))
-    path_server = db.Column(db.Text())
-    path_linux = db.Column(db.Text())
-    path_win = db.Column(db.Text())
-    path_osx = db.Column(db.Text())
-    render_path_server = db.Column(db.Text())
-    render_path_linux = db.Column(db.Text())
-    render_path_win = db.Column(db.Text())
-    render_path_osx = db.Column(db.Text())
+    status = db.Column(db.String(80))
+    creation_date = db.Column(db.DateTime(), default=datetime.datetime.now)
+
 
     @property
     def is_active(self):

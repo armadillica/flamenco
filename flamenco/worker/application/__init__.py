@@ -21,10 +21,10 @@ try:
     # Load config.py if available
     import config
     app.config.update(
-        FLAMENCO_MANAGER = config.Config.FLAMENCO_MANAGER,
-        STORAGE_DIR = config.Config.STORAGE_DIR,
-        PORT = config.Config.PORT,
-        HOSTNAME = config.Config.HOSTNAME,
+        FLAMENCO_MANAGER=config.Config.FLAMENCO_MANAGER,
+        STORAGE_DIR=config.Config.STORAGE_DIR,
+        PORT=config.Config.PORT,
+        HOSTNAME=config.Config.HOSTNAME,
 
     )
 except ImportError as e:
