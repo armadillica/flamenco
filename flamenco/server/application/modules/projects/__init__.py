@@ -1,5 +1,3 @@
-from flask import jsonify
-from flask import request
 from flask.ext.restful import Resource
 from flask.ext.restful import fields
 from flask.ext.restful import marshal_with
@@ -10,10 +8,9 @@ from application.modules.settings.model import Setting
 from application.modules.jobs.model import Job
 
 
-parser = reqparse.RequestParser()
-parser.add_argument('name', type=str)
-parser.add_argument('is_active', type=bool)
-
+parser_project = reqparse.RequestParser()
+parser_project.add_argument('name', type=str)
+parser_project.add_argument('is_active', type=bool)
 
 project_fields = {
     'id' : fields.Integer,
@@ -34,11 +31,10 @@ class ProjectListApi(Resource):
         for project in Project.query.all():
             projects[project.id] = dict(
                 name=project.name)
-        return jsonify(projects)
 
     @marshal_with(project_fields)
     def post(self):
-        args = parser.parse_args()
+        args = parser_project.parse_args()
         project = Project(
             name=args['name'])
         db.session.add(project)
@@ -47,7 +43,8 @@ class ProjectListApi(Resource):
         if args['is_active'] is not None:
             if args['is_active'] == True:
                 # Check if the setting already exists
-                setting_active_project = Setting.query.filter_by(name='active_project').first()
+                setting_active_project = Setting.query.filter_by(
+                    name='active_project').first()
                 if setting_active_project:
                     setting_active_project.value = project.id
                 else:
@@ -66,13 +63,13 @@ class ProjectApi(Resource):
         return project
 
     def delete(self, project_id):
-        setting_active_project = Setting.query.filter_by(name='active_project').first()
+        setting_active_project = Setting.query.filter_by(
+            name='active_project').first()
         if setting_active_project:
             if setting_active_project.value == str(project_id):
                 setting_active_project.value = None
-        jobs_project = Job.query.filter_by(project_id = project_id).all()
+        jobs_project = Job.query.filter_by(project_id=project_id).all()
         for job_project in jobs_project:
-            # print '[Debug] Deleting job (%s) for project %s ' % (job_project.job_name, job_project.project_id)
             db.session.delete(job_project)
             db.session.commit()
         project = Project.query.get_or_404(project_id)
@@ -82,7 +79,7 @@ class ProjectApi(Resource):
 
     @marshal_with(project_fields)
     def put(self, project_id):
-        args = parser.parse_args()
+        args = parser_project.parse_args()
         project = Project.query.get_or_404(project_id)
         if args['name']:
             project.name = args['name']
