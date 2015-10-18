@@ -83,7 +83,7 @@ job_fields = {
     'notes': fields.String
 }
 
-class jobInfo():
+class JobInfo():
 
     @staticmethod
     def get_overview(job):
@@ -124,9 +124,7 @@ class jobInfo():
             time_elapsed = datetime.now() - job.creation_date
             time_elapsed = int(time_elapsed.total_seconds())
 
-        username = None
-        if job.user:
-            username = job.user.username
+        username = None if not job.user else job.user.username
 
         job_info = {
             'id': job.id,
@@ -301,7 +299,7 @@ class JobListApi(Resource):
             # Otherwise we provide all jobs that have not been archived
             jobs_query = Job.query.filter(Job.status != 'archived').all()
         for job in jobs_query :
-            jobs[job.id] = jobInfo.get_overview(job)
+            jobs[job.id] = JobInfo.get_overview(job)
 
         return jsonify(jobs)
 
@@ -459,7 +457,7 @@ class JobListApi(Resource):
 class JobApi(Resource):
     def get(self, job_id):
         job = Job.query.get(job_id)
-        job_info = jobInfo.get(job, embed_tasks=True)
+        job_info = JobInfo.get(job, embed_tasks=True)
         return jsonify(job_info)
 
     @marshal_with(job_fields)
