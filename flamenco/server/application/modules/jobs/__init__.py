@@ -70,8 +70,8 @@ command_parser.add_argument('command', type=str)
 parser_thumbnail = reqparse.RequestParser()
 parser_thumbnail.add_argument('task_id', type=int)
 
-jobs_list_parser = reqparse.RequestParser()
-jobs_list_parser.add_argument('status', type=str)
+parser_job_list = reqparse.RequestParser()
+parser_job_list.add_argument('status', type=str)
 
 job_fields = {
     'project_id': fields.Integer,
@@ -284,20 +284,15 @@ class JobInfo():
 
 class JobListApi(Resource):
     def get(self):
-        args = jobs_list_parser.parse_args()
+        args = parser_job_list.parse_args()
         jobs = {}
-        # jobs_query = Job.query\
-        #     .filter(Job.status != 'archived')\
-        #     .options(Load(Task).load_only('log'))\
-        #     .all()
-        # Old jobs query (inefficient and to be removed)
-
         # Check if we are requiring a specific job status to use as filter
         if args['status']:
             jobs_query = Job.query.filter(Job.status == args['status']).all()
         else:
             # Otherwise we provide all jobs that have not been archived
             jobs_query = Job.query.filter(Job.status != 'archived').all()
+
         for job in jobs_query :
             jobs[job.id] = JobInfo.get_overview(job)
 
@@ -569,13 +564,6 @@ class JobApi(Resource):
 
                 TaskApi.delete_tasks(job.id)
                 TaskApi.create_tasks(job)
-
-                # Security check
-                # insecure_names = [None, "", "/", "\\", ".", ".."]
-                # path = join(job.project.render_path_server, str(job.id))
-                # if job.project.render_path_server not in insecure_names and str(job.id) not in insecure_names:
-                #     if exists(path):
-                #         rmtree(path)
                 logging.info('Job {0} reset end ready'.format(job_id))
 
         else:
@@ -603,13 +591,6 @@ class JobDeleteApi(Resource):
             TaskApi.delete_tasks(j)
             job = Job.query.get(j)
             if job:
-                #path = join(job.project.render_path_server, str(j))
-                #Security check
-                #insecure_names=[None, "", "/", "\\", ".", ".."]
-                #if job.project.render_path_server not in insecure_names and str(j) not in insecure_names:
-                #    if exists(path):
-                #        rmtree(path)
-
                 db.session.query(JobManagers)\
                     .filter(JobManagers.job_id == job.id).delete()
                 db.session.delete(job)
@@ -688,7 +669,6 @@ class JobThumbnailApi(Resource):
             else:
                 logging.error("Generic error making the thumbnail")
                 return None
-
 
         def generate(job_id, size):
             """Generate a thumbnail for the requested job id, at the requested
