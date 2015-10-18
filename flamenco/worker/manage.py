@@ -15,7 +15,8 @@ from application import controllers
 @manager.command
 @manager.option('-p', '--port', help='The port', default=None)
 @manager.option('-m', '--manager', help='Manager address. Default is localhost:7777', default=None)
-def runserver(port_number=None, manager=None):
+@manager.option('-l', '--loop', help='Loop time. Defaul is 5 seconds.', default=5)
+def runserver(port_number=None, manager=None, loop=5):
     # global LOOP_THREAD
     # try:
     #     from application import config
@@ -50,7 +51,7 @@ def runserver(port_number=None, manager=None):
 
     while True:
         controllers.worker_loop()
-        time.sleep(5)
+        time.sleep(float(loop))
 
     """if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
         #controllers.register_worker(PORT)
