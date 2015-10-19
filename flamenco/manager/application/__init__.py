@@ -125,7 +125,7 @@ from modules.job_types import JobTypeApi
 api.add_resource(JobTypeListApi, '/job-types')
 api.add_resource(JobTypeApi, '/job-types/<string:name>')
 
-def register_manager(port, name, has_virtual_workers):
+def register_manager(host, name, has_virtual_workers):
     """This is going to be an HTTP request to the server with all the info for
     registering the render node. This is called by the runserver script.
     """
@@ -141,27 +141,32 @@ def register_manager(port, name, has_virtual_workers):
             print ("Cant connect with Server, retrying...")
         time.sleep(1)
 
-    params = {
-        'port' : port,
-        'name' : name,
-        'has_virtual_workers' : has_virtual_workers
-        }
+    params = dict(
+        host=host,
+        name=name,
+        has_virtual_workers=has_virtual_workers)
+
+    # Search in the settings if we have a uuid for the manager
+    token = Setting.query.filter_by(name='token').first()
+    if token:
+        params['token'] = token.value
 
     r = http_request(app.config['FLAMENCO_SERVER'], '/managers', 'post', params=params)
 
-    # Search in the settings if we have a uuid for the manager
-    uuid = Setting.query.filter_by(name='uuid').first()
     # If we don't find one, we proceed to create it, using the server reponse
-    if not uuid:
-        uuid = Setting(name='uuid', value=r['uuid'])
-        db.session.add(uuid)
+    if not token:
+        token = Setting(name='token', value=r['token'])
+        db.session.add(token)
         db.session.commit()
-    # TODO: manage update if uuid already exists and does not match with the one
-    # returned by the server
+    else:
+        token.value = r['token']
+        db.session.commit()
+
 
 @app.route('/')
 def index():
     return jsonify(message='Flamenco manager up and running!')
+
 
 @app.errorhandler(404)
 def not_found(error):

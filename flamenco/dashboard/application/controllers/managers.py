@@ -26,7 +26,7 @@ def index():
             "DT_RowId": "manager_" + str(val['id']),
             "0": val['checkbox'],
             "1": key,
-            "2": val['uuid'],
+            "2": val['host'],
             "3": val['ip_address'],
             "4": val['port'],
             "5": val['connection'],

@@ -17,11 +17,12 @@ from application.modules.managers.model import Manager
 
 from requests.exceptions import ConnectionError
 
-parser = reqparse.RequestParser()
-parser.add_argument('port', type=int)
-parser.add_argument('name', type=str)
-parser.add_argument('total_workers', type=int)
-parser.add_argument('has_virtual_workers', type=int)
+parser_manager = reqparse.RequestParser()
+parser_manager.add_argument('host', type=str)
+parser_manager.add_argument('name', type=str)
+parser_manager.add_argument('token', type=str)
+parser_manager.add_argument('total_workers', type=int)
+parser_manager.add_argument('has_virtual_workers', type=int)
 
 
 class ManagerListApi(Resource):
@@ -30,38 +31,38 @@ class ManagerListApi(Resource):
         the manager already existed. If not, we create one and assign it a
         unique identifier.
         """
-        args = parser.parse_args()
+        args = parser_manager.parse_args()
         ip_address = request.remote_addr
-        port = args['port']
+        token = args['token']
         has_virtual_workers = args['has_virtual_workers']
 
-        manager = Manager.query\
-            .filter_by(ip_address=ip_address)\
-            .filter_by(port=port)\
-            .first()
-
-        if not manager:
-            u = uuid.uuid1()
+        if token:
+            manager = Manager.query\
+                .filter_by(token=token)\
+                .first()
+            if manager:
+                token = uuid.uuid1()
+                manager.token = token.hex
+                db.session.commit()
+                logging.info("Manager token updated: {0}".format(token.hex))
+            else:
+                return '', 404
+        else:
+            token = uuid.uuid1()
             manager = Manager(
                 name=args['name'],
                 ip_address=ip_address,
-                port=port,
                 has_virtual_workers=has_virtual_workers,
-                uuid=u.hex)
+                host=args['host'],
+                token=token.hex)
             db.session.add(manager)
             db.session.commit()
-            logging.info("New manager registered with uuid: {0}".format(u.hex))
-        else:
-            # Handle the case where the manager has no UUID
-            if not manager.uuid:
-                u = uuid.uuid1()
-                manager.uuid = u.hex
-                db.session.commit()
-                logging.info("Manager updated with uuid: {0}".format(u.hex))
+            logging.info("New manager registered with uuid: {0}".format(token.hex))
 
-        logging.info("Manager connected at {0}:{1}".format(manager.ip_address, manager.port))
 
-        return jsonify(uuid=manager.uuid)
+        logging.info("Manager connected at {0}".format(manager.ip_address))
+
+        return jsonify(token=manager.token)
 
 
     def get(self):
@@ -74,44 +75,37 @@ class ManagerListApi(Resource):
                 "id" : manager.id,
                 "name" : manager.name,
                 "ip_address" : manager.ip_address,
-                "port" : manager.port,
+                "host" : manager.host,
                 "connection" : 'online',
-                "uuid": manager.uuid
+                "token": manager.token
             }
         return jsonify(managers)
 
 
 class ManagerApi(Resource):
-    def get(self, manager_uuid):
-        try:
-            manager = Manager.query.filter_by(uuid=manager_uuid).one()
-        except NoResultFound:
-            logging.warning("No manager found in Database")
-            return '', 404
+    def get(self, manager_id):
+        manager = Manager.query.get_or_404(manager_id)
+
         manager_dict = {
             'id': manager.id,
             'ip_address': manager.ip_address,
-            'port': manager.port,
-            'uuid': manager.uuid,
+            'host': manager.host,
+            'token': manager.token,
         }
-        url = 'http://' + manager.ip_address+':'+str(manager.port)+'/settings'
+        url = manager.host + '/settings'
         try:
             r = requests.get(url)
             manager_dict['settings'] = r.text
         except ConnectionError:
             logging.error(
-                'Can not connect with the Manager {0}'.format(manager.uuid))
+                'Can not connect with the Manager {0}'.format(manager.host))
         return jsonify(manager_dict)
 
-    def patch(self, manager_uuid):
+    def patch(self, manager_id):
         from application.modules.tasks import TaskApi
 
-        args = parser.parse_args()
-        try:
-            manager = Manager.query.filter_by(uuid=manager_uuid).one()
-        except NoResultFound:
-            logging.warning("No manager found in Database")
-            return '', 404
+        args = parser_manager.parse_args()
+        manager = Manager.query.get_or_404(manager_id)
 
         # TODO add try except statement to safely handle .one() query
         manager.total_workers = args['total_workers']

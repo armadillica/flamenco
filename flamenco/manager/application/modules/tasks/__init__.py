@@ -285,14 +285,14 @@ class TaskManagementApi(Resource):
     def get(self, job_types=None):
         # TODO: stop referring to job_types using the name and start using a UUID
         # Get the worker UUID as identification for asking tasks
-        uuid = Setting.query.filter_by(name='uuid').first()
-        # Currently this is implemented as a GET, with the uuid argument optional.
-        # In the future the uuid will be sent in the headers.
+        token = Setting.query.filter_by(name='token').first()
+        # Currently this is implemented as a GET, with the token argument optional.
+        # In the future the token will be sent in the headers.
 
         args = task_management_parser.parse_args()
         worker = args['worker']
 
-        task_generate_params = {'uuid': uuid.value}
+        task_generate_params = {'token': token.value}
         if job_types and job_types != "":
             task_generate_params['job_types'] = job_types
         if worker:

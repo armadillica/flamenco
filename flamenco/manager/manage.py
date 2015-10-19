@@ -104,7 +104,8 @@ def runserver():
             has_virtual_worker = 1
         else:
             has_virtual_worker = 0
-        register_manager(PORT, HOSTNAME, has_virtual_worker)
+        full_host = "{0}:{1}".format(HOST, PORT)
+        register_manager(full_host, HOSTNAME, has_virtual_worker)
 
     app.run(
         port=PORT,

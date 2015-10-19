@@ -47,7 +47,7 @@ api.add_resource(WorkerApi, '/workers/<int:worker_id>')
 from modules.managers import ManagerListApi
 from modules.managers import ManagerApi
 api.add_resource(ManagerListApi, '/managers')
-api.add_resource(ManagerApi, '/managers/<manager_uuid>')
+api.add_resource(ManagerApi, '/managers/<int:manager_id>')
 
 from modules.settings import SettingsListApi
 from modules.settings import ManagersSettingsApi
