@@ -41,7 +41,7 @@ except ImportError as e:
 # Clean the temp folder from previous sessions
 tmp_folder = app.config['STORAGE_DIR']
 if not os.path.exists(tmp_folder):
-    os.mkdir(tmp_folder)
+    os.makedirs(tmp_folder)
 
 clean_dir(tmp_folder)
 
