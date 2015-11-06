@@ -758,7 +758,7 @@ class JobFileApi(Resource):
             while chunk_data:
                 f.write(chunk_data)
                 chunk_data = request.stream.read(size=CHUNK_SIZE)
-        print 'file saved'
+        logging.debug("File saved")
         return ''
 
 
