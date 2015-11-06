@@ -60,22 +60,19 @@ class ManagersSettingsApi(Resource):
         managers = Manager.query.all()
         managers_settings = {}
         for manager in managers:
-            if manager.has_virtual_workers:
-                continue
-            r = None
-            url = 'http://{0}:{1}/settings'.format(
-                manager.ip_address, manager.port)
-            try:
-                r = requests.get(url)
-            except ConnectionError:
-                logging.error(
-                    'Cant connect with the Manager {0}'.format(
-                        manager.ip_address))
-            if r:
-                print (r.json())
-                managers_settings[manager.id] = r.json()
-                managers_settings[manager.id]['manager_name']=manager.name
-
+            if manager.host:
+                if manager.has_virtual_workers:
+                    continue
+                r = None
+                try:
+                    r = requests.get(manager.host)
+                except ConnectionError:
+                    logging.error(
+                        'Cant connect with manager {0}'.format(
+                            manager.host))
+                if r:
+                    managers_settings[manager.id] = r.json()
+                    managers_settings[manager.id]['manager_name']=manager.name
         return jsonify(managers_settings)
 
 class ManagerSettingApi(Resource):

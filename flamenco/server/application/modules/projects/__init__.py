@@ -31,6 +31,7 @@ class ProjectListApi(Resource):
         for project in Project.query.all():
             projects[project.id] = dict(
                 name=project.name)
+        return projects
 
     @marshal_with(project_fields)
     def post(self):

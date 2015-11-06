@@ -516,8 +516,9 @@ def project_list(self, context):
         return []
 
     project_list = []
-    for project in project_cache:
-        project_list.append((project, project_cache[project].get('name'), ''))
+    if project_cache:
+        for project in project_cache:
+            project_list.append((project, project_cache[project].get('name'), ''))
 
     return project_list
 
