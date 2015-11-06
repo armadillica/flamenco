@@ -61,7 +61,7 @@ task_status_parser = reqparse.RequestParser()
 task_status_parser.add_argument('status', type=str)
 
 task_generator_parser = reqparse.RequestParser()
-task_generator_parser.add_argument('uuid', type=str)
+task_generator_parser.add_argument('token', type=str)
 task_generator_parser.add_argument('job_types', type=str)
 task_generator_parser.add_argument('worker', type=str)
 
@@ -510,12 +510,12 @@ class TaskGeneratorApi(Resource):
         tasks = {}
         percentage_done = 0
 
-        manager_uuid = args['uuid']
+        manager_token = args['token']
         job_types = args['job_types']
         worker = args['worker']
 
-        if manager_uuid:
-            manager = Manager.query.filter_by(uuid=manager_uuid).one()
+        if manager_token:
+            manager = Manager.query.filter_by(token=manager_token).one()
         else:
             ip_address = request.remote_addr
             manager = Manager.query.filter_by(ip_address=ip_address).first()

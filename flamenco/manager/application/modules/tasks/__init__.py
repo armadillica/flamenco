@@ -251,7 +251,7 @@ class TaskManagementApi(Resource):
     @marshal_with(task_fields)
     def post(self):
         args = parser.parse_args()
-        task={
+        task = {
             'priority' : args['priority'],
             'settings' : args['settings'],
             'task_id' : args['task_id'],
