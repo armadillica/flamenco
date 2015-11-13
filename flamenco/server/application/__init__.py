@@ -13,7 +13,6 @@ app = Flask(__name__)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-#RENDER_PATH = "render"
 
 try:
     from application import config
