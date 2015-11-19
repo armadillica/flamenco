@@ -28,3 +28,7 @@ config.py
 /flamenco/dashboard/application/templates/layout.html
 /flamenco/dashboard/application/templates/workers/index.html
 /flamenco/dashboard/application/templates/managers/index.html
+/flamenco/dashboard/application/templates/managers/view.html
+
+/flamenco/dashboard/application/templates/errors/404.html
+/flamenco/dashboard/application/templates/errors/500.html
