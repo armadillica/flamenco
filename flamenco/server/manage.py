@@ -2,10 +2,10 @@
 
 # import logging
 import json
-
+import contextlib
+import sqlalchemy.exc
 from flask.ext.script import Manager
 from flask.ext.migrate import MigrateCommand
-# from flask.ext.migrate import current
 from flask.ext.migrate import upgrade
 from sqlalchemy import create_engine
 from alembic.migration import MigrationContext
@@ -43,11 +43,18 @@ def compute_tasks_status():
 
 
 @manager.command
-def runserver():
-    """This command is meant for development. If no configuration is found,
-    we start the app listening from all hosts, from port 9999."""
+def setup_db():
+    """Create database and required tables."""
 
-    # Testig Alembic
+    try:
+        with create_engine(
+            app.config['SQLALCHEMY_DATABASE_URI'],
+        ).connect() as connection:
+            connection.execute('CREATE DATABASE server')
+        print("Database created")
+    except sqlalchemy.exc.ProgrammingError:
+        pass
+
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
     context = MigrationContext.configure(conn)
@@ -57,6 +64,15 @@ def runserver():
         print("Press Ctrl+C when finished")
         upgrade()
         print("Upgrade completed. Press Ctrl+C and runserver again.")
+
+
+@manager.command
+def runserver():
+    """This command is meant for development. If no configuration is found,
+    we start the app listening from all hosts, from port 9999.
+    """
+
+    setup_db()
 
     try:
         from application import config

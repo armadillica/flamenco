@@ -13,7 +13,7 @@ python-openssl \
 libmysqlclient-dev \
 libssl-dev \
 libffi-dev \
-software-properties-common
+software-properties-common \
 apache2-mpm-event \
 libapache2-mod-wsgi \
 libapache2-mod-xsendfile
@@ -47,9 +47,11 @@ VOLUME /data/config
 VOLUME /data/storage/shared
 VOLUME /data/storage/manager
 
-
-EXPOSE 80
+EXPOSE 7777
 
 ADD 000-default.conf /etc/apache2/sites-available/000-default.conf
+ADD runserver.sh /runserver.sh
+ADD manage.sh /manage.sh
 
-CMD ["/usr/sbin/apache2", "-D", "FOREGROUND"]
+ENTRYPOINT ["bash", "/runserver.sh"]
+

@@ -43,4 +43,4 @@ EXPOSE 8888
 ADD runserver.sh /runserver.sh
 ADD setup.sh /setup.sh
 
-ENTRYPOINT ["bash", "/setup.sh"]
+ENTRYPOINT ["bash", "/runserver.sh"]

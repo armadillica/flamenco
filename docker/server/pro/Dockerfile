@@ -13,7 +13,7 @@ python-openssl \
 libmysqlclient-dev \
 libssl-dev \
 libffi-dev \
-software-properties-common
+software-properties-common \
 apache2-mpm-event \
 libapache2-mod-wsgi \
 libapache2-mod-xsendfile
@@ -35,7 +35,7 @@ RUN mkdir -p $APACHE_RUN_DIR $APACHE_LOCK_DIR $APACHE_LOG_DIR
 RUN pip install virtualenv \
 && virtualenv /data/venv
 
-ENV PIP_PACKAGES_VERSION = 2
+ENV PIP_PACKAGES_VERSION = 3
 ADD requirements.txt /requirements.txt
 
 RUN . /data/venv/bin/activate && pip install -r /requirements.txt
@@ -45,8 +45,10 @@ VOLUME /data/config
 VOLUME /data/storage/shared
 VOLUME /data/storage/server
 
-EXPOSE 80
+EXPOSE 9999
 
 ADD 000-default.conf /etc/apache2/sites-available/000-default.conf
+ADD runserver.sh /runserver.sh
+ADD manage.sh /manage.sh
 
-CMD ["/usr/sbin/apache2", "-D", "FOREGROUND"]
+ENTRYPOINT ["bash", "/runserver.sh"]

@@ -6,4 +6,5 @@ if [ ! -e /installed ]; then
 	touch /installed
 fi
 
-. /data/venv/bin/activate && cd /data/git/manager && python manage.py runserver
+# Run Apache
+/usr/sbin/apache2 -D FOREGROUND
