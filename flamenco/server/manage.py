@@ -54,6 +54,8 @@ def setup_db():
         print("Database created")
     except sqlalchemy.exc.ProgrammingError:
         pass
+    except sqlalchemy.exc.OperationalError:
+        pass
 
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
