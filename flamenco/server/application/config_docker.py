@@ -5,4 +5,4 @@ class Config(object):
     DATABASE_NAME = 'server'
     SQLALCHEMY_DATABASE_URI = os.path.join(DATABASE_URI, DATABASE_NAME)
     THUMBNAIL_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
-    SERVER_STORAGE = '/data/storage/server'
+    STORAGE_SERVER = '/data/storage/server'

@@ -10,5 +10,5 @@ class Config(object):
     HOST = '0.0.0.0' # or 'localhost'
     TMP_FOLDER = tempfile.gettempdir()
     THUMBNAIL_EXTENSIONS = set(['png'])
-    SERVER_STORAGE = '{0}/static/storage'.format(
+    STORAGE_SERVER = '{0}/static/storage'.format(
         os.path.join(os.path.dirname(__file__)))

@@ -134,7 +134,7 @@ class TaskApi(Resource):
         # print (r)
         if not r['file']:
             job = Job.query.get(task.job_id)
-            serverstorage = app.config['SERVER_STORAGE']
+            serverstorage = app.config['STORAGE_SERVER']
             projectpath = os.path.join(serverstorage, str(job.project_id))
             jobpath = os.path.join(projectpath, str(job.id))
             zippath = os.path.join(jobpath, "jobfile_{0}.zip".format(job.id))
@@ -342,7 +342,7 @@ class TaskApi(Resource):
         if task.status in ['canceled', 'completed']:
             return '', 403
 
-        serverstorage = app.config['SERVER_STORAGE']
+        serverstorage = app.config['STORAGE_SERVER']
         projectpath = os.path.join(serverstorage, str(job.project_id))
 
         try:
@@ -620,7 +620,7 @@ class TaskFileOutputApi(Resource):
     def get(self, task_id):
         """Given a task_id returns the output zip file
         """
-        serverstorage = app.config['SERVER_STORAGE']
+        serverstorage = app.config['STORAGE_SERVER']
         task = Task.query.get(task_id)
         job = Job.query.get(task.job_id)
         projectpath = os.path.join(serverstorage, str(job.project_id))

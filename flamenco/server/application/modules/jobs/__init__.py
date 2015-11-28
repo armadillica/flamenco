@@ -419,7 +419,7 @@ class JobListApi(Resource):
         db.session.add(job)
         db.session.commit()
 
-        serverstorage = app.config['SERVER_STORAGE']
+        serverstorage = app.config['STORAGE_SERVER']
         projectpath = join(serverstorage, str(job.project_id))
 
         try:
@@ -738,7 +738,7 @@ class JobFileApi(Resource):
         """Given a job_id returns the jobzip file
         """
         job = Job.query.get(job_id)
-        serverstorage = app.config['SERVER_STORAGE']
+        serverstorage = app.config['STORAGE_SERVER']
         projectpath = join(serverstorage, str(job.project_id))
         jobpath = join(projectpath, str(job_id))
         return send_from_directory(jobpath, 'jobfile_{0}.zip'.format(job_id))
@@ -746,7 +746,7 @@ class JobFileApi(Resource):
     def post(self, job_id):
         CHUNK_SIZE = 32 * 1024 * 1024
         job = Job.query.get_or_404(job_id)
-        serverstorage = app.config['SERVER_STORAGE']
+        serverstorage = app.config['STORAGE_SERVER']
         filepath = join(
             serverstorage,
             str(job.project_id),
@@ -766,7 +766,7 @@ class JobFileOutputApi(Resource):
     def get(self, job_id):
         """Given a task_id returns the output zip file
         """
-        serverstorage = app.config['SERVER_STORAGE']
+        serverstorage = app.config['STORAGE_SERVER']
         job = Job.query.get(job_id)
         projectpath = join(serverstorage, str(job.project_id))
         jobpath = join(projectpath, str(job_id))
