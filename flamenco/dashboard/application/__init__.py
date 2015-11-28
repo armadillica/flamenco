@@ -1,3 +1,4 @@
+import os
 import requests
 from HTMLParser import HTMLParser
 from flask import Flask

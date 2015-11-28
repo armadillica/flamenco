@@ -1,5 +1,4 @@
 import os
-import tempfile
 from flask import Flask
 from flask import jsonify
 from flask.ext.sqlalchemy import SQLAlchemy
