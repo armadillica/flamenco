@@ -24,16 +24,19 @@ manager.add_command('db', MigrateCommand)
 @manager.command
 def setup_db():
     """Create database and required tables."""
-    try:
-        with create_engine(
-            app.config['SQLALCHEMY_DATABASE_URI'],
-        ).connect() as connection:
-            connection.execute('CREATE DATABASE manager')
-        print("Database created")
-    except sqlalchemy.exc.ProgrammingError:
-        pass
-    except sqlalchemy.exc.OperationalError:
-        pass
+    if not app.config['DATABASE_URI'].startswith('sqlite'):
+        try:
+            with create_engine(
+                app.config['DATABASE_URI'],
+            ).connect() as connection:
+                connection.execute('CREATE DATABASE {0}'.format(
+                    app.config['DATABASE_NAME']))
+            print("Database created")
+        except sqlalchemy.exc.OperationalError:
+            pass
+        except sqlalchemy.exc.ProgrammingError:
+            # If database already exists
+            pass
 
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     conn = engine.connect()
