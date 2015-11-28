@@ -2,7 +2,8 @@
 
 # Run setup if installed flag is not found
 if [ ! -e /installed ]; then
-	bash manage.sh setup_db
+	# Enable venv, move next to alembic migration folder, run migration
+	. /data/venv/bin/activate && cd /data/git/manager && python manage.py setup_db && cd /
 	touch /installed
 fi
 

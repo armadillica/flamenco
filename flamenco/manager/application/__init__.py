@@ -23,41 +23,7 @@ from application.modules.settings.model import Setting
 
 try:
     from application import config
-    app.config['TMP_FOLDER']= config.Config.TMP_FOLDER
-    app.config['THUMBNAIL_EXTENSIONS']= config.Config.THUMBNAIL_EXTENSIONS
-    app.config['MANAGER_STORAGE'] = config.Config.MANAGER_STORAGE
-    app.config.update(
-        FLAMENCO_SERVER=config.Config.FLAMENCO_SERVER,
-        SQLALCHEMY_DATABASE_URI= config.Config.SQLALCHEMY_DATABASE_URI,
-    )
-
-    if not config.Config.IS_PRIVATE_MANAGER:
-        """try:
-            server_settings = http_request(app.config['FLAMENCO_SERVER'], '/settings', 'get')
-            app.config.update(
-                BLENDER_PATH_LINUX=server_settings['blender_path_linux'],
-                BLENDER_PATH_OSX=server_settings['blender_path_osx'],
-                BLENDER_PATH_WIN=server_settings['blender_path_win'],
-                SETTINGS_PATH_LINUX=server_settings['render_settings_path_linux'],
-                SETTINGS_PATH_OSX=server_settings['render_settings_path_osx'],
-                SETTINGS_PATH_WIN=server_settings['render_settings_path_win']
-            )
-        except ConnectionError:
-            logging.error("The server {0} seems be unavailable.".format(app.config['FLAMENCO_SERVER']))
-            exit(3)
-        except KeyError:
-            logging.error("Please, configure Flamenco Paths browsing Dashboard->Server->Settings")
-            exit(3)"""
-    else:
-        app.config.update(
-            BLENDER_PATH_LINUX=config.Config.BLENDER_PATH_LINUX,
-            BLENDER_PATH_OSX=config.Config.BLENDER_PATH_OSX,
-            BLENDER_PATH_WIN=config.Config.BLENDER_PATH_WIN,
-            SETTINGS_PATH_LINUX=config.Config.SETTINGS_PATH_LINUX,
-            SETTINGS_PATH_OSX=config.Config.SETTINGS_PATH_OSX,
-            SETTINGS_PATH_WIN=config.Config.SETTINGS_PATH_WIN
-        )
-
+    app.config.from_object(config.Config)
 except ImportError:
     """If a config is not defined, we use the default settings, importing the
     BLENDER_PATH and SETTINGS_PATH from the server.
@@ -70,24 +36,6 @@ except ImportError:
     app.config['THUMBNAIL_EXTENSIONS'] = set(['png'])
     app.config['MANAGER_STORAGE'] = '{0}/static/storage'.format(
         os.path.join(os.path.dirname(__file__)))
-
-    """try:
-        server_settings = http_request(app.config['FLAMENCO_SERVER'], '/settings', 'get')
-        app.config.update(
-            BLENDER_PATH_LINUX=server_settings['blender_path_linux'],
-            BLENDER_PATH_OSX=server_settings['blender_path_osx'],
-            BLENDER_PATH_WIN=server_settings['blender_path_win'],
-            SETTINGS_PATH_LINUX=server_settings['render_settings_path_linux'],
-            SETTINGS_PATH_OSX=server_settings['render_settings_path_osx'],
-            SETTINGS_PATH_WIN=server_settings['render_settings_path_win']
-        )
-    except ConnectionError:
-        logging.error("The server {0} seems be unavailable.".format(app.config['FLAMENCO_SERVER']))
-        exit(3)
-    except KeyError:
-        logging.error("Please, configure Flamenco Paths browsing Dashboard->Server->Settings")
-        exit(3)"""
-
 
 api = Api(app)
 
@@ -138,7 +86,7 @@ def register_manager(host, name, has_virtual_workers):
             connection.request("GET", "/managers")
             break
         except socket.error:
-            print ("Cant connect with Server, retrying...")
+            print ("Can't connect with Server, retrying...")
         time.sleep(1)
 
     params = dict(
