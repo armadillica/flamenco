@@ -14,6 +14,9 @@ libmysqlclient-dev \
 libssl-dev \
 libffi-dev \
 software-properties-common \
+nodejs \
+nodejs-legacy \
+npm \
 apache2-mpm-event \
 libapache2-mod-wsgi \
 libapache2-mod-xsendfile
@@ -21,7 +24,6 @@ libapache2-mod-xsendfile
 RUN mkdir -p /data/git/dashboard \
 && mkdir -p /data/storage/shared \
 && mkdir -p /data/storage/dashboard \
-&& mkdir -p /data/bins/ \
 && mkdir -p /data/config
 
 ENV APACHE_RUN_USER www-data
@@ -36,12 +38,12 @@ RUN mkdir -p $APACHE_RUN_DIR $APACHE_LOCK_DIR $APACHE_LOG_DIR
 RUN pip install virtualenv \
 && virtualenv /data/venv
 
-ENV PIP_PACKAGES_VERSION = 2
+ENV PIP_PACKAGES_VERSION 2
 ADD requirements.txt /requirements.txt
 
 RUN . /data/venv/bin/activate && pip install -r /requirements.txt
 
-VOLUME /data/git/pillar
+VOLUME /data/git/dashboard
 VOLUME /data/config
 VOLUME /data/storage/shared
 VOLUME /data/storage/dashboard

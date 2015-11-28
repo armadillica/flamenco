@@ -21,13 +21,12 @@ npm
 RUN mkdir -p /data/git/dashboard \
 && mkdir -p /data/storage/shared \
 && mkdir -p /data/storage/dashboard \
-&& mkdir -p /data/bins/ \
 && mkdir -p /data/config
 
 RUN pip install virtualenv \
 && virtualenv /data/venv
 
-ENV PIP_PACKAGES_VERSION = 1
+ENV PIP_PACKAGES_VERSION 1
 ADD requirements.txt /requirements.txt
 
 RUN . /data/venv/bin/activate && pip install -r /requirements.txt
@@ -36,7 +35,6 @@ VOLUME /data/git/dashboard
 VOLUME /data/config
 VOLUME /data/storage/shared
 VOLUME /data/storage/dashboard
-VOLUME /data/bins
 
 EXPOSE 8888
 
