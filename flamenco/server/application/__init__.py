@@ -13,19 +13,20 @@ app = Flask(__name__)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+# Initial configuration
+from application import config_base
+app.config.from_object(config_base.Config)
 
-try:
-    from application import config
-    app.config.from_object(config.Config)
-except ImportError:
-    app.config.update(
-        SQLALCHEMY_DATABASE_URI='sqlite:///{0}'.format(
-            os.path.join(os.path.dirname(__file__), '../server.sqlite')),
-        TMP_FOLDER=tempfile.gettempdir(),
-        THUMBNAIL_EXTENSIONS=set(['png']),
-        SERVER_STORAGE='{0}/static/storage'.format(
-            os.path.join(os.path.dirname(__file__)))
-    )
+# If we are in a Docker container, override with some new defaults
+if os.environ.get('IS_DOCKER'):
+    from application import config_docker
+    app.config.from_object(config_docker.Config)
+
+# If a custom config file is specified, further override the config
+if os.environ.get('FLAMENCO_SERVER_CONFIG'):
+    app.config.from_envvar('FLAMENCO_SERVER_CONFIG')
+
+print app.config
 
 api = Api(app)
 

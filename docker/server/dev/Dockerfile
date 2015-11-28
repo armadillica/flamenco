@@ -33,7 +33,7 @@ VOLUME /data/config
 VOLUME /data/storage/shared
 VOLUME /data/storage/server
 
-ENV MYSQL_HOST mysql_flamenco_server
+ENV IS_DOCKER True
 
 EXPOSE 9999
 
