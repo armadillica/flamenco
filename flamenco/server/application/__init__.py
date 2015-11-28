@@ -16,12 +16,8 @@ migrate = Migrate(app, db)
 
 try:
     from application import config
-    app.config['SQLALCHEMY_DATABASE_URI'] = config.Config.SQLALCHEMY_DATABASE_URI
-    app.config['TMP_FOLDER']= config.Config.TMP_FOLDER
-    app.config['THUMBNAIL_EXTENSIONS']= config.Config.THUMBNAIL_EXTENSIONS
-    app.config['SERVER_STORAGE'] = config.Config.SERVER_STORAGE
+    app.config.from_object(config.Config)
 except ImportError:
-
     app.config.update(
         SQLALCHEMY_DATABASE_URI='sqlite:///{0}'.format(
             os.path.join(os.path.dirname(__file__), '../server.sqlite')),
