@@ -1,0 +1,6 @@
+class Config(object):
+    DEBUG = True
+    FLAMENCO_SERVER = 'localhost:9999'
+    PORT = 8888
+    HOST = '0.0.0.0'
+

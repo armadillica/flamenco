@@ -76,38 +76,29 @@ def setup_db():
 
 
 @manager.command
+def setup_register_manager():
+    # Register the manager to the server
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        if app.config['VIRTUAL_WORKERS']:
+            has_virtual_worker = 1
+        else:
+            has_virtual_worker = 0
+        full_host = "http://{0}:{1}".format(
+            app.config['HOST'], app.config['PORT'])
+        register_manager(full_host, app.config['NAME'], has_virtual_worker)
+
+
+@manager.command
 def runserver():
     """This command is meant for development. If no configuration is found,
     we start the app listening from all hosts, from port 7777."""
     setup_db()
-
-    try:
-        from application import config
-        PORT = config.Config.PORT
-        DEBUG = config.Config.DEBUG
-        HOST = config.Config.HOST
-        HOSTNAME = config.Config.HOSTNAME
-        VIRTUAL_WORKERS = config.Config.VIRTUAL_WORKERS
-    except ImportError:
-        DEBUG = False
-        PORT = 7777
-        HOST = '0.0.0.0'
-        VIRTUAL_WORKERS = False
-        HOSTNAME = socket.gethostname()
-
-    # Register the manager to the server
-    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
-        if VIRTUAL_WORKERS:
-            has_virtual_worker = 1
-        else:
-            has_virtual_worker = 0
-        full_host = "{0}:{1}".format(HOST, PORT)
-        register_manager(full_host, HOSTNAME, has_virtual_worker)
+    setup_register_manager()
 
     app.run(
-        port=PORT,
-        debug=DEBUG,
-        host=HOST,
+        port=app.config['PORT'],
+        debug=app.config['DEBUG'],
+        host=app.config['HOST'],
         threaded=True)
 
 

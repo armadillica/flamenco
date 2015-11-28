@@ -6,7 +6,7 @@ class Config(object):
     DEBUG = True
     PORT = 7777
     HOST = '0.0.0.0' # or 'localhost'
-    HOSTNAME = 'My Manager' # or use socket.gethostname()
+    NAME = 'My Manager' # or use socket.gethostname()
     FLAMENCO_SERVER = 'localhost:9999'
 
     DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../')
@@ -20,7 +20,5 @@ class Config(object):
     TMP_FOLDER = tempfile.gettempdir()
     THUMBNAIL_EXTENSIONS = set(['png'])
 
-    # Don't change this variable until the worker's code will have costant declaration of this path
-    # see controllers.py line 243 to understand
     MANAGER_STORAGE = '{0}/static/storage'.format(
         os.path.join(os.path.dirname(__file__)))

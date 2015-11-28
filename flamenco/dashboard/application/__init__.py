@@ -10,11 +10,18 @@ app.config.update(
     SECRET_KEY='A0Zr98j/3yX R~XHH!jmN]LWX/,?RT',
 )
 
-try:
-    from application import config
-    app.config['FLAMENCO_SERVER'] = config.Config.FLAMENCO_SERVER
-except ImportError:
-    app.config['FLAMENCO_SERVER'] = 'localhost:9999'
+# Initial configuration
+from application import config_base
+app.config.from_object(config_base.Config)
+
+# If we are in a Docker container, override with some new defaults
+if os.environ.get('IS_DOCKER'):
+    from application import config_docker
+    app.config.from_object(config_docker.Config)
+
+# If a custom config file is specified, further override the config
+if os.environ.get('FLAMENCO_DASHBOARD_CONFIG'):
+    app.config.from_envvar('FLAMENCO_DASHBOARD_CONFIG')
 
 def check_connection():
     try:

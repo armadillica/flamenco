@@ -36,6 +36,8 @@ VOLUME /data/config
 VOLUME /data/storage/shared
 VOLUME /data/storage/dashboard
 
+ENV IS_DOCKER True
+
 EXPOSE 8888
 
 ADD runserver.sh /runserver.sh

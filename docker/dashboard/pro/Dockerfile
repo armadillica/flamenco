@@ -48,6 +48,8 @@ VOLUME /data/config
 VOLUME /data/storage/shared
 VOLUME /data/storage/dashboard
 
+ENV IS_DOCKER True
+
 EXPOSE 8888
 
 ADD 000-default.conf /etc/apache2/sites-available/000-default.conf

@@ -7,5 +7,8 @@ if [ ! -e /installed ]; then
 	touch /installed
 fi
 
+# Enable virtual evnvironment and register manager
+. /data/venv/bin/activate && cd /data/git/manager && python manage.py setup_register_manager
+
 # Run Apache
 /usr/sbin/apache2 -D FOREGROUND

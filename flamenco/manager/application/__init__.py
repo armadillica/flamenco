@@ -99,6 +99,7 @@ def register_manager(host, name, has_virtual_workers):
     r = http_request(app.config['FLAMENCO_SERVER'], '/managers', 'post', params=params)
 
     # If we don't find one, we proceed to create it, using the server reponse
+    # TODO handle case when token exists on the manager, but not on the server
     if not token:
         token = Setting(name='token', value=r['token'])
         db.session.add(token)
