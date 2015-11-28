@@ -35,7 +35,7 @@ RUN mkdir -p $APACHE_RUN_DIR $APACHE_LOCK_DIR $APACHE_LOG_DIR
 RUN pip install virtualenv \
 && virtualenv /data/venv
 
-ENV PIP_PACKAGES_VERSION = 3
+ENV PIP_PACKAGES_VERSION 3
 ADD requirements.txt /requirements.txt
 
 RUN . /data/venv/bin/activate && pip install -r /requirements.txt
@@ -44,6 +44,8 @@ VOLUME /data/git/server
 VOLUME /data/config
 VOLUME /data/storage/shared
 VOLUME /data/storage/server
+
+ENV IS_DOCKER True
 
 EXPOSE 9999
 

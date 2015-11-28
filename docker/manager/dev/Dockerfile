@@ -24,7 +24,7 @@ RUN mkdir -p /data/git/manager \
 RUN pip install virtualenv \
 && virtualenv /data/venv
 
-ENV PIP_PACKAGES_VERSION = 2
+ENV PIP_PACKAGES_VERSION 2
 ADD requirements.txt /requirements.txt
 
 RUN . /data/venv/bin/activate && pip install -r /requirements.txt
@@ -35,7 +35,7 @@ VOLUME /data/storage/shared
 VOLUME /data/storage/manager
 VOLUME /data/bins
 
-ENV MYSQL_HOST mysql_flamenco_manager
+ENV IS_DOCKER True
 
 EXPOSE 7777
 

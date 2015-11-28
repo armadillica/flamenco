@@ -21,21 +21,18 @@ migrate = Migrate(app, db)
 from helpers import http_request
 from application.modules.settings.model import Setting
 
-try:
-    from application import config
-    app.config.from_object(config.Config)
-except ImportError:
-    """If a config is not defined, we use the default settings, importing the
-    BLENDER_PATH and SETTINGS_PATH from the server.
-    """
-    logging.error("No config.py file found, importing config from Server.")
+# Initial configuration
+from application import config_base
+app.config.from_object(config_base.Config)
 
-    app.config['FLAMENCO_SERVER'] = 'localhost:9999'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../manager.sqlite')
-    app.config['TMP_FOLDER'] = tempfile.gettempdir()
-    app.config['THUMBNAIL_EXTENSIONS'] = set(['png'])
-    app.config['MANAGER_STORAGE'] = '{0}/static/storage'.format(
-        os.path.join(os.path.dirname(__file__)))
+# If we are in a Docker container, override with some new defaults
+if os.environ.get('IS_DOCKER'):
+    from application import config_docker
+    app.config.from_object(config_docker.Config)
+
+# If a custom config file is specified, further override the config
+if os.environ.get('FLAMENCO_MANAGER_CONFIG'):
+    app.config.from_envvar('FLAMENCO_MANAGER_CONFIG')
 
 api = Api(app)
 

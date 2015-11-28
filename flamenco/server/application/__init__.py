@@ -26,8 +26,6 @@ if os.environ.get('IS_DOCKER'):
 if os.environ.get('FLAMENCO_SERVER_CONFIG'):
     app.config.from_envvar('FLAMENCO_SERVER_CONFIG')
 
-print app.config
-
 api = Api(app)
 
 from modules.projects import ProjectListApi

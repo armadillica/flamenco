@@ -7,24 +7,19 @@ class Config(object):
     PORT = 7777
     HOST = '0.0.0.0' # or 'localhost'
     HOSTNAME = 'My Manager' # or use socket.gethostname()
-
     FLAMENCO_SERVER = 'localhost:9999'
 
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../manager.sqlite')
+    DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../')
+    DATABASE_NAME = 'manager.sqlite'
+    SQLALCHEMY_DATABASE_URI = os.path.join(DATABASE_URI, DATABASE_NAME)
 
     VIRTUAL_WORKERS = False # If true, the manager will not have a fixed number of workers
     IS_PRIVATE_MANAGER = False
 
     # If IS_PRIVATE_MANAGER is False, the following settings are not neede
-    BLENDER_PATH_LINUX = ""
-    BLENDER_PATH_OSX = ""
-    BLENDER_PATH_WIN = ""
-    SETTINGS_PATH_LINUX = ""
-    SETTINGS_PATH_OSX = ""
-    SETTINGS_PATH_WIN = ""
     TMP_FOLDER = tempfile.gettempdir()
     THUMBNAIL_EXTENSIONS = set(['png'])
-    
+
     # Don't change this variable until the worker's code will have costant declaration of this path
     # see controllers.py line 243 to understand
     MANAGER_STORAGE = '{0}/static/storage'.format(
