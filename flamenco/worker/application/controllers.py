@@ -75,7 +75,7 @@ def register_worker():
 
     http_request(Config.FLAMENCO_MANAGER, '/workers', 'post',
         params={
-            'port': Config.PORT,
+            'port': 5000,
             'hostname': HOSTNAME,
             'system': SYSTEM})
 
