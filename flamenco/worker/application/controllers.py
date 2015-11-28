@@ -16,17 +16,11 @@ from threading import Thread
 from threading import Lock
 from threading import Timer
 import Queue # for windows
-
-from flask import redirect
-from flask import url_for
-from flask import request
-from flask import jsonify
-
 from uuid import getnode as get_mac_address
-
-from application import app
-from application import clean_dir
 from requests.exceptions import ConnectionError
+from application.config_base import Config
+from application.utils import http_request
+
 
 MAC_ADDRESS = get_mac_address()  # the MAC address of the worker
 PLATFORM = platform.system()
@@ -37,8 +31,8 @@ ACTIVITY = None
 LOG = None
 TIME_INIT = None
 CONNECTIVITY = False
-FLAMENCO_MANAGER = app.config['FLAMENCO_MANAGER']
-HOSTNAME = app.config['HOSTNAME']
+FLAMENCO_MANAGER = Config.FLAMENCO_MANAGER
+HOSTNAME = Config.HOSTNAME
 
 if platform.system() is not 'Windows':
     from fcntl import fcntl, F_GETFL, F_SETFL
@@ -47,46 +41,18 @@ else:
     from signal import CTRL_C_EVENT
 
 
-# def http_request(command, values):
-#     global CONNECTIVITY
-#     params = urllib.urlencode(values)
-#     try:
-#         urllib.urlopen('http://' + FLAMENCO_MANAGER + '/' + command, params)
-#         #print(f.read())
-#     except IOError:
-#         CONNECTIVITY = False
-#         logging.error("Could not connect to manager to register")
+def clean_dir(cleardir, keep_job=None):
+    if os.path.exists(cleardir):
+        for root, dirs, files in os.walk(cleardir, topdown=False):
+            for name in files:
+                if name == "taskfile_{0}.zip".format(keep_job):
+                    continue
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                if name == str(keep_job):
+                    continue
+                os.rmdir(os.path.join(root, name))
 
-def http_request(ip_address, command, method, params=None, files=None):
-    global CONNECTIVITY
-    if method == 'delete':
-        r = requests.delete('http://' + ip_address + command)
-    elif method == 'post':
-        r = requests.post('http://' + ip_address + command, data=params, files=files)
-    elif method == 'get':
-        r = requests.get('http://' + ip_address + command)
-    elif method == 'put':
-        r = requests.put('http://' + ip_address + command, data=params)
-    elif method == 'patch':
-        r = requests.patch('http://' + ip_address + command, data=params)
-
-    if r.status_code == 404:
-        return '', 404
-
-    # Only for debug
-    if r.status_code == 400:
-        for chunk in r.iter_content(50):
-            print chunk
-        return '', 404
-
-    if r.status_code == 204:
-        return '', 204
-
-    if r.status_code >= 500:
-        logging.debug("STATUS CODE: %d" % r.status_code)
-        return '', 500
-
-    return r.json()
 
 def register_worker():
     """This is going to be an HTTP request to the server with all the info
@@ -96,25 +62,25 @@ def register_worker():
 
     while True:
         try:
-            r = http_request(app.config['FLAMENCO_MANAGER'], '/', 'get')
+            r = http_request(Config.FLAMENCO_MANAGER, '/', 'get')
             CONNECTIVITY = True
             break
         except ConnectionError:
             logging.error(
                 "Could not connect to {0} to register".format(
-                    app.config['FLAMENCO_MANAGER']))
+                    Config.FLAMENCO_MANAGER))
             CONNECTIVITY = False
             pass
         time.sleep(1)
 
-    http_request(app.config['FLAMENCO_MANAGER'], '/workers', 'post',
+    http_request(Config.FLAMENCO_MANAGER, '/workers', 'post',
         params={
-            'port': app.config['PORT'],
+            'port': Config.PORT,
             'hostname': HOSTNAME,
             'system': SYSTEM})
 
 def get_task():
-    manager_url = "http://{0}/tasks".format(app.config['FLAMENCO_MANAGER'])
+    manager_url = "http://{0}/tasks".format(Config.FLAMENCO_MANAGER)
     return requests.get(manager_url)
 
 def getZipFile(url, tmpfile, zippath, force=False):
@@ -181,7 +147,7 @@ def worker_loop():
 
     params = {'worker': HOSTNAME}
     manager_url = "http://{0}/tasks/compiled/0".format(
-        app.config['FLAMENCO_MANAGER'])
+        Config.FLAMENCO_MANAGER)
     try:
         # Send a request to the manager, specifying our hostname
         rtask = requests.get(manager_url, params=params)
@@ -206,18 +172,18 @@ def worker_loop():
             }
         try:
             requests.patch(
-                'http://' + app.config['FLAMENCO_MANAGER'] + '/tasks/' + str(task['task_id']),
+                'http://' + Config.FLAMENCO_MANAGER + '/tasks/' + str(task['task_id']),
             data = params
             )
             CONNECTIVITY = True
         except ConnectionError:
             logging.error(
-                'Cant connect with the Manager {0}'.format(app.config['FLAMENCO_MANAGER']))
+                'Cant connect with the Manager {0}'.format(Config.FLAMENCO_MANAGER))
             CONNECTIVITY = False
 
-        clean_dir(app.config['STORAGE_DIR'], task['job_id'])
+        clean_dir(Config.STORAGE_DIR, task['job_id'])
 
-        jobpath = os.path.join(app.config['STORAGE_DIR'],
+        jobpath = os.path.join(Config.STORAGE_DIR,
                                str(task['job_id']))
         if not os.path.exists(jobpath):
             os.mkdir(jobpath)
@@ -228,7 +194,7 @@ def worker_loop():
         tmpfile = os.path.join(
             jobpath, 'taskfile_{0}.zip'.format(task['job_id']))
         url = "http://{0}/static/storage/{1}/jobfile_{1}.zip".format(
-                app.config['FLAMENCO_MANAGER'], task['job_id'])
+                Config.FLAMENCO_MANAGER, task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath)
 
         # Get support file
@@ -237,7 +203,7 @@ def worker_loop():
         tmpfile = os.path.join(
             jobpath, 'tasksupportfile_{0}.zip'.format(task['job_id']))
         url = "http://{0}/static/storage/{1}/jobsupportfile_{1}.zip".format(
-                app.config['FLAMENCO_MANAGER'], task['job_id'])
+                Config.FLAMENCO_MANAGER, task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath, True)
 
         # Get dependency file
@@ -245,13 +211,13 @@ def worker_loop():
         tmpfile = os.path.join(
             jobpath, 'dependencies.zip'.format(task['job_id']))
         url = "http://{0}/static/storage/{1}/dependencies_{2}.zip".format(
-                app.config['FLAMENCO_MANAGER'], task['job_id'], task['task_id'])
+                Config.FLAMENCO_MANAGER, task['job_id'], task['task_id'])
         print ("Fetching dependency {0}".format(url))
         unzipdepok = getZipFile(url, tmpfile, zippath)
 
         # Get compiler settings
         r = None
-        url = 'http://' + app.config['FLAMENCO_MANAGER'] + '/job-types/'
+        url = 'http://' + Config.FLAMENCO_MANAGER + '/job-types/'
         try:
             r = requests.get(
                 url + task['type'],
@@ -358,7 +324,7 @@ def _parse_output(tmp_buffer, options):
         if activity.get('thumbnail'):
             params = dict(task_id=task_id)
             manager_url = "http://{0}/tasks/thumbnails".format(
-                app.config['FLAMENCO_MANAGER'])
+                Config.FLAMENCO_MANAGER)
             request_thread = Thread(
                 target=send_thumbnail,
                 args=(manager_url, activity.get('thumbnail'), params))
@@ -384,7 +350,7 @@ def _parse_output(tmp_buffer, options):
     try:
         r = requests.patch(
             'http://{0}/tasks/{1}'.format(
-                app.config['FLAMENCO_MANAGER'], task_id),
+                Config.FLAMENCO_MANAGER, task_id),
             data=params,
         )
         CONNECTIVITY = True
@@ -402,7 +368,7 @@ def _parse_output(tmp_buffer, options):
     #    # action.append('stop')
 
     LOG = "{0}{1}".format(LOG, tmp_buffer)
-    logpath = os.path.join(app.config['STORAGE_DIR'],
+    logpath = os.path.join(Config.STORAGE_DIR,
                            "{0}.log".format(task_id))
     f = open(logpath, 'a')
     f.write(tmp_buffer)
@@ -474,7 +440,7 @@ def run_blender_in_thread(options):
 
     render_command = json.loads(options['task_command'])
 
-    workerstorage = app.config['STORAGE_DIR']
+    workerstorage = Config.STORAGE_DIR
     tmppath = os.path.join(
         workerstorage, str(options['job_id']))
     outpath = os.path.join(tmppath, 'output')
@@ -565,7 +531,7 @@ def run_blender_in_thread(options):
         time_cost = 0
         logging.error("time_init is None")
 
-    workerstorage = app.config['STORAGE_DIR']
+    workerstorage = Config.STORAGE_DIR
     taskpath = os.path.join(
         workerstorage,
         str(options['job_id']),
@@ -735,7 +701,7 @@ def execute_task(task, files):
         'compiler_settings': task['compiler_settings'],
     }
 
-    taskpath = os.path.join(app.config['STORAGE_DIR'], str(options['job_id']))
+    taskpath = os.path.join(Config.STORAGE_DIR, str(options['job_id']))
     zippath = os.path.join(taskpath, str(options['job_id']))
 
     options['jobpath'] = taskpath

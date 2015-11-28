@@ -1,13 +1,12 @@
+import os
 import tempfile
 import socket
 
 class Config(object):
-    DEBUG = False
     FLAMENCO_MANAGER = 'localhost:7777'
-    HOST = '0.0.0.0' # or localhost
-    PORT = 5000
     HOSTNAME = socket.gethostname()
     STORAGE_DIR = os.path.join(tempfile.gettempdir(),
-                                'flamenco-worker',
-                                app.config['HOSTNAME'])
+        'flamenco-worker', HOSTNAME)
 
+
+configa = Config()
