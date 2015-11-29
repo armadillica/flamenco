@@ -26,12 +26,12 @@ RUN mkdir -p /data/git/dashboard \
 && mkdir -p /data/storage/dashboard \
 && mkdir -p /data/config
 
-ENV APACHE_RUN_USER www-data
-ENV APACHE_RUN_GROUP www-data
-ENV APACHE_LOG_DIR /var/log/apache2
-ENV APACHE_PID_FILE /var/run/apache2.pid
-ENV APACHE_RUN_DIR /var/run/apache2
-ENV APACHE_LOCK_DIR /var/lock/apache2
+ENV APACHE_RUN_USER=www-data \
+APACHE_RUN_GROUP=www-data \
+APACHE_LOG_DIR=/var/log/apache2 \
+APACHE_PID_FILE=/var/run/apache2.pid \
+APACHE_RUN_DIR=/var/run/apache2 \
+APACHE_LOCK_DIR=/var/lock/apache2
 
 RUN mkdir -p $APACHE_RUN_DIR $APACHE_LOCK_DIR $APACHE_LOG_DIR
 
@@ -48,13 +48,14 @@ VOLUME /data/config
 VOLUME /data/storage/shared
 VOLUME /data/storage/dashboard
 
-ENV IS_DOCKER True
-ENV USE_X_SENDFILE True
+ENV IS_DOCKER=True \
+USE_X_SENDFILE=True
 
 EXPOSE 8888
 
+ADD rs.sh /usr/local/bin/rs
+RUN chmod +x /usr/local/bin/rs
 ADD 000-default.conf /etc/apache2/sites-available/000-default.conf
-
 ADD runserver.sh /runserver.sh
 ADD setup.sh /setup.sh
 
