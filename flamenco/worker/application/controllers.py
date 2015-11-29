@@ -87,6 +87,10 @@ def getZipFile(url, tmpfile, zippath, force=False):
     if not os.path.exists(tmpfile) or force:
         try:
             r = requests.get(url, stream=True)
+            if r.status_code != 200:
+                # If we get any error (usually 404) simply return False
+                print("No file found")
+                return False
         except KeyboardInterrupt:
             return
 
@@ -100,8 +104,8 @@ def getZipFile(url, tmpfile, zippath, force=False):
                 return
 
     if not os.path.exists(zippath):
-        os.mkdir(zippath)
-    print ( "Extracting {0}".format(tmpfile))
+        os.makedirs(zippath)
+    print("Extracting {0}".format(tmpfile))
     unzipok = True
     try:
         with ZipFile(tmpfile, 'r') as jobzip:
@@ -115,9 +119,9 @@ def getZipFile(url, tmpfile, zippath, force=False):
         unzipok = False
 
     if not unzipok:
-        print ("Removing bad zipfile {0}".format(tmpfile))
+        logging.error("Unzipping failed")
+        logging.error("Removing bad zipfile {0}".format(tmpfile))
         os.remove(tmpfile)
-        logging.error('Not a ZipFile')
 
     return unzipok
 
@@ -186,14 +190,14 @@ def worker_loop():
         jobpath = os.path.join(Config.STORAGE_DIR,
                                str(task['job_id']))
         if not os.path.exists(jobpath):
-            os.mkdir(jobpath)
+            os.makedirs(jobpath)
 
         # Get job file
         print ("Fetching job file {0}".format(task['job_id']))
         zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
             jobpath, 'taskfile_{0}.zip'.format(task['job_id']))
-        url = "http://{0}/static/storage/{1}/jobfile_{1}.zip".format(
+        url = "http://{0}/tasks/zip/{1}".format(
                 Config.FLAMENCO_MANAGER, task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath)
 
@@ -202,17 +206,17 @@ def worker_loop():
         zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
             jobpath, 'tasksupportfile_{0}.zip'.format(task['job_id']))
-        url = "http://{0}/static/storage/{1}/jobsupportfile_{1}.zip".format(
+        url = "http://{0}/tasks/zip/sup/{1}".format(
                 Config.FLAMENCO_MANAGER, task['job_id'])
         unzipok = getZipFile(url, tmpfile, zippath, True)
 
         # Get dependency file
+        print ("Fetching dependency for task {0}".format(task['job_id']))
         zippath = os.path.join(jobpath, str(task['job_id']))
         tmpfile = os.path.join(
             jobpath, 'dependencies.zip'.format(task['job_id']))
         url = "http://{0}/static/storage/{1}/dependencies_{2}.zip".format(
                 Config.FLAMENCO_MANAGER, task['job_id'], task['task_id'])
-        print ("Fetching dependency {0}".format(url))
         unzipdepok = getZipFile(url, tmpfile, zippath)
 
         # Get compiler settings
@@ -227,7 +231,6 @@ def worker_loop():
                 'Can not connect with the Manager {0}'.format(FLAMENCO_MANAGER))
 
         task['compiler_settings'] = {}
-        print (r.status_code)
         if r != None and r.status_code == 200:
             task['compiler_settings'] = r.json()
 

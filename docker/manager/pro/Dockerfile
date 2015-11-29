@@ -48,6 +48,7 @@ VOLUME /data/storage/shared
 VOLUME /data/storage/manager
 
 ENV IS_DOCKER True
+ENV USE_X_SENDFILE True
 
 EXPOSE 7777
 

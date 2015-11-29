@@ -8,5 +8,3 @@ class Config(object):
     STORAGE_DIR = os.path.join(tempfile.gettempdir(),
         'flamenco-worker', HOSTNAME)
 
-
-configa = Config()

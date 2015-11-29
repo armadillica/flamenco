@@ -2,10 +2,8 @@ import os
 import subprocess
 import re
 
-from application import app
 
 class blender_parser():
-
     @staticmethod
     def unable_to_open(output):
         # Check if blender is unable to open blendfile
@@ -18,7 +16,6 @@ class blender_parser():
         if len(match):
             unable_to_open = True
         return unable_to_open
-
 
     @staticmethod
     def path_not_found(output):

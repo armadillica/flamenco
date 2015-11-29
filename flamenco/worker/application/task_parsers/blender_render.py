@@ -9,7 +9,7 @@ except ImportError:
     #raise RuntimeError('Image module of PIL needs to be installed')
     logging.warning("Image module of PIL needs to be installed")
 
-from application import app
+from application.config_base import Config
 from common.blender_parser import *
 
 class task_parser():
@@ -56,7 +56,7 @@ class task_parser():
 
         if saved_file:
             file_name = "thumbnail_%s.png" % options['task_id']
-            output_path = os.path.join(app.config['STORAGE_DIR'],
+            output_path = os.path.join(Config.STORAGE_DIR,
                                        file_name)
             print('Saving {0} to {1}'.format(file_name, output_path))
             tmberror = False

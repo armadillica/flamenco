@@ -49,6 +49,7 @@ VOLUME /data/storage/shared
 VOLUME /data/storage/dashboard
 
 ENV IS_DOCKER True
+ENV USE_X_SENDFILE True
 
 EXPOSE 8888
 

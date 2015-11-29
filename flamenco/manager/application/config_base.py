@@ -4,6 +4,7 @@ import socket
 
 class Config(object):
     DEBUG = True
+    USE_X_SENDFILE = os.getenv('USE_X_SENDFILE', False)
     PORT = 7777
     HOST = '0.0.0.0' # or 'localhost'
     NAME = 'My Manager' # or use socket.gethostname()

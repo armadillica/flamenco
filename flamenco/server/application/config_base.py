@@ -6,6 +6,7 @@ class Config(object):
     DATABASE_NAME = 'server.sqlite'
     SQLALCHEMY_DATABASE_URI = os.path.join(DATABASE_URI, DATABASE_NAME)
     DEBUG = True
+    USE_X_SENDFILE = os.getenv('USE_X_SENDFILE', False)
     PORT = 9999
     HOST = '0.0.0.0' # or 'localhost'
     TMP_FOLDER = tempfile.gettempdir()
