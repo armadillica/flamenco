@@ -1,3 +1,4 @@
+import logging
 import requests
 
 def http_request(ip_address, command, method, params=None, files=None):
