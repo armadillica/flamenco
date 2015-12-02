@@ -66,7 +66,7 @@ task_fields = {
 
 class TaskFileApi(Resource):
     def get(self, job_id):
-        """Check if the Manager already have the file
+        """Check if the Manager already has the file
         """
         managerstorage = app.config['MANAGER_STORAGE']
         jobpath = os.path.join(managerstorage, str(job_id))
@@ -164,9 +164,9 @@ class TaskCompiledApi(Resource):
                 f.write("locked")
 
             r = requests.get(
-                #'http://{0}/jobs/file/{1}'.format(
-                'http://{0}/static/storage/{1}/{2}/jobfile_{2}.zip'.format(
-                    app.config['FLAMENCO_SERVER'], task['project_id'], task['job_id']),
+                'http://{0}/jobs/file/{1}'.format(
+                #'http://{0}/static/storage/{1}/{2}/jobfile_{2}.zip'.format(
+                    app.config['FLAMENCO_SERVER'], task['job_id']),
                 stream=True
             )
 
