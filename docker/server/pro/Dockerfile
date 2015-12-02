@@ -38,7 +38,8 @@ RUN pip install virtualenv \
 ENV PIP_PACKAGES_VERSION 3
 ADD requirements.txt /requirements.txt
 
-RUN . /data/venv/bin/activate && pip install -r /requirements.txt
+RUN . /data/venv/bin/activate && pip install -r /requirements.txt \
+&& rm /requirements.txt
 
 VOLUME /data/git/server
 VOLUME /data/config

@@ -26,7 +26,8 @@ RUN pip install virtualenv \
 ENV PIP_PACKAGES_VERSION 2
 ADD requirements.txt /requirements.txt
 
-RUN . /data/venv/bin/activate && pip install -r /requirements.txt
+RUN . /data/venv/bin/activate && pip install -r /requirements.txt \
+&& rm /requirements.txt
 
 VOLUME /data/git/server
 VOLUME /data/config
@@ -38,5 +39,6 @@ ENV IS_DOCKER True
 EXPOSE 9999
 
 ADD runserver.sh /runserver.sh
+ADD manage.sh /manage.sh
 
 ENTRYPOINT ["bash", "/runserver.sh"]
