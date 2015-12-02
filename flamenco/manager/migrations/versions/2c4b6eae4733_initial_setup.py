@@ -22,7 +22,7 @@ def upgrade():
     sa.Column('hostname', sa.String(length=50), nullable=True),
     sa.Column('status', sa.String(length=20), nullable=True),
     sa.Column('connection', sa.String(length=20), nullable=True),
-    sa.Column('system', sa.String(length=20), nullable=True),
+    sa.Column('system', sa.String(length=50), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('ip_address', 'port', name='connection_uix')
     )

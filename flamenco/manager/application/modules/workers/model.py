@@ -14,7 +14,7 @@ class Worker(db.Model):
     hostname = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20))
     connection = db.Column(db.String(20))
-    system = db.Column(db.String(20))
+    system = db.Column(db.String(50))
     current_task = db.Column(db.String(20))
     child_task = db.Column(db.String(20))
     activity = db.Column(db.String(64))
