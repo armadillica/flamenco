@@ -32,7 +32,7 @@ def upgrade():
         batch_op.drop_column('running_tasks')
 
     with op.batch_alter_table('task', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('activity', sa.String(length=128), nullable=True))
+        batch_op.add_column(sa.Column('activity', sa.String(length=256), nullable=True))
         batch_op.add_column(sa.Column('log', sa.Text(), nullable=True))
         batch_op.add_column(sa.Column('name', sa.String(length=64), nullable=True))
         batch_op.add_column(sa.Column('settings', sa.Text(), nullable=True))

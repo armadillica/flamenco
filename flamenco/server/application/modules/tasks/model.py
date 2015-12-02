@@ -22,7 +22,7 @@ class Task(db.Model):
     type = db.Column(db.String(64))
     settings = db.Column(db.Text())
     log = db.Column(db.Text())
-    activity = db.Column(db.String(128))
+    activity = db.Column(db.String(256))
     child_id = db.Column(db.Integer())
     parser = db.Column(db.String(64))
     time_cost = db.Column(db.Integer())
