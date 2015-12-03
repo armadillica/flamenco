@@ -1,10 +1,12 @@
 import requests
+import logging
 from flask import jsonify
 from flask import abort
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from application.utils import list_integers_string
 from application.utils import http_rest_request
+from application.utils import FlamencoManager
 from application.modules.managers.model import Manager
 
 parser = reqparse.RequestParser()
@@ -19,12 +21,14 @@ class WorkerListApi(Resource):
             if manager.has_virtual_workers:
                 continue
             try:
-                r = http_rest_request(manager.host, '/workers', 'get')
+                m = FlamencoManager(manager.host)
+                r = m.get('workers')
                 for worker in r.keys():
                     r[worker]['manager_id'] = manager.id
                 workers = dict(workers.items() + r.items())
-            except:
+            except Exception, e:
                 # TODO add proper exception handling!
+                logging.error(e)
                 pass
         return jsonify(workers)
 

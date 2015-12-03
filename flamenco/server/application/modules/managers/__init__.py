@@ -19,6 +19,7 @@ from requests.exceptions import ConnectionError
 
 parser_manager = reqparse.RequestParser()
 parser_manager.add_argument('host', type=str)
+parser_manager.add_argument('port', type=int)
 parser_manager.add_argument('name', type=str)
 parser_manager.add_argument('token', type=str)
 parser_manager.add_argument('total_workers', type=int)
@@ -53,7 +54,7 @@ class ManagerListApi(Resource):
                 name=args['name'],
                 ip_address=ip_address,
                 has_virtual_workers=has_virtual_workers,
-                host=args['host'],
+                host="http://{0}:{1}".format(ip_address, args['port']),
                 token=token.hex)
             db.session.add(manager)
             db.session.commit()

@@ -85,7 +85,7 @@ def setup_register_manager():
             has_virtual_worker = 0
         full_host = "http://{0}:{1}".format(
             app.config['HOST'], app.config['PORT'])
-        register_manager(full_host, app.config['NAME'], has_virtual_worker)
+        register_manager(app.config['PORT'], app.config['NAME'], has_virtual_worker)
 
 
 @manager.command

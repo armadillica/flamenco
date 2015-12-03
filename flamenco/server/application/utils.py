@@ -1,6 +1,39 @@
+import re
 import urllib
 import requests
+import logging
 from flask import abort
+
+
+class FlamencoManager(object):
+    """Basic Flamenco Manager client"""
+    def __init__(self, manager_endpoint):
+        """Initialize the Manager client.
+
+        :param manager_endpoint: the full url to reach the manager, for example
+            ("http://manager:7777")
+        :type manager_endpoint: string
+        """
+        self.manager_endpoint = manager_endpoint
+
+    def parse_result(self, r):
+        """Process the response object that comes from the request and in case
+        of success, return it as JSON.
+        """
+        if r.status_code >= 500:
+            logging.error("STATUS CODE: %d" % r.status_code)
+            return '', 500
+        if r.status_code == 404:
+            return '', 404
+        elif r.status_code == 204:
+            return '', 204
+        else:
+            return r.json()
+
+    def get(self, resource):
+        """Create a GET request"""
+        r = requests.get(join_url(self.manager_endpoint, resource))
+        return self.parse_result(r)
 
 
 def http_request(ip_address, command, post_params=None):
@@ -178,4 +211,17 @@ def frame_range_merge(frames_list=None):
     else:
         ranges.append("{0}-{1}".format(start_frame, current_frame))
     return ",".join(ranges)
+
+
+def join_url(url, *paths):
+    """Joins individual URL strings together, and returns a single string.
+
+    Usage::
+
+        >>> utils.join_url("flamenco:9999", "jobs")
+        flamenco:9999/jobs
+    """
+    for path in paths:
+        url = re.sub(r'/?$', re.sub(r'^/?', '/', path), url)
+    return url
 

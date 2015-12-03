@@ -113,7 +113,7 @@ class TaskApi(Resource):
         way to get the additional job information - should be done with join)
         """
 
-        params={'priority':task.priority,
+        params = {'priority':task.priority,
             'type':task.type,
             'parser':task.parser,
             'task_id':task.id,

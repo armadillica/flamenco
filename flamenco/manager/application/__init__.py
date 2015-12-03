@@ -70,7 +70,7 @@ from modules.job_types import JobTypeApi
 api.add_resource(JobTypeListApi, '/job-types')
 api.add_resource(JobTypeApi, '/job-types/<string:name>')
 
-def register_manager(host, name, has_virtual_workers):
+def register_manager(port, name, has_virtual_workers):
     """This is going to be an HTTP request to the server with all the info for
     registering the render node. This is called by the runserver script.
     """
@@ -87,7 +87,7 @@ def register_manager(host, name, has_virtual_workers):
         time.sleep(1)
 
     params = dict(
-        host=host,
+        port=port,
         name=name,
         has_virtual_workers=has_virtual_workers)
 
