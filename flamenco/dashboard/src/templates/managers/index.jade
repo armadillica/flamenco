@@ -26,19 +26,17 @@ ul.nav.navbar-nav.navbar-left
 				tr
 					th(width="5%")
 						input.check-all(type="checkbox")
-					th(width="20%") Hostname
-					th(width="20%") UUID
+					th(width="20%") Name
+					th(width="20%") Host
 					th(width="20%") IP Address
-					th(width="20%") Port
 					th(width="20%") Connection
 			tbody
 			tfoot
 				tr
 					th
-					th Hostname
-					th UUID
+					th Name
+					th Host
 					th IP Address
-					th Port
 					th Connection
 
 | {% endblock %}
@@ -47,77 +45,76 @@ ul.nav.navbar-nav.navbar-left
 script.
 	$(document).ready(function() {
 
-	    var data = {{ entries | safe }};
+			var data = {{ entries | safe }};
 
-	    // TODO change to managers
-	    var workersTable = $('#workers').dataTable({
-	        "bProcessing": true,
-	        "iDisplayLength": 50,
-	        "aaData": data,
-	        "aoColumns": [
-	             { "bSortable": false },
-	             null,
-	             null,
-	             null,
-	             null,
-	             null
-	         ],
+			// TODO change to managers
+			var workersTable = $('#workers').dataTable({
+					"bProcessing": true,
+					"iDisplayLength": 50,
+					"aaData": data,
+					"aoColumns": [
+							 { "bSortable": false },
+							 null,
+							 null,
+							 null,
+							 null
+					 ],
 
-	        "fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
-	            $('td:eq(1)', nRow).html('<a href="/managers/view/' + aData[2] + '"> ' + aData[1] + ' </a>');
-	            if (aData[5] == "offline"){
-	                $('td:eq(5)', nRow).html('<span class="label label-danger">offline</span>');
-	            } else if (aData[5] == "online"){
-	                $('td:eq(5)', nRow).html('<span class="label label-success">online</span>');
-	            }
-	        }
+					"fnRowCallback": function( nRow, aData, iDisplayIndex, iDisplayIndexFull ) {
+							$('td:eq(1)', nRow).html('<a href="/managers/view/' + aData[2] + '"> ' + aData[1] + ' </a>');
+							if (aData[4] == "offline"){
+									$('td:eq(4)', nRow).html('<span class="label label-danger">offline</span>');
+							} else if (aData[4] == "online"){
+									$('td:eq(4)', nRow).html('<span class="label label-success">online</span>');
+							}
+					}
 
-	    });
+			});
 
-	    $("div.toolbar").html('Custom tool bar! Text/images etc.');
+			$("div.toolbar").html('Custom tool bar! Text/images etc.');
 
 
-	    $(document).on("click", "#managers-enable, #managers-disable", function() {
+			$(document).on("click", "#managers-enable, #managers-disable", function() {
 
-	        var managers = new Array();
+					var managers = new Array();
 
-	        var checkbox_list = $( "tbody input:checked" );
-	        for (var i = checkbox_list.length - 1; i >= 0; i--) {
-	            var checkbox = checkbox_list[i];
-	            managers.push($(checkbox).val());
-	        };
+					var checkbox_list = $( "tbody input:checked" );
+					for (var i = checkbox_list.length - 1; i >= 0; i--) {
+							var checkbox = checkbox_list[i];
+							managers.push($(checkbox).val());
+					};
 
-	        if (managers.length == 0) {
-	          $.growl("Please select one or more managers", {
-	            type: "warning"
-	          });
-	            return false;
-	        };
+					if (managers.length == 0) {
+						$.growl("Please select one or more managers", {
+							type: "warning"
+						});
+							return false;
+					};
 
-	        workers_ids = managers.join();
+					workers_ids = managers.join();
 
-	        status = $(this).attr('status');
-	        params = { 'id' : workers_ids, 'status' : status}
+					status = $(this).attr('status');
+					params = { 'id' : workers_ids, 'status' : status}
 
-	        $.post("/managers/edit", params)
-	            .done(function(data_fun) {
-	                // console.log('Managers ' + workers_ids + ' updated : ' + status);
-	                $.growl('Managers ' + workers_ids + ' ' + status);
-	                // redrawing the table to display changes
+					$.post("/managers/edit", params)
+							.done(function(data_fun) {
+									// console.log('Managers ' + workers_ids + ' updated : ' + status);
+									$.growl('Managers ' + workers_ids + ' ' + status);
+									// redrawing the table to display changes
 
-	                var j = 0;
-	                for (var i = 0; i < managers.length; i++) {
-	                    for (var j = 0; j < data.length; j++) {
-	                        id = data[j][6]+';'+data[j][8];
-	                        if (id == managers[i]) {
-	                            workersTable.fnUpdate(status, j, 5);
-	                        }
-	                    }
-	                };
+									var j = 0;
+									for (var i = 0; i < managers.length; i++) {
+											for (var j = 0; j < data.length; j++) {
+													id = data[j][6]+';'+data[j][8];
+													if (id == managers[i]) {
+															workersTable.fnUpdate(status, j, 5);
+													}
+											}
+									};
 
-	                workersTable.fnDraw();
-	        });
-	    });
+									workersTable.fnDraw();
+					});
+			});
 
 		$('#workers tbody').on( 'click', 'tr', function () {
 			$(this).find('input[type=checkbox]').trigger('click');

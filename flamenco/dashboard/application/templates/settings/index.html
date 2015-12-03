@@ -10,48 +10,6 @@
     <form role="form" class="form-horizontal" action="{{ url_for('settings.index') }}" method=post>
 
       <div class="form-group">
-        <label for="blender_path_linux" class="col-sm-3 control-label">Shared Blender path Linux</label>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" name="blender_path_linux" id="blender_path_linux" value="{{settings['blender_path_linux']}}">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="render_settings_path_linux" class="col-sm-3 control-label">Shared Config path Linux</label>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" name="render_settings_path_linux" id="render_settings_path_linux" value="{{settings['render_settings_path_linux']}}">
-        </div>
-      </div>
-
-	  <div class="form-group">
-        <label for="blender_path_win" class="col-sm-3 control-label">Shared Blender path Windows</label>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" name="blender_path_win" id="blender_path_win" value="{{settings['blender_path_win']}}">
-        </div>
-      </div>
-
-	  <div class="form-group">
-        <label for="render_settings_path_win" class="col-sm-3 control-label">Shared Config path Windows</label>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" name="render_settings_path_win" id="render_settings_path_win" value="{{settings['render_settings_path_win']}}">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="blender_path_osx" class="col-sm-3 control-label">Shared Blender path OSX</label>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" name="blender_path_osx" id="blender_path_osx" value="{{settings['blender_path_osx']}}">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="render_settings_path_osx" class="col-sm-3 control-label">Shared Config path OSX</label>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" name="render_settings_path_osx" id="render_settings_path_osx" value="{{settings['render_settings_path_osx']}}">
-        </div>
-      </div>
-
-      <div class="form-group">
         <label for="active_project" class="col-sm-3 control-label">Active project</label>
         <div class="col-sm-9">
           <select name="active_project" class="form-control">

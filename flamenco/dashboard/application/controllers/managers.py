@@ -28,9 +28,8 @@ def index():
             "1": key,
             "2": val['host'],
             "3": val['ip_address'],
-            "4": val['port'],
-            "5": val['connection'],
-            "6": val['id'],
+            "4": val['connection'],
+            "5": val['id'],
         })
 
     entries = json.dumps(managers_list)
