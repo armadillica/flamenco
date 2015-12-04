@@ -5,6 +5,15 @@ Free and Open Source Job distribution system for render farms.
 
 Warning: currently Flamenco is in beta stage, testing welcome!
 
+
+## Quick install with Docker
+You can test Flamenco in an easy and quick way using [Docker](https://www.docker.com/) images.
+
+Check out the `docker-compose-example.yml` as a base to set up your install. A
+more detailed guide on how to install Flamenco with Docker still needs to be
+written. Volunteers are welcome :)
+
+
 ## Developer installation
 
 In order to install Flamenco, we recommend to set up a Python virtual environment.
