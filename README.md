@@ -9,9 +9,86 @@ Warning: currently Flamenco is in beta stage, testing welcome!
 ## Quick install with Docker
 You can test Flamenco in an easy and quick way using [Docker](https://www.docker.com/) images.
 
-Check out the `docker-compose-example.yml` as a base to set up your install. A
-more detailed guide on how to install Flamenco with Docker still needs to be
-written. Volunteers are welcome :)
+### Directory and repository setup
+Before we proceed with the configuration of our containers we have to set up a few directories. In this example, we will set up the directory in ```
+/media/data/```, but any directory would work.
+
+```
+$ cd /media/data/
+```
+
+Let's clone the repository:
+
+```
+$ git clone https://github.com/armadillica/flamenco.git
+```
+
+This means that our repository directory is `/media/data/flamenco` (we will need this path soon).
+
+### MySQL container
+Now we start the container, from MySQL Docker image. Keep in mind that Flamenco also works with SQLite and Posgres.
+
+```
+$ docker run -ti -p 3306:3306 --name mysql -e MYSQL_ROOT_PASSWORD=root mysql
+```
+This database will be used both by the server and the manager.
+
+### Server
+The Flamenco server needs to be linked to the mysql container, and also needs to have a few volumes mounted. The following command takes care of everything.
+
+```
+docker run -ti -p 9999:9999 --name flamenco_server --link mysql \
+-v /media/data/flamenco/flamenco/server:/data/git/server \
+-v /media/data/flamenco_data/storage/shared:/data/storage/shared \
+-v /media/data/flamenco_data/storage/server:/data/storage/server \
+armadillica/flamenco_server_dev
+```
+
+### Manager
+Setting up the manager is a very similar process, but needs some more interaction. Before we start let's make sure we know the path of the shared Blender binary.
+
+```
+docker run -ti -p 7777:7777 --name flamenco_manager --link flamenco_server --link mysql \
+-v /media/data/flamenco/flamenco/manager:/data/git/manager \
+-v /media/data/flamenco_data/storage/shared:/data/storage/shared \
+-v /media/data/flamenco_data/storage/manager:/data/storage/manager \
+armadillica/flamenco_manager_dev
+```
+
+As soon as the container is up and running we will be prompted to provide the Blender path for Linux, OSX and Windows. Currently the worker is implemented assuming that all workers connecting to it have access to a shared location where the binary for each OS is located.
+
+### Dashboard
+The final component we will install is the dashboard, which allows us to track the progress and manage the various jobs.
+
+```
+docker run -ti -p 8888:8888 --name flamenco_dashboard --link flamenco_server \
+-v /media/data/flamenco/flamenco/dashboard:/data/git/dashboard \
+-v /media/data/flamenco_data/storage/dashboard:/data/storage/dashboard \
+armadillica/flamenco_dashboard_dev
+```
+
+When running the dashboard for the first time, we build the html components using gulp. Future updates can only be done by hand on the host OS at the moment.
+
+### Using docker-compose
+Once all the containers have been set up, they can be managed using the `docker-compose` tool. Check out the `docker-compose-example.yml` as a base.
+
+### Worker
+The Flamenco worker is a very simple standalone component. The only requirements needed for it are:
+
+* Python 2.7
+* the requests library
+
+We can make sure that we have the requests library installed on the OS level with:
+
+```
+$ sudo pip install requests
+```
+
+After that, we can run the worker with:
+
+```
+$ python /media/data/flamenco/flamenco/worker/run.py
+``` 
 
 
 ## Developer installation
