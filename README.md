@@ -70,7 +70,7 @@ $ pip install -r requirements.txt
 Databases are managed by `MySQL` or `SQLite` (for testing only, don't use in production).
 
 
-### Grunt file for the Dashboard
+### Gulp file for the Dashboard
 In order to streamline UI development of the Dashboard, we use Jade templating
 and Sass for the CSS generation. In oder to generate the templates and CSS needed
 by the dashboard, you need to install [NodeJS](https://nodejs.org/en/) and run
@@ -79,9 +79,9 @@ the following commands.
 #### OSX
 ```
 cd flamenco/dashboard
-npm install -g grunt-cli
+npm install -g gulp
 npm install
-grunt
+gulp
 ```
 
 #### Debian Linux Wheezy and Ubuntu 14.04
@@ -106,11 +106,9 @@ sudo apt-get update
 # On linux you can install NodeJS using the package manager.
 sudo apt-get install nodejs nodejs-legacy curl
 sudo curl -L --insecure https://www.npmjs.org/install.sh | bash
-sudo npm install -g grunt-cli
-sudo apt-get install ruby
-sudo gem install sass
-sudo npm install
-grunt
+sudo npm install -g gulp
+npm install
+gulp
 ```
 
 ## Running Flamenco
