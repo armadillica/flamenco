@@ -2,13 +2,11 @@
 # flamenco-worker initial script starter
 
 : ${FLAMENCO_WORKER:?"Need to set FLAMENCO_WORKER"}
-: ${FLAMENCO_VENV:?"Need to set FLAMENCO_VENV"}
 
 start() {
     (
         exec >/dev/null 2>&1
-        source "$FLAMENCO_VENV"
-        python2.7 "$FLAMENCO_WORKER" runserver &
+        LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8 LC_ALL=en_US.UTF-8 screen -S fwork -d -m python2.7 "$FLAMENCO_WORKER" &
     )
     echo "Flamenco-Worker started"
 }
@@ -42,7 +40,7 @@ case "$1" in
     start
     ;;
   stop)
-    stop   
+    stop
     ;;
   restart)
     stop
