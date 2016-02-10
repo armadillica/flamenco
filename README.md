@@ -37,7 +37,7 @@ This database will be used both by the server and the manager.
 The Flamenco server needs to be linked to the mysql container, and also needs to have a few volumes mounted. The following command takes care of everything.
 
 ```
-docker run -ti -p 9999:9999 --name flamenco_server --link mysql \
+$ docker run -ti -p 9999:9999 --name flamenco_server --link mysql:mysql \
 -v /media/data/flamenco/flamenco/server:/data/git/server \
 -v /media/data/flamenco_data/storage/shared:/data/storage/shared \
 -v /media/data/flamenco_data/storage/server:/data/storage/server \
@@ -48,7 +48,7 @@ armadillica/flamenco_server_dev
 Setting up the manager is a very similar process, but needs some more interaction. Before we start let's make sure we know the path of the shared Blender binary.
 
 ```
-docker run -ti -p 7777:7777 --name flamenco_manager --link flamenco_server --link mysql \
+$ docker run -ti -p 7777:7777 --name flamenco_manager --link flamenco_server:flamenco_server --link mysql:mysql \
 -v /media/data/flamenco/flamenco/manager:/data/git/manager \
 -v /media/data/flamenco_data/storage/shared:/data/storage/shared \
 -v /media/data/flamenco_data/storage/manager:/data/storage/manager \
@@ -61,10 +61,22 @@ As soon as the container is up and running we will be prompted to provide the Bl
 The final component we will install is the dashboard, which allows us to track the progress and manage the various jobs.
 
 ```
-docker run -ti -p 8888:8888 --name flamenco_dashboard --link flamenco_server \
+$ docker run -ti -p 8888:8888 --name flamenco_dashboard --link flamenco_server:flamenco_server \
 -v /media/data/flamenco/flamenco/dashboard:/data/git/dashboard \
 -v /media/data/flamenco_data/storage/dashboard:/data/storage/dashboard \
 armadillica/flamenco_dashboard_dev
+```
+
+Now you can access Dashboard using the URL: http://127.0.0.1:8888, in order to see the humbnails corectly you will need to add the following line to your `/etc/hosts` file:
+
+```
+xxx.xxx.xxx.xxx      flamenco_server
+```
+
+Replacing xxx.xxx.xxx.xxx by the flamenco_server docker IP, you can find it running:
+
+```
+$ sudo docker inspect flamenco_server
 ```
 
 When running the dashboard for the first time, we build the html components using gulp. Future updates can only be done by hand on the host OS at the moment.
@@ -77,17 +89,33 @@ The Flamenco worker is a very simple standalone component. The only requirements
 
 * Python 2.7
 * the requests library
+* the Pillow library
 
-We can make sure that we have the requests library installed on the OS level with:
+Notice that `Pillow` requires the folowing packages:
 
 ```
-$ sudo pip install requests
+$ sudo apt-get install libjpeg-dev zlib1g-dev python-dev
 ```
+
+Is recommended to create and activate a virtual environment:
+
+```
+$ cd /media/data
+$ virtualenv venv
+$ . venv/bin/activate
+```
+
+We can make sure that we have the requests library installed on the virtual environment with:
+
+```
+(venv)$ pip install requests Pillow
+```
+
 
 After that, we can run the worker with:
 
 ```
-$ python /media/data/flamenco/flamenco/worker/run.py
+(venv)$ python /media/data/flamenco/flamenco/worker/run.py --manager 127.0.0.1:7777
 ``` 
 
 
