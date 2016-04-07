@@ -8,4 +8,4 @@ if [ ! -e /installed ]; then
 fi
 
 # Run Apache
-/usr/sbin/apache2 -D FOREGROUND
+/usr/sbin/apache2ctl -D FOREGROUND

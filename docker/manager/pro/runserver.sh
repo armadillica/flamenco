@@ -11,4 +11,4 @@ fi
 . /data/venv/bin/activate && cd /data/git/manager && python manage.py setup_register_manager
 
 # Run Apache
-/usr/sbin/apache2 -D FOREGROUND
+/usr/sbin/apache2ctl -D FOREGROUND
