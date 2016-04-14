@@ -6,6 +6,7 @@ Developer docs
 
    architecture.rst
    roadmap.rst
+   worker.rst
    api/index.rst
 
 
