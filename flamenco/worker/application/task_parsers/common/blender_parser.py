@@ -75,7 +75,7 @@ class blender_parser():
         #Send Thumbnail
         #Saved: path
         re_frame = re.compile(
-        r'Saved: (.*?)\s'
+        r'Saved: \'(.*?)\'\s'
         )
         output_path = None
         match = re_frame.findall(output)
