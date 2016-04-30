@@ -118,9 +118,15 @@ class flamencoPreferences(AddonPreferences):
         default="http://127.0.0.1:9999",
         options={'HIDDEN', 'SKIP_SAVE'})
 
+    bam_binary = StringProperty(
+        name="BAM binary",
+        default="bam",
+        options={'HIDDEN','SKIP_SAVE'})
+
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "flamenco_server")
+        layout.prop(self, "bam_binary")
 
 class flamencoUpdate (bpy.types.Operator):
     """Update information about Flamenco Server"""
@@ -293,14 +299,14 @@ class bamToRenderfarm (bpy.types.Operator):
         C.scene.render.use_file_extension = use_extension
 
         tmppath = C.user_preferences.filepaths.temporary_directory
-
+        bam_binary=addon_prefs.bam_binary
         # Generate a UUID and attach it to the zipfile
         zipname = "jobfile_{0}".format(str(uuid.uuid1()))
         zippath = os.path.join(tmppath, "{0}.zip".format(zipname))
 
         try:
             print("Creating BAM archive at {0}".format(zippath))
-            command = ["bam", "pack", D.filepath, '-o', zippath]
+            command = [bam_binary, "pack", D.filepath, '-o', zippath]
 
             # If we do not want to pack large files
             exclude_pattern = []
