@@ -90,6 +90,7 @@ The Flamenco worker is a very simple standalone component. The only requirements
 * Python 2.7
 * the requests library
 * the Pillow library
+* Imagemagick
 
 Notice that `Pillow` requires the folowing packages:
 
@@ -116,7 +117,7 @@ After that, we can run the worker with:
 
 ```
 (venv)$ python /media/data/flamenco/flamenco/worker/run.py --manager 127.0.0.1:7777
-``` 
+```
 
 
 ## Developer installation
