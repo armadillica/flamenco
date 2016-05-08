@@ -1,15 +1,13 @@
 import os
 
-# Enable reads (GET), inserts (POST) and DELETE for resources/collections
+# Enable reads (GET), inserts (POST) and for resources/collections
 # (if you omit this line, the API will default to ['GET'] and provide
 # read-only access to the endpoint).
-RESOURCE_METHODS = ['GET', 'POST', 'DELETE']
+RESOURCE_METHODS = ['GET', 'POST']
 
 # Enable reads (GET), edits (PATCH), replacements (PUT) and deletes of
 # individual items  (defaults to read-only item access).
 ITEM_METHODS = ['GET', 'PUT', 'DELETE', 'PATCH']
-
-PAGINATION_LIMIT = 25
 
 _file_embedded_schema = {
     'type': 'objectid',
@@ -36,8 +34,59 @@ _activity_object_type = {
     'allowed': [
         'project',
         'user',
-        'node'
+        'job',
+        'task'
     ],
+}
+
+_permissions_embedded_schema = {
+    'groups': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'group': {
+                    'type': 'objectid',
+                    'required': True,
+                    'data_relation': {
+                        'resource': 'groups',
+                        'field': '_id',
+                        'embeddable': True
+                    }
+                },
+                'methods': {
+                    'type': 'list',
+                    'required': True,
+                    'allowed': ['GET', 'PUT', 'POST', 'DELETE']
+                }
+            }
+        },
+    },
+    'users': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'user' : {
+                    'type': 'objectid',
+                    'required': True,
+                },
+                'methods': {
+                    'type': 'list',
+                    'required': True,
+                    'allowed': ['GET', 'PUT', 'POST', 'DELETE']
+                }
+            }
+        }
+    },
+    'world': {
+        'type': 'list',
+        #'required': True,
+        'allowed': ['GET',]
+    },
+    'is_free': {
+        'type': 'boolean',
+    }
 }
 
 users_schema = {
@@ -106,71 +155,6 @@ users_schema = {
                 'allowed': [0, 1]
             }
         }
-    }
-}
-
-nodes_schema = {
-    'name': {
-        'type': 'string',
-        'minlength': 1,
-        'maxlength': 128,
-        'required': True,
-    },
-    'description': {
-        'type': 'string',
-    },
-    'picture': {
-        'type': 'objectid',
-        'data_relation': {
-           'resource': 'files',
-           'field': '_id',
-           'embeddable': True
-        },
-    },
-    'order': {
-        'type': 'integer',
-        'minlength': 0,
-    },
-    'revision': {
-        'type': 'integer',
-    },
-    'parent': {
-        'type': 'objectid',
-         'data_relation': {
-            'resource': 'nodes',
-            'field': '_id',
-            'embeddable': True
-         },
-    },
-    'project': {
-        'type': 'objectid',
-         'data_relation': {
-            'resource': 'projects',
-            'field': '_id',
-            'embeddable': True
-         },
-    },
-    'user': {
-        'type': 'objectid',
-        'required': True,
-        'data_relation': {
-            'resource': 'users',
-            'field': '_id',
-            'embeddable': True
-        },
-    },
-    'node_type': {
-        'type': 'string',
-        'required': True
-    },
-    'properties': {
-        'type' : 'dict',
-        'valid_properties' : True,
-        'required': True,
-     },
-    'permissions': {
-        'type': 'dict',
-        'schema': permissions_embedded_schema
     }
 }
 
@@ -328,6 +312,13 @@ files_schema = {
     }
 }
 
+groups_schema = {
+    'name': {
+        'type': 'string',
+        'required': True
+    }
+}
+
 projects_schema = {
     'name': {
         'type': 'string',
@@ -337,11 +328,6 @@ projects_schema = {
     },
     'description': {
         'type': 'string',
-    },
-    # Short summary for the project
-    'summary': {
-        'type': 'string',
-        'maxlength': 128
     },
     # Logo
     'picture_square': _file_embedded_schema,
@@ -355,20 +341,6 @@ projects_schema = {
             'field': '_id',
             'embeddable': True
         },
-    },
-    'category': {
-        'type': 'string',
-        'allowed': [
-            'training',
-            'film',
-            'assets',
-            'software',
-            'game'
-        ],
-        'required': True,
-    },
-    'is_private': {
-        'type': 'boolean'
     },
     'url': {
         'type': 'string'
@@ -385,69 +357,13 @@ projects_schema = {
     'status': {
         'type': 'string',
         'allowed': [
-            'published',
-            'pending',
-            'deleted'
+            'active',
+            'archived',
         ],
-    },
-    # Latest nodes being edited
-    'nodes_latest': {
-        'type': 'list',
-        'schema': {
-            'type': 'objectid',
-        }
-    },
-    # Featured nodes, manually added
-    'nodes_featured': {
-        'type': 'list',
-        'schema': {
-            'type': 'objectid',
-        }
-    },
-    # Latest blog posts, manually added
-    'nodes_blog': {
-        'type': 'list',
-        'schema': {
-            'type': 'objectid',
-        }
-    },
-    # Where Node type schemas for every projects are defined
-    'node_types': {
-        'type': 'list',
-        'schema': {
-            'type': 'dict',
-            'schema': {
-                # URL is the way we identify a node_type when calling it via
-                # the helper methods in the Project API.
-                'url': {'type': 'string'},
-                'name': {'type': 'string'},
-                'description': {'type': 'string'},
-                # Allowed parents for the node_type
-                'parent': {
-                    'type': 'list',
-                    'schema': {
-                        'type': 'string'
-                    }
-                },
-                'dyn_schema': {
-                    'type': 'dict',
-                    'allow_unknown': True
-                },
-                'form_schema': {
-                    'type': 'dict',
-                    'allow_unknown': True
-                },
-                'permissions': {
-                    'type': 'dict',
-                    'schema': permissions_embedded_schema
-                }
-            },
-
-        }
     },
     'permissions': {
         'type': 'dict',
-        'schema': permissions_embedded_schema
+        'schema': _permissions_embedded_schema
     }
 }
 
@@ -505,18 +421,11 @@ notifications_schema = {
     },
 }
 
-
-nodes = {
-    'schema': nodes_schema,
-    'public_methods': ['GET'],
-    'public_item_methods': ['GET']
-}
-
-node_types = {
-    'resource_methods': ['GET', 'POST'],
-    'public_methods': ['GET'],
-    'public_item_methods': ['GET'],
-    'schema': node_types_schema,
+jobs_schema = {
+    'name': {
+        'type': 'string',
+        'required': True
+    }
 }
 
 users = {
@@ -560,12 +469,6 @@ groups = {
     'schema': groups_schema,
 }
 
-organizations = {
-    'schema': organizations_schema,
-    'public_item_methods': ['GET'],
-    'public_methods': ['GET']
-}
-
 projects = {
     'schema': projects_schema,
     'public_item_methods': ['GET'],
@@ -585,25 +488,26 @@ notifications = {
     'schema': notifications_schema,
 }
 
+jobs = {
+    'schema': jobs_schema,
+}
 
 DOMAIN = {
     'users': users,
-    'nodes': nodes,
-    'node_types': node_types,
     'tokens': tokens,
     'files': files,
     'groups': groups,
-    'organizations': organizations,
     'projects': projects,
     'activities': activities,
     'activities-subscriptions': activities_subscriptions,
-    'notifications': notifications
+    'notifications': notifications,
+    'jobs': jobs
 }
 
 
 MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost')
 MONGO_PORT = os.environ.get('MONGO_PORT', 27017)
-MONGO_DBNAME = os.environ.get('MONGO_DBNAME', 'eve')
+MONGO_DBNAME = os.environ.get('MONGO_DBNAME', 'eve_flamenco')
 CACHE_EXPIRES = 60
 HATEOAS = False
 UPSET_ON_PUT = False  # do not create new document on PUT of non-existant URL.
