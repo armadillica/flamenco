@@ -39,14 +39,47 @@ MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost')
 
 
 @manager.command
-def runserver():
+def runserver(**options):
     # Automatic creation of STORAGE_DIR path if it's missing
     if not os.path.exists(app.config['STORAGE_DIR']):
         os.makedirs(app.config['STORAGE_DIR'])
 
     app.run(host=app.config['HOST'],
             port=app.config['PORT'],
-            debug=app.config['DEBUG'])
+            debug=app.config['DEBUG'],
+            **options)
+
+
+@manager.command
+def runserver_memlimit(limit_kb=1000000):
+    import resource
+
+    limit_b = int(limit_kb) * 1024
+    for rsrc in (resource.RLIMIT_AS, resource.RLIMIT_DATA, resource.RLIMIT_RSS):
+        resource.setrlimit(rsrc, (limit_b, limit_b))
+
+    runserver()
+
+
+@manager.command
+def runserver_profile(pfile='profile.stats'):
+    import cProfile
+
+    cProfile.run('runserver(use_reloader=False)', pfile)
+
+
+def each_project_node_type(node_type_name=None):
+    """Generator, yields (project, node_type) tuples for all projects and node types.
+
+    When a node type name is given, only yields those node types.
+    """
+
+    projects_coll = app.data.driver.db['projects']
+
+    for project in projects_coll.find():
+        for node_type in project['node_types']:
+            if node_type_name is None or node_type['name'] == node_type_name:
+                yield project, node_type
 
 
 def post_item(entry, data):
@@ -243,140 +276,6 @@ def clear_db():
 
 
 @manager.command
-def upgrade_node_types():
-    """Wipes node_types collection and populates it again"""
-    node_types_collection = app.data.driver.db['node_types']
-    node_types = node_types_collection.find({})
-    old_ids = {}
-    for node_type in node_types:
-        old_ids[node_type['name']] = node_type['_id']
-    populate_node_types(old_ids)
-
-
-@manager.command
-def manage_groups():
-    """Take user email and group name,
-    and add or remove the user from that group.
-    """
-    from pymongo import MongoClient
-    client = MongoClient(MONGO_HOST, 27017)
-    db = client.eve
-
-    print ("")
-    print ("Add or Remove user from group")
-    print ("leave empty to cancel")
-    print ("")
-
-    # Select Action
-    print ("Do you want to Add or Remove the user from the group?")
-    retry = True
-    while retry:
-        action = raw_input('add/remove: ')
-        if action == '':
-            return
-        elif action.lower() in ['add', 'a', 'insert']:
-            action = 'add'
-            retry = False
-        elif action.lower() in ['remove', 'r', 'rmv', 'rem', 'delete', 'del']:
-            action = 'remove'
-            retry = False
-        else:
-            print ("Incorrect action, press type 'add' or 'remove'")
-
-    # Select User
-    retry = True
-    while retry:
-        user_email = raw_input('User email: ')
-        if user_email == '':
-            return
-        user = db.users.find_one({'email': user_email})
-        if user:
-            retry = False
-        else:
-            print ("Incorrect user email, try again, or leave empty to cancel")
-
-    # Select group
-    retry = True
-    while retry:
-        group_name = raw_input('Group name: ')
-        if group_name == '':
-            return
-        group = db.groups.find_one({'name': group_name})
-        if group:
-            retry = False
-        else:
-            print ("Incorrect group name, try again, or leave empty to cancel")
-
-    # Do
-    current_groups = user.get('groups', [])
-    if action == 'add':
-        if group['_id'] in current_groups:
-            print("User {0} is already in group {1}".format(
-                user_email, group_name))
-        else:
-            current_groups.append(group['_id'])
-            db.users.update({'_id': user['_id']},
-                            {"$set": {'groups': current_groups}})
-            print("User {0} added to group {1}".format(user_email, group_name))
-    elif action == 'remove':
-        if group['_id'] not in current_groups:
-            print("User {0} is not in group {1}".format(user_email, group_name))
-        else:
-            current_groups.remove(group['_id'])
-            db.users.update({'_id': user['_id']},
-                            {"$set": {'groups': current_groups}})
-            print("User {0} removed from group {1}".format(
-                user_email, group_name))
-
-
-def populate_node_types(old_ids={}):
-    node_types_collection = app.data.driver.db['node_types']
-
-    def mix_node_type(old_id, node_type_dict):
-        # Take eve parameters
-        node_type = node_types_collection.find_one({'_id': old_id})
-        for attr in node_type:
-            if attr[0] == '_':
-                # Mix with node eve attributes. This is really not needed since
-                # the attributes are stripped before doing a put_internal.
-                node_type_dict[attr] = node_type[attr]
-            elif attr == 'permissions':
-                node_type_dict['permissions'] = node_type['permissions']
-        return node_type_dict
-
-    def upgrade(node_type, old_ids):
-        print("Node {0}".format(node_type['name']))
-        node_name = node_type['name']
-        if node_name in old_ids:
-            node_id = old_ids[node_name]
-            node_type = mix_node_type(node_id, node_type)
-
-            # Removed internal fields that would cause validation error
-            internal_fields = ['_id', '_etag', '_updated', '_created']
-            for field in internal_fields:
-                node_type.pop(field, None)
-            p = put_internal('node_types', node_type, **{'_id': node_id})
-        else:
-            print("Making the node")
-            print(node_type)
-            post_item('node_types', node_type)
-
-    # upgrade(shot_node_type, old_ids)
-    # upgrade(task_node_type, old_ids)
-    # upgrade(scene_node_type, old_ids)
-    # upgrade(act_node_type, old_ids)
-    upgrade(node_type_project, old_ids)
-    upgrade(node_type_group, old_ids)
-    upgrade(node_type_asset, old_ids)
-    upgrade(node_type_storage, old_ids)
-    upgrade(node_type_comment, old_ids)
-    upgrade(node_type_blog, old_ids)
-    upgrade(node_type_post, old_ids)
-    upgrade(node_type_texture, old_ids)
-    upgrade(node_type_group_texture, old_ids)
-
-
-@manager.command
 def add_parent_to_nodes():
     """Find the parent of any node in the nodes collection"""
     import codecs
@@ -386,6 +285,7 @@ def add_parent_to_nodes():
     sys.stdout = UTF8Writer(sys.stdout)
 
     nodes_collection = app.data.driver.db['nodes']
+
     def find_parent_project(node):
         if node and 'parent' in node:
             parent = nodes_collection.find_one({'_id': node['parent']})
@@ -394,6 +294,7 @@ def add_parent_to_nodes():
             return node
         else:
             return None
+
     nodes = nodes_collection.find()
     nodes_index = 0
     nodes_orphan = 0
@@ -405,7 +306,7 @@ def add_parent_to_nodes():
             project = find_parent_project(node)
             if project:
                 nodes_collection.update({'_id': node['_id']},
-                                {"$set": {'project': project['_id']}})
+                                        {"$set": {'project': project['_id']}})
                 print(u"{0} {1}".format(node['_id'], node['name']))
             else:
                 nodes_orphan += 1
@@ -414,18 +315,6 @@ def add_parent_to_nodes():
 
     print("Edited {0} nodes".format(nodes_index))
     print("Orphan {0} nodes".format(nodes_orphan))
-
-
-@manager.command
-def remove_children_files():
-    """Remove any file object with a parent field"""
-    files_collection = app.data.driver.db['files']
-    for f in files_collection.find():
-        if 'parent' in f:
-            file_id = f['_id']
-            # Delete child object
-            files_collection.remove({'_id': file_id})
-            print("deleted {0}".format(file_id))
 
 
 @manager.command
@@ -442,127 +331,11 @@ def make_project_public(project_id):
 
 
 @manager.command
-def convert_assets_to_textures(project_id):
-    """Get any node of type asset in a certain project and convert it to a
-    node_type texture.
-    """
-
-    DRY_RUN = False
-
-    node_types_collection = app.data.driver.db['node_types']
-    files_collection = app.data.driver.db['files']
-    nodes_collection = app.data.driver.db['nodes']
-
-    def parse_name(name):
-        """Parse a texture name to infer properties"""
-        variation = 'col'
-        is_tileable = False
-        variations = ['_bump', '_spec', '_nor', '_col', '_translucency']
-        for v in variations:
-            if v in name:
-                variation = v[1:]
-                break
-        if '_tileable' in name:
-            is_tileable = True
-        return dict(variation=variation, is_tileable=is_tileable)
-
-    def make_texture_node(base_node, files, parent_id=None):
-        texture_node_type = node_types_collection.find_one({'name':'texture'})
-        files_list = []
-        is_tileable = False
-
-        if parent_id is None:
-            parent_id = base_node['parent']
-        else:
-            print("Using provided parent {0}".format(parent_id))
-
-        # Create a list with all the file fariations for the texture
-        for f in files:
-            print("Processing {1} {0}".format(f['name'], f['_id']))
-            attributes = parse_name(f['name'])
-            if attributes['is_tileable']:
-                is_tileable = True
-            file_entry = dict(
-                file=f['properties']['file'],
-                is_tileable=attributes['is_tileable'],
-                map_type=attributes['variation'])
-            files_list.append(file_entry)
-        # Get the first file from the files list and use it as base for some
-        # node properties
-        first_file = files_collection.find_one({'_id': files[0]['properties']['file']})
-        if 'picture' in base_node and base_node['picture'] != None:
-            picture = base_node['picture']
-        else:
-            picture = first_file['_id']
-        if 'height' in first_file:
-            node = dict(
-                name=base_node['name'],
-                picture=picture,
-                parent=parent_id,
-                project=base_node['project'],
-                user=base_node['user'],
-                node_type=texture_node_type['_id'],
-                properties=dict(
-                    status=base_node['properties']['status'],
-                    files=files_list,
-                    resolution="{0}x{1}".format(first_file['height'], first_file['width']),
-                    is_tileable=is_tileable,
-                    is_landscape=(first_file['height'] < first_file['width']),
-                    aspect_ratio=round(
-                        (first_file['width'] / first_file['height']), 2)
-                    )
-                )
-            print("Making {0}".format(node['name']))
-            if not DRY_RUN:
-                p = post_internal('nodes', node)
-                if p[0]['_status'] == 'ERR':
-                    import pprint
-                    pprint.pprint(node)
-
-
-    nodes_collection = app.data.driver.db['nodes']
-
-    for n in nodes_collection.find({'project': ObjectId(project_id)}):
-        n_type = node_types_collection.find_one({'_id': n['node_type']})
-        processed_nodes = []
-        if n_type['name'] == 'group' and n['name'].startswith('_'):
-            print("Processing {0}".format(n['name']))
-            # Get the content of the group
-            children = [c for c in nodes_collection.find({'parent': n['_id']})]
-            make_texture_node(children[0], children, parent_id=n['parent'])
-            processed_nodes += children
-            processed_nodes.append(n)
-        elif n_type['name'] == 'group':
-            # Change group type to texture group
-            node_type_texture = node_types_collection.find_one(
-                {'name':'group_texture'})
-            n['node_type'] = node_type_texture['_id']
-            n['properties'].pop('notes', None)
-            print("Updating {0}".format(n['name']))
-            if not DRY_RUN:
-                put_item('nodes', n)
-        # Delete processed nodes
-        for node in processed_nodes:
-            print("Removing {0} {1}".format(node['_id'], node['name']))
-            if not DRY_RUN:
-                nodes_collection.remove({'_id': node['_id']})
-    # Make texture out of single image
-    for n in nodes_collection.find({'project': ObjectId(project_id)}):
-        n_type = node_types_collection.find_one({'_id': n['node_type']})
-        if n_type['name'] == 'asset':
-            make_texture_node(n, [n])
-            # Delete processed nodes
-            print("Removing {0} {1}".format(n['_id'], n['name']))
-            if not DRY_RUN:
-                nodes_collection.remove({'_id': n['_id']})
-
-
-@manager.command
 def set_attachment_names():
     """Loop through all existing nodes and assign proper ContentDisposition
     metadata to referenced files that are using GCS.
     """
-    from application import update_file_name
+    from application.utils.gcs import update_file_name
     nodes_collection = app.data.driver.db['nodes']
     for n in nodes_collection.find():
         print("Updating node {0}".format(n['_id']))
@@ -583,7 +356,7 @@ def files_verify_project():
                 if item['project'] != f['project']:
                     issues['conflicting'].append(item['_id'])
                 if 'status' in item['properties'] \
-                    and item['properties']['status'] == 'processing':
+                        and item['properties']['status'] == 'processing':
                     issues['processing'].append(item['_id'])
         else:
             issues['missing'].append(
@@ -613,7 +386,7 @@ def replace_node_type(project, node_type_name, new_node_type):
 
     old_node_type = next(
         (item for item in project['node_types'] if item.get('name') \
-            and item['name'] == node_type_name), None)
+         and item['name'] == node_type_name), None)
     if old_node_type:
         for i, v in enumerate(project['node_types']):
             if v['name'] == node_type_name:
@@ -686,26 +459,28 @@ def files_make_public_t():
     from gcloud.exceptions import InternalServerError
     from application.utils.gcs import GoogleCloudStorageBucket
     files_collection = app.data.driver.db['files']
+
     for f in files_collection.find({'backend': 'gcs'}):
-        if 'variations' in f:
-            variation_t = next((item for item in f['variations'] \
-                if item['size'] == 't'), None)
-            if variation_t:
-                try:
-                    storage = GoogleCloudStorageBucket(str(f['project']))
-                    blob = storage.Get(variation_t['file_path'], to_dict=False)
-                    if blob:
-                        try:
-                            print("Making blob public: {0}".format(blob.path))
-                            blob.make_public()
-                        except InternalServerError:
-                            print("Internal Server Error")
-                        except Exception:
-                            pass
-                except InternalServerError:
-                    print("Internal Server Error")
-                except Exception:
-                    pass
+        if 'variations' not in f:
+            continue
+
+        variation_t = next((item for item in f['variations']
+                            if item['size'] == 't'), None)
+        if not variation_t:
+            continue
+
+        try:
+            storage = GoogleCloudStorageBucket(str(f['project']))
+            blob = storage.Get(variation_t['file_path'], to_dict=False)
+            if not blob:
+                print('Unable to find blob for project %s file %s' %(f['project'], f['_id']))
+                continue
+
+            print('Making blob public: {0}'.format(blob.path))
+            blob.make_public()
+        except InternalServerError as ex:
+            print('Internal Server Error: ', ex)
+
 
 @manager.command
 def subscribe_node_owners():
@@ -809,6 +584,201 @@ def add_group_to_projects(group_name):
                     node_type['permissions']['groups'].append(permissions)
                     projects_collections.update(
                         {'_id': project['_id']}, project)
+
+
+@manager.command
+def add_license_props():
+    """Add license fields to all node types asset for every project."""
+    projects_collections = app.data.driver.db['projects']
+    for project in projects_collections.find():
+        print("Processing {}".format(project['_id']))
+        for node_type in project['node_types']:
+            if node_type['name'] == 'asset':
+                node_type['dyn_schema']['license_notes'] = {'type': 'string'}
+                node_type['dyn_schema']['license_type'] = {
+                    'type': 'string',
+                    'allowed': [
+                        'cc-by',
+                        'cc-0',
+                        'cc-by-sa',
+                        'cc-by-nd',
+                        'cc-by-nc',
+                        'copyright'
+                    ],
+                    'default': 'cc-by'
+                }
+                node_type['form_schema']['license_notes'] = {}
+                node_type['form_schema']['license_type'] = {}
+        projects_collections.update(
+            {'_id': project['_id']}, project)
+
+
+@manager.command
+def refresh_file_sizes():
+    """Computes & stores the 'length_aggregate_in_bytes' fields of all files."""
+
+    from application.modules import file_storage
+
+    matched = 0
+    unmatched = 0
+    total_size = 0
+
+    files_collection = app.data.driver.db['files']
+    for file_doc in files_collection.find():
+        file_storage.compute_aggregate_length(file_doc)
+        length = file_doc['length_aggregate_in_bytes']
+        total_size += length
+
+        result = files_collection.update_one({'_id': file_doc['_id']},
+                                             {'$set': {'length_aggregate_in_bytes': length}})
+        if result.matched_count != 1:
+            log.warning('Unable to update document %s', file_doc['_id'])
+            unmatched += 1
+        else:
+            matched += 1
+
+    log.info('Updated %i file documents.', matched)
+    if unmatched:
+        log.warning('Unable to update %i documents.', unmatched)
+    log.info('%i bytes (%.3f GiB) storage used in total.',
+             total_size, total_size / 1024 ** 3)
+
+
+@manager.command
+def project_stats():
+    import csv
+    import sys
+    from collections import defaultdict
+    from functools import partial
+
+    from application.modules import projects
+
+    proj_coll = app.data.driver.db['projects']
+    nodes = app.data.driver.db['nodes']
+
+    aggr = defaultdict(partial(defaultdict, int))
+
+    csvout = csv.writer(sys.stdout)
+    csvout.writerow(['project ID', 'owner', 'private', 'file size',
+                     'nr of nodes', 'nr of top-level nodes', ])
+
+    for proj in proj_coll.find(projection={'user': 1,
+                                           'name': 1,
+                                           'is_private': 1,
+                                           '_id': 1}):
+        project_id = proj['_id']
+        is_private = proj.get('is_private', False)
+        row = [str(project_id),
+               unicode(proj['user']).encode('utf-8'),
+               is_private]
+
+        file_size = projects.project_total_file_size(project_id)
+        row.append(file_size)
+
+        node_count_result = nodes.aggregate([
+            {'$match': {'project': project_id}},
+            {'$project': {'parent': 1,
+                          'is_top': {'$cond': [{'$gt': ['$parent', None]}, 0, 1]},
+                          }},
+            {'$group': {
+                '_id': None,
+                'all': {'$sum': 1},
+                'top': {'$sum': '$is_top'},
+            }}
+        ])
+
+        try:
+            node_counts = next(node_count_result)
+            nodes_all = node_counts['all']
+            nodes_top = node_counts['top']
+        except StopIteration:
+            # No result from the nodes means nodeless project.
+            nodes_all = 0
+            nodes_top = 0
+        row.append(nodes_all)
+        row.append(nodes_top)
+
+        for collection in aggr[None], aggr[is_private]:
+            collection['project_count'] += 1
+            collection['project_count'] += 1
+            collection['file_size'] += file_size
+            collection['node_count'] += nodes_all
+            collection['top_nodes'] += nodes_top
+
+        csvout.writerow(row)
+
+    csvout.writerow([
+        'public', '', '%i projects' % aggr[False]['project_count'],
+        aggr[False]['file_size'], aggr[False]['node_count'], aggr[False]['top_nodes'],
+    ])
+    csvout.writerow([
+        'private', '', '%i projects' % aggr[True]['project_count'],
+        aggr[True]['file_size'], aggr[True]['node_count'], aggr[True]['top_nodes'],
+    ])
+    csvout.writerow([
+        'total', '', '%i projects' % aggr[None]['project_count'],
+        aggr[None]['file_size'], aggr[None]['node_count'], aggr[None]['top_nodes'],
+    ])
+
+
+@manager.command
+def add_node_types():
+    """Add texture and group_texture node types to all projects"""
+    from manage_extra.node_types.texture import node_type_texture
+    from manage_extra.node_types.group_texture import node_type_group_texture
+    from application.utils import project_get_node_type
+    projects_collections = app.data.driver.db['projects']
+    for project in projects_collections.find():
+        print("Processing {}".format(project['_id']))
+        if not project_get_node_type(project, 'group_texture'):
+            project['node_types'].append(node_type_group_texture)
+            print("Added node type: {}".format(node_type_group_texture['name']))
+        if not project_get_node_type(project, 'texture'):
+            project['node_types'].append(node_type_texture)
+            print("Added node type: {}".format(node_type_texture['name']))
+        projects_collections.update(
+            {'_id': project['_id']}, project)
+
+
+@manager.command
+def update_texture_node_type():
+    """Update allowed values for textures node_types"""
+    projects_collections = app.data.driver.db['projects']
+    for project in projects_collections.find():
+        print("Processing {}".format(project['_id']))
+        for node_type in project['node_types']:
+            if node_type['name'] == 'texture':
+                allowed = [
+                    'color',
+                    'specular',
+                    'bump',
+                    'normal',
+                    'translucency',
+                    'emission',
+                    'alpha'
+                    ]
+                node_type['dyn_schema']['files']['schema']['schema']['map_type']['allowed'] = allowed
+        projects_collections.update(
+            {'_id': project['_id']}, project)
+
+
+@manager.command
+def update_texture_nodes_maps():
+    """Update abbreviated texture map types to the extended version"""
+    nodes_collection = app.data.driver.db['nodes']
+    remap = {
+        'col': 'color',
+        'spec': 'specular',
+        'nor': 'normal'}
+    for node in nodes_collection.find({'node_type': 'texture'}):
+        for v in node['properties']['files']:
+            try:
+                updated_map_types = remap[v['map_type']]
+                print("Updating {} to {}".format(v['map_type'], updated_map_types))
+                v['map_type'] = updated_map_types
+            except KeyError:
+                print("Skipping {}".format(v['map_type']))
+            nodes_collection.update({'_id': node['_id']}, node)
 
 
 if __name__ == '__main__':

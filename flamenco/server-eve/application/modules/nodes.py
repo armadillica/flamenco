@@ -65,6 +65,7 @@ def resource_parse_attachments(response):
     for item in response['_items']:
         item_parse_attachments(item)
 
+
 def before_replacing_node(item, original):
     check_permissions('nodes', original, 'PUT')
     update_file_name(item)

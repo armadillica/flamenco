@@ -6,9 +6,9 @@ module for Blender ID communication.
 """
 
 import logging
+import datetime
 
 from bson import tz_util
-from datetime import datetime
 from flask import g
 from flask import request
 from flask import current_app
@@ -30,6 +30,8 @@ def validate_token():
 
     # Default to no user at all.
     g.current_user = None
+
+    _delete_expired_tokens()
 
     if not request.authorization:
         # If no authorization headers are provided, we are getting a request
@@ -76,7 +78,7 @@ def find_token(token, is_subclient_token=False, **extra_filters):
     # TODO: remove expired tokens from collection.
     lookup = {'token': token,
               'is_subclient_token': True if is_subclient_token else {'$in': [False, None]},
-              'expire_time': {"$gt": datetime.now(tz=tz_util.utc)}}
+              'expire_time': {"$gt": datetime.datetime.now(tz=tz_util.utc)}}
     lookup.update(extra_filters)
 
     db_token = tokens_collection.find_one(lookup)
@@ -170,3 +172,20 @@ def make_unique_username(email):
         if user_from_username is None:
             return unique_name
         suffix += 1
+
+
+def _delete_expired_tokens():
+    """Deletes tokens that have expired.
+
+    For debugging, we keep expired tokens around for a few days, so that we
+    can determine that a token was expired rather than not created in the
+    first place. It also grants some leeway in clock synchronisation.
+    """
+
+    token_coll = current_app.data.driver.db['tokens']
+
+    now = datetime.datetime.now(tz_util.utc)
+    expiry_date = now - datetime.timedelta(days=7)
+
+    result = token_coll.delete_many({'expire_time': {"$lt": expiry_date}})
+    log.debug('Deleted %i expired authentication tokens', result.deleted_count)

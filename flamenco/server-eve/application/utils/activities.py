@@ -133,7 +133,7 @@ def activity_object_add(actor_user_id, verb, object_type, object_id,
     subscriptions = notification_get_subscriptions(
         context_object_type, context_object_id, actor_user_id)
 
-    if subscriptions.count():
+    if subscriptions.count() > 0:
         activity = dict(
             actor_user=actor_user_id,
             verb=verb,

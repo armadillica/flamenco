@@ -11,10 +11,14 @@ blueprint = Blueprint('latest', __name__)
 def keep_fetching(collection, db_filter, projection, sort, py_filter, batch_size=12):
     """Yields results for which py_filter returns True"""
 
+    projection['_deleted'] = 1
     curs = collection.find(db_filter, projection).sort(sort)
     curs.batch_size(batch_size)
 
     for doc in curs:
+        if doc.get('_deleted'):
+            continue
+        doc.pop('_deleted', None)
         if py_filter(doc):
             yield doc
 

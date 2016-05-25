@@ -1,13 +1,16 @@
 import os
 
-# Enable reads (GET), inserts (POST) and for resources/collections
+# Enable reads (GET), inserts (POST) and DELETE for resources/collections
 # (if you omit this line, the API will default to ['GET'] and provide
 # read-only access to the endpoint).
-RESOURCE_METHODS = ['GET', 'POST']
+RESOURCE_METHODS = ['GET', 'POST', 'DELETE']
 
 # Enable reads (GET), edits (PATCH), replacements (PUT) and deletes of
 # individual items  (defaults to read-only item access).
 ITEM_METHODS = ['GET', 'PUT', 'DELETE', 'PATCH']
+
+PAGINATION_LIMIT = 250
+PAGINATION_DEFAULT = 250
 
 _file_embedded_schema = {
     'type': 'objectid',
@@ -34,59 +37,8 @@ _activity_object_type = {
     'allowed': [
         'project',
         'user',
-        'job',
-        'task'
+        'node'
     ],
-}
-
-_permissions_embedded_schema = {
-    'groups': {
-        'type': 'list',
-        'schema': {
-            'type': 'dict',
-            'schema': {
-                'group': {
-                    'type': 'objectid',
-                    'required': True,
-                    'data_relation': {
-                        'resource': 'groups',
-                        'field': '_id',
-                        'embeddable': True
-                    }
-                },
-                'methods': {
-                    'type': 'list',
-                    'required': True,
-                    'allowed': ['GET', 'PUT', 'POST', 'DELETE']
-                }
-            }
-        },
-    },
-    'users': {
-        'type': 'list',
-        'schema': {
-            'type': 'dict',
-            'schema': {
-                'user' : {
-                    'type': 'objectid',
-                    'required': True,
-                },
-                'methods': {
-                    'type': 'list',
-                    'required': True,
-                    'allowed': ['GET', 'PUT', 'POST', 'DELETE']
-                }
-            }
-        }
-    },
-    'world': {
-        'type': 'list',
-        #'required': True,
-        'allowed': ['GET',]
-    },
-    'is_free': {
-        'type': 'boolean',
-    }
 }
 
 users_schema = {
@@ -158,6 +110,243 @@ users_schema = {
     }
 }
 
+organizations_schema = {
+    'name': {
+        'type': 'string',
+        'minlength': 1,
+        'maxlength': 128,
+        'required': True
+    },
+    'email': {
+        'type': 'string'
+    },
+    'url': {
+        'type': 'string',
+        'minlength': 1,
+        'maxlength': 128,
+        'required': True
+    },
+    'description': {
+        'type': 'string',
+        'maxlength': 256,
+    },
+    'website': {
+        'type': 'string',
+        'maxlength': 256,
+    },
+    'location': {
+        'type': 'string',
+        'maxlength': 256,
+    },
+    'picture': {
+        'type': 'objectid',
+        'nullable': True,
+        'data_relation': {
+           'resource': 'files',
+           'field': '_id',
+           'embeddable': True
+        },
+    },
+    'users': {
+        'type': 'list',
+        'default': [],
+        'schema': {
+            'type': 'objectid',
+            'data_relation': {
+                'resource': 'users',
+                'field': '_id',
+                'embeddable': True
+            }
+        }
+    },
+    'teams': {
+        'type': 'list',
+        'default': [],
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                # Team name
+                'name': {
+                    'type': 'string',
+                    'minlength': 1,
+                    'maxlength': 128,
+                    'required': True
+                },
+                # List of user ids for the team
+                'users': {
+                    'type': 'list',
+                    'default': [],
+                    'schema': {
+                        'type': 'objectid',
+                        'data_relation': {
+                            'resource': 'users',
+                            'field': '_id',
+                        }
+                    }
+                },
+                # List of groups assigned to the team (this will automatically
+                # update the groups property of each user in the team)
+                'groups': {
+                    'type': 'list',
+                    'default': [],
+                    'schema': {
+                        'type': 'objectid',
+                        'data_relation': {
+                            'resource': 'groups',
+                            'field': '_id',
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+permissions_embedded_schema = {
+    'groups': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'group': {
+                    'type': 'objectid',
+                    'required': True,
+                    'data_relation': {
+                        'resource': 'groups',
+                        'field': '_id',
+                        'embeddable': True
+                    }
+                },
+                'methods': {
+                    'type': 'list',
+                    'required': True,
+                    'allowed': ['GET', 'PUT', 'POST', 'DELETE']
+                }
+            }
+        },
+    },
+    'users': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'user' : {
+                    'type': 'objectid',
+                    'required': True,
+                },
+                'methods': {
+                    'type': 'list',
+                    'required': True,
+                    'allowed': ['GET', 'PUT', 'POST', 'DELETE']
+                }
+            }
+        }
+    },
+    'world': {
+        'type': 'list',
+        #'required': True,
+        'allowed': ['GET',]
+    },
+    'is_free': {
+        'type': 'boolean',
+    }
+}
+
+nodes_schema = {
+    'name': {
+        'type': 'string',
+        'minlength': 1,
+        'maxlength': 128,
+        'required': True,
+    },
+    'description': {
+        'type': 'string',
+    },
+    'picture': {
+        'type': 'objectid',
+        'data_relation': {
+           'resource': 'files',
+           'field': '_id',
+           'embeddable': True
+        },
+    },
+    'order': {
+        'type': 'integer',
+        'minlength': 0,
+    },
+    'revision': {
+        'type': 'integer',
+    },
+    'parent': {
+        'type': 'objectid',
+         'data_relation': {
+            'resource': 'nodes',
+            'field': '_id',
+            'embeddable': True
+         },
+    },
+    'project': {
+        'type': 'objectid',
+         'data_relation': {
+            'resource': 'projects',
+            'field': '_id',
+            'embeddable': True
+         },
+    },
+    'user': {
+        'type': 'objectid',
+        'required': True,
+        'data_relation': {
+            'resource': 'users',
+            'field': '_id',
+            'embeddable': True
+        },
+    },
+    'node_type': {
+        'type': 'string',
+        'required': True
+    },
+    'properties': {
+        'type' : 'dict',
+        'valid_properties' : True,
+        'required': True,
+     },
+    'permissions': {
+        'type': 'dict',
+        'schema': permissions_embedded_schema
+    }
+}
+
+node_types_schema = {
+    'name': {
+        'type': 'string',
+        'minlength': 1,
+        'maxlength': 128,
+        'required': True,
+    },
+    'description': {
+        'type': 'string',
+        'maxlength': 256,
+    },
+    'dyn_schema': {
+        'type': 'dict',
+        'required': True,
+    },
+    'form_schema': {
+        'type': 'dict',
+        'required': True,
+    },
+    'parent': {
+        'type': 'dict',
+        'required': True,
+    },
+    'permissions': {
+        'type': 'dict',
+        'required': True,
+        'schema': permissions_embedded_schema
+    }
+}
+
 tokens_schema = {
     'user': {
         'type': 'objectid',
@@ -178,6 +367,7 @@ tokens_schema = {
 }
 
 files_schema = {
+    # Name of the file after processing, possibly hashed.
     'name': {
         'type': 'string',
         'required': True,
@@ -213,10 +403,16 @@ files_schema = {
         'type': 'integer',
         'required': True,
     },
+    'length_aggregate_in_bytes': {  # Size of file + all variations
+        'type': 'integer',
+        'required': False,  # it's computed on the fly anyway, so clients don't need to provide it.
+    },
     'md5': {
         'type': 'string',
         'required': True,
     },
+
+    # Original filename as given by the user, possibly cleaned-up to make it safe.
     'filename': {
         'type': 'string',
         'required': True,
@@ -226,10 +422,14 @@ files_schema = {
         'required': True,
         'allowed': ["attract-web", "pillar", "cdnsun", "gcs", "unittest"]
     },
+
+    # Where the file is in the backend storage itself. In the case of GCS,
+    # it is relative to the /_ folder. In the other cases, it is relative
+    # to the root of that storage backend. required=False to allow creation
+    # before uploading to a storage, in case the final path is determined
+    # by that storage backend.
     'file_path': {
         'type': 'string',
-        #'required': True,
-        'unique': True,
     },
     'link': {
         'type': 'string',
@@ -309,7 +509,13 @@ files_schema = {
                     "failed", "cancelled"]
             },
         }
-    }
+    },
+    'status': {
+        'type': 'string',
+        'allowed': ['uploading', 'queued_for_processing', 'processing', 'complete', 'failed'],
+        'required': False,
+        'default': 'complete',  # default value for backward compatibility.
+    },
 }
 
 groups_schema = {
@@ -329,6 +535,11 @@ projects_schema = {
     'description': {
         'type': 'string',
     },
+    # Short summary for the project
+    'summary': {
+        'type': 'string',
+        'maxlength': 128
+    },
     # Logo
     'picture_square': _file_embedded_schema,
     # Header
@@ -341,6 +552,21 @@ projects_schema = {
             'field': '_id',
             'embeddable': True
         },
+    },
+    'category': {
+        'type': 'string',
+        'allowed': [
+            'training',
+            'film',
+            'assets',
+            'software',
+            'game'
+        ],
+        'required': True,
+    },
+    'is_private': {
+        'type': 'boolean',
+        'default': True,
     },
     'url': {
         'type': 'string'
@@ -357,13 +583,68 @@ projects_schema = {
     'status': {
         'type': 'string',
         'allowed': [
-            'active',
-            'archived',
+            'published',
+            'pending',
         ],
+    },
+    # Latest nodes being edited
+    'nodes_latest': {
+        'type': 'list',
+        'schema': {
+            'type': 'objectid',
+        }
+    },
+    # Featured nodes, manually added
+    'nodes_featured': {
+        'type': 'list',
+        'schema': {
+            'type': 'objectid',
+        }
+    },
+    # Latest blog posts, manually added
+    'nodes_blog': {
+        'type': 'list',
+        'schema': {
+            'type': 'objectid',
+        }
+    },
+    # Where Node type schemas for every projects are defined
+    'node_types': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                # URL is the way we identify a node_type when calling it via
+                # the helper methods in the Project API.
+                'url': {'type': 'string'},
+                'name': {'type': 'string'},
+                'description': {'type': 'string'},
+                # Allowed parents for the node_type
+                'parent': {
+                    'type': 'list',
+                    'schema': {
+                        'type': 'string'
+                    }
+                },
+                'dyn_schema': {
+                    'type': 'dict',
+                    'allow_unknown': True
+                },
+                'form_schema': {
+                    'type': 'dict',
+                    'allow_unknown': True
+                },
+                'permissions': {
+                    'type': 'dict',
+                    'schema': permissions_embedded_schema
+                }
+            },
+
+        }
     },
     'permissions': {
         'type': 'dict',
-        'schema': _permissions_embedded_schema
+        'schema': permissions_embedded_schema
     }
 }
 
@@ -421,11 +702,11 @@ notifications_schema = {
     },
 }
 
-jobs_schema = {
-    'name': {
-        'type': 'string',
-        'required': True
-    }
+nodes = {
+    'schema': nodes_schema,
+    'public_methods': ['GET'],
+    'public_item_methods': ['GET'],
+    'soft_delete': True,
 }
 
 users = {
@@ -469,6 +750,12 @@ groups = {
     'schema': groups_schema,
 }
 
+organizations = {
+    'schema': organizations_schema,
+    'public_item_methods': ['GET'],
+    'public_methods': ['GET']
+}
+
 projects = {
     'schema': projects_schema,
     'public_item_methods': ['GET'],
@@ -488,26 +775,28 @@ notifications = {
     'schema': notifications_schema,
 }
 
-jobs = {
-    'schema': jobs_schema,
-}
 
 DOMAIN = {
     'users': users,
+    'nodes': nodes,
     'tokens': tokens,
     'files': files,
     'groups': groups,
+    'organizations': organizations,
     'projects': projects,
     'activities': activities,
     'activities-subscriptions': activities_subscriptions,
-    'notifications': notifications,
-    'jobs': jobs
+    'notifications': notifications
 }
 
 
 MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost')
 MONGO_PORT = os.environ.get('MONGO_PORT', 27017)
-MONGO_DBNAME = os.environ.get('MONGO_DBNAME', 'eve_flamenco')
+MONGO_DBNAME = os.environ.get('MONGO_DBNAME', 'eve')
 CACHE_EXPIRES = 60
 HATEOAS = False
 UPSET_ON_PUT = False  # do not create new document on PUT of non-existant URL.
+X_DOMAINS = '*'
+X_ALLOW_CREDENTIALS = True
+X_HEADERS = 'Authorization'
+XML = False

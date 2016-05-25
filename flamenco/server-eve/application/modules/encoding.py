@@ -8,6 +8,7 @@ from flask import abort
 from flask import request
 from flask import current_app
 from application import utils
+from application.utils import skip_when_testing
 from application.utils.gcs import GoogleCloudStorageBucket
 
 encoding = Blueprint('encoding', __name__)
@@ -39,6 +40,13 @@ def size_descriptor(width, height):
         return widths[width]
 
     return '%ip' % height
+
+
+@skip_when_testing
+def rename_on_gcs(bucket_name, from_path, to_path):
+    gcs = GoogleCloudStorageBucket(str(bucket_name))
+    blob = gcs.bucket.blob(from_path)
+    gcs.bucket.rename_blob(blob, to_path)
 
 
 @encoding.route('/zencoder/notifications', methods=['POST'])
@@ -137,9 +145,9 @@ def zencoder_notifications():
 
         # Rename on Google Cloud Storage
         try:
-            gcs = GoogleCloudStorageBucket(str(file_doc['project']))
-            blob = gcs.bucket.blob('_/' + variation['file_path'])
-            gcs.bucket.rename_blob(blob, '_/' + new_fname)
+            rename_on_gcs(file_doc['project'],
+                          '_/' + variation['file_path'],
+                          '_/' + new_fname)
         except Exception:
             log.warning('Unable to rename GCS blob %r to %r. Keeping old name.',
                         variation['file_path'], new_fname, exc_info=True)

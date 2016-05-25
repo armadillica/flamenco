@@ -1,27 +1,19 @@
 import logging
+import logging.config
 import os
 import tempfile
 from bson import ObjectId
 from datetime import datetime
-import bugsnag
-import bugsnag.flask
-import bugsnag.handlers
 from zencoder import Zencoder
 from flask import g
 from flask import request
 from flask import abort
-from flask import current_app
 from eve import Eve
 
 from eve.auth import TokenAuth
 from eve.io.mongo import Validator
 
 RFC1123_DATE_FORMAT = '%a, %d %b %Y %H:%M:%S GMT'
-
-
-class NewAuth(TokenAuth):
-    def check_auth(self, token, allowed_roles, resource, method):
-        return validate_token()
 
 
 class ValidateCustomFields(Validator):
@@ -67,7 +59,7 @@ class ValidateCustomFields(Validator):
         try:
             value = self.convert_properties(value, node_type['dyn_schema'])
         except Exception, e:
-            print ("Error converting: {0}".format(e))
+            log.debug("Error converting form properties", exc_info=True)
 
         v = Validator(node_type['dyn_schema'])
         val = v.validate(value)
@@ -87,8 +79,8 @@ class ValidateCustomFields(Validator):
 # automatically. The default path (which works in Docker) can be overridden with
 # an env variable.
 settings_path = os.environ.get(
-    'EVE_SETTINGS', '/data/git/flamenco/flamenco/server-eve/settings.py')
-app = Eve(settings=settings_path, validator=ValidateCustomFields, auth=NewAuth)
+    'EVE_SETTINGS', '/data/git/pillar/pillar/settings.py')
+app = Eve(settings=settings_path, validator=ValidateCustomFields)
 
 # Load configuration from three different sources, to make it easy to override
 # settings with secrets, as well as for development & testing.
@@ -103,7 +95,7 @@ if from_envvar:
     app.config.from_pyfile(from_envvar, silent=False)
 
 # Set the TMP environment variable to manage where uploads are stored.
-# These are all used by tempfile.mkstemp(), but we don't know in which
+# These are all used by tempfile.mkstemp(), but we don't knwow in whic
 # order. As such, we remove all used variables but the one we set.
 tempfile.tempdir = app.config['STORAGE_DIR']
 os.environ['TMP'] = app.config['STORAGE_DIR']
@@ -112,41 +104,41 @@ os.environ.pop('TMPDIR', None)
 
 
 # Configure logging
-logging.basicConfig(
-    level=logging.WARNING,
-    format='%(asctime)-15s %(levelname)8s %(name)s %(message)s')
-
-logging.getLogger('werkzeug').setLevel(logging.INFO)
-
+logging.config.dictConfig(app.config['LOGGING'])
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG if app.config['DEBUG'] else logging.INFO)
 if app.config['DEBUG']:
     log.info('Pillar starting, debug=%s', app.config['DEBUG'])
 
 # Configure Bugsnag
-if not app.config.get('TESTING'):
+if not app.config.get('TESTING') and app.config.get('BUGSNAG_API_KEY'):
+    import bugsnag
+    import bugsnag.flask
+    import bugsnag.handlers
+
     bugsnag.configure(
         api_key=app.config['BUGSNAG_API_KEY'],
-        project_root=current_app.root_path,
+        project_root="/data/git/pillar/pillar",
     )
     bugsnag.flask.handle_exceptions(app)
 
     bs_handler = bugsnag.handlers.BugsnagHandler()
     bs_handler.setLevel(logging.ERROR)
     log.addHandler(bs_handler)
+else:
+    log.info('Bugsnag NOT configured.')
 
-# # Google Cloud project
-# try:
-#     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = \
-#         app.config['GCLOUD_APP_CREDENTIALS']
-# except KeyError:
-#     raise SystemExit('GCLOUD_APP_CREDENTIALS configuration is missing')
-#
-# # Storage backend (GCS)
-# try:
-#     os.environ['GCLOUD_PROJECT'] = app.config['GCLOUD_PROJECT']
-# except KeyError:
-#     raise SystemExit('GCLOUD_PROJECT configuration value is missing')
+# Google Cloud project
+try:
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = \
+        app.config['GCLOUD_APP_CREDENTIALS']
+except KeyError:
+    raise SystemExit('GCLOUD_APP_CREDENTIALS configuration is missing')
+
+# Storage backend (GCS)
+try:
+    os.environ['GCLOUD_PROJECT'] = app.config['GCLOUD_PROJECT']
+except KeyError:
+    raise SystemExit('GCLOUD_PROJECT configuration value is missing')
 
 # Algolia search
 if 'ALGOLIA_USER' in app.config:
@@ -203,6 +195,7 @@ from modules import file_storage
 from modules import users
 from modules import nodes
 from modules import latest
+from modules import blender_cloud
 
 app.register_blueprint(encoding, url_prefix='/encoding')
 app.register_blueprint(blender_id, url_prefix='/blender_id')
@@ -210,5 +203,6 @@ projects.setup_app(app, url_prefix='/p')
 local_auth.setup_app(app, url_prefix='/auth')
 file_storage.setup_app(app, url_prefix='/storage')
 latest.setup_app(app, url_prefix='/latest')
-users.setup_app(app)
+blender_cloud.setup_app(app, url_prefix='/bcloud')
+users.setup_app(app, url_prefix='/users')
 nodes.setup_app(app)

@@ -1,10 +1,16 @@
+import logging
+
 from bson import ObjectId
 from flask import current_app
+
 from application import algolia_index_users
 from application import algolia_index_nodes
 from application.modules.file_storage import generate_link
+from . import skip_when_testing
 
+log = logging.getLogger(__name__)
 
+@skip_when_testing
 def algolia_index_user_save(user):
     # Define accepted roles
     accepted_roles = ['admin', 'subscriber', 'demo']
@@ -24,7 +30,7 @@ def algolia_index_user_save(user):
             'email': user['email']
         })
 
-
+@skip_when_testing
 def algolia_index_node_save(node):
     accepted_node_types = ['asset', 'texture', 'group']
     if node['node_type'] in accepted_node_types and algolia_index_nodes:

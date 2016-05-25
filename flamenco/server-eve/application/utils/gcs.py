@@ -135,55 +135,55 @@ class GoogleCloudStorageBucket(object):
         """Set the ContentDisposition metadata so that when a file is downloaded
         it has a human-readable name.
         """
-        blob.content_disposition = 'attachment; filename="{0}"'.format(name)
+        blob.content_disposition = u'attachment; filename="{0}"'.format(name)
         blob.patch()
 
 
-def update_file_name(item):
+def update_file_name(node):
     """Assign to the CGS blob the same name of the asset node. This way when
     downloading an asset we get a human-readable name.
     """
 
-    def _format_name(name, format, size=None):
-        # If the name already has an extention, and such extension matches the
-        # format, only inject the size.
-        root, ext = os.path.splitext(name)
-        size = "-{0}".format(size) if size else ''
-        ext = ext if len(ext) > 1 and ext[1:] == format else ".{0}".format(format)
-        return "{0}{1}{2}".format(root, size, ext)
+    # Process only files that are not processing
+    if node['properties']['status'] == 'processing':
+        return
 
-    def _update_name(item, file_id):
+    def _format_name(name, override_ext, size=None, map_type=u''):
+        root, _ = os.path.splitext(name)
+        size = u'-{}'.format(size) if size else u''
+        map_type = u'-{}'.format(map_type) if map_type else u''
+        return u'{}{}{}{}'.format(root, size, map_type, override_ext)
+
+    def _update_name(file_id, file_props):
         files_collection = current_app.data.driver.db['files']
-        f = files_collection.find_one({'_id': ObjectId(file_id)})
-        status = item['properties']['status']
-        if f and f['backend'] == 'gcs' and status != 'processing':
-            # Process only files that are on GCS and that are not processing
-            try:
-                storage = GoogleCloudStorageBucket(str(item['project']))
-                blob = storage.Get(f['file_path'], to_dict=False)
-                # Pick file extension from original filename
-                _, ext = os.path.splitext(f['filename'])
-                name = _format_name(item['name'], ext[1:])
-                storage.update_name(blob, name)
-                try:
-                    # Assign the same name to variations
-                    for v in f['variations']:
-                        blob = storage.Get(v['file_path'], to_dict=False)
-                        name = _format_name(item['name'], v['format'], v['size'])
-                        storage.update_name(blob, name)
-                except KeyError:
-                    pass
-            except AttributeError:
-                bugsnag.notify(Exception('Missing or conflicting ids detected'),
-                               meta_data={'nodes_info':
-                                              {'node_id': item['_id'], 'file_id': file_id}})
+        file_doc = files_collection.find_one({'_id': ObjectId(file_id)})
+
+        if file_doc is None or file_doc['backend'] != 'gcs':
+            return
+
+        # For textures -- the map type should be part of the name.
+        map_type = file_props.get('map_type', u'')
+
+        storage = GoogleCloudStorageBucket(str(node['project']))
+        blob = storage.Get(file_doc['file_path'], to_dict=False)
+        # Pick file extension from original filename
+        _, ext = os.path.splitext(file_doc['filename'])
+        name = _format_name(node['name'], ext, map_type=map_type)
+        storage.update_name(blob, name)
+
+        # Assign the same name to variations
+        for v in file_doc.get('variations', []):
+            _, override_ext = os.path.splitext(v['file_path'])
+            name = _format_name(node['name'], override_ext, v['size'], map_type=map_type)
+            blob = storage.Get(v['file_path'], to_dict=False)
+            storage.update_name(blob, name)
 
     # Currently we search for 'file' and 'files' keys in the object properties.
     # This could become a bit more flexible and realy on a true reference of the
     # file object type from the schema.
-    if 'file' in item['properties']:
-        _update_name(item, item['properties']['file'])
+    if 'file' in node['properties']:
+        _update_name(node['properties']['file'], {})
 
-    elif 'files' in item['properties']:
-        for f in item['properties']['files']:
-            _update_name(item, f['file'])
+    if 'files' in node['properties']:
+        for file_props in node['properties']['files']:
+            _update_name(file_props['file'], file_props)

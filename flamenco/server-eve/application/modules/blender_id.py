@@ -59,7 +59,7 @@ def validate_create_user(blender_id_user_id, token, oauth_subclient_id):
     user_info, token_expiry = validate_token(blender_id_user_id, token, oauth_subclient_id)
 
     if user_info is None:
-        log.warning('Unable to verify token with Blender ID.')
+        log.debug('Unable to verify token with Blender ID.')
         return None, None
 
     # Blender ID can be queried without user ID, and will always include the
@@ -73,7 +73,12 @@ def validate_create_user(blender_id_user_id, token, oauth_subclient_id):
     if '_id' in db_user:
         # Update the existing user
         db_id = db_user['_id']
-        r, _, _, status = put_internal('users', remove_private_keys(db_user), _id=db_id)
+        try:
+            etag = {'_etag': db_user['_etag']}
+        except KeyError:
+            etag = {}
+        r, _, _, status = put_internal('users', remove_private_keys(db_user),
+                                       _id=db_id, **etag)
     else:
         # Create a new user
         r, _, _, status = post_internal('users', db_user)
@@ -126,7 +131,7 @@ def validate_token(user_id, token, oauth_subclient_id):
         return None, None
 
     if r.status_code != 200:
-        log.info('Token invalid, HTTP status %i returned', r.status_code)
+        log.debug('Token %s invalid, HTTP status %i returned', token, r.status_code)
         return None, None
 
     resp = r.json()

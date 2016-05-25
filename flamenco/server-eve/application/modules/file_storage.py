@@ -1,5 +1,6 @@
 import datetime
 import logging
+import mimetypes
 import os
 import tempfile
 import uuid
@@ -36,6 +37,9 @@ log = logging.getLogger(__name__)
 file_storage = Blueprint('file_storage', __name__,
                          template_folder='templates',
                          static_folder='../../static/storage', )
+
+# Add our own extensions to the mimetypes package
+mimetypes.add_type('application/x-blender', '.blend')
 
 
 @file_storage.route('/gcs/<bucket_name>/<subdir>/')
@@ -119,6 +123,9 @@ def _process_image(gcs, file_id, local_file, src_file):
         blob = gcs.bucket.blob('_/' + fname, chunk_size=256 * 1024 * 2)
         blob.upload_from_filename(variation['local_path'],
                                   content_type=variation['content_type'])
+
+        if variation.get('size') == 't':
+            blob.make_public()
 
         try:
             os.unlink(variation['local_path'])
@@ -294,6 +301,29 @@ def generate_link(backend, file_path, project_id=None, is_public=False):
 def before_returning_file(response):
     ensure_valid_link(response)
 
+    # Enable this call later, when we have implemented the is_public field on files.
+    # strip_link_and_variations(response)
+
+
+def strip_link_and_variations(response):
+    # Check the access level of the user.
+    if g.current_user is None:
+        has_full_access = False
+    else:
+        user_roles = g.current_user['roles']
+        access_roles = current_app.config['FULL_FILE_ACCESS_ROLES']
+        has_full_access = bool(user_roles.intersection(access_roles))
+
+    # Strip all file variations (unless image) and link to the actual file.
+    if not has_full_access:
+        response.pop('link', None)
+        response.pop('link_expires', None)
+
+        # Image files have public variations, other files don't.
+        if not response.get('content_type', '').startswith('image/'):
+            if response.get('variations') is not None:
+                response['variations'] = []
+
 
 def before_returning_files(response):
     for item in response['_items']:
@@ -333,8 +363,10 @@ def _generate_all_links(response, now):
         response['project']) if 'project' in response else None  # TODO: add project id to all files
     backend = response['backend']
     response['link'] = generate_link(backend, response['file_path'], project_id)
-    if 'variations' in response:
-        for variation in response['variations']:
+
+    variations = response.get('variations')
+    if variations:
+        for variation in variations:
             variation['link'] = generate_link(backend, variation['file_path'], project_id)
 
     # Construct the new expiry datetime.
@@ -432,7 +464,7 @@ def refresh_links_for_backend(backend_name, chunk_size, expiry_seconds):
     log.info('Refreshed %i links', min(chunk_size, to_refresh.count()))
 
 
-@require_login({u'subscriber', u'admin'})
+@require_login({u'subscriber', u'admin', u'demo'})
 def create_file_doc(name, filename, content_type, length, project, backend='gcs',
                     **extra_fields):
     """Creates a minimal File document for storage in MongoDB.
@@ -463,8 +495,6 @@ def override_content_type(uploaded_file):
     :type uploaded_file: werkzeug.datastructures.FileStorage
     """
 
-    import mimetypes
-
     # Possibly use the browser-provided mime type
     mimetype = uploaded_file.mimetype
     if '/' in mimetype:
@@ -472,11 +502,6 @@ def override_content_type(uploaded_file):
         if mimecat in {'video', 'audio', 'image'}:
             # The browser's mime type is probably ok, just use it.
             return
-
-    # Add our own extensions to the mimetypes package
-    if not mimetypes.inited:
-        mimetypes.init()
-        mimetypes.add_type('application/x-blend', '.blend')
 
     # And then use it to set the mime type.
     (mimetype, encoding) = mimetypes.guess_type(uploaded_file.filename)
@@ -494,7 +519,6 @@ def override_content_type(uploaded_file):
 @file_storage.route('/stream/<string:project_id>', methods=['POST', 'OPTIONS'])
 @require_login(require_roles={u'subscriber', u'admin', u'demo'})
 def stream_to_gcs(project_id):
-
     projects = current_app.data.driver.db['projects']
     try:
         project = projects.find_one(ObjectId(project_id), projection={'_id': 1})
@@ -522,12 +546,15 @@ def stream_to_gcs(project_id):
         stream_for_gcs = uploaded_file.stream
 
     # Upload the file to GCS.
+    from gcloud.streaming import transfer
+    # Files larger than this many bytes will be streamed directly from disk, smaller
+    # ones will be read into memory and then uploaded.
+    transfer.RESUMABLE_UPLOAD_THRESHOLD = 102400
     try:
         gcs = GoogleCloudStorageBucket(project_id)
         blob = gcs.bucket.blob('_/' + internal_fname, chunk_size=256 * 1024 * 2)
         blob.upload_from_file(stream_for_gcs,
-                              content_type=uploaded_file.mimetype,
-                              size=uploaded_file.content_length)
+                              content_type=uploaded_file.mimetype)
     except Exception:
         log.exception('Error uploading file to Google Cloud Storage (GCS),'
                       ' aborting handling of uploaded file (id=%s).', file_id)

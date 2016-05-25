@@ -4,13 +4,24 @@ import json
 import logging
 import urllib
 
-from flask import g, current_app
+from flask import g, current_app, Blueprint, make_response
 from werkzeug.exceptions import Forbidden
 from eve.utils import parse_request
+from eve.methods.get import get
 
-from application.utils.authorization import user_has_role
+from application.utils.authorization import user_has_role, require_login
+from application.utils import jsonify
 
 log = logging.getLogger(__name__)
+blueprint = Blueprint('users', __name__)
+
+
+@blueprint.route('/me')
+@require_login()
+def my_info():
+    eve_resp, _, _, status, _ = get('users', {'_id': g.current_user['user_id']})
+    resp = jsonify(eve_resp['_items'][0], status=status)
+    return resp
 
 
 def gravatar(email, size=64):
@@ -122,7 +133,7 @@ def after_fetching_user_resource(response):
         after_fetching_user(user)
 
 
-def setup_app(app):
+def setup_app(app, url_prefix):
     app.on_pre_GET_users += check_user_access
     app.on_post_GET_users += post_GET_user
     app.on_pre_PUT_users += check_put_access
@@ -130,3 +141,5 @@ def setup_app(app):
     app.on_replaced_users += after_replacing_user
     app.on_fetched_item_users += after_fetching_user
     app.on_fetched_resource_users += after_fetching_user_resource
+
+    app.register_blueprint(blueprint, url_prefix=url_prefix)
