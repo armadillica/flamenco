@@ -4,7 +4,7 @@ from collections import defaultdict
 SCHEME = 'http'
 STORAGE_DIR = os.environ.get('STORAGE_DIR', '/data/storage/pillar')
 SHARED_DIR = os.environ.get('SHARED_DIR', '/data/storage/shared')
-PORT = 5000
+PORT = 9999
 HOST = '0.0.0.0'
 DEBUG = True
 CDN_USE_URL_SIGNING = True
@@ -64,3 +64,27 @@ FILE_LINK_VALIDITY = defaultdict(
     lambda: 3600 * 24 * 30,  # default of 1 month.
     gcs=3600 * 23,  # 23 hours for Google Cloud Storage.
 )
+
+LOGGING = {
+    'version': 1,
+    'formatters': {
+        'default': {'format': '%(asctime)-15s %(levelname)8s %(name)s %(message)s'}
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'default',
+            'stream': 'ext://sys.stderr',
+        }
+    },
+    'loggers': {
+        'application': {'level': 'DEBUG'},
+        'werkzeug': {'level': 'INFO'},
+    },
+    'root': {
+        'level': 'WARNING',
+        'handlers': [
+            'console',
+        ],
+    }
+}
