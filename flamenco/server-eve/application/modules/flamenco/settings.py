@@ -44,6 +44,14 @@ jobs_schema = {
             'embeddable': True
         },
     },
+    'manager': {
+        'type': 'objectid',
+        'data_relation': {
+            'resource': 'manager',
+            'field': '_id',
+            'embeddable': True
+        },
+    },
     'status': {
         'type': 'string',
         'allowed': [
