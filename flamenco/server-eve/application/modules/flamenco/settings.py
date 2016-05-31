@@ -47,7 +47,7 @@ jobs_schema = {
     'manager': {
         'type': 'objectid',
         'data_relation': {
-            'resource': 'manager',
+            'resource': 'managers',
             'field': '_id',
             'embeddable': True
         },
@@ -79,14 +79,80 @@ jobs_schema = {
     },
     'settings': {
         'type': 'dict',
-        'schema': {
-            'frames': {'type': 'string'},
-            'chunk_size': {'type': 'integer'},
-            'filepath': {'type': 'string'},
-            'render_settings': {'type': 'string'},
-            'format': {'type': 'string'}
-        }
+        # TODO: introduce dynamic validator, based on job_type/task_type
+        'allow_unknown': True,
     }
+}
+
+
+tasks_schema = {
+    'job': {
+        'type': 'objectid',
+        'data_relation': {
+            'resource': 'jobs',
+            'field': '_id',
+            'embeddable': True
+        },
+    },
+    'manager': {
+        'type': 'objectid',
+        'data_relation': {
+            'resource': 'managers',
+            'field': '_id',
+            'embeddable': True
+        },
+    },
+    'name': {
+        'type': 'string',
+        'required': True,
+    },
+    'status': {
+        'type': 'string',
+        'allowed': [
+            'completed',
+            'active',
+            'canceled',
+            'queued',
+            'failed'],
+        'default': 'queued'
+    },
+    'priority': {
+        'type': 'integer',
+        'min': 1,
+        'max': 100,
+        'default': 50
+    },
+    'job_type': {
+        'type': 'string',
+        'required': True,
+    },
+    'parser': {
+        'type': 'string',
+        'required': True,
+    },
+    'settings': {
+        'type': 'dict',
+        # TODO: introduce dynamic validator, based on job_type/task_type
+        'allow_unknown': True,
+    },
+    'log': {
+        'type': 'string',
+    },
+    'activity': {
+        'type': 'string',
+        'maxlength': 128
+    },
+    'child': {
+        'type': 'objectid',
+        'data_relation': {
+            'resource': 'tasks',
+            'field': '_id',
+            'embeddable': True
+        },
+    },
+    'worker': {
+        'type': 'string',
+    },
 }
 
 managers = {
@@ -95,4 +161,8 @@ managers = {
 
 jobs = {
     'schema': jobs_schema,
+}
+
+tasks = {
+    'schema': tasks_schema,
 }

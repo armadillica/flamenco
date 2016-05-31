@@ -801,6 +801,7 @@ X_ALLOW_CREDENTIALS = True
 X_HEADERS = 'Authorization'
 XML = False
 
-from application.modules.flamenco.settings import managers, jobs
+from application.modules.flamenco.settings import managers, jobs, tasks
 DOMAIN['managers'] = managers
 DOMAIN['jobs'] = jobs
+DOMAIN['tasks'] = tasks

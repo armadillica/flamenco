@@ -10,8 +10,12 @@ class Config(object):
     NAME = 'My Manager' # or use socket.gethostname()
     FLAMENCO_SERVER = 'localhost:9999'
 
-    DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../')
-    DATABASE_NAME = 'manager.sqlite'
+    # DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../')
+    # DATABASE_NAME = 'manager.sqlite'
+    # SQLALCHEMY_DATABASE_URI = os.path.join(DATABASE_URI, DATABASE_NAME)
+
+    DATABASE_URI = 'mysql://root:root@192.168.99.100'
+    DATABASE_NAME = 'flamenco_manager'
     SQLALCHEMY_DATABASE_URI = os.path.join(DATABASE_URI, DATABASE_NAME)
 
     VIRTUAL_WORKERS = False # If true, the manager will not have a fixed number of workers

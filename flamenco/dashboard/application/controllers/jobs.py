@@ -42,52 +42,53 @@ def index_json():
     jobs = http_server_request('get', jobs_route)
     jobs_list = []
 
-    for key, val in jobs.iteritems():
+    for job in jobs['_items']:
 
-        remaining_time = val['time_remaining']
-        if not remaining_time:
-            remaining_time = '-'
-        else:
-            remaining_time = seconds_to_time(remaining_time)
-        average_time = val['time_average']
-        if not average_time:
-            average_time = '-'
-        else:
-            average_time = seconds_to_time(average_time)
-        total_time = val['time_total']
-        if not total_time:
-            total_time = '-'
-        else:
-            total_time = seconds_to_time(total_time)
-        job_time = None
-        if job_time:
-            total_time = "{0} ({1})".format(total_time, seconds_to_time(job_time))
+        # remaining_time = val['time_remaining']
+        # if not remaining_time:
+        #     remaining_time = '-'
+        # else:
+        #     remaining_time = seconds_to_time(remaining_time)
+        # average_time = val['time_average']
+        # if not average_time:
+        #     average_time = '-'
+        # else:
+        #     average_time = seconds_to_time(average_time)
+        # total_time = val['time_total']
+        # if not total_time:
+        #     total_time = '-'
+        # else:
+        #     total_time = seconds_to_time(total_time)
+        # job_time = None
+        # if job_time:
+        #     total_time = "{0} ({1})".format(total_time, seconds_to_time(job_time))
+        #
+        # time_elapsed = val['time_elapsed']
+        # if time_elapsed == None:
+        #     time_elapsed = ''
+        # else:
+        #     time_elapsed = seconds_to_time(time_elapsed)
 
-        time_elapsed = val['time_elapsed']
-        if time_elapsed == None:
-            time_elapsed = ''
-        else:
-            time_elapsed = seconds_to_time(time_elapsed)
-
-        val['checkbox'] = '<input type="checkbox" value="' + key + '" />'
+        job['checkbox'] = '<input type="checkbox" value="' + job['_id'] + '" />'
         jobs_list.append({
-            'DT_RowId' : 'job_' + str(key),
-            'checkbox' : val['checkbox'],
-            'job_id' : key,
-            'thumbnail' : 'http://{0}/jobs/thumbnails/{1}s'.format(FLAMENCO_SERVER, key),
-            'name' : val['job_name'],
-            'percentage_done' : val['percentage_done'],
-            'time_remaining' : remaining_time,
-            'time_average' : average_time,
-            'time_total' : total_time,
-            'status' : val['status'],
-            'date_creation' : val['creation_date'],
-            'date_edit' : val['date_edit'],
-            'priority' : val['priority'],
-            'manager': val['manager'],
-            'time_elapsed': time_elapsed,
-            'tasks_status': val['tasks_status'],
-            'username': val['username']
+            'DT_RowId': 'job_' + str(job['_id']),
+            'checkbox': job['checkbox'],
+            'job_id': job['_id'],
+            'thumbnail': 'http://{0}/jobs/thumbnails/{1}s'.format(
+                FLAMENCO_SERVER, job['_id']),
+            'name': job['name'],
+            'percentage_done': '',
+            'time_remaining': '',
+            'time_average': '',
+            'time_total': '',
+            'status': job['status'],
+            'date_creation': job['_created'],
+            'date_edit': job['_updated'],
+            'priority': job['priority'],
+            'manager': job['manager'],
+            'time_elapsed': '',
+            'tasks_status': job.get('tasks_status', ''),
+            'username': job['user']
             })
 
     #jobs_list = sorted(jobs_list, key=lambda x: x['1'])
