@@ -93,7 +93,7 @@ def runserver():
     """This command is meant for development. If no configuration is found,
     we start the app listening from all hosts, from port 7777."""
     setup_db()
-    setup_register_manager()
+    #setup_register_manager()
 
     app.run(
         port=app.config['PORT'],
