@@ -17,6 +17,9 @@ from flask.ext.restful import fields
 from werkzeug.datastructures import FileStorage
 from werkzeug import secure_filename
 
+from flamencosdk import Task
+from flamencosdk import Api
+
 from application import http_request
 from application import db
 from application import app
@@ -63,6 +66,7 @@ task_fields = {
     'status': fields.String,
     'format': fields.String
 }
+
 
 class TaskFileApi(Resource):
     def get(self, job_id):
@@ -118,23 +122,17 @@ class TaskCompiledApi(Resource):
         worker.status = 'enabled'
         db.session.commit()
 
-        tasks = TaskManagementApi().get(job_types=",".join(worker.job_types_list))
-        if tasks[0] == ('', 404):
-            return '', 400
-        if not len(tasks) or not len(tasks[0]):
-            return '', 400
-        task = tasks[0]
+        task = TaskManagementApi().get(job_types=",".join(worker.job_types_list))
 
-        worker.current_task = task['id']
-        worker.child_task = task['child_id']
+        worker.current_task = task['_id']
+        #worker.child_task = task['child_id']
         db.session.commit()
 
         managerstorage = app.config['MANAGER_STORAGE']
-        jobpath = os.path.join(managerstorage, str(task['job_id']))
+        jobpath = os.path.join(managerstorage, str(task['job']))
         if not os.path.exists(jobpath):
             os.mkdir(jobpath)
-
-
+        """
         # TODO make random name
         tmpfile = os.path.join(
             jobpath, 'jobfile_{0}.zip'.format(task['job_id']))
@@ -143,7 +141,7 @@ class TaskCompiledApi(Resource):
             jobpath, 'jobfile_{0}.lock'.format(task['job_id']))
 
         if os.path.isfile(lockfile):
-            # Try and set the task back to wating
+            # Try and set the task back to waiting
             params = dict(id=task_id, status='waiting')
             r = http_request(
                 app.config['FLAMENCO_SERVER'],
@@ -165,7 +163,6 @@ class TaskCompiledApi(Resource):
 
             r = requests.get(
                 'http://{0}/jobs/file/{1}'.format(
-                #'http://{0}/static/storage/{1}/{2}/jobfile_{2}.zip'.format(
                     app.config['FLAMENCO_SERVER'], task['job_id']),
                 stream=True
             )
@@ -177,35 +174,33 @@ class TaskCompiledApi(Resource):
                         f.flush()
 
             os.remove(lockfile)
-
-
-        module_name = 'application.task_compilers.{0}'.format(task['type'])
+        """
+        module_name = 'application.task_compilers.{0}'.format(task['job_type'])
         task_compiler = None
         try:
             module_loader = __import__(
                 module_name, globals(), locals(), ['task_compiler'], 0)
             task_compiler = module_loader.task_compiler
-        except ImportError, e:
+        except ImportError as e:
             logging.error(' loading module {0}, {1}'.format(module_name, e))
             return
 
         task_command = task_compiler.compile(worker, task, add_file)
 
         if not task_command:
-            logging.error("Can't compile {0}".format(task['type']))
+            logging.error("Can't compile {0}".format(task['job_type']))
             return
 
         options = {
-            'task_id': task['id'],
-            'job_id': task['job_id'],
+            'task_id': task['_id'],
+            'job_id': task['job'],
             'task_parser': task['parser'],
-            'settings': task['settings'],
-            'type': task['type'],
+            'settings': task['settings'].to_dict(),
+            'type': task['job_type'],
             'task_command': json.dumps(task_command)}
-
+        """
         jobfile = []
 
-        pid = None
         managerstorage = app.config['MANAGER_STORAGE']
         jobpath = os.path.join(managerstorage, str(task['job_id']))
         zippath = os.path.join(
@@ -239,13 +234,15 @@ class TaskCompiledApi(Resource):
                     'application/zip')
                 ),
             )
-
+        """
         jflist = []
+        """
         for jf in jobfile:
             jflist.append([jf[0],jf[1][0]])
-
-
-        return {"options": options, "files": {"jobfiles": jflist}}, 200
+        """
+        return {
+            'options': options,
+            'files': {'jobfiles': jflist}}, 200
 
 
 class TaskManagementApi(Resource):
@@ -289,7 +286,7 @@ class TaskManagementApi(Resource):
         token = Setting.query.filter_by(name='token').first()
         # Currently this is implemented as a GET, with the token argument optional.
         # In the future the token will be sent in the headers.
-
+        """
         args = task_management_parser.parse_args()
         worker = args['worker']
 
@@ -307,6 +304,15 @@ class TaskManagementApi(Resource):
             'get')
 
         return r, 200
+        """
+        api = Api(
+            endpoint='http://localhost:9999',
+            username=None,
+            password=None,
+            token='pqNOVVLfMipraREd63MEhgC9ZtcO1sPq0Y5RMZtgjA8='
+        )
+        task = Task.get_new(api=api)
+        return task
 
     #@marshal_with(task_fields)
     def delete(self):

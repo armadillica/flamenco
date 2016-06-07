@@ -32,7 +32,7 @@ class task_compiler():
         add_file(
             script,
             'pre_render.py',
-            task['job_id']
+            task['job']
         )
 
         script_path = os.path.join(
