@@ -13,7 +13,6 @@ class job_compiler():
 
         task_settings = {
             'filepath': job_settings['filepath'],
-            'priority': job['priority'],
             'render_settings': job_settings['render_settings'],
             'format': job_settings['format'],
             'command_name': job_settings['command_name'],

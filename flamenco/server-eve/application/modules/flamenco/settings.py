@@ -84,7 +84,6 @@ jobs_schema = {
     }
 }
 
-
 tasks_schema = {
     'job': {
         'type': 'objectid',
@@ -113,6 +112,7 @@ tasks_schema = {
             'active',
             'canceled',
             'queued',
+            'processing',
             'failed'],
         'default': 'queued'
     },

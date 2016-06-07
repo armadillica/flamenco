@@ -68,8 +68,8 @@ FILE_LINK_VALIDITY = defaultdict(
 FULL_FILE_ACCESS_ROLES = {u'admin', u'subscriber', u'demo'}
 
 # Client and Subclient IDs for Blender ID
-BLENDER_ID_CLIENT_ID = 'SPECIAL-SNOWFLAKE-57'
-BLENDER_ID_SUBCLIENT_ID = 'PILLAR'
+BLENDER_ID_CLIENT_ID = '-'
+BLENDER_ID_SUBCLIENT_ID = 'FLAMENCO'
 
 
 # See https://docs.python.org/2/library/logging.config.html#configuration-dictionary-schema
