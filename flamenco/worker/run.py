@@ -1,11 +1,11 @@
 import time
 import argparse
-from application.config_base import Config
+
 parser = argparse.ArgumentParser(description='Run the Flamenco worker.')
 parser.add_argument('-l', '--loop', default=5,
-    help='Loop time. Default is 5 seconds.')
+                    help='Loop time. Default is 5 seconds.')
 parser.add_argument('-m', '--manager', default='localhost:7777',
-    help='Manager address. Default is localhost:7777.')
+                    help='Manager address. Default is localhost:7777.')
 args = parser.parse_args()
 
 # Override base config with command line options

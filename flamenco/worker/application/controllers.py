@@ -177,7 +177,7 @@ def worker_loop():
         try:
             requests.patch(
                 'http://' + Config.FLAMENCO_MANAGER + '/tasks/' + str(task['task_id']),
-            data = params
+                data=params
             )
             CONNECTIVITY = True
         except ConnectionError:
