@@ -2,7 +2,6 @@ import logging
 import os
 
 from flask import current_app
-from zencoder import Zencoder
 
 from application import encoding_service_client
 
@@ -18,13 +17,13 @@ class Encoder:
     def job_create(src_file):
         """Create an encoding job. Return the backend used as well as an id.
         """
-
-        if not isinstance(encoding_service_client, Zencoder):
-            log.error('I can only work with Zencoder, not with %r', encoding_service_client)
-            return None
+        if current_app.config['ENCODING_BACKEND'] != 'zencoder' or \
+                        encoding_service_client is None:
+            log.error('I can only work with Zencoder, check the config file.')
+        return None
 
         if src_file['backend'] != 'gcs':
-            log.error("Unable to work with storage backend %r", src_file['backend'])
+            log.error('Unable to work with storage backend %r', src_file['backend'])
             return None
 
         # Build the specific GCS input url, assuming the file is stored

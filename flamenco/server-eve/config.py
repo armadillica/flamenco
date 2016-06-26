@@ -51,6 +51,8 @@ ALGOLIA_API_KEY = '-SECRET-'
 ALGOLIA_INDEX_USERS = 'dev_Users'
 ALGOLIA_INDEX_NODES = 'dev_Nodes'
 
+SEARCH_BACKEND = 'algolia'  # algolia, elastic
+
 ZENCODER_API_KEY = '-SECRET-'
 ZENCODER_NOTIFICATIONS_SECRET = '-SECRET-'
 ZENCODER_NOTIFICATIONS_URL = 'http://zencoderfetcher/'
@@ -68,8 +70,8 @@ FILE_LINK_VALIDITY = defaultdict(
 FULL_FILE_ACCESS_ROLES = {u'admin', u'subscriber', u'demo'}
 
 # Client and Subclient IDs for Blender ID
-BLENDER_ID_CLIENT_ID = '-'
-BLENDER_ID_SUBCLIENT_ID = 'FLAMENCO'
+BLENDER_ID_CLIENT_ID = 'SPECIAL-SNOWFLAKE-57'
+BLENDER_ID_SUBCLIENT_ID = 'PILLAR'
 
 
 # See https://docs.python.org/2/library/logging.config.html#configuration-dictionary-schema

@@ -4,7 +4,6 @@ import os
 import tempfile
 from bson import ObjectId
 from datetime import datetime
-from zencoder import Zencoder
 from flask import g
 from flask import request
 from flask import abort
@@ -137,7 +136,7 @@ except KeyError:
     raise SystemExit('GCLOUD_PROJECT configuration value is missing')
 
 # Algolia search
-if 'ALGOLIA_USER' in app.config:
+if app.config['SEARCH_BACKEND'] == 'algolia':
     from algoliasearch import algoliasearch
 
     client = algoliasearch.Client(
@@ -151,6 +150,7 @@ else:
 
 # Encoding backend
 if app.config['ENCODING_BACKEND'] == 'zencoder':
+    from zencoder import Zencoder
     encoding_service_client = Zencoder(app.config['ZENCODER_API_KEY'])
 else:
     encoding_service_client = None
