@@ -62,7 +62,7 @@ users_schema = {
     },
     'roles': {
         'type': 'list',
-        'allowed': ["admin", "subscriber", "demo"],
+        'schema': {'type': 'string'}
     },
     'groups': {
         'type': 'list',
@@ -105,6 +105,15 @@ users_schema = {
             'email_communications': {
                 'type': 'integer',
                 'allowed': [0, 1]
+            }
+        }
+    },
+    'service': {
+        'type': 'dict',
+        'schema': {
+            'badger': {
+                'type': 'list',
+                'schema': {'type': 'string'}
             }
         }
     }

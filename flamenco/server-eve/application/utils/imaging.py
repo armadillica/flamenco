@@ -29,7 +29,7 @@ def generate_local_thumbnails(name_base, src):
             resize_and_crop(src, dst, settings['size'])
             width, height = settings['size']
         else:
-            im = Image.open(src)
+            im = Image.open(src).convert('RGB')
             im.thumbnail(settings['size'])
             im.save(dst, "JPEG")
             width, height = im.size
@@ -70,7 +70,7 @@ def resize_and_crop(img_path, modified_path, size, crop_type='middle'):
 
     """
     # If height is higher we resize vertically, if not we resize horizontally
-    img = Image.open(img_path)
+    img = Image.open(img_path).convert('RGB')
     # Get current and desired ratio for the images
     img_ratio = img.size[0] / float(img.size[1])
     ratio = size[0] / float(size[1])

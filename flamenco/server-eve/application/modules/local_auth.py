@@ -2,7 +2,7 @@ import base64
 import datetime
 import hashlib
 import logging
-import rsa
+import rsa.randnum
 import bcrypt
 from bson import tz_util
 from eve.methods.post import post_internal
@@ -64,13 +64,28 @@ def make_token():
     hashed_password = hash_password(password, salt)
     if hashed_password != credentials['token']:
         return abort(403)
-    # Generate Token
-    token = base64.b64encode(rsa.randnum.read_random_bits(256))
-    # TODO look into alternative implementations
-    token_expiry = datetime.datetime.now(tz=tz_util.utc) + datetime.timedelta(
-        days=15)
-    store_token(user['_id'], token, token_expiry)
-    return jsonify(token=token)
+
+    token = generate_and_store_token(user['_id'])
+    return jsonify(token=token['token'])
+
+
+def generate_and_store_token(user_id, days=15, prefix=''):
+    """Generates token based on random bits.
+
+    :param user_id: ObjectId of the owning user.
+    :param days: token will expire in this many days.
+    :param prefix: the token will be prefixed by this string, for easy identification.
+    :return: the token document.
+    """
+
+    random_bits = rsa.randnum.read_random_bits(256)
+
+    # Use 'xy' as altargs to prevent + and / characters from appearing.
+    # We never have to b64decode the string anyway.
+    token = prefix + base64.b64encode(random_bits, altchars='xy').strip('=')
+
+    token_expiry = datetime.datetime.now(tz=tz_util.utc) + datetime.timedelta(days=days)
+    return store_token(user_id, token, token_expiry)
 
 
 def hash_password(password, salt):

@@ -20,6 +20,9 @@ from manage_extra.node_types.group_texture import node_type_group_texture
 log = logging.getLogger(__name__)
 blueprint = Blueprint('projects', __name__)
 
+# Default project permissions for the admin group.
+DEFAULT_ADMIN_GROUP_PERMISSIONS = ['GET', 'PUT', 'POST', 'DELETE']
+
 
 def before_inserting_projects(items):
     """Strip unwanted properties, that will be assigned after creation. Also,
@@ -148,7 +151,7 @@ def after_inserting_project(project, db_user):
         'users': [],
         'groups': [
             {'group': admin_group_id,
-             'methods': ['GET', 'PUT', 'POST', 'DELETE']},
+             'methods': DEFAULT_ADMIN_GROUP_PERMISSIONS[:]},
         ]
     }
 

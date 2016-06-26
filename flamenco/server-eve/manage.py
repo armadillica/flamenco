@@ -150,6 +150,8 @@ def _default_permissions():
     :rtype: dict
     """
 
+    from application.modules.projects import DEFAULT_ADMIN_GROUP_PERMISSIONS
+
     groups_collection = app.data.driver.db['groups']
     admin_group = groups_collection.find_one({'name': 'admin'})
 
@@ -158,7 +160,7 @@ def _default_permissions():
         'users': [],
         'groups': [
             {'group': admin_group['_id'],
-             'methods': ['GET', 'PUT', 'POST']},
+             'methods': DEFAULT_ADMIN_GROUP_PERMISSIONS[:]},
         ]
     }
 
@@ -259,6 +261,21 @@ def _update_project(project_uuid, project):
     if result['_status'] != 'OK':
         log.error("Can't update project %s, issues: %s", project_uuid, result['_issues'])
         raise SystemExit()
+
+
+@manager.command
+def refresh_project_permissions():
+    """Replaces the admin group permissions of each project with the defaults."""
+
+    from application.modules.projects import DEFAULT_ADMIN_GROUP_PERMISSIONS
+
+    proj_coll = app.data.driver.db['projects']
+    result = proj_coll.update_many({}, {'$set': {
+        'permissions.groups.0.methods': DEFAULT_ADMIN_GROUP_PERMISSIONS
+    }})
+
+    print('Matched %i documents' % result.matched_count)
+    print('Updated %i documents' % result.modified_count)
 
 
 @manager.command
@@ -487,7 +504,7 @@ def subscribe_node_owners():
     """Automatically subscribe node owners to notifications for items created
     in the past.
     """
-    from application import after_inserting_nodes
+    from application.modules.nodes import after_inserting_nodes
     nodes_collection = app.data.driver.db['nodes']
     for n in nodes_collection.find():
         if 'parent' in n:
@@ -780,6 +797,148 @@ def update_texture_nodes_maps():
                 print("Skipping {}".format(v['map_type']))
             nodes_collection.update({'_id': node['_id']}, node)
 
+
+@manager.command
+def create_badger_account(email, badges):
+    """
+    Creates a new service account that can give badges (i.e. roles).
+
+    :param email: email address associated with the account
+    :param badges: single space-separated argument containing the roles
+        this account can assign and revoke.
+    """
+
+    from application.modules import service
+    from application.utils import dumps
+
+    account, token = service.create_service_account(
+        email,
+        [u'badger'],
+        {'badger': badges.strip().split()}
+    )
+
+    print('Account created:')
+    print(dumps(account, indent=4, sort_keys=True))
+    print()
+    print('Access token: %s' % token['token'])
+    print('  expires on: %s' % token['expire_time'])
+
+
+@manager.command
+def find_duplicate_users():
+    """Finds users that have the same BlenderID user_id."""
+
+    from collections import defaultdict
+
+    users_coll = app.data.driver.db['users']
+    nodes_coll = app.data.driver.db['nodes']
+    projects_coll = app.data.driver.db['projects']
+
+    found_users = defaultdict(list)
+
+    for user in users_coll.find():
+        blender_ids = [auth['user_id'] for auth in user['auth']
+                       if auth['provider'] == 'blender-id']
+        if not blender_ids:
+            continue
+        blender_id = blender_ids[0]
+        found_users[blender_id].append(user)
+
+    for blender_id, users in found_users.iteritems():
+        if len(users) == 1:
+            continue
+
+        usernames = ', '.join(user['username'] for user in users)
+        print('Blender ID: %5s has %i users: %s' % (
+            blender_id, len(users), usernames))
+
+        for user in users:
+            print('  %s owns %i nodes and %i projects' % (
+                user['username'],
+                nodes_coll.count({'user': user['_id']}),
+                projects_coll.count({'user': user['_id']}),
+            ))
+
+
+@manager.command
+def sync_role_groups(do_revoke_groups):
+    """For each user, synchronizes roles and group membership.
+
+    This ensures that everybody with the 'subscriber' role is also member of the 'subscriber'
+    group, and people without the 'subscriber' role are not member of that group. Same for
+    admin and demo groups.
+
+    When do_revoke_groups=False (the default), people are only added to groups.
+    when do_revoke_groups=True, people are also removed from groups.
+    """
+
+    from application.modules import service
+
+    if do_revoke_groups not in {'true', 'false'}:
+        print('Use either "true" or "false" as first argument.')
+        print('When passing "false", people are only added to groups.')
+        print('when passing "true", people are also removed from groups.')
+        raise SystemExit()
+    do_revoke_groups = do_revoke_groups == 'true'
+
+    service.fetch_role_to_group_id_map()
+
+    users_coll = app.data.driver.db['users']
+    groups_coll = app.data.driver.db['groups']
+
+    group_names = {}
+
+    def gname(gid):
+        try:
+            return group_names[gid]
+        except KeyError:
+            name = groups_coll.find_one(gid, projection={'name': 1})['name']
+            name = str(name)
+            group_names[gid] = name
+            return name
+
+    ok_users = bad_users = 0
+    for user in users_coll.find():
+        for role in service.ROLES_WITH_GROUPS:
+            action = 'grant' if role in user.get('roles', ()) else 'revoke'
+            groups = service.manage_user_group_membership(user, role, action)
+
+            if groups is None:
+                # No changes required
+                ok_users += 1
+                continue
+
+            current_groups = set(user.get('groups'))
+            if groups == current_groups:
+                ok_users += 1
+                continue
+
+            bad_users += 1
+
+            grant_groups = groups.difference(current_groups)
+            revoke_groups = current_groups.difference(groups)
+
+            print('Discrepancy for user %s/%s:' % (user['_id'], user['full_name']))
+            print('    - actual groups  :', sorted(gname(gid) for gid in user.get('groups')))
+            print('    - expected groups:', sorted(gname(gid) for gid in groups))
+            print('    - will grant     :', sorted(gname(gid) for gid in grant_groups))
+            print('    - might revoke   :', sorted(gname(gid) for gid in revoke_groups))
+
+            if grant_groups and revoke_groups:
+                print('        ------ CAREFUL this one has BOTH grant AND revoke -----')
+
+            # Determine which changes we'll apply
+            if do_revoke_groups:
+                final_groups = groups
+            else:
+                final_groups = current_groups.union(grant_groups)
+            print('    - final groups   :', sorted(gname(gid) for gid in final_groups))
+
+            # Perform the actual update
+            users_coll.update_one({'_id': user['_id']},
+                                  {'$set': {'groups': list(final_groups)}})
+
+    print('%i bad and %i ok users seen.' % (bad_users, ok_users))
 
 if __name__ == '__main__':
     manager.run()

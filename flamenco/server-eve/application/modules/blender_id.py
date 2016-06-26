@@ -9,6 +9,7 @@ import datetime
 
 from bson import tz_util
 import requests
+from requests.adapters import HTTPAdapter
 from flask import Blueprint, request, current_app, abort, jsonify
 from eve.methods.post import post_internal
 from eve.methods.put import put_internal
@@ -70,23 +71,42 @@ def validate_create_user(blender_id_user_id, token, oauth_subclient_id):
     # Store the user info in MongoDB.
     db_user = find_user_in_db(blender_id_user_id, user_info)
 
-    if '_id' in db_user:
-        # Update the existing user
-        db_id = db_user['_id']
-        try:
-            etag = {'_etag': db_user['_etag']}
-        except KeyError:
-            etag = {}
-        r, _, _, status = put_internal('users', remove_private_keys(db_user),
-                                       _id=db_id, **etag)
+    r = {}
+    for retry in range(5):
+        if '_id' in db_user:
+            # Update the existing user
+            attempted_eve_method = 'PUT'
+            db_id = db_user['_id']
+            r, _, _, status = put_internal('users', remove_private_keys(db_user),
+                                           _id=db_id)
+            if status == 422:
+                log.error('Status %i trying to PUT user %s with values %s, should not happen! %s',
+                          status, db_id, remove_private_keys(db_user), r)
+        else:
+            # Create a new user, retry for non-unique usernames.
+            attempted_eve_method = 'POST'
+            r, _, _, status = post_internal('users', db_user)
+
+            db_id = r['_id']
+            db_user.update(r)  # update with database/eve-generated fields.
+
+        if status == 422:
+            # Probably non-unique username, so retry a few times with different usernames.
+            log.info('Error creating new user: %s', r)
+            username_issue = r.get('_issues', {}).get(u'username', '')
+            if u'not unique' in username_issue:
+                # Retry
+                db_user['username'] = authentication.make_unique_username(db_user['email'])
+                continue
+
+        # Saving was successful, or at least didn't break on a non-unique username.
+        break
     else:
-        # Create a new user
-        r, _, _, status = post_internal('users', db_user)
-        db_id = r['_id']
-        db_user.update(r)  # update with database/eve-generated fields.
+        log.error('Unable to create new user %s: %s', db_user, r)
+        return abort(500)
 
     if status not in (200, 201):
-        log.error('internal response: %r %r', status, r)
+        log.error('internal response from %s to Eve: %r %r', attempted_eve_method, status, r)
         return abort(500)
 
     # Store the token in MongoDB.
@@ -123,9 +143,14 @@ def validate_token(user_id, token, oauth_subclient_id):
     url = '{0}/u/validate_token'.format(blender_id_endpoint())
     log.debug('POSTing to %r', url)
 
+    # Retry a few times when POSTing to BlenderID fails.
+    # Source: http://stackoverflow.com/a/15431343/875379
+    s = requests.Session()
+    s.mount(blender_id_endpoint(), HTTPAdapter(max_retries=5))
+
     # POST to Blender ID, handling errors as negative verification results.
     try:
-        r = requests.post(url, data=payload)
+        r = s.post(url, data=payload, timeout=5)
     except requests.exceptions.ConnectionError as e:
         log.error('Connection error trying to POST to %s, handling as invalid token.', url)
         return None, None
@@ -176,7 +201,6 @@ def find_user_in_db(blender_id_user_id, user_info):
     if db_user:
         log.debug('User blender_id_user_id=%r already in our database, '
                   'updating with info from Blender ID.', blender_id_user_id)
-        db_user['full_name'] = user_info['full_name']
         db_user['email'] = user_info['email']
     else:
         log.debug('User %r not yet in our database, create a new one.', blender_id_user_id)

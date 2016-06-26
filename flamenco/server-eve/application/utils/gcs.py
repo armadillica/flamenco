@@ -1,11 +1,14 @@
 import os
 import time
 import datetime
-import bugsnag
+import logging
+
 from bson import ObjectId
 from gcloud.storage.client import Client
 from gcloud.exceptions import NotFound
 from flask import current_app
+
+log = logging.getLogger(__name__)
 
 
 class GoogleCloudStorageBucket(object):
@@ -145,7 +148,7 @@ def update_file_name(node):
     """
 
     # Process only files that are not processing
-    if node['properties']['status'] == 'processing':
+    if node['properties'].get('status', '') == 'processing':
         return
 
     def _format_name(name, override_ext, size=None, map_type=u''):
@@ -176,6 +179,10 @@ def update_file_name(node):
             _, override_ext = os.path.splitext(v['file_path'])
             name = _format_name(node['name'], override_ext, v['size'], map_type=map_type)
             blob = storage.Get(v['file_path'], to_dict=False)
+            if blob is None:
+                log.info('Unable to find blob for file %s in project %s. This can happen if the '
+                         'video encoding is still processing.', v['file_path'], node['project'])
+                continue
             storage.update_name(blob, name)
 
     # Currently we search for 'file' and 'files' keys in the object properties.

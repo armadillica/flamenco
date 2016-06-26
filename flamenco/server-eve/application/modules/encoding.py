@@ -1,7 +1,9 @@
 import logging
+
+import datetime
 import os
 
-from bson import ObjectId
+from bson import ObjectId, tz_util
 from eve.methods.put import put_internal
 from flask import Blueprint
 from flask import abort
@@ -165,6 +167,10 @@ def zencoder_notifications():
         })
 
     file_doc['status'] = 'complete'
+
+    # Force an update of the links on the next load of the file.
+    file_doc['link_expires'] = datetime.datetime.now(tz=tz_util.utc) - datetime.timedelta(days=1)
+
     put_internal('files', file_doc, _id=file_id)
 
     return '', 204

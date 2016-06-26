@@ -4,6 +4,7 @@ import mimetypes
 import os
 import tempfile
 import uuid
+import io
 from hashlib import md5
 
 import bson.tz_util
@@ -280,22 +281,23 @@ def generate_link(backend, file_path, project_id=None, is_public=False):
     if backend == 'gcs':
         storage = GoogleCloudStorageBucket(project_id)
         blob = storage.Get(file_path)
-        if blob and not is_public:
-            link = blob['signed_url']
-        elif blob and is_public:
-            link = blob['public_url']
-        else:
-            link = None
-    elif backend == 'pillar':
-        link = url_for('file_storage.index', file_name=file_path, _external=True,
+        if blob is None:
+            return ''
+
+        if is_public:
+            return blob['public_url']
+        return blob['signed_url']
+
+    if backend == 'pillar':
+        return url_for('file_storage.index', file_name=file_path, _external=True,
                        _scheme=current_app.config['SCHEME'])
-    elif backend == 'cdnsun':
-        link = hash_file_path(file_path, None)
-    elif backend == 'unittest':
-        link = md5(file_path).hexdigest()
-    else:
-        link = None
-    return link
+    if backend == 'cdnsun':
+        return hash_file_path(file_path, None)
+    if backend == 'unittest':
+        return md5(file_path).hexdigest()
+
+    return ''
+
 
 
 def before_returning_file(response):
@@ -545,6 +547,14 @@ def stream_to_gcs(project_id):
         local_file = None
         stream_for_gcs = uploaded_file.stream
 
+    # Figure out the file size, as we need to pass this in explicitly to GCloud.
+    # Otherwise it always uses os.fstat(file_obj.fileno()).st_size, which isn't
+    # supported by a BytesIO object (even though it does have a fileno attribute).
+    if isinstance(stream_for_gcs, io.BytesIO):
+        file_size = len(stream_for_gcs.getvalue())
+    else:
+        file_size = os.fstat(stream_for_gcs.fileno()).st_size
+
     # Upload the file to GCS.
     from gcloud.streaming import transfer
     # Files larger than this many bytes will be streamed directly from disk, smaller
@@ -553,7 +563,7 @@ def stream_to_gcs(project_id):
     try:
         gcs = GoogleCloudStorageBucket(project_id)
         blob = gcs.bucket.blob('_/' + internal_fname, chunk_size=256 * 1024 * 2)
-        blob.upload_from_file(stream_for_gcs,
+        blob.upload_from_file(stream_for_gcs, size=file_size,
                               content_type=uploaded_file.mimetype)
     except Exception:
         log.exception('Error uploading file to Google Cloud Storage (GCS),'

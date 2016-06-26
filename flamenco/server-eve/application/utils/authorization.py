@@ -232,14 +232,25 @@ def merge_permissions(*args):
     return effective
 
 
-def require_login(require_roles=set()):
+def require_login(require_roles=set(),
+                  require_all=False):
     """Decorator that enforces users to authenticate.
 
-    Optionally only allows access to users with a certain role./
+    Optionally only allows access to users with a certain role.
+
+    :param require_roles: set of roles.
+    :param require_all:
+        When False (the default): if the user's roles have a
+        non-empty intersection with the given roles, access is granted.
+        When True: require the user to have all given roles before access is
+        granted.
     """
 
     if not isinstance(require_roles, set):
         raise TypeError('require_roles param should be a set, but is a %r' % type(require_roles))
+
+    if require_all and not require_roles:
+        raise ValueError('require_login(require_all=True) cannot be used with empty require_roles.')
 
     def decorator(func):
         @functools.wraps(func)
@@ -253,7 +264,13 @@ def require_login(require_roles=set()):
                 log.debug('Unauthenticated acces to %s attempted.', func)
                 abort(403)
 
-            if require_roles and not require_roles.intersection(set(current_user['roles'])):
+            intersection = require_roles.intersection(set(current_user['roles']))
+            if require_all:
+                if intersection != require_roles:
+                    log.warning('User %s does not have ALL required roles %s to access %s',
+                                current_user['user_id'], require_roles, func)
+                    abort(403)
+            elif require_roles and not intersection:
                 log.warning('User %s is authenticated, but does not have any required role %s to '
                             'access %s', current_user['user_id'], require_roles, func)
                 abort(403)

@@ -13,6 +13,8 @@ from eve import Eve
 from eve.auth import TokenAuth
 from eve.io.mongo import Validator
 
+from application.utils import project_get_node_type
+
 RFC1123_DATE_FORMAT = '%a, %d %b %Y %H:%M:%S GMT'
 
 
@@ -53,26 +55,20 @@ class ValidateCustomFields(Validator):
         projects_collection = app.data.driver.db['projects']
         lookup = {'_id': ObjectId(self.document['project'])}
         project = projects_collection.find_one(lookup)
-        node_type = next(
-            (item for item in project['node_types'] if item.get('name') \
-             and item['name'] == self.document['node_type']), None)
+        node_type = project_get_node_type(project, self.document['node_type'])
         try:
             value = self.convert_properties(value, node_type['dyn_schema'])
-        except Exception, e:
-            log.debug("Error converting form properties", exc_info=True)
+        except Exception as e:
+            log.warning("Error converting form properties", exc_info=True)
 
         v = Validator(node_type['dyn_schema'])
         val = v.validate(value)
 
         if val:
             return True
-        else:
-            try:
-                print (val.errors)
-            except:
-                pass
-            self._error(
-                field, "Error validating properties")
+
+        log.debug('Error validating properties for node %s: %s', self.document, v.errors)
+        self._error(field, "Error validating properties")
 
 
 # We specify a settings.py file because when running on wsgi we can't detect it
@@ -196,7 +192,7 @@ from modules import users
 from modules import nodes
 from modules import latest
 from modules import blender_cloud
-from modules.flamenco.modules import jobs, scheduler
+from modules import service
 
 app.register_blueprint(encoding, url_prefix='/encoding')
 app.register_blueprint(blender_id, url_prefix='/blender_id')
@@ -206,6 +202,5 @@ file_storage.setup_app(app, url_prefix='/storage')
 latest.setup_app(app, url_prefix='/latest')
 blender_cloud.setup_app(app, url_prefix='/bcloud')
 users.setup_app(app, url_prefix='/users')
+service.setup_app(app, url_prefix='/service')
 nodes.setup_app(app)
-jobs.setup_app(app)
-scheduler.setup_app(app, url_prefix='/scheduler')

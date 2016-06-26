@@ -18,7 +18,7 @@ TEXTURE_LIBRARY_QUERY_ARGS = {
     'max_results': 'null',  # this needs to be there, or we get a KeyError.
 }
 
-blueprint = Blueprint('blender_cloud', __name__)
+blueprint = Blueprint('blender_cloud.texture_libs', __name__)
 log = logging.getLogger(__name__)
 
 
