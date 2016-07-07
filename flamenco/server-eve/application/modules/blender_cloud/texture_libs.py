@@ -23,7 +23,6 @@ log = logging.getLogger(__name__)
 
 
 def keep_fetching_texture_libraries(proj_filter):
-
     groups = g.current_user['groups']
     user_id = g.current_user['user_id']
 
@@ -64,7 +63,7 @@ def texture_libraries():
     # Use Eve method so that we get filtering on permissions for free.
     # This gives all the projects that contain the required node types.
 
-    request.args = MultiDict(request.args)   # allow changes; it's an ImmutableMultiDict by default.
+    request.args = MultiDict(request.args)  # allow changes; it's an ImmutableMultiDict by default.
     request.args.setlist(eve_config.QUERY_PROJECTION, [TL_PROJECTION])
     request.args.setlist(eve_config.QUERY_SORT, [TL_SORT])
 

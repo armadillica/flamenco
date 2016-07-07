@@ -1,6 +1,6 @@
-import logging
 import logging.config
 import os
+import subprocess
 import tempfile
 from bson import ObjectId
 from datetime import datetime
@@ -53,8 +53,22 @@ class ValidateCustomFields(Validator):
     def _validate_valid_properties(self, valid_properties, field, value):
         projects_collection = app.data.driver.db['projects']
         lookup = {'_id': ObjectId(self.document['project'])}
+
         project = projects_collection.find_one(lookup)
-        node_type = project_get_node_type(project, self.document['node_type'])
+        if project is None:
+            log.warning('Unknown project %s, declared by node %s',
+                        project, self.document.get('_id'))
+            self._error(field, 'Unknown project')
+            return False
+
+        node_type_name = self.document['node_type']
+        node_type = project_get_node_type(project, node_type_name)
+        if node_type is None:
+            log.warning('Project %s has no node type %s, declared by node %s',
+                        project, node_type_name, self.document.get('_id'))
+            self._error(field, 'Unknown node type')
+            return False
+
         try:
             value = self.convert_properties(value, node_type['dyn_schema'])
         except Exception as e:
@@ -66,7 +80,7 @@ class ValidateCustomFields(Validator):
         if val:
             return True
 
-        log.debug('Error validating properties for node %s: %s', self.document, v.errors)
+        log.warning('Error validating properties for node %s: %s', self.document, v.errors)
         self._error(field, "Error validating properties")
 
 
@@ -104,6 +118,16 @@ log = logging.getLogger(__name__)
 if app.config['DEBUG']:
     log.info('Pillar starting, debug=%s', app.config['DEBUG'])
 
+# Get the Git hash
+try:
+    git_cmd = ['git', '-C', app_root, 'describe', '--always']
+    description = subprocess.check_output(git_cmd)
+    app.config['GIT_REVISION'] = description.strip()
+except (subprocess.CalledProcessError, OSError) as ex:
+    log.warning('Unable to run "git describe" to get git revision: %s', ex)
+    app.config['GIT_REVISION'] = 'unknown'
+log.info('Git revision %r', app.config['GIT_REVISION'])
+
 # Configure Bugsnag
 if not app.config.get('TESTING') and app.config.get('BUGSNAG_API_KEY'):
     import bugsnag
@@ -113,6 +137,7 @@ if not app.config.get('TESTING') and app.config.get('BUGSNAG_API_KEY'):
     bugsnag.configure(
         api_key=app.config['BUGSNAG_API_KEY'],
         project_root="/data/git/pillar/pillar",
+        revision=app.config['GIT_REVISION'],
     )
     bugsnag.flask.handle_exceptions(app)
 
@@ -182,6 +207,41 @@ app.on_fetched_item_notifications += before_returning_item_notifications
 app.on_fetched_resource_notifications += before_returning_resource_notifications
 
 
+@app.before_first_request
+def setup_db_indices():
+    """Adds missing database indices.
+
+    This does NOT drop and recreate existing indices,
+    nor does it reconfigure existing indices.
+    If you want that, drop them manually first.
+    """
+
+    log.debug('Adding missing database indices.')
+
+    import pymongo
+
+    db = app.data.driver.db
+
+    coll = db['tokens']
+    coll.create_index([('user', pymongo.ASCENDING)])
+    coll.create_index([('token', pymongo.ASCENDING)])
+
+    coll = db['notifications']
+    coll.create_index([('user', pymongo.ASCENDING)])
+
+    coll = db['activities-subscriptions']
+    coll.create_index([('context_object', pymongo.ASCENDING)])
+
+    coll = db['nodes']
+    # This index is used for queries on project, and for queries on
+    # the combination (project, node type).
+    coll.create_index([('project', pymongo.ASCENDING),
+                       ('node_type', pymongo.ASCENDING)])
+    coll.create_index([('parent', pymongo.ASCENDING)])
+    coll.create_index([('short_code', pymongo.ASCENDING)],
+                      sparse=True, unique=True)
+
+
 # The encoding module (receive notification and report progress)
 from modules.encoding import encoding
 from modules.blender_id import blender_id
@@ -203,4 +263,4 @@ latest.setup_app(app, url_prefix='/latest')
 blender_cloud.setup_app(app, url_prefix='/bcloud')
 users.setup_app(app, url_prefix='/users')
 service.setup_app(app, url_prefix='/service')
-nodes.setup_app(app)
+nodes.setup_app(app, url_prefix='/nodes')

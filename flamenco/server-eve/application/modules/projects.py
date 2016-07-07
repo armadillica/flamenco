@@ -6,9 +6,11 @@ from bson import ObjectId
 from eve.methods.post import post_internal
 from eve.methods.patch import patch_internal
 from flask import g, Blueprint, request, abort, current_app
+from gcloud import exceptions as gcs_exceptions
 from werkzeug import exceptions as wz_exceptions
 
-from application.utils import remove_private_keys, authorization, jsonify, mongo
+from application.utils import remove_private_keys, jsonify, mongo
+from application.utils import authorization, authentication
 from application.utils.gcs import GoogleCloudStorageBucket
 from application.utils.authorization import user_has_role, check_permissions, require_login
 from manage_extra.node_types.asset import node_type_asset
@@ -96,27 +98,29 @@ def protect_sensitive_fields(document, original):
             return
         document[name] = original[name]
 
-    revert('url')
     revert('status')
     revert('category')
     revert('user')
 
+    if 'url' in original:
+        revert('url')
 
-def after_inserting_projects(items):
+
+def after_inserting_projects(projects):
     """After inserting a project in the collection we do some processing such as:
     - apply the right permissions
     - define basic node types
     - optionally generate a url
     - initialize storage space
 
-    :param items: List of project docs that have been inserted (normally one)
+    :param projects: List of project docs that have been inserted (normally one)
     """
-    current_user = g.current_user
-    users_collection = current_app.data.driver.db['users']
-    user = users_collection.find_one(current_user['user_id'])
 
-    for item in items:
-        after_inserting_project(item, user)
+    users_collection = current_app.data.driver.db['users']
+    for project in projects:
+        owner_id = project.get('user', None)
+        owner = users_collection.find_one(owner_id)
+        after_inserting_project(project, owner)
 
 
 def after_inserting_project(project, db_user):
@@ -172,17 +176,23 @@ def after_inserting_project(project, db_user):
 
     # Allow admin users to use whatever url they want.
     if not is_admin or not project.get('url'):
-        project['url'] = "p-{!s}".format(project_id)
+        if project.get('category', '') == 'home':
+            project['url'] = 'home'
+        else:
+            project['url'] = "p-{!s}".format(project_id)
 
     # Initialize storage page (defaults to GCS)
     if current_app.config.get('TESTING'):
         log.warning('Not creating Google Cloud Storage bucket while running unit tests!')
     else:
-        gcs_storage = GoogleCloudStorageBucket(str(project_id))
-        if gcs_storage.bucket.exists():
-            log.info('Created CGS instance for project %s', project_id)
-        else:
-            log.warning('Unable to create CGS instance for project %s', project_id)
+        try:
+            gcs_storage = GoogleCloudStorageBucket(str(project_id))
+            if gcs_storage.bucket.exists():
+                log.info('Created GCS instance for project %s', project_id)
+            else:
+                log.warning('Unable to create GCS instance for project %s', project_id)
+        except gcs_exceptions.Forbidden as ex:
+            log.warning('GCS forbids me to create CGS instance for project %s: %s', project_id, ex)
 
     # Commit the changes directly to the MongoDB; a PUT is not allowed yet,
     # as the project doesn't have a valid permission structure.
@@ -194,7 +204,7 @@ def after_inserting_project(project, db_user):
         abort_with_error(500)
 
 
-def _create_new_project(project_name, user_id, overrides):
+def create_new_project(project_name, user_id, overrides):
     """Creates a new project owned by the given user."""
 
     log.info('Creating new project "%s" for user %s', project_name, user_id)
@@ -242,7 +252,7 @@ def create_project(overrides=None):
         project_name = request.form['project_name']
     user_id = g.current_user['user_id']
 
-    project = _create_new_project(project_name, user_id, overrides)
+    project = create_new_project(project_name, user_id, overrides)
 
     # Return the project in the response.
     return jsonify(project, status=201, headers={'Location': '/projects/%s' % project['_id']})
@@ -306,6 +316,7 @@ def project_manage_users():
     user = users_collection.find_one({'_id': target_user_id},
                                      {'username': 1, 'email': 1,
                                       'full_name': 1})
+
     user['_status'] = 'OK'
     return jsonify(user)
 
@@ -382,9 +393,15 @@ def before_returning_project_permissions(response):
 
 def before_returning_project_resource_permissions(response):
     # Return only those projects the user has access to.
-    allow = [project for project in response['_items']
-             if authorization.has_permissions('projects', project,
-                                              'GET', append_allowed_methods=True)]
+    allow = []
+    for project in response['_items']:
+        if authorization.has_permissions('projects', project,
+                                         'GET', append_allowed_methods=True):
+            allow.append(project)
+        else:
+            log.debug('User %s requested project %s, but has no access to it; filtered out.',
+                      authentication.current_user_id(), project['_id'])
+
     response['_items'] = allow
 
 

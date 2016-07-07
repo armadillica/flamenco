@@ -55,7 +55,7 @@ def validate_token():
 
         db_user, status = blender_id.validate_create_user('', token, oauth_subclient)
     else:
-        log.debug("User is already in our database and token hasn't expired yet.")
+        # log.debug("User is already in our database and token hasn't expired yet.")
         users = current_app.data.driver.db['users']
         db_user = users.find_one(db_token['user'])
 
@@ -188,4 +188,11 @@ def _delete_expired_tokens():
     expiry_date = now - datetime.timedelta(days=7)
 
     result = token_coll.delete_many({'expire_time': {"$lt": expiry_date}})
-    log.debug('Deleted %i expired authentication tokens', result.deleted_count)
+    # log.debug('Deleted %i expired authentication tokens', result.deleted_count)
+
+
+def current_user_id():
+    """None-safe fetching of user ID. Can return None itself, though."""
+
+    current_user = g.get('current_user') or {}
+    return current_user.get('user_id')

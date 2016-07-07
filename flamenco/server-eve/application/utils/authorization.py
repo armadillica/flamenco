@@ -34,7 +34,7 @@ def check_permissions(collection_name, resource, method, append_allowed_methods=
 
 
 def has_permissions(collection_name, resource, method, append_allowed_methods=False,
-                      check_node_type=None):
+                    check_node_type=None):
     """Check user permissions to access a node. We look up node permissions from
     world to groups to users and match them with the computed user permissions.
 
@@ -100,7 +100,9 @@ def has_permissions(collection_name, resource, method, append_allowed_methods=Fa
                 assign_to = resource
             assign_to['allowed_methods'] = list(set(allowed_methods))
         return True
-
+    else:
+        log.debug('Permission denied, method %s not in allowed methods %s',
+                  method, allowed_methods)
     return False
 
 
@@ -255,25 +257,47 @@ def require_login(require_roles=set(),
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            current_user = g.get('current_user')
-
-            if current_user is None:
-                # We don't need to log at a higher level, as this is very common.
-                # Many browsers first try to see whether authentication is needed
-                # at all, before sending the password.
-                log.debug('Unauthenticated acces to %s attempted.', func)
+            if not user_matches_roles(require_roles, require_all):
+                if g.current_user is None:
+                    # We don't need to log at a higher level, as this is very common.
+                    # Many browsers first try to see whether authentication is needed
+                    # at all, before sending the password.
+                    log.debug('Unauthenticated acces to %s attempted.', func)
+                else:
+                    log.warning('User %s is authenticated, but does not have required roles %s to '
+                                'access %s', g.current_user['user_id'], require_roles, func)
                 abort(403)
 
-            intersection = require_roles.intersection(set(current_user['roles']))
-            if require_all:
-                if intersection != require_roles:
-                    log.warning('User %s does not have ALL required roles %s to access %s',
-                                current_user['user_id'], require_roles, func)
-                    abort(403)
-            elif require_roles and not intersection:
-                log.warning('User %s is authenticated, but does not have any required role %s to '
-                            'access %s', current_user['user_id'], require_roles, func)
-                abort(403)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def ab_testing(require_roles=set(),
+               require_all=False):
+    """Decorator that raises a 404 when the user doesn't match the roles..
+
+    :param require_roles: set of roles.
+    :param require_all:
+        When False (the default): if the user's roles have a
+        non-empty intersection with the given roles, access is granted.
+        When True: require the user to have all given roles before access is
+        granted.
+    """
+
+    if not isinstance(require_roles, set):
+        raise TypeError('require_roles param should be a set, but is a %r' % type(require_roles))
+
+    if require_all and not require_roles:
+        raise ValueError('require_login(require_all=True) cannot be used with empty require_roles.')
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if not user_matches_roles(require_roles, require_all):
+                abort(404)
 
             return func(*args, **kwargs)
 
@@ -291,7 +315,38 @@ def user_has_role(role, user=None):
     if user is None:
         return False
 
-    return role in user['roles']
+    roles = user.get('roles') or ()
+    return role in roles
+
+
+def user_matches_roles(require_roles=set(),
+                       require_all=False):
+    """Returns True iff the user's roles matches the query.
+
+    :param require_roles: set of roles.
+    :param require_all:
+        When False (the default): if the user's roles have a
+        non-empty intersection with the given roles, returns True.
+        When True: require the user to have all given roles before
+        returning True.
+    """
+
+    if not isinstance(require_roles, set):
+        raise TypeError('require_roles param should be a set, but is a %r' % type(require_roles))
+
+    if require_all and not require_roles:
+        raise ValueError('require_login(require_all=True) cannot be used with empty require_roles.')
+
+    current_user = g.get('current_user')
+
+    if current_user is None:
+        return False
+
+    intersection = require_roles.intersection(current_user['roles'])
+    if require_all:
+        return len(intersection) == len(require_roles)
+
+    return not bool(require_roles) or bool(intersection)
 
 
 def is_admin(user):

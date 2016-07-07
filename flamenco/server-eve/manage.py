@@ -142,6 +142,28 @@ def setup_db(admin_email):
                                            'is_private': False})
 
 
+@manager.command
+def setup_db_indices():
+    """Adds missing database indices."""
+
+    from application import setup_db_indices
+
+    import pymongo
+
+    log.info('Adding missing database indices.')
+    log.warning('This does NOT drop and recreate existing indices, '
+                'nor does it reconfigure existing indices. '
+                'If you want that, drop them manually first.')
+
+    setup_db_indices()
+
+    coll_names = db.collection_names(include_system_collections=False)
+    for coll_name in sorted(coll_names):
+        stats = db.command('collStats', coll_name)
+        log.info('Collection %25s takes up %.3f MiB index space',
+                 coll_name, stats['totalIndexSize'] / 2**20)
+
+
 def _default_permissions():
     """Returns a dict of default permissions.
 
@@ -490,7 +512,7 @@ def files_make_public_t():
             storage = GoogleCloudStorageBucket(str(f['project']))
             blob = storage.Get(variation_t['file_path'], to_dict=False)
             if not blob:
-                print('Unable to find blob for project %s file %s' %(f['project'], f['_id']))
+                print('Unable to find blob for project %s file %s' % (f['project'], f['_id']))
                 continue
 
             print('Making blob public: {0}'.format(blob.path))
@@ -773,8 +795,9 @@ def update_texture_node_type():
                     'translucency',
                     'emission',
                     'alpha'
-                    ]
-                node_type['dyn_schema']['files']['schema']['schema']['map_type']['allowed'] = allowed
+                ]
+                node_type['dyn_schema']['files']['schema']['schema']['map_type'][
+                    'allowed'] = allowed
         projects_collections.update(
             {'_id': project['_id']}, project)
 
@@ -918,7 +941,7 @@ def sync_role_groups(do_revoke_groups):
             grant_groups = groups.difference(current_groups)
             revoke_groups = current_groups.difference(groups)
 
-            print('Discrepancy for user %s/%s:' % (user['_id'], user['full_name']))
+            print('Discrepancy for user %s/%s:' % (user['_id'], user['full_name'].encode('utf8')))
             print('    - actual groups  :', sorted(gname(gid) for gid in user.get('groups')))
             print('    - expected groups:', sorted(gname(gid) for gid in groups))
             print('    - will grant     :', sorted(gname(gid) for gid in grant_groups))
@@ -939,6 +962,67 @@ def sync_role_groups(do_revoke_groups):
                                   {'$set': {'groups': list(final_groups)}})
 
     print('%i bad and %i ok users seen.' % (bad_users, ok_users))
+
+
+@manager.command
+def sync_project_groups(user_email, fix):
+    """Gives the user access to their self-created projects."""
+
+    if fix.lower() not in {'true', 'false'}:
+        print('Use either "true" or "false" as second argument.')
+        print('When passing "false", only a report is produced.')
+        print('when passing "true", group membership is fixed.')
+        raise SystemExit()
+    fix = fix.lower() == 'true'
+
+    users_coll = app.data.driver.db['users']
+    proj_coll = app.data.driver.db['projects']
+    groups_coll = app.data.driver.db['groups']
+
+    # Find by email or by user ID
+    if '@' in user_email:
+        where = {'email': user_email}
+    else:
+        where = {'_id': ObjectId(user_email)}
+
+    user = users_coll.find_one(where, projection={'_id': 1, 'groups': 1})
+    if user is None:
+        log.error('User %s not found', where)
+        raise SystemExit()
+
+    user_groups = set(user['groups'])
+    user_id = user['_id']
+    log.info('Updating projects for user %s', user_id)
+
+    ok_groups = missing_groups = 0
+    for proj in proj_coll.find({'user': user_id}):
+        project_id = proj['_id']
+        log.info('Investigating project %s (%s)', project_id, proj['name'])
+
+        # Find the admin group
+        admin_group = groups_coll.find_one({'name': str(project_id)}, projection={'_id': 1})
+        if admin_group is None:
+            log.warning('No admin group for project %s', project_id)
+            continue
+        group_id = admin_group['_id']
+
+        # Check membership
+        if group_id not in user_groups:
+            log.info('Missing group membership')
+            missing_groups += 1
+            user_groups.add(group_id)
+        else:
+            ok_groups += 1
+
+    log.info('User %s was missing %i group memberships; %i projects were ok.',
+             user_id, missing_groups, ok_groups)
+
+    if missing_groups > 0 and fix:
+        log.info('Updating database.')
+        result = users_coll.update_one({'_id': user_id},
+                                       {'$set': {'groups': list(user_groups)}})
+        log.info('Updated %i user.', result.modified_count)
+
 
 if __name__ == '__main__':
     manager.run()

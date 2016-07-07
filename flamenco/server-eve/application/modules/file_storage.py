@@ -23,10 +23,10 @@ from flask import url_for, helpers
 from flask import current_app
 from flask import g
 from flask import make_response
-from werkzeug.exceptions import NotFound, InternalServerError
+from werkzeug.exceptions import NotFound, InternalServerError, BadRequest
 
 from application import utils
-from application.utils import remove_private_keys
+from application.utils import remove_private_keys, authentication
 from application.utils.authorization import require_login, user_has_role
 from application.utils.cdn import hash_file_path
 from application.utils.encoding import Encoder
@@ -149,21 +149,22 @@ def _process_video(gcs, file_id, local_file, src_file):
     root, _ = os.path.splitext(src_file['file_path'])
     src_file['variations'] = []
 
-    for v in ('mp4', 'webm'):
-        # Most of these properties will be available after encode.
-        file_variation = dict(
-            format=v,
-            content_type='video/{}'.format(v),
-            file_path='{}-{}.{}'.format(root, v, v),
-            size='',
-            duration=0,
-            width=0,
-            height=0,
-            length=0,
-            md5='',
-        )
-        # Append file variation
-        src_file['variations'].append(file_variation)
+    # Most of these properties will be available after encode.
+    v = 'mp4'
+    file_variation = dict(
+        format=v,
+        content_type='video/{}'.format(v),
+        file_path='{}-{}.{}'.format(root, v, v),
+        size='',
+        duration=0,
+        width=0,
+        height=0,
+        length=0,
+        md5='',
+    )
+    # Append file variation. Originally mp4 and webm were the available options,
+    # that's why we build a list.
+    src_file['variations'].append(file_variation)
 
     j = Encoder.job_create(src_file)
     if j is None:
@@ -297,7 +298,6 @@ def generate_link(backend, file_path, project_id=None, is_public=False):
         return md5(file_path).hexdigest()
 
     return ''
-
 
 
 def before_returning_file(response):
@@ -466,7 +466,7 @@ def refresh_links_for_backend(backend_name, chunk_size, expiry_seconds):
     log.info('Refreshed %i links', min(chunk_size, to_refresh.count()))
 
 
-@require_login({u'subscriber', u'admin', u'demo'})
+@require_login()
 def create_file_doc(name, filename, content_type, length, project, backend='gcs',
                     **extra_fields):
     """Creates a minimal File document for storage in MongoDB.
@@ -519,22 +519,29 @@ def override_content_type(uploaded_file):
 
 
 @file_storage.route('/stream/<string:project_id>', methods=['POST', 'OPTIONS'])
-@require_login(require_roles={u'subscriber', u'admin', u'demo'})
+@require_login()
 def stream_to_gcs(project_id):
-    projects = current_app.data.driver.db['projects']
     try:
-        project = projects.find_one(ObjectId(project_id), projection={'_id': 1})
+        project_oid = ObjectId(project_id)
     except InvalidId:
-        project = None
+        raise BadRequest('Invalid ObjectID')
+
+    projects = current_app.data.driver.db['projects']
+    project = projects.find_one(project_oid, projection={'_id': 1})
+
     if not project:
         raise NotFound('Project %s does not exist' % project_id)
 
-    log.info('Streaming file to bucket for project %s', project_id)
+    log.info('Streaming file to bucket for project=%s user_id=%s', project_id,
+             authentication.current_user_id())
     uploaded_file = request.files['file']
 
-    file_id, internal_fname, status = create_file_doc_for_upload(project['_id'], uploaded_file)
-
     override_content_type(uploaded_file)
+    if not uploaded_file.content_type:
+        log.warning('File uploaded to project %s without content type.', project_oid)
+        raise BadRequest('Missing content type.')
+
+    file_id, internal_fname, status = create_file_doc_for_upload(project_oid, uploaded_file)
 
     if uploaded_file.content_type.startswith('image/'):
         # We need to do local thumbnailing, so we have to write the stream

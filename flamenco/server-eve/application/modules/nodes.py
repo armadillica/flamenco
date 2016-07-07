@@ -1,15 +1,113 @@
+import base64
 import logging
+import urlparse
 
+import pymongo.errors
+import rsa.randnum
 from bson import ObjectId
-from flask import current_app
-from werkzeug.exceptions import UnprocessableEntity
+from flask import current_app, g, Blueprint, request
+from werkzeug.exceptions import UnprocessableEntity, InternalServerError
 
 from application.modules import file_storage
-from application.utils.authorization import check_permissions
+from application.utils import str2id, jsonify
+from application.utils.authorization import check_permissions, require_login
 from application.utils.gcs import update_file_name
 from application.utils.activities import activity_subscribe, activity_object_add
 
 log = logging.getLogger(__name__)
+blueprint = Blueprint('nodes', __name__)
+ROLES_FOR_SHARING = {u'subscriber', u'demo'}
+
+
+@blueprint.route('/<node_id>/share', methods=['GET', 'POST'])
+@require_login(require_roles=ROLES_FOR_SHARING)
+def share_node(node_id):
+    """Shares a node, or returns sharing information."""
+
+    node_id = str2id(node_id)
+    nodes_coll = current_app.data.driver.db['nodes']
+
+    node = nodes_coll.find_one({'_id': node_id},
+                               projection={
+                                   'project': 1,
+                                   'node_type': 1,
+                                   'short_code': 1
+                               })
+
+    check_permissions('nodes', node, request.method)
+
+    log.info('Sharing node %s', node_id)
+
+    short_code = node.get('short_code')
+    status = 200
+
+    if not short_code:
+        if request.method == 'POST':
+            short_code = generate_and_store_short_code(node)
+            status = 201
+        else:
+            return '', 204
+
+    return jsonify(short_link_info(short_code), status=status)
+
+
+def generate_and_store_short_code(node):
+    nodes_coll = current_app.data.driver.db['nodes']
+    node_id = node['_id']
+
+    log.debug('Creating new short link for node %s', node_id)
+
+    max_attempts = 10
+    for attempt in range(1, max_attempts):
+
+        # Generate a new short code
+        short_code = create_short_code(node)
+        log.debug('Created short code for node %s: %s', node_id, short_code)
+
+        node['short_code'] = short_code
+
+        # Store it in MongoDB
+        try:
+            result = nodes_coll.update_one({'_id': node_id},
+                                           {'$set': {'short_code': short_code}})
+            break
+        except pymongo.errors.DuplicateKeyError:
+            log.info('Duplicate key while creating short code, retrying (attempt %i/%i)',
+                     attempt, max_attempts)
+            pass
+    else:
+        log.error('Unable to find unique short code for node %s after %i attempts, failing!',
+                  node_id, max_attempts)
+        raise InternalServerError('Unable to create unique short code for node %s' % node_id)
+
+    # We were able to store a short code, now let's verify the result.
+    if result.matched_count != 1:
+        log.warning('Unable to update node %s with new short_links=%r', node_id, node['short_code'])
+        raise InternalServerError('Unable to update node %s with new short links' % node_id)
+
+    return short_code
+
+
+def create_short_code(node):
+    """Generates a new 'short code' for the node."""
+
+    length = current_app.config['SHORT_CODE_LENGTH']
+    bits = rsa.randnum.read_random_bits(32)
+    short_code = base64.b64encode(bits, altchars='xy').rstrip('=')
+    short_code = short_code[:length]
+
+    return short_code
+
+
+def short_link_info(short_code):
+    """Returns the short link info in a dict."""
+
+    short_link = urlparse.urljoin(current_app.config['SHORT_LINK_BASE_URL'], short_code)
+
+    return {
+        'short_code': short_code,
+        'short_link': short_link,
+    }
 
 
 def item_parse_attachments(response):
@@ -116,6 +214,9 @@ def before_inserting_nodes(items):
             if project:
                 item['project'] = project['_id']
 
+        # Default the 'user' property to the current user.
+        item.setdefault('user', g.current_user['user_id'])
+
 
 def after_inserting_nodes(items):
     for item in items:
@@ -155,17 +256,20 @@ def after_inserting_nodes(items):
         )
 
 
-def deduct_content_type(node_doc, original):
+def deduct_content_type(node_doc, original=None):
     """Deduct the content type from the attached file, if any."""
 
     if node_doc['node_type'] != 'asset':
         log.debug('deduct_content_type: called on node type %r, ignoring', node_doc['node_type'])
         return
 
-    node_id = node_doc['_id']
+    node_id = node_doc.get('_id')
     try:
         file_id = ObjectId(node_doc['properties']['file'])
     except KeyError:
+        if node_id is None:
+            # Creation of a file-less node is allowed, but updates aren't.
+            return
         log.warning('deduct_content_type: Asset without properties.file, rejecting.')
         raise UnprocessableEntity('Missing file property for asset node')
 
@@ -189,6 +293,11 @@ def deduct_content_type(node_doc, original):
     node_doc['properties']['content_type'] = content_type
 
 
+def nodes_deduct_content_type(nodes):
+    for node in nodes:
+        deduct_content_type(node)
+
+
 def before_returning_node_permissions(response):
     # Run validation process, since GET on nodes entry point is public
     check_permissions('nodes', response, 'GET', append_allowed_methods=True)
@@ -199,16 +308,59 @@ def before_returning_node_resource_permissions(response):
         check_permissions('nodes', item, 'GET', append_allowed_methods=True)
 
 
-def setup_app(app):
+def node_set_default_picture(node, original=None):
+    """Uses the image of an image asset or colour map of texture node as picture."""
+
+    if node.get('picture'):
+        log.debug('Node %s already has a picture, not overriding', node.get('_id'))
+        return
+
+    node_type = node.get('node_type')
+    props = node.get('properties', {})
+    content = props.get('content_type')
+
+    if node_type == 'asset' and content == 'image':
+        image_file_id = props.get('file')
+    elif node_type == 'texture':
+        # Find the colour map, defaulting to the first image map available.
+        image_file_id = None
+        for image in props.get('files', []):
+            if image_file_id is None or image.get('map_type') == u'color':
+                image_file_id = image.get('file')
+    else:
+        log.debug('Not setting default picture on node type %s content type %s',
+                  node_type, content)
+        return
+
+    if image_file_id is None:
+        log.debug('Nothing to set the picture to.')
+        return
+
+    log.debug('Setting default picture for node %s to %s', node.get('_id'), image_file_id)
+    node['picture'] = image_file_id
+
+
+def nodes_set_default_picture(nodes):
+    for node in nodes:
+        node_set_default_picture(node)
+
+
+def setup_app(app, url_prefix):
     # Permission hooks
     app.on_fetched_item_nodes += before_returning_node_permissions
     app.on_fetched_resource_nodes += before_returning_node_resource_permissions
 
     app.on_fetched_item_nodes += item_parse_attachments
     app.on_fetched_resource_nodes += resource_parse_attachments
+
     app.on_replace_nodes += before_replacing_node
+    app.on_replace_nodes += deduct_content_type
+    app.on_replace_nodes += node_set_default_picture
     app.on_replaced_nodes += after_replacing_node
+
     app.on_insert_nodes += before_inserting_nodes
+    app.on_insert_nodes += nodes_deduct_content_type
+    app.on_insert_nodes += nodes_set_default_picture
     app.on_inserted_nodes += after_inserting_nodes
 
-    app.on_replace_nodes += deduct_content_type
+    app.register_blueprint(blueprint, url_prefix=url_prefix)

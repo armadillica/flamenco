@@ -18,9 +18,9 @@ class Encoder:
         """Create an encoding job. Return the backend used as well as an id.
         """
         if current_app.config['ENCODING_BACKEND'] != 'zencoder' or \
-                        encoding_service_client is None:
+                encoding_service_client is None:
             log.error('I can only work with Zencoder, check the config file.')
-        return None
+            return None
 
         if src_file['backend'] != 'gcs':
             log.error('Unable to work with storage backend %r', src_file['backend'])

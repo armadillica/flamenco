@@ -4,7 +4,8 @@ import json
 import logging
 import urllib
 
-from flask import g, current_app, Blueprint, make_response
+from flask import g, current_app, Blueprint
+
 from werkzeug.exceptions import Forbidden
 from eve.utils import parse_request
 from eve.methods.get import get
@@ -59,17 +60,30 @@ def before_replacing_user(request, lookup):
         updates.pop('auth', None)
 
 
-def after_replacing_user(item, original):
+def push_updated_user_to_algolia(user, original):
     """Push an update to the Algolia index when a user item is updated"""
 
     from algoliasearch.client import AlgoliaException
     from application.utils.algolia import algolia_index_user_save
 
     try:
-        algolia_index_user_save(item)
+        algolia_index_user_save(user)
     except AlgoliaException as ex:
         log.warning('Unable to push user info to Algolia for user "%s", id=%s; %s',
-                    item.get('username'), item.get('_id'), ex)
+                    user.get('username'), user.get('_id'), ex)
+
+
+def send_blinker_signal_roles_changed(user, original):
+    """Sends a Blinker signal that the user roles were changed, so others can respond."""
+
+    if user.get('roles') == original.get('roles'):
+        return
+
+    from application.modules.service import signal_user_changed_role
+
+    log.info('User %s changed roles to %s, sending Blinker signal',
+             user.get('_id'), user.get('roles'))
+    signal_user_changed_role.send(current_app, user=user)
 
 
 def check_user_access(request, lookup):
@@ -138,7 +152,8 @@ def setup_app(app, url_prefix):
     app.on_post_GET_users += post_GET_user
     app.on_pre_PUT_users += check_put_access
     app.on_pre_PUT_users += before_replacing_user
-    app.on_replaced_users += after_replacing_user
+    app.on_replaced_users += push_updated_user_to_algolia
+    app.on_replaced_users += send_blinker_signal_roles_changed
     app.on_fetched_item_users += after_fetching_user
     app.on_fetched_resource_users += after_fetching_user_resource
 

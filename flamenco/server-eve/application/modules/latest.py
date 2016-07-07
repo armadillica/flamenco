@@ -62,12 +62,13 @@ def is_project_public(project_id):
 def latest_assets():
     latest = latest_nodes({'node_type': 'asset', 'properties.status': 'published'},
                           {'name': 1, 'project': 1, 'user': 1, 'node_type': 1,
-                           'picture': 1, 'properties.status': 1,
+                           'parent': 1, 'picture': 1, 'properties.status': 1,
                            'properties.content_type': 1,
                            'permissions.world': 1},
                           has_public_project, 12)
 
     embed_user(latest)
+    embed_project(latest)
 
     return jsonify({'_items': latest})
 
@@ -80,6 +81,7 @@ def embed_user(latest):
         comment['user'] = users.find_one(user_id, {'auth': 0, 'groups': 0, 'roles': 0,
                                                    'settings': 0, 'email': 0,
                                                    '_created': 0, '_updated': 0, '_etag': 0})
+
 
 def embed_project(latest):
     projects = current_app.data.driver.db['projects']

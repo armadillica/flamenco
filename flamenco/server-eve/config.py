@@ -98,3 +98,6 @@ LOGGING = {
         ],
     }
 }
+
+SHORT_LINK_BASE_URL = 'https://blender.cloud/r/'
+SHORT_CODE_LENGTH = 6  # characters
