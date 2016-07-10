@@ -15,7 +15,7 @@ from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
 from flask.ext.restful import fields
 from werkzeug.datastructures import FileStorage
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 
 from flamencosdk import Task
 from flamencosdk import Api

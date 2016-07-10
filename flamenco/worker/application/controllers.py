@@ -236,6 +236,10 @@ def worker_loop():
 
         if unzipok:
             execute_task(task, files)
+        else:
+            from commands import cmd_sleep
+            cmd_sleep(task['settings']['time_in_seconds'])
+
 
     elif rtask.status_code == 403:
         print ("[{0}] Worker is disabled".format(HOSTNAME))
@@ -681,7 +685,7 @@ def run_blender_in_thread(options):
             'Cant connect with the Manager {0}'.format(FLAMENCO_MANAGER))
         CONNECTIVITY = False
 
-    logging.debug( 'Return code: {0}'.format(retcode) )
+    logging.debug('Return code: {0}'.format(retcode) )
 
     PROCESS = None
     ACTIVITY = None

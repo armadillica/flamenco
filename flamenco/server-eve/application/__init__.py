@@ -253,6 +253,7 @@ from modules import nodes
 from modules import latest
 from modules import blender_cloud
 from modules import service
+from modules.flamenco.modules import jobs, scheduler
 
 app.register_blueprint(encoding, url_prefix='/encoding')
 app.register_blueprint(blender_id, url_prefix='/blender_id')
@@ -264,3 +265,5 @@ blender_cloud.setup_app(app, url_prefix='/bcloud')
 users.setup_app(app, url_prefix='/users')
 service.setup_app(app, url_prefix='/service')
 nodes.setup_app(app, url_prefix='/nodes')
+jobs.setup_app(app)
+scheduler.setup_app(app, url_prefix='/scheduler')
