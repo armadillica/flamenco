@@ -10,6 +10,7 @@ from requests.exceptions import ConnectionError
 from flask import request
 from flask import send_from_directory
 from flask import send_file
+from flask import abort
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
@@ -312,6 +313,8 @@ class TaskManagementApi(Resource):
             token='pqNOVVLfMipraREd63MEhgC9ZtcO1sPq0Y5RMZtgjA8='
         )
         task = Task.get_new(api=api)
+        if not task:
+            return abort(404)
         return task
 
     #@marshal_with(task_fields)

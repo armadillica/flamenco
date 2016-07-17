@@ -145,9 +145,10 @@ def update():
 
 global LOOP_THREAD
 
+
 def worker_loop():
     register_worker()
-    print ("Quering for a new task")
+    print("Quering for a new task")
 
     params = {'worker': HOSTNAME}
     manager_url = "http://{0}/tasks/compiled/0".format(
@@ -240,11 +241,12 @@ def worker_loop():
             from commands import cmd_sleep
             cmd_sleep(task['settings']['time_in_seconds'])
 
-
     elif rtask.status_code == 403:
         print ("[{0}] Worker is disabled".format(HOSTNAME))
     elif rtask.status_code == 400:
         print ("[{0}] No task available".format(HOSTNAME))
+    elif rtask.status_code == 404:
+        print ("[{0}] No task found".format(HOSTNAME))
     #LOOP_THREAD = Timer(5, worker_loop)
     #LOOP_THREAD.start()
 
