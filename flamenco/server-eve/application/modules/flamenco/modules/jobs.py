@@ -21,8 +21,8 @@ def create_tasks(job):
     job_compiler = None
     try:
         module_loader = __import__(module_name, globals(), locals(),
-                                   ['job_compiler'], 0)
-        job_compiler = module_loader.job_compiler
+                                   ['JobCompiler'], 0)
+        job_compiler = module_loader.JobCompiler
     except ImportError as e:
         print('Cant find module {0}: {1}'.format(module_name, e))
         return
@@ -30,7 +30,7 @@ def create_tasks(job):
     job_compiler.compile(job, create_task)
 
 
-def create_task(job, task_settings, name, child_id, parser):
+def create_task(job, task_settings, name, parents, parser):
     task = {
         'job': job['_id'],
         'name': name,
@@ -41,9 +41,9 @@ def create_task(job, task_settings, name, child_id, parser):
         'manager': job['manager'],
         'parser': parser,
     }
-    # Insertion of None child_id is not supported
-    if child_id:
-        task['child'] = child_id
+    # Insertion of None parents is not supported
+    if parents:
+        task['parents'] = parents
 
     r = post_internal('tasks', task)
     if r[3] != 201:

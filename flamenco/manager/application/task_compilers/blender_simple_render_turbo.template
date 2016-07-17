@@ -1,7 +1,0 @@
-import bpy
-
-# Enable Jpeg preview generation (regardless if we use EXR or not)
-bpy.context.scene.render.image_settings.use_preview = True
-
-# Report missing files
-bpy.ops.file.report_missing_files()
