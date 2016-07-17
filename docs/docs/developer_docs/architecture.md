@@ -1,15 +1,12 @@
-.. _architecture:
 
+# System Architecture
 
-*******************
-System Architecture
-*******************
 
 The Flamenco architecture is based on the following scheme.
 We have one server, one or more managers which control one or more workers,
 and one dashboard.
 
-.. image:: ../_static/architecture_diagram.png
+![Architecture diagram](img/architecture_diagram.png)
 
 With this configuration it is possible to have a very generic and simple
 API on the server, and develop/maintain different type of front-ends for it.
@@ -31,8 +28,7 @@ This allows us to have loops only at the worker level, and keep the infarstructu
 as responsive and available a possible.
 
 
-Jobs, tasks and commands
-========================
+##Jobs, tasks and commands
 Flamenco is designed to handle several types of jobs, mostly serving computer
 animated film production, for example:
 
@@ -47,8 +43,8 @@ In order to use the computing power of multiple machines, we split the Job into
 Tasks, according to the instructions provided. This process is called Job
 compilation.
 
-Server
-======
+##Server
+
 In a Flamenco network, there can be only one server. The functionality of the
 server consists in:
 
@@ -64,13 +60,11 @@ server consists in:
 - keeping a log of operations related to Jobs (task logging happens on the manager)
 - collecting and storing all the data needed to complete a Job
 
-Code layout
------------
+### Code layout
 
 - application (the server application)
 
-    + __init__.py (app object creation and initialization)
-    + conf.py.example (confg example. Configuration is optional)
+    + `__init__.py` (app object creation and initialization)
     + job_compilers (user-defined job compilers)
     + modules (the actual components of the server)
 
@@ -90,8 +84,8 @@ Code layout
 - test.py (basic suite of tests)
 
 
-Many infrastructure components
-==============================
+## Many infrastructure components
+
 
 It could be argued that developing a unified version of server and dashboard
 would make things more efficient, but on the other hand the development
@@ -103,8 +97,7 @@ level of security, as well as more resilience (dashboard can go down and the
 server can keep running).
 
 
-Manager double handshake
-========================
+## Manager double handshake
 
 Connection between workers and the manager is automatic and follows this procedure
 (assuming that the manager is up and running):
@@ -117,56 +110,44 @@ Connection between workers and the manager is automatic and follows this procedu
 * manager checks current jobs and eventually assigns one to the worker
 
 
-Render workflow
-===============
+```
+# upload to https://www.websequencediagrams.com/ to visualise
+title Worker Request Loop
+
+Worker->Manager: register_worker()
+Manager-->Worker: identity confirmed
+Worker->Manager: get_task() [GET] /generate
+note over Manager: confirm Worker as 'enabled'
+Manager->Server: [GET] /scheduler/tasks
+note over Server
+    Pick task from queue
+    Set as 'processing'
+end note
+Server-->Manager: task document
+note over Manager
+    assign task_id to Worker model
+    compile task on the fly
+end note
+Manager-->Worker: compiled task document
+note over Worker: process task
+Worker->Manager: [PATCH] /tasks/<task_id>
+Manager->Server: [PATCH] /task/<task_id>
+Server-->Manager: 200
+Manager-->Worker: 200
+Worker->Manager: [GET] /tasks/zip/<task_id>
+opt if task file NOT cached
+    Manager->Server: [GET] /tasks/zip/<task_id>
+    Server-->Manager: task_file.zip
+    note over Manager: cache the file
+end
+Manager-->Worker: task_file.zip
+```
+
+
+
+## Render workflow
 
 The render workflow is based on jobs. Once a jobs is added to Flamenco, we
 automatically create tasks (collection of commands) to send to any available
 worker.
 When all tasks are completed, the job is marked as finished.
-
-
-Frames
-======
-
-We need to get the frames framework set. Every frame rendered in Flamenco
-gets saved in the database with the relative stats, frame address and
-a preview (the thumbnail).
-
-Once a frame is rendered (as part of a job):
-
-* save it in the designated location
-* add an entry in the frames table
-* generate a thumbnails via the worker who made them
-* also save such thumbnails as part of the frame data?
-
-
-Frame model:
-
-* Shot ID
-* Number
-* Name
-* Path (on server)
-* Render Date
-* Render Time
-
-
-Thumbnail generation
-====================
-
-Thumbnails of each rendered frame are automatically generated in Flamenco
-and are used for both static and animated previews of a shot.
-
-As soon as a frame is saved on the shared storage controlled by the server,
-it will be the server's duty to generate a thumbnail for it.
-
-Used for:
-
-* last frame rendered (to be displayed in the dashboard homepage)
-* all frames of a shot (in the frames view)
-* shot preview (single image and animation)
-
-
-Thumbnail
-
-    shot_id/frame_name_thumbnail.jpg (or png for transparency)

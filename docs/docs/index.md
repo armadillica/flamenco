@@ -1,19 +1,14 @@
-.. _about:
+# Flamenco
 
-*****
-About
-*****
-
-flamenco is a distributed rendering solution for the 3D animation suite
+Flamenco is a distributed rendering solution for the 3D animation suite
 Blender. It supports many features that make it a perfect fit for a small
 or medium CG studio, such as workstations/nodes availability scheduling,
 project management, render previews via web interface, pre and post-render
 actions.
 
-.. image:: ../_static/basic_screenshot.png
+![image](img/basic_screenshot.png)
 
-Main features
-=============
+## Main features
 
 * Runs on Linux, OSX and Windows
 * Automatic detection of clients
@@ -22,8 +17,7 @@ Main features
 * Priority system
 
 
-Supported software
-==================
+## Supported software
 
 flamenco is designed to be quite flexible and support other software than
 just Blender. The integration of other packages is not possible just yet

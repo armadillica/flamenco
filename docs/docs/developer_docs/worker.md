@@ -1,15 +1,9 @@
-.. _worker:
-
-
-************
-Worker Setup
-************
+# Worker setup
 
 There is a number of ways to set up a Flamenco worker. We are going to consider
 the specific instance of getting a Blender render node.
 
-Simple worker (Linux)
-=====================
+## Simple worker (Linux)
 
 Setting up a simple worker would require the following configuration:
 
@@ -24,8 +18,7 @@ The libraries can be installed with::
 Once the node is setup, we run the manager run.py script and wait for a response
 from the manager, which will provide a link to download.
 
-Shared resources
-================
+## Shared resources
 
 In case the job files are large (2+GiB), we can avoid long transfer times by
 mounting a shared drive with the workers, which will be able to read the file
@@ -34,11 +27,9 @@ directly.
 
 Run a Blender instance inside of a byobu session.
 
-Compute Engine setup
-====================
+## Compute Engine setup
 
-Ubuntu 14.04
-------------
+### Ubuntu 14.04
 
 We need to mount the resources disk (with software and file to render).::
 
@@ -53,8 +44,7 @@ We if our disk is labeled `render-base`, then it will be available with a
     sudo chmod a+w /mnt/render-output
     echo '/dev/disk/by-id/google-render-base /mnt/render ext4 discard,defaults 1 1' | sudo tee -a /etc/fstab
 
-GCS Fuse setup
---------------
+### GCS Fuse setup
 
 In order to mount a large storage (a GCS bucket) we need to get `gcsfuse` running.
 Taken from gcsfuse docs.
@@ -79,14 +69,14 @@ Taken from gcsfuse docs.
         exit
 
 
-Connect GCS bucket
-------------------
+### Connect GCS bucket
+
 
     gcsfuse render-storage /mnt/render-output
 
 
-Blender command example
------------------------
+### Blender command example
+
 
     /mnt/render/data/bin/blender-pano-experiments/blender \
     --enable-autoexec -noaudio --background \
