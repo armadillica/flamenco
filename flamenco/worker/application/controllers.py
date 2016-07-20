@@ -15,7 +15,7 @@ from zipfile import zlib
 from threading import Thread
 from threading import Lock
 from threading import Timer
-import Queue # for windows
+import Queue  # for windows
 from uuid import getnode as get_mac_address
 from requests.exceptions import ConnectionError
 from application.config_base import Config
@@ -73,7 +73,8 @@ def register_worker():
             pass
         time.sleep(1)
 
-    http_request(Config.FLAMENCO_MANAGER, '/workers', 'post',
+    http_request(
+        Config.FLAMENCO_MANAGER, '/workers', 'post',
         params={
             'port': 5000,
             'hostname': HOSTNAME,
@@ -147,6 +148,7 @@ global LOOP_THREAD
 
 
 def worker_loop():
+    global LOG
     register_worker()
     print("Quering for a new task")
 
@@ -160,11 +162,12 @@ def worker_loop():
         return
 
     if rtask.status_code == 200:
+        task = rtask.json()
+
         try:
             files = rtask.json()['files']
             task = rtask.json()['options']
-        except:
-            raise
+        except KeyError:
             pass
 
         print ("New Task Found {0}, job {1}".format(task['task_id'], task['job_id']))
@@ -238,8 +241,9 @@ def worker_loop():
         if unzipok:
             execute_task(task, files)
         else:
-            from commands import cmd_sleep
-            cmd_sleep(task['settings']['time_in_seconds'])
+            for command in task['commands']:
+                cmd_exec(command, task)
+            LOG = None
 
     elif rtask.status_code == 403:
         print ("[{0}] Worker is disabled".format(HOSTNAME))
@@ -250,14 +254,14 @@ def worker_loop():
     #LOOP_THREAD = Timer(5, worker_loop)
     #LOOP_THREAD.start()
 
+
 def _checkProcessOutput(process):
     try:
         # If the PROCESS halts, will halt here
-        ready = select.select([process.stdout.fileno(),
-                            process.stderr.fileno()],
-                            [], [])
+        ready = select.select([
+            process.stdout.fileno(),
+            process.stderr.fileno()], [], [])
     except KeyboardInterrupt:
-        raise
         return
     full_buffer = ''
     for fd in ready[0]:
@@ -266,11 +270,12 @@ def _checkProcessOutput(process):
                 buffer = os.read(fd, 1024)
                 if not buffer:
                     break
-                print buffer
+                print(buffer)
             except OSError:
                 break
             full_buffer += buffer
     return full_buffer
+
 
 def _checkOutputThreadWin(fd, q):
     while True:
@@ -278,8 +283,9 @@ def _checkOutputThreadWin(fd, q):
         if not buffer:
             break
         else:
-            print buffer
+            print(buffer)
             q.put(buffer)
+
 
 def _checkProcessOutputWin(process, q):
     full_buffer = ''
@@ -293,10 +299,11 @@ def _checkProcessOutputWin(process, q):
         full_buffer += buffer
     return full_buffer
 
+
 def send_thumbnail(manager_url, file_path, params):
     try:
         thumbnail_file = open(file_path, 'r')
-    except IOError, e:
+    except IOError as e:
         logging.error('Cant open thumbnail: {0}'.format(e))
         return
     try:
@@ -305,43 +312,46 @@ def send_thumbnail(manager_url, file_path, params):
         logging.error("Can't send Thumbnail to manager: {0}".format(manager_url))
     thumbnail_file.close()
 
-def _parse_output(tmp_buffer, options):
+
+def _parse_output(tmp_buffer, command, task):
     global ACTIVITY
     global LOG
     global TIME_INIT
+    global CONNECTIVITY
 
     action = []
 
-    task_id = options['task_id']
-    module_name = 'application.task_parsers.{0}'.format(options['task_parser'])
+    task_id = task['task_id']
+    module_name = 'application.task_parsers.{0}'.format(command['name'])
     task_parser = None
     try:
-        module_loader = __import__(module_name, globals(), locals(), ['task_parser'], 0)
+        module_loader = __import__(
+            module_name, globals(), locals(), ['task_parser'], 0)
         task_parser = module_loader.task_parser
-    except ImportError, e:
-        print('Cant find module {0}: {1}'.format(module_name, e))
+    except ImportError as e:
+        print("Can't find module {0}: {1}".format(module_name, e))
 
     if not LOG:
         LOG = ""
 
     if task_parser:
-        parser_output = task_parser.parse(tmp_buffer, options, ACTIVITY)
+        parser_output = task_parser.parse(tmp_buffer, ACTIVITY)
         if parser_output:
             ACTIVITY = parser_output
             activity = json.loads(parser_output)
 
-        if activity.get('thumbnail'):
-            params = dict(task_id=task_id)
-            manager_url = "http://{0}/tasks/thumbnails".format(
-                Config.FLAMENCO_MANAGER)
-            request_thread = Thread(
-                target=send_thumbnail,
-                args=(manager_url, activity.get('thumbnail'), params))
-            request_thread.start()
+        # if activity.get('thumbnail'):
+        #     params = dict(task_id=task_id)
+        #     manager_url = "http://{0}/tasks/thumbnails".format(
+        #         Config.FLAMENCO_MANAGER)
+        #     request_thread = Thread(
+        #         target=send_thumbnail,
+        #         args=(manager_url, activity.get('thumbnail'), params))
+        #     request_thread.start()
 
     time_init = TIME_INIT
     if time_init:
-        time_cost=int(time.time())-time_init
+        time_cost = int(time.time())-time_init
 
     else:
         logging.error("time_init is None")
@@ -352,11 +362,12 @@ def _parse_output(tmp_buffer, options):
         'log': LOG[-256:],
         'activity': ACTIVITY,
         'time_cost': time_cost,
-        'job_id': options['job_id'],
-        'task_id': options['task_id'],
+        'job_id': task['job_id'],
+        'task_id': task['task_id'],
         }
     r = None
     try:
+        print 'do request {}'.format(params)
         r = requests.patch(
             'http://{0}/tasks/{1}'.format(
                 Config.FLAMENCO_MANAGER, task_id),
@@ -368,7 +379,7 @@ def _parse_output(tmp_buffer, options):
             'Cant connect with the Manager {0}'.format(FLAMENCO_MANAGER))
         CONNECTIVITY = False
 
-    if r != None and r.status_code != 204:
+    if r is not None and r.status_code != 204:
         print ("Stopping Task: {0}".format(r.status_code))
         action.append('stop')
 
@@ -384,9 +395,9 @@ def _parse_output(tmp_buffer, options):
     f.close()
     return action
 
-def _interactiveReadProcessWin(process, options):
+
+def _interactiveReadProcessWin(process, command, task):
     full_buffer = ''
-    tmp_buffer = ''
     q = Queue.Queue()
     t_out = Thread(target=_checkOutputThreadWin, args=(process.stdout.fileno(), q,))
     t_err = Thread(target=_checkOutputThreadWin, args=(process.stderr.fileno(), q,))
@@ -397,7 +408,7 @@ def _interactiveReadProcessWin(process, options):
     while True:
         tmp_buffer = _checkProcessOutputWin(process, q)
         if tmp_buffer:
-            actions = _parse_output(tmp_buffer, options)
+            actions = _parse_output(tmp_buffer, command, task)
             if 'stop' in actions:
                 update()
             pass
@@ -407,16 +418,15 @@ def _interactiveReadProcessWin(process, options):
     t_out.join()
     t_err.join()
     # full_buffer += _checkProcessOutputWin(process, q)
-    return (process.returncode, full_buffer)
+    return process.returncode, full_buffer
 
-def _interactiveReadProcess(process, options):
+
+def _interactiveReadProcess(process, command, task):
     full_buffer = ''
-    tmp_buffer = ''
     while True:
         tmp_buffer = _checkProcessOutput(process)
-
         if tmp_buffer:
-            actions = _parse_output(tmp_buffer, options)
+            actions = _parse_output(tmp_buffer, command, task)
             print (actions)
             if 'stop' in actions:
                 print ("UPDATE")
@@ -428,7 +438,8 @@ def _interactiveReadProcess(process, options):
     # the process finished
     # full_buffer += _checkProcessOutput(process)
 
-    return (process.returncode, full_buffer)
+    return process.returncode, full_buffer
+
 
 def clear_dir(cleardir):
     if os.path.exists(cleardir):
@@ -437,6 +448,90 @@ def clear_dir(cleardir):
                 os.remove(os.path.join(root, name))
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
+
+
+def cmd_exec(command, task):
+    global PROCESS
+    global ACTIVITY
+    global LOG
+    global TIME_INIT
+    global CONNECTIVITY
+    print(command)
+    TIME_INIT = int(time.time())
+    PROCESS = subprocess.Popen(command['command'],
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+
+    # Make I/O non blocking for unix
+    if platform.system() is not 'Windows':
+        flags = fcntl(PROCESS.stdout, F_GETFL)
+        fcntl(PROCESS.stdout, F_SETFL, flags | os.O_NONBLOCK)
+        flags = fcntl(PROCESS.stderr, F_GETFL)
+        fcntl(PROCESS.stderr, F_SETFL, flags | os.O_NONBLOCK)
+
+    # flask.g.blender_process = process
+    (retcode, full_output) = _interactiveReadProcess(PROCESS, command, task) \
+        if (platform.system() is not 'Windows') \
+        else _interactiveReadProcessWin(PROCESS, command, task)
+
+    log = LOG
+    activity = ACTIVITY
+    time_init = TIME_INIT
+
+
+    script_dir = os.path.dirname(__file__)
+    rel_path = 'render_log_' + HOSTNAME + '.log'
+    abs_file_path = os.path.join(script_dir, rel_path)
+    with open(abs_file_path, 'w') as f:
+        f.write(full_output)
+
+    if retcode == -9:
+        status = 'canceled'
+    elif retcode != 0:
+        status = 'failed'
+        if retcode == -11:
+            segfault_text = "\nSegmentation Fault\n"
+            print (segfault_text)
+            log += segfault_text
+    else:
+        status = 'completed'
+
+    logging.debug(status)
+
+    if time_init:
+        time_cost = int(time.time()) - time_init
+    else:
+        time_cost = 0
+        logging.error("time_init is None")
+
+    params = {
+        'status': status,
+        'log': log[-256:],
+        'activity': activity,
+        'time_cost': time_cost,
+        'job_id': task['job_id'],
+    }
+
+    try:
+        # Send results of the task to the server
+        requests.patch(
+            'http://{0}/tasks/{1}'.format(
+                FLAMENCO_MANAGER, task['task_id']),
+            data=params,
+        )
+        CONNECTIVITY = True
+    except ConnectionError:
+        logging.error(
+            'Cant connect with the Manager {0}'.format(FLAMENCO_MANAGER))
+        CONNECTIVITY = False
+
+    logging.debug('Return code: {0}'.format(retcode))
+
+    PROCESS = None
+    ACTIVITY = None
+    LOG = ""
+    TIME_INIT = None
+
 
 def run_blender_in_thread(options):
     """We take the command and run it
@@ -504,7 +599,7 @@ def run_blender_in_thread(options):
         fcntl(PROCESS.stderr, F_SETFL, flags | os.O_NONBLOCK)
 
     #flask.g.blender_process = process
-    (retcode, full_output) =  _interactiveReadProcess(PROCESS, options) \
+    (retcode, full_output) = _interactiveReadProcess(PROCESS, options) \
         if (platform.system() is not "Windows") \
         else _interactiveReadProcessWin(PROCESS, options)
 
@@ -693,6 +788,7 @@ def run_blender_in_thread(options):
     ACTIVITY = None
     LOG = None
     TIME_INIT = None
+
 
 def execute_task(task, files):
     global PROCESS
