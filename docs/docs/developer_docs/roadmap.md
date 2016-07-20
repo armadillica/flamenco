@@ -1,6 +1,9 @@
 # Roadmap
 General planning for the next develoment steps.
 
+## In progress
+Tweak manager's task compiler to handle the 'commands' array (right now it crashes) when requesting from worker.
+
 ## New job/task system
 We use a nested Job -> Tasks -> Commands structure. A *job* defines a directed graph of *tasks*, wich are composed by an ordered list of *commands*.
 
@@ -144,6 +147,28 @@ While the original structure of jobs remains the same from the original Flamenco
         # TODO: introduce dynamic validator, based on job_type/task_type
         'allow_unknown': True,
     },
+    # 'commands': {
+    #     'type': 'list',
+    #     'schema': {
+    #         'type': 'dict',
+    #         'schema': {
+    #             # The parser is inferred form the command name
+    #             'name': {
+    #                 'type': 'string',
+    #                 'required': True,
+    #             },
+    #             # In the list of built arguments for the command, we will
+    #             # replace the executable, which will be defined on the fly by
+    #             # the manager
+    #             'argv': {
+    #                 'type': 'list',
+    #                 'schema': {
+    #                     'type': 'string'
+    #                 },
+    #             },
+    #         }
+    #     },
+    # },
     'log': {
         'type': 'string',
     },
