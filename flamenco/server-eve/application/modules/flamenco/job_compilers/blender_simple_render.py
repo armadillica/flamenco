@@ -25,4 +25,4 @@ class JobCompiler:
             task_settings['frames'] = frame_range_merge(
                 parsed_frames[i:i + chunk_size])
             name = task_settings['frames']
-            create_task(job, task_settings, name, None, parser)
+            create_task(job, task_settings, name, None)

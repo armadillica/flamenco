@@ -30,16 +30,15 @@ def create_tasks(job):
     job_compiler.compile(job, create_task)
 
 
-def create_task(job, task_settings, name, parents, parser):
+def create_task(job, commands, name, parents=None):
     task = {
         'job': job['_id'],
         'name': name,
         'job_type': job['job_type'],
-        'settings': task_settings,
+        'commands': commands,
         'status': 'queued',
         'priority': job['priority'],
         'manager': job['manager'],
-        'parser': parser,
     }
     # Insertion of None parents is not supported
     if parents:

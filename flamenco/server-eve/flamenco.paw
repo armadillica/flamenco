@@ -5,12 +5,12 @@
     <databaseInfo>
         <version>134481920</version>
         <UUID>2B9E04E5-389C-41C8-8800-CD60CB4F9DED</UUID>
-        <nextObjectID>142</nextObjectID>
+        <nextObjectID>149</nextObjectID>
         <metadata>
             <plist version="1.0">
                 <dict>
                     <key>NSPersistenceFrameworkVersion</key>
-                    <integer>641</integer>
+                    <integer>526</integer>
                     <key>NSStoreModelVersionHashes</key>
                     <dict>
                         <key>LMCookieJar</key>
@@ -190,7 +190,7 @@
         <attribute name="redirectauthorization" type="bool">0</attribute>
         <attribute name="method" type="string">GET</attribute>
         <attribute name="followredirects" type="bool">0</attribute>
-        <attribute name="order" type="int64">3</attribute>
+        <attribute name="order" type="int64">6</attribute>
         <attribute name="name" type="string">Nodes</attribute>
         <relationship name="parent" type="0/1" destination="LMREQUESTTREEITEM"></relationship>
         <relationship name="children" type="0/0" destination="LMREQUESTTREEITEM"></relationship>
@@ -216,7 +216,7 @@
         <attribute name="redirectauthorization" type="bool">0</attribute>
         <attribute name="method" type="string">POST</attribute>
         <attribute name="followredirects" type="bool">0</attribute>
-        <attribute name="order" type="int64">5</attribute>
+        <attribute name="order" type="int64">4</attribute>
         <attribute name="name" type="string">Make Token</attribute>
         <relationship name="parent" type="0/1" destination="LMREQUESTTREEITEM"></relationship>
         <relationship name="children" type="0/0" destination="LMREQUESTTREEITEM"></relationship>
@@ -244,7 +244,7 @@
     </object>
     <object type="LMREQUESTGROUP" id="z120">
         <attribute name="uuid" type="string">9335CE13-92B0-4E42-893A-FAC254A22CF4</attribute>
-        <attribute name="order" type="int64">4</attribute>
+        <attribute name="order" type="int64">3</attribute>
         <attribute name="name" type="string">Managers</attribute>
         <relationship name="parent" type="0/1" destination="LMREQUESTTREEITEM"></relationship>
         <relationship name="children" type="0/0" destination="LMREQUESTTREEITEM" idrefs="z104 z123"></relationship>
@@ -323,7 +323,7 @@
         <attribute name="order" type="int64">1</attribute>
         <attribute name="name" type="string">Jobs</attribute>
         <relationship name="parent" type="0/1" destination="LMREQUESTTREEITEM"></relationship>
-        <relationship name="children" type="0/0" destination="LMREQUESTTREEITEM" idrefs="z114 z128 z140"></relationship>
+        <relationship name="children" type="0/0" destination="LMREQUESTTREEITEM" idrefs="z140 z128 z114"></relationship>
         <relationship name="bodyparameters" type="0/0" destination="LMKEYVALUE"></relationship>
         <relationship name="headers" type="0/0" destination="LMKEYVALUE"></relationship>
         <relationship name="urlparameters" type="0/0" destination="LMKEYVALUE"></relationship>
@@ -366,7 +366,7 @@
         <attribute name="method" type="string">GET</attribute>
         <attribute name="followredirects" type="bool">0</attribute>
         <attribute name="body" type="string"></attribute>
-        <attribute name="order" type="int64">7</attribute>
+        <attribute name="order" type="int64">5</attribute>
         <attribute name="name" type="string">Scheduler</attribute>
         <relationship name="parent" type="0/1" destination="LMREQUESTTREEITEM"></relationship>
         <relationship name="children" type="0/0" destination="LMREQUESTTREEITEM"></relationship>
@@ -402,7 +402,7 @@
         <attribute name="method" type="string">POST</attribute>
         <attribute name="followredirects" type="bool">0</attribute>
         <attribute name="body" type="string">[{"data":{"json":"{\\"name\\":\\"Job Sleep\\",\\"job_type\\":\\"sleep_simple\\",\\"user\\":\\"57475e811e87f76deeac4330\\",\\"manager\\":\\"574764de1652956df3e3668b\\",\\"settings\\":{\\"time_in_seconds\\":2,\\"frames\\":\\"1-45\\",\\"chunk_size\\":5,\\"command_name\\":\\"default\\"}}"},"identifier":"com.luckymarmot.JSONDynamicValue"}]</attribute>
-        <attribute name="order" type="int64">2</attribute>
+        <attribute name="order" type="int64">3</attribute>
         <attribute name="name" type="string">New Job Sleep</attribute>
         <relationship name="parent" type="0/1" destination="LMREQUESTTREEITEM" idrefs="z127"></relationship>
         <relationship name="children" type="0/0" destination="LMREQUESTTREEITEM"></relationship>
@@ -427,5 +427,31 @@
         <relationship name="groupforheaders" type="0/1" destination="LMREQUESTGROUP"></relationship>
         <relationship name="groupforurlparameters" type="0/1" destination="LMREQUESTGROUP"></relationship>
         <relationship name="request" type="0/1" destination="LMREQUEST" idrefs="z140"></relationship>
+    </object>
+    <object type="LMENVIRONMENT" id="z143">
+        <attribute name="uuid" type="string">EE2BAE18-EE0C-4428-9CBB-8E50B32765B3</attribute>
+        <attribute name="order" type="int64">0</attribute>
+        <attribute name="name" type="string">Development</attribute>
+        <relationship name="domain" type="0/1" destination="LMENVIRONMENTDOMAIN" idrefs="z148"></relationship>
+        <relationship name="variablesvalues" type="0/0" destination="LMENVIRONMENTVARIABLEVALUE" idrefs="z147"></relationship>
+    </object>
+    <object type="LMENVIRONMENTVARIABLE" id="z146">
+        <attribute name="uuid" type="string">B27725E2-130A-4D4B-A7A7-04ABDC0EE5F4</attribute>
+        <attribute name="order" type="int64">0</attribute>
+        <attribute name="name" type="string">manager_host</attribute>
+        <relationship name="domain" type="0/1" destination="LMENVIRONMENTDOMAIN" idrefs="z148"></relationship>
+        <relationship name="values" type="0/0" destination="LMENVIRONMENTVARIABLEVALUE" idrefs="z147"></relationship>
+    </object>
+    <object type="LMENVIRONMENTVARIABLEVALUE" id="z147">
+        <attribute name="value" type="string">http://localhost:7777</attribute>
+        <relationship name="environment" type="1/1" destination="LMENVIRONMENT" idrefs="z143"></relationship>
+        <relationship name="variable" type="1/1" destination="LMENVIRONMENTVARIABLE" idrefs="z146"></relationship>
+    </object>
+    <object type="LMENVIRONMENTDOMAIN" id="z148">
+        <attribute name="uuid" type="string">2FA12CA2-43EF-480C-B41F-0CAC83ACB240</attribute>
+        <attribute name="order" type="int64">1</attribute>
+        <attribute name="name" type="string">Flamenco - Manager</attribute>
+        <relationship name="environments" type="0/0" destination="LMENVIRONMENT" idrefs="z143"></relationship>
+        <relationship name="variables" type="0/0" destination="LMENVIRONMENTVARIABLE" idrefs="z146"></relationship>
     </object>
 </database>
