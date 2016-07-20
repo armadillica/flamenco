@@ -26,7 +26,9 @@ if __name__ == "__main__":
     |_| |_|\__,_|_| |_| |_|\___|_| |_|\___\___/
 
     """)
-
-    while True:
-        worker_loop()
-        time.sleep(float(args.loop))
+    try:
+        while True:
+                worker_loop()
+                time.sleep(float(args.loop))
+    except KeyboardInterrupt:
+        print('Quitting Flamenco worker.')
