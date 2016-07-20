@@ -13,6 +13,7 @@ from flask.ext.restful import Api
 from flask.ext.migrate import Migrate
 
 logging.basicConfig(level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 app = Flask(__name__)
 db = SQLAlchemy(app)
@@ -30,6 +31,14 @@ if os.environ.get('IS_DOCKER'):
     from application import config_docker
     app.config.from_object(config_docker.Config)
 
+# Try to import a local config object
+try:
+    from application import config_local
+    app.config.from_object(config_local.Config)
+    log.debug('Loaded local config.')
+except ImportError:
+    log.debug('No local config file found.')
+
 # If a custom config file is specified, further override the config
 if os.environ.get('FLAMENCO_MANAGER_CONFIG'):
     app.config.from_envvar('FLAMENCO_MANAGER_CONFIG')
@@ -44,14 +53,14 @@ from modules.tasks import TaskCompiledApi
 from modules.tasks import TaskZipApi
 from modules.tasks import TaskSupZipApi
 from modules.tasks import TaskDepZipApi
-api.add_resource(TaskFileApi, '/tasks/file/<int:job_id>')
+api.add_resource(TaskFileApi, '/tasks/file/<job_id>')
 api.add_resource(TaskManagementApi, '/tasks')
-api.add_resource(TaskApi, '/tasks/<int:task_id>')
+api.add_resource(TaskApi, '/tasks/<task_id>')
 api.add_resource(TaskThumbnailListApi, '/tasks/thumbnails')
-api.add_resource(TaskCompiledApi, '/tasks/compiled/<int:task_id>')
-api.add_resource(TaskZipApi, '/tasks/zip/<int:job_id>')
-api.add_resource(TaskSupZipApi, '/tasks/zip/sup/<int:job_id>')
-api.add_resource(TaskDepZipApi, '/tasks/zip/dep/<int:job_id>')
+api.add_resource(TaskCompiledApi, '/tasks/compiled/<task_id>')
+api.add_resource(TaskZipApi, '/tasks/zip/<job_id>')
+api.add_resource(TaskSupZipApi, '/tasks/zip/sup/<job_id>')
+api.add_resource(TaskDepZipApi, '/tasks/zip/dep/<job_id>')
 
 from modules.workers import WorkerListApi
 from modules.workers import WorkerApi

@@ -1,29 +1,27 @@
 import os
 import tempfile
-import socket
+
 
 class Config(object):
     DEBUG = True
     USE_X_SENDFILE = os.getenv('USE_X_SENDFILE', False)
     PORT = 7777
-    HOST = '0.0.0.0' # or 'localhost'
-    NAME = 'My Manager' # or use socket.gethostname()
-    FLAMENCO_SERVER = 'localhost:9999'
-
-    # DATABASE_URI = 'sqlite:///' + os.path.join(os.path.dirname(__file__), '../')
-    # DATABASE_NAME = 'manager.sqlite'
-    # SQLALCHEMY_DATABASE_URI = os.path.join(DATABASE_URI, DATABASE_NAME)
+    HOST = '0.0.0.0'  # or 'localhost'
+    NAME = 'My Manager'  # or use socket.gethostname()
+    FLAMENCO_SERVER = 'http://localhost:9999'
+    FLAMENCO_SERVER_TOKEN = ''
 
     DATABASE_URI = 'mysql://root:root@192.168.99.100'
     DATABASE_NAME = 'flamenco_manager'
     SQLALCHEMY_DATABASE_URI = os.path.join(DATABASE_URI, DATABASE_NAME)
 
-    VIRTUAL_WORKERS = False # If true, the manager will not have a fixed number of workers
+    # If true, the manager will not have a fixed number of workers
+    VIRTUAL_WORKERS = False
     IS_PRIVATE_MANAGER = False
 
-    # If IS_PRIVATE_MANAGER is False, the following settings are not neede
+    # If IS_PRIVATE_MANAGER is False, the following settings are not needed
     TMP_FOLDER = tempfile.gettempdir()
-    THUMBNAIL_EXTENSIONS = set(['png'])
+    THUMBNAIL_EXTENSIONS = {'png'}
 
     MANAGER_STORAGE = '{0}/static/storage'.format(
         os.path.join(os.path.dirname(__file__)))

@@ -9,12 +9,9 @@ try:
 except ImportError:
     from urllib import urlencode
 
-from hashlib import md5
 from threading import Thread
-from werkzeug import secure_filename
-from flask import flash
+from flamencosdk import Api
 from application import app
-
 
 def http_request(ip_address, command, method, params=None, files=None):
     if method == 'delete':
@@ -142,3 +139,12 @@ def merge_dict(data, *override):
         result.update(current_dict)
     return result
 
+
+def get_flamenco_server_api_object():
+    """Temp utility to get an API object to be used"""
+    return Api(
+        endpoint=app.config['FLAMENCO_SERVER'],
+        username=None,
+        password=None,
+        token=app.config['FLAMENCO_SERVER_TOKEN']
+    )

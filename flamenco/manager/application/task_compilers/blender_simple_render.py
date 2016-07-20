@@ -16,7 +16,7 @@ def parse(s):
 
 class task_compiler():
     @staticmethod
-    def compile(worker, task, add_file):
+    def compile(task, add_file=None, worker=None):
 
         settings = task['settings']
         file_path = os.path.join('==jobpath==', settings['filepath'])

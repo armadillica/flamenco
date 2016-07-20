@@ -25,7 +25,7 @@ from application import http_request
 from application import db
 from application import app
 
-from application.helpers import join_url_params
+from application.helpers import get_flamenco_server_api_object
 from application.modules.workers.model import Worker
 from application.modules.settings.model import Setting
 
@@ -33,8 +33,8 @@ from application.modules.settings.model import Setting
 parser = reqparse.RequestParser()
 parser.add_argument('priority', type=int)
 parser.add_argument('type', type=str)
-parser.add_argument('task_id', type=int, required=True)
-parser.add_argument('job_id', type=int)
+parser.add_argument('task_id', type=str, required=True)
+parser.add_argument('job_id', type=str)
 parser.add_argument('settings', type=str)
 parser.add_argument('parser', type=str)
 parser.add_argument('jobfile', type=FileStorage, location='files')
@@ -44,12 +44,12 @@ status_parser.add_argument('status', type=str, required=True)
 status_parser.add_argument('log', type=str)
 status_parser.add_argument('activity', type=str)
 status_parser.add_argument('time_cost', type=int)
-status_parser.add_argument('job_id', type=int)
-status_parser.add_argument('task_id', type=int)
+status_parser.add_argument('job_id', type=str)
+status_parser.add_argument('task_id', type=str)
 status_parser.add_argument('taskfile', type=FileStorage, location='files')
 
 parser_thumbnail = reqparse.RequestParser()
-parser_thumbnail.add_argument('task_id', type=int)
+parser_thumbnail.add_argument('task_id', type=str)
 
 parser_delete = reqparse.RequestParser()
 parser_delete.add_argument('tasks', type=str, action='append', required=True)
@@ -108,7 +108,7 @@ class TaskCompiledApi(Resource):
         """
         logging.debug("Scheduling")
 
-        # TODO we will need to make this more robust, and give each worker a uuid
+        # TODO: make this more robust, and give each worker a uuid
         ip_address = request.remote_addr
         worker = Worker.query.filter_by(ip_address=ip_address).one()
         if not worker:
@@ -133,117 +133,26 @@ class TaskCompiledApi(Resource):
         jobpath = os.path.join(managerstorage, str(task['job']))
         if not os.path.exists(jobpath):
             os.mkdir(jobpath)
-        """
-        # TODO make random name
-        tmpfile = os.path.join(
-            jobpath, 'jobfile_{0}.zip'.format(task['job_id']))
 
-        lockfile = os.path.join(
-            jobpath, 'jobfile_{0}.lock'.format(task['job_id']))
-
-        if os.path.isfile(lockfile):
-            # Try and set the task back to waiting
-            params = dict(id=task_id, status='waiting')
-            r = http_request(
-                app.config['FLAMENCO_SERVER'],
-                '/tasks/{0}'.format(task_id),
-                'put',
-                params=params)
-            return '', 400
-
-        zipok = True
-        try:
-            with ZipFile(tmpfile, 'r') as jobzip:
-                jobzip.namelist()
-        except:
-            zipok = False
-
-        if not os.path.isfile(tmpfile) or not zipok:
-            with open(lockfile, 'w') as f:
-                f.write("locked")
-
-            r = requests.get(
-                'http://{0}/jobs/file/{1}'.format(
-                    app.config['FLAMENCO_SERVER'], task['job_id']),
-                stream=True
-            )
-
-            with open(tmpfile, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=1024):
-                    if chunk: # filter out keep-alive new chunks
-                        f.write(chunk)
-                        f.flush()
-
-            os.remove(lockfile)
-        """
         module_name = 'application.task_compilers.{0}'.format(task['job_type'])
         task_compiler = None
         try:
             module_loader = __import__(
-                module_name, globals(), locals(), ['task_compiler'], 0)
-            task_compiler = module_loader.task_compiler
+                module_name, globals(), locals(), ['TaskCompiler'], 0)
+            task_compiler = module_loader.TaskCompiler
         except ImportError as e:
-            logging.error(' loading module {0}, {1}'.format(module_name, e))
+            logging.error('Loading module {0}, {1}'.format(module_name, e))
             return
 
-        task_command = task_compiler.compile(worker, task, add_file)
+        task_commands = task_compiler.compile(task, worker, add_file)
 
-        if not task_command:
-            logging.error("Can't compile {0}".format(task['job_type']))
-            return
-
-        options = {
+        task = {
             'task_id': task['_id'],
             'job_id': task['job'],
-            'task_parser': task['parser'],
-            'settings': task['settings'].to_dict(),
             'type': task['job_type'],
-            'task_command': json.dumps(task_command)}
-        """
-        jobfile = []
+            'commands': task_commands}
 
-        managerstorage = app.config['MANAGER_STORAGE']
-        jobpath = os.path.join(managerstorage, str(task['job_id']))
-        zippath = os.path.join(
-            jobpath, "jobfile_{0}.zip".format(task['job_id']))
-
-        jobfile.append(
-            ('jobfile', (
-                'jobfile.zip',
-                open(zippath, 'rb'),
-                'application/zip')
-            )
-        )
-
-        zipsuppath = None
-        addpath = os.path.join(managerstorage, str(task['job_id']), 'addfiles')
-        if os.path.exists(addpath):
-            zipsuppath = os.path.join(
-                jobpath, "jobsupportfile_{0}.zip".format(task['job_id']))
-            with ZipFile(zipsuppath, 'w') as jobzip:
-                f = []
-                for dirpath, dirnames, filenames in os.walk(addpath):
-                    for fname in filenames:
-                        filepath = os.path.join(dirpath, fname)
-                        jobzip.write(filepath, fname)
-
-        if zipsuppath:
-            jobfile.append(
-                ('jobsupportfile', (
-                    'jobsupportfile.zip',
-                    open(zipsuppath, 'rb'),
-                    'application/zip')
-                ),
-            )
-        """
-        jflist = []
-        """
-        for jf in jobfile:
-            jflist.append([jf[0],jf[1][0]])
-        """
-        return {
-            'options': options,
-            'files': {'jobfiles': jflist}}, 200
+        return task, 200
 
 
 class TaskManagementApi(Resource):
@@ -251,12 +160,12 @@ class TaskManagementApi(Resource):
     def post(self):
         args = parser.parse_args()
         task = {
-            'priority' : args['priority'],
-            'settings' : args['settings'],
-            'task_id' : args['task_id'],
-            'job_id':args['job_id'],
-            'type' : args['type'],
-            'parser' : args['parser'],
+            'priority': args['priority'],
+            'settings': args['settings'],
+            'task_id': args['task_id'],
+            'job_id': args['job_id'],
+            'type': args['type'],
+            'parser': args['parser'],
             }
 
         if args['jobfile']:
@@ -306,13 +215,8 @@ class TaskManagementApi(Resource):
 
         return r, 200
         """
-        api = Api(
-            endpoint='http://localhost:9999',
-            username=None,
-            password=None,
-            token='pqNOVVLfMipraREd63MEhgC9ZtcO1sPq0Y5RMZtgjA8='
-        )
-        task = Task.get_new(api=api)
+
+        task = Task.get_new(api=get_flamenco_server_api_object())
         if not task:
             return abort(404)
         return task
@@ -425,18 +329,20 @@ class TaskApi(Resource):
             'id': task_id,
             'status': args['status'],
             'time_cost': args['time_cost'],
-            'log': args['log'], # we the trimmed version of the log
+            'log': args['log'],  # we the trimmed version of the log
             'activity': args['activity']}
 
-        r = http_request(
-            app.config['FLAMENCO_SERVER'],
-            '/tasks/{0}'.format(task_id),
-            'put',
-            params=params,
-            files=jobfile)
+        # r = http_request(
+        #     app.config['FLAMENCO_SERVER'],
+        #     '/tasks/{0}'.format(task_id),
+        #     'put',
+        #     params=params,
+        #     files=jobfile)
 
-        if r[1] == 403:
-            return '', 403
+        t = Task.find(task_id, api=get_flamenco_server_api_object())
+        t.status = params['status']
+        t.update(api=get_flamenco_server_api_object())
+        print t
 
         return '', 204
 

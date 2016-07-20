@@ -1,30 +1,26 @@
-import os
-import json
+class TaskCompiler:
+    def __init__(self):
+        pass
 
-
-def parse(s):
-    all_frames = []
-    for part in s.split(','):
-        x = part.split("-")
-        num_parts = len(x)
-        if num_parts == 1:
-            # Individual frame
-            all_frames += ["-f", str(x[0])]
-        elif num_parts == 2:
-            # Frame range
-            all_frames += ["--frame-start", str(x[0]), "--frame-end", str(x[1]), "--render-anim"]
-    return all_frames
-
-
-class task_compiler():
     @staticmethod
-    def compile(worker, task, add_file):
+    def compile(task, add_file=None, worker=None):
+        """Build commands according to the OS. For the moment no OS is provided
+        because we are not passing a worker, but we will.
+        """
+        commands = []
+        # Compile echo
+        cmd_echo = task['commands'][0]
+        cmd_echo_dict = dict(
+            name=cmd_echo['name'],
+            command=[cmd_echo['name'], cmd_echo['settings']['message']])
+        commands.append(cmd_echo_dict)
 
-        settings = task['settings']
-        command = "==command=="
-
-        task_command = [
-            str(command),
-            str(settings['time_in_seconds'])]
-
-        return task_command
+        # Compile sleep
+        cmd_sleep = task['commands'][1]
+        cmd_sleep_dict = dict(
+            name=cmd_sleep['name'],
+            command=[
+                cmd_sleep['name'],
+                str(cmd_sleep['settings']['time_in_seconds'])])
+        commands.append(cmd_sleep_dict)
+        return commands
