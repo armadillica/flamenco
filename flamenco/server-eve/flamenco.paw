@@ -329,7 +329,7 @@
         <relationship name="urlparameters" type="0/0" destination="LMKEYVALUE"></relationship>
     </object>
     <object type="LMREQUEST" id="z128">
-        <attribute name="body" type="string">[{"data":{"json":"{\\"name\\":\\"Job1\\",\\"job_type\\":\\"blender_simple_render\\",\\"user\\":\\"57475e811e87f76deeac4330\\",\\"manager\\":\\"574764de1652956df3e3668b\\",\\"settings\\":{\\"format\\":\\"JPEG\\",\\"frames\\":\\"1-45\\",\\"chunk_size\\":5,\\"command_name\\":\\"default\\",\\"filepath\\":\\"untitled.blend\\",\\"render_settings\\":\\"\\"}}"},"identifier":"com.luckymarmot.JSONDynamicValue"}]</attribute>
+        <attribute name="body" type="string">[{"data":{"json":"{\\"name\\":\\"Job1\\",\\"job_type\\":\\"blender_simple_render\\",\\"user\\":\\"57475e811e87f76deeac4330\\",\\"manager\\":\\"574764de1652956df3e3668b\\",\\"settings\\":{\\"format\\":\\"JPEG\\",\\"frames\\":\\"1-45\\",\\"chunk_size\\":5,\\"command_name\\":\\"default\\",\\"filepath\\":\\"\\\\\\/tmp\\\\\\/untitled.blend\\",\\"render_settings\\":\\"\\",\\"filepath_output\\":\\"\\\\\\/tmp\\\\\\/#####\\"}}"},"identifier":"com.luckymarmot.JSONDynamicValue"}]</attribute>
         <attribute name="uuid" type="string">B796C0D0-23E3-4429-905E-AA0C64B35E66</attribute>
         <attribute name="url" type="string">[{"data":{"environmentVariable":"9B4BDF21-FD8C-45CD-9734-541A7E9143D9"},"identifier":"com.luckymarmot.EnvironmentVariableDynamicValue"},"\\/jobs"]</attribute>
         <attribute name="storecookies" type="bool">1</attribute>

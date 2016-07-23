@@ -29,6 +29,7 @@ from application.helpers import get_flamenco_server_api_object
 from application.modules.workers.model import Worker
 from application.modules.settings.model import Setting
 
+log = logging.getLogger(__name__)
 
 parser = reqparse.RequestParser()
 parser.add_argument('priority', type=int)
@@ -332,17 +333,12 @@ class TaskApi(Resource):
             'log': args['log'],  # we the trimmed version of the log
             'activity': args['activity']}
 
-        # r = http_request(
-        #     app.config['FLAMENCO_SERVER'],
-        #     '/tasks/{0}'.format(task_id),
-        #     'put',
-        #     params=params,
-        #     files=jobfile)
 
         t = Task.find(task_id, api=get_flamenco_server_api_object())
         t.status = params['status']
         t.update(api=get_flamenco_server_api_object())
-        print t
+
+        log.debug('Task {} updated with status {}'.format(t['_id'], t['status']))
 
         return '', 204
 
