@@ -5,6 +5,7 @@
 *.bak
 .DS_Store
 *.sqlite
+.idea
 /temp/*
 venv/
 *.log
