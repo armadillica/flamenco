@@ -103,19 +103,3 @@ class TaskCompiler:
             commands.append(cmd_dict)
 
         return commands
-
-        # dir = os.path.dirname(__file__)
-        # template_path = os.path.join(dir, 'blender_simple_render.template')
-        # with open(template_path, "r") as f:
-        #     script = f.read()
-        # f.close()
-        #
-        # add_file(
-        #     script,
-        #     'pre_render.py',
-        #     task['job']
-        # )
-        #
-        # script_path = os.path.join(
-        #     "==jobpath==", "pre_render.py")
-
