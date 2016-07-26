@@ -2,7 +2,7 @@
 General planning for the next develoment steps.
 
 ## In progress
-Tweak manager's task compiler to handle the 'commands' array (right now it crashes) when requesting from worker.
+Handle mapping of executable paths (and shared dir paths) for each worker when compiling a task.
 
 ## New job/task system
 We use a nested Job -> Tasks -> Commands structure. A *job* defines a directed graph of *tasks*, wich are composed by an ordered list of *commands*.

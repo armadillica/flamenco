@@ -11,7 +11,7 @@ class Config(object):
     FLAMENCO_SERVER = 'http://localhost:9999'
     FLAMENCO_SERVER_TOKEN = ''
 
-    DATABASE_URI = 'mysql://root:root@192.168.99.100'
+    DATABASE_URI = 'mysql://root:root@mysql'
     DATABASE_NAME = 'flamenco_manager'
     SQLALCHEMY_DATABASE_URI = os.path.join(DATABASE_URI, DATABASE_NAME)
 
