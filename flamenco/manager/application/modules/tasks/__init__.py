@@ -385,7 +385,10 @@ class TaskZipApi(Resource):
         managerstorage = app.config['MANAGER_STORAGE']
         filename = 'jobfile_{0}.zip'.format(job_id)
         jobfile = os.path.join(managerstorage, str(job_id), filename)
-        return send_file(jobfile)
+        if os.path.exists(jobfile):
+            return send_file(jobfile)
+        else:
+            return abort(404)
 
 
 class TaskSupZipApi(Resource):
