@@ -148,3 +148,18 @@ def get_flamenco_server_api_object():
         password=None,
         token=app.config['FLAMENCO_SERVER_TOKEN']
     )
+
+
+def parse(s):
+    all_frames = []
+    for part in s.split(','):
+        x = part.split("-")
+        num_parts = len(x)
+        if num_parts == 1:
+            # Individual frame
+            all_frames += ["-f", str(x[0])]
+        elif num_parts == 2:
+            # Frame range
+            all_frames += ["--frame-start", str(x[0]), "--frame-end", str(x[1]),
+                           "--render-anim"]
+    return all_frames

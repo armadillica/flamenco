@@ -1,18 +1,5 @@
-import os
-
-
-def parse(s):
-    all_frames = []
-    for part in s.split(','):
-        x = part.split("-")
-        num_parts = len(x)
-        if num_parts == 1:
-            # Individual frame
-            all_frames += ["-f", str(x[0])]
-        elif num_parts == 2:
-            # Frame range
-            all_frames += ["--frame-start", str(x[0]), "--frame-end", str(x[1]), "--render-anim"]
-    return all_frames
+from application.helpers import parse
+from application.modules.job_types import get_job_type_paths
 
 
 class TaskCompiler:
@@ -21,6 +8,8 @@ class TaskCompiler:
 
     @staticmethod
     def compile(task, add_file=None, worker=None):
+
+        paths = get_job_type_paths('blender_simple_render', worker)
 
         def _compile_download(cmd_settings):
             pass
@@ -34,32 +23,26 @@ class TaskCompiler:
             - filepath
             - render_output
             """
-            # Get path remapping for the current job_type
-            remaps_for_os = {
-                'blender_render': '/Applications/Blender/buildbot/blender.app/Contents/MacOS/blender',
-                'shared': '/shared',
-                'something': '/something'
-            }
 
-            # Check if a render command has been defined. If not, use the default definition.
+            # Check if a command has been defined, or use the default definition.
             try:
                 blender_cmd = cmd_settings['blender_cmd']
             except KeyError:
                 blender_cmd = '{blender_render}'
             # Do path remapping
-            blender_cmd = blender_cmd.format(**remaps_for_os)
+            blender_cmd = blender_cmd.format(**paths)
 
-            # Parse the filepath. This property is required, so we will crash if not set.
+            # Parse the file path. This property is required, so we crash if not set.
             filepath = cmd_settings['filepath']
             # Do path remapping
-            filepath = filepath.format(**remaps_for_os)
+            filepath = filepath.format(**paths)
 
-            # Look for render_output. If not specified we use what's in the file, assuming it is an
-            # absolute path.
+            # Look for render_output. If not specified we use what's in the file,
+            # assuming it is an absolute path.
             try:
                 render_output = cmd_settings['render_output']
                 # Do path remapping
-                render_output = render_output.format(**remaps_for_os)
+                render_output = render_output.format(**paths)
 
             except KeyError:
                 render_output = None

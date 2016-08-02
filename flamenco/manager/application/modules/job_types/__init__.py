@@ -53,3 +53,12 @@ class JobTypeApi(Resource):
         else:
             return abort(404)
         return jsonify(dict(properties=job_type.properties))
+
+
+def get_job_type_paths(job_type_name, worker):
+    job_paths = JobType.query.filter_by(name=job_type_name).one()
+    paths = json.loads(job_paths.properties)
+    worker_system = worker.system.split()[0]
+    for k, v in paths.items():
+        paths[k] = v[worker_system]
+    return paths

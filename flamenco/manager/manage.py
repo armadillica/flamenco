@@ -20,6 +20,8 @@ from application.modules.job_types.model import JobType
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
+log = logging.getLogger(__name__)
+
 
 @manager.command
 def setup_db():
@@ -48,30 +50,40 @@ def setup_db():
         upgrade()
         print("Upgrade completed. Press Ctrl+C and runserver again.")
 
-    # TODO: search for the task_compilers and ask for required commands accordigly
+    # TODO: search for the task_compilers and ask for required commands accordingly
     # Render Config
-    render_config = JobType.query.filter_by(name='simple_blender_render').first()
+    render_config = JobType.query.filter_by(name='blender_simple_render').first()
     if not render_config:
-        configuration = {'commands' : {
-            'default' : {
-                'Linux' : '',
-                'Darwin' : '',
-                'Windows' : ''
-            }
+        configuration = {'blender_render': {
+            'Linux': '',
+            'Darwin': '',
+            'Windows': ''
         }}
-        print("Please enter the shared blender path for the simple_blender_render command")
-        configuration['commands']['default']['Linux'] = raw_input('Linux path: ')
-        configuration['commands']['default']['Darwin'] = raw_input('OSX path: ')
-        configuration['commands']['default']['Windows'] = raw_input('Windows path: ')
+        print("Please enter the shared blender path for the simple_blender_render "
+              "command")
+        configuration['blender_render']['Linux'] = raw_input('Linux path: ')
+        configuration['blender_render']['Darwin'] = raw_input('OSX path: ')
+        configuration['blender_render']['Windows'] = raw_input('Windows path: ')
 
-        render_config = JobType(
-            name='simple_blender_render',
-            properties=json.dumps(configuration))
-        db.session.add(render_config)
         render_config = JobType(
             name='blender_simple_render',
             properties=json.dumps(configuration))
         db.session.add(render_config)
+        db.session.commit()
+
+    # The sleep simple command, used for testing and with OS defaults already set.
+    sleep_simple = JobType.query.filter_by(name='sleep_simple').first()
+    if not sleep_simple:
+        log.debug('Creating sleep_simple job_type.')
+        configuration = {'sleep': {
+            'Linux': 'sleep',
+            'Darwin': 'sleep',
+            'Windows': 'timeout'
+        }}
+        sleep_config = JobType(
+            name='sleep_simple',
+            properties=json.dumps(configuration))
+        db.session.add(sleep_config)
         db.session.commit()
 
 

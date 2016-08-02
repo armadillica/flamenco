@@ -195,3 +195,33 @@ While the original structure of jobs remains the same from the original Flamenco
 
 
 ## Implement local storage
+Create an abstract Storage class for Pillar, that can be initialized with different storage backends.
+
+## Jobs and tasks storage
+Default Pillar storage is flat and file-based (one file has one _id). For Flamenco jobs (and tasks) it makes sense to keep everything into 1 directory.
+
+```
+/<project_uuid>
+	/flamenco
+		/<job_uuid>
+			/thumbnails
+			/<command_name>
+```
+
+## Manager: job_type table
+In the job_type table we store the path remap instructions for each job.
+
+```
+{
+'blender_render': {
+	'windows': '',
+	'darwin': '',
+	'linux': '',
+	},
+'shared': {
+	'windows': '\\shared\',
+	'darwin': '/Volumes/shared',
+	'linux': '/shared',
+	},
+}
+```
