@@ -1,78 +1,85 @@
 node_type_task = {
-    'name': 'flamenco_task',
-    'description': 'Task Node Type, for tasks',
-    'dyn_schema': {
-        'status': {
-            'type': 'string',
-            'allowed': [
-                'invalid',
-                'todo',
-                'in_progress',
-                'on_hold',
-                'approved',
-                'cbb',  # Could Be Better
-                'final',
-                'review'
-            ],
-            'default': 'todo',
-            'required': True,
+    'job': {
+        'type': 'objectid',
+        'data_relation': {
+            'resource': 'jobs',
+            'field': '_id',
+            'embeddable': True
         },
-        'task_type': {
-            'type': 'string',
+    },
+    'manager': {
+        'type': 'objectid',
+        'data_relation': {
+            'resource': 'managers',
+            'field': '_id',
+            'embeddable': True
         },
-        'assigned_to': {
+    },
+    'name': {
+        'type': 'string',
+        'required': True,
+    },
+    'status': {
+        'type': 'string',
+        'allowed': [
+            'completed',
+            'active',
+            'canceled',
+            'queued',
+            'processing',
+            'failed'],
+        'default': 'queued'
+    },
+    'priority': {
+        'type': 'integer',
+        'min': 1,
+        'max': 100,
+        'default': 50
+    },
+    'job_type': {
+        'type': 'string',
+        'required': True,
+    },
+    'commands': {
+        'type': 'list',
+        'schema': {
             'type': 'dict',
             'schema': {
-                'users': {
-                    'type': 'list',
-                    'schema': {
-                        # TODO: refer to user collection
-                        'type': 'objectid',
-                    }
-                }
-            }
-        },
-
-        'due_date': {
-            'type': 'datetime',
-        },
-
-        # For Gantt charts and the like.
-        'time': {
-            'type': 'dict',
-            'schema': {
-                'planned_start': {
-                    'type': 'datetime'
+                # The parser is inferred form the command name
+                'name': {
+                    'type': 'string',
+                    'required': True,
                 },
-                'planned_duration_hours': {
-                    'type': 'integer'
-                },
-                'chunks': {
-                    'type': 'list',
-                    'schema': {
-                        'type': 'dict',
-                        'schema': {
-                            'planned_start': {
-                                'type': 'datetime',
-                            },
-                            'planned_duration_hours': {
-                                'type': 'integer',
-                            }
-                        }
-                    }
+                # In the list of built arguments for the command, we will
+                # replace the executable, which will be defined on the fly by
+                # the manager
+                'settings': {
+                    'type': 'dict',
+                    # TODO: introduce dynamic validator, based on job_type/task_type
+                    'allow_unknown': True,
                 },
             }
         },
-        'shortcode': {
-            'type': 'string',
-            'required': False,
-            'maxlength': 16,
+    },
+    'log': {
+        'type': 'string',
+    },
+    'activity': {
+        'type': 'string',
+        'maxlength': 128
+    },
+    'parents': {
+        'type': 'list',
+        'schema': {
+            'type': 'objectid',
+            'data_relation': {
+                'resource': 'tasks',
+                'field': '_id',
+                'embeddable': True
+            }
         },
     },
-
-    'form_schema': {
-        'time': {'visible': False},
+    'worker': {
+        'type': 'string',
     },
-
-    'parent': ['task', 'shot'],
 }
