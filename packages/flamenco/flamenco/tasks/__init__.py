@@ -132,50 +132,6 @@ class TaskManager(object):
 
         return task
 
-    def api_task_logged_in_svn(self, sender, shortcode, log_entry):
-        """Blinker signal receiver; connects the logged commit with the task.
-
-        :param sender: sender of the signal
-        :type sender: flamenco_server.subversion.CommitLogObserver
-        :type log_entry: flamenco.subversion.LogEntry
-        """
-
-        self._log.info(u"Task '%s' logged in SVN by %s: %s...",
-                       shortcode, log_entry.author, log_entry.msg[:30].replace('\n', ' // '))
-
-        # Find the task
-        task = self.api_task_for_shortcode(shortcode)
-        if not task:
-            self._log.warning(u'Task %s not found, ignoring SVN commit.', shortcode)
-            return
-
-        # Find the author
-        db = flask.current_app.db()
-        proj = db['projects'].find_one({'_id': task['project']},
-                                      projection={'extension_props.flamenco': 1})
-        if not proj:
-            self._log.warning(u'Project %s for task %s not found, ignoring SVN commit.',
-                              task['project'], task['_id'])
-            return
-
-        # We have to have a user ID to register an activity, which is why we fall back
-        # to the current user (the SVNer service account) if there is no mapping.
-        usermap = proj['extension_props'].get('flamenco', {}).get('svn_usermap', {})
-        user_id = usermap.get(log_entry.author, None)
-        msg = 'committed SVN revision %s' % log_entry.revision
-        if not user_id:
-            self._log.warning(u'No Pillar user mapped for SVN user %s, using SVNer account.',
-                              log_entry.author)
-            user_id = authentication.current_user_id()
-            msg = 'committed SVN revision %s authored by SVN user %s' % (
-                log_entry.revision, log_entry.author)
-
-        register_activity(
-            user_id, msg,
-            'node', task['_id'],
-            'node', task['parent'] or task['_id'],
-            project_id=task['project'])
-
 
 def setup_app(app):
     from . import eve_hooks
