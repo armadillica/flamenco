@@ -9,20 +9,22 @@ from pillar.web.nodes.routes import url_for_node
 
 import pillarsdk
 
+import flamenco.jobs
+import flamenco.managers
 import flamenco.tasks
-import flamenco.shots
 
 EXTENSION_NAME = 'flamenco'
 
-# Roles required to view task or shot details.
+# Roles required to view job, manager or task details.
 ROLES_REQUIRED_TO_VIEW_ITEMS = {u'demo', u'subscriber', u'admin'}
 
 
 class FlamencoExtension(PillarExtension):
     def __init__(self):
         self._log = logging.getLogger('%s.FlamencoExtension' % __name__)
+        self.job_manager = flamenco.jobs.JobManager()
+        self.manager_manager = flamenco.managers.ManagerManager()
         self.task_manager = flamenco.tasks.TaskManager()
-        self.shot_manager = flamenco.shots.ShotManager()
 
     @property
     def name(self):
@@ -63,17 +65,18 @@ class FlamencoExtension(PillarExtension):
         """
 
         from . import routes
+        import flamenco.jobs.routes
+        import flamenco.managers.routes
         import flamenco.tasks.routes
-        import flamenco.shots.routes
-        import flamenco.subversion.routes
 
         return [
             routes.blueprint,
+            flamenco.jobs.routes.blueprint,
+            flamenco.jobs.routes.perproject_blueprint,
+            flamenco.managers.routes.blueprint,
+            flamenco.managers.routes.perproject_blueprint,
             flamenco.tasks.routes.blueprint,
             flamenco.tasks.routes.perproject_blueprint,
-            flamenco.shots.routes.perproject_blueprint,
-            flamenco.subversion.routes.blueprint,
-            flamenco.subversion.routes.api_blueprint,
         ]
 
     @property
@@ -89,12 +92,12 @@ class FlamencoExtension(PillarExtension):
     def setup_app(self, app):
         """Connects Blinker signals and sets up other app-dependent stuff in submodules."""
 
-        from . import comments, subversion, tasks, eve_hooks, shots
+        from . import comments, jobs, managers, tasks, eve_hooks
 
-        subversion.task_logged.connect(self.task_manager.api_task_logged_in_svn)
         comments.setup_app(app)
+        jobs.setup_app(app)
+        managers.setup_app(app)
         tasks.setup_app(app)
-        shots.setup_app(app)
         eve_hooks.setup_app(app)
 
         # Imports for side-effects
@@ -108,7 +111,6 @@ class FlamencoExtension(PillarExtension):
 
         import pillarsdk
         from pillar.web.system_util import pillar_api
-        from .node_types.shot import node_type_shot
 
         api = pillar_api()
 
@@ -116,7 +118,6 @@ class FlamencoExtension(PillarExtension):
         projects = pillarsdk.Project.all({
             'where': {
                 'extension_props.flamenco': {'$exists': 1},
-                'node_types.name': node_type_shot['name'],
             }}, api=api)
 
         return projects
@@ -165,7 +166,7 @@ class FlamencoExtension(PillarExtension):
         #                              project=project)
 
     def activities_for_node(self, node_id, max_results=20, page=1):
-        """Returns a page of activities for the given task or shot.
+        """Returns a page of activities for the given job, manager or task.
 
         Activities that are either on this node or have this node as context
         are returned.
@@ -200,21 +201,24 @@ class FlamencoExtension(PillarExtension):
         :type act: pillarsdk.Activity
         """
 
+        from .node_types.job import node_type_job
+        from .node_types.manager import node_type_manager
         from .node_types.task import node_type_task
-        from .node_types.shot import node_type_shot
 
         if act.node_type == node_type_task['name']:
-            if act.context_object:
-                return flask.url_for('flamenco.shots.perproject.with_task',
-                                     project_url=act.project.url,
-                                     task_id=act.object)
             return flask.url_for('flamenco.tasks.perproject.view_task',
                                  project_url=act.project.url,
                                  task_id=act.object)
-        elif act.node_type == node_type_shot['name']:
-            return flask.url_for('flamenco.shots.perproject.view_shot',
+
+        elif act.node_type == node_type_job['name']:
+            return flask.url_for('flamenco.jobs.perproject.view_job',
                                  project_url=act.project.url,
-                                 shot_id=act.object)
+                                 job_id=act.object)
+
+        elif act.node_type == node_type_manager['name']:
+            return flask.url_for('flamenco.managers.perproject.view_manager',
+                                 project_url=act.project.url,
+                                 manager_id=act.object)
 
         return url_for_node(node_id=act.object)
 

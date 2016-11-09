@@ -10,8 +10,9 @@ from pillar.web.system_util import pillar_api
 import pillarsdk
 
 from flamenco import current_flamenco
+from flamenco.node_types.job import node_type_job
+from flamenco.node_types.manager import node_type_manager
 from flamenco.node_types.task import node_type_task
-from flamenco.node_types.shot import node_type_shot
 
 blueprint = Blueprint('flamenco', __name__)
 log = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ def index():
         attach_project_pictures(project, api)
 
     projs_with_summaries = [
-        (proj, current_flamenco.shot_manager.shot_status_summary(proj['_id']))
+        (proj, current_flamenco.job_manager.job_status_summary(proj['_id']))
         for proj in projects['_items']
         ]
 
@@ -146,10 +147,12 @@ def project_index(project, flamenco_props):
 @blueprint.route('/<project_url>/help')
 @flamenco_project_view(extension_props=False)
 def help(project):
+    nt_job = project.get_node_type(node_type_job['name'])
     nt_task = project.get_node_type(node_type_task['name'])
-    nt_shot = project.get_node_type(node_type_shot['name'])
+    nt_manager = project.get_node_type(node_type_manager['name'])
 
-    statuses = set(nt_task['dyn_schema']['status']['allowed'] +
-                   nt_shot['dyn_schema']['status']['allowed'])
+    statuses = set(nt_manager['dyn_schema']['status']['allowed'] +
+                   nt_jobs['dyn_schema']['status']['allowed'] +
+                   nt_tasks['dyn_schema']['status']['allowed'])
 
     return render_template('flamenco/help.html', statuses=statuses)

@@ -67,7 +67,7 @@ def setup_for_flamenco(project_url, replace=False, svn_url=None):
     Returns the updated project.
     """
 
-    from .node_types import NODE_TYPES, shot
+    from .node_types import NODE_TYPES, job
 
     # Copy permissions from the project, then give everyone with PUT
     # access also DELETE access.
@@ -102,7 +102,6 @@ def setup_for_flamenco(project_url, replace=False, svn_url=None):
 
     # Set up task types
     task_types = flamenco_props.setdefault('task_types', {})
-    task_types.setdefault(shot.node_type_shot['name'], shot.task_types)
 
     _update_project(project)
 
