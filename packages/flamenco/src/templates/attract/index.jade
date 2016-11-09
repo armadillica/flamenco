@@ -1,0 +1,60 @@
+| {% extends 'attract/layout.html' %}
+| {% block bodyattrs %}{{ super() }} data-context='dashboard'{% endblock %}
+| {% block page_title %}Dashboard{% endblock %}
+
+| {% block body %}
+#col_main
+	.dashboard
+		.d-stats
+			h3
+				i.pi-attract
+				|  Attract
+	| {% if current_user.is_authenticated %}
+	| {% from "attract/tasks/task_list_for_user.html" import task_list_for_user %}
+	| {{ task_list_for_user(tasks['_meta']['total'], tasks['_items']) }}
+	| {% else %}
+	| {% include "attract/index_anon_left_column.html" %}
+	| {% endif %}
+
+#col_right
+	.dashboard
+		.d-stats
+			h3 Statistics
+
+			| {% for proj, summary in projs_with_summaries %}
+			.d-stats-card
+				h4
+					a(href="{{ url_for('attract.shots.perproject.index', project_url=proj.url) }}") {{ proj.name }}
+
+					span.pull-right
+						a(href="{{ url_for('attract.shots.perproject.index', project_url=proj.url) }}") Shots&nbsp;
+						| |
+						a(href="{{ url_for('attract.tasks.perproject.index', project_url=proj.url) }}")  Tasks
+				.progress
+					| {% for status, percentage in summary.percentages() %}
+					.progress-bar.bg-status(
+						class="status-{{status}}",
+						title="{{ status | undertitle }} ({{percentage}}%)",
+						role="progressbar",
+						style="width:{{percentage}}%")
+						| {{ status | undertitle }}
+					| {% endfor %}
+				| {% endfor %}
+
+		hr
+
+		.d-activity
+			h3 Activity Stream
+
+			ul
+				| {% for act in activities['_items'] %}
+				| {% if act.link %}
+				li
+					a(href="{{ act.link }}")
+						img.actor-avatar(src="{{ act['actor_user']['email'] | gravatar }}")
+						span.date(title="{{ act._created }}") {{ act._created | pretty_date_time }}
+						span.actor {{ act['actor_user']['full_name'] }}
+						span.verb {{ act.verb }}
+				| {% endif %}
+				| {% endfor %}
+| {% endblock %}

@@ -1,0 +1,62 @@
+| {% extends 'attract/layout.html' %}
+| {% block bodyattrs %}{{ super() }} data-context='task'{% endblock %}
+| {% block page_title %}Tasks - {{ project.name }} {% endblock %}
+| {% block body %}
+#col_main
+	.col_header.task-list-header
+		| Tasks ({{ tasks | count }})
+		a.task-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
+		//- Dirty hack, assume a user can create a task if they can edit the project.
+		| {% if 'PUT' in project.allowed_methods %}
+		a#task-add(href="javascript:task_create(undefined, 'generic');") + Create Task
+		| {% endif %}
+	#task-list.col-list
+		| {% for task in tasks %}
+		//- NOTE: this is tightly linked to the JS in tasks.js, function task_add()
+		a.col-list-item.task-list-item(
+			id="task-{{task._id}}",
+			data-task-id="{{task._id}}",
+			class="status-{{ task.properties.status }} task-link",
+			href="{{ url_for('attract.tasks.perproject.view_task', project_url=project.url, task_id=task._id) }}")
+			span.status-indicator(title="Status: {{ task.properties.status | undertitle }}")
+			| {% if task._parent_info %}
+			span.shotname(title="Shot {{ task._parent_info.name }}") {{ task._parent_info.name }}
+			| {% endif %}
+			span.name {{ task.name }}
+			span.type {{ task.properties.task_type }}
+		| {% endfor %}
+
+.col-splitter
+
+#col_right
+	.col_header
+		span.header_text
+		#status-bar
+	#item-details
+		.item-details-empty
+			| Select a Task
+| {% endblock %}
+
+| {% block footer_scripts %}
+script.
+	{% if open_task_id %}
+		$(function() { item_open('{{ open_task_id }}', 'task', false); });
+	{% endif %}
+
+script(src="{{ url_for('static_attract', filename='assets/js/vendor/clipboard.min.js')}}")
+script(src="{{ url_for('static_attract', filename='assets/js/vendor/jquery-resizable.min.js')}}")
+
+script.
+	$("#col_main").resizable({
+		handleSelector: ".col-splitter",
+		resizeHeight: false
+	});
+
+	$(window).on('load resize', function(){
+		var window_height = $(window).height() - 50;
+		var task_list = document.getElementById('task-list');
+		$('#task-list').css({'height': window_height});
+		$('#item-details').css({'height': window_height});
+	});
+
+| {% endblock %}

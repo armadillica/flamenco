@@ -1,0 +1,144 @@
+| {% extends 'attract/layout.html' %}
+| {% block bodyattrs %}{{ super() }} data-context='shot'{% endblock %}
+| {% block page_title %}Shots - {{ project.name }}{% endblock %}
+| {% block body %}
+#col_main
+	.col_header.task-list-header
+		span(title='In the edit') {{ stats.nr_of_shots }} shots | {{ stats.total_frame_count }} frames
+		a.task-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
+
+		| {# Not allowed for the moment. Shots are added via the Sequencer
+		a#task-add(href="javascript:shot_create('{{ project.url }}');") + Create Shot
+		| #}
+
+	#shot-list
+		.table
+			.table-head
+				.table-row
+					.table-cell.shot-status
+					.table-cell.shot-thumbnail
+						span.collapser.thumbnails(title="Collapse thumbnails") Thumbnail
+					.table-cell.shot-name
+						span.collapser(title="Collapse name column") Name
+					| {% for task_type in task_types %}
+					.table-cell.task-type(class="{{ task_type }}")
+						span.collapser(title="Collapse {{ task_type or 'Other' }} column") {{ task_type or 'other' }}
+					| {% endfor %}
+
+			.table-body.has-thumbnails
+				| {% for shot in shots %}
+				.table-row(
+					id="shot-{{ shot._id }}",
+					class="status-{{ shot.properties.status }} {{ shot.properties.used_in_edit | yesno(' ,not-in-edit, ') }}")
+					.table-cell.shot-status
+					.table-cell.shot-thumbnail
+						a(
+							data-shot-id="{{ shot._id }}",
+							href="{{ url_for('attract.shots.perproject.view_shot', project_url=project.url, shot_id=shot._id) }}",
+							class="status-{{ shot.properties.status }} shot-link")
+							img(src="{{ shot._thumbnail }}",
+								alt="Thumbnail",
+								style='width: 110px; height: {{ shot._thumbnail_height }}')
+					.table-cell.shot-name
+						a(
+							data-shot-id="{{ shot._id }}",
+							href="{{ url_for('attract.shots.perproject.view_shot', project_url=project.url, shot_id=shot._id) }}",
+							class="status-{{ shot.properties.status }} shot-link")
+							span(class="shot-name-{{ shot._id }}") {{ shot.name }}
+					| {% for task_type in task_types %}
+					.table-cell.task-type(class="{{ task_type }}")
+						| {% for task in tasks_for_shots[shot._id][task_type] %}
+						a(
+							data-task-id="{{ task._id }}",
+							id="task-{{ task._id }}",
+							href="{{ url_for('attract.shots.perproject.with_task', project_url=project.url, task_id=task._id) }}",
+							class="status-{{ task.properties.status }} task-link",
+							title="{{ task.properties.status | undertitle }} task: {{ task.name }}")
+							| {# First letter of the status. Disabled until we provide the user setting to turn it off
+							span {{ task.properties.status[0] }}
+							| #}
+						| {% endfor %}
+						//- Dirty hack, assume a user can create a task for a shot if they can edit the shot.
+						| {% if 'PUT' in shot.allowed_methods %}
+						a.task-add(
+							title="Add a new '{{ task_type }}' task",
+							class="task-add-link {% if tasks_for_shots[shot._id][task_type] %}hidden{% endif %}"
+							href="javascript:task_create('{{ shot._id }}', '{{ task_type }}');")
+							i.pi-plus
+							| Task
+						| {% endif %}
+					| {% endfor %}
+				| {% endfor %}
+
+.col-splitter
+
+#col_right
+	.col_header
+		span.header_text
+		#status-bar
+	#item-details
+		.item-details-empty
+			| Select a Shot or Task
+
+| {% endblock %}
+| {% block footer_scripts %}
+script.
+	{% if open_task_id %}
+		$(function() { item_open('{{ open_task_id }}', 'task', false); });
+	{% endif %}
+	{% if open_shot_id %}
+		$(function() { item_open('{{ open_shot_id }}', 'shot', false); });
+	{% endif %}
+
+	var same_cells;
+
+	/* Collapse columns by clicking on the title */
+	$('.table-head .table-cell span.collapser').on('click', function(e){
+		e.stopPropagation();
+
+		/* We need to find every cell matching the same classes */
+		same_cells = '.' + $(this).parent().attr('class').split(' ').join('.');
+		$(same_cells).hide();
+		/* Add the spacer which we later click to expand  */
+		$('<div class="table-cell-spacer ' + $(this).text() + '" title="Expand ' + $(this).text() + '"></div>').insertAfter(same_cells);
+	});
+
+	$('body').on('click', '.table-cell-spacer', function(){
+
+		/* We need to find every cell matching the same classes */
+		same_cells = '.' + $(this).prev().attr('class').split(' ').join('.');
+		$(same_cells).show();
+		$(same_cells).next().remove();
+	});
+
+	$('.table-body .table-cell').mouseenter(function(){
+		same_cells = '.' + $(this).attr('class').split(' ').join('.');
+		$('.table-head ' + same_cells).addClass('highlight');
+	}).mouseleave(function(){
+		same_cells = '.' + $(this).attr('class').split(' ').join('.');
+		$('.table-head ' + same_cells).removeClass('highlight');
+	});
+
+	$('.table-head .table-cell').mouseenter(function(){
+		same_cells = '.' + $(this).attr('class').split(' ').join('.');
+		$('.table-body ' + same_cells).addClass('highlight');
+	}).mouseleave(function(){
+		same_cells = '.' + $(this).attr('class').split(' ').join('.');
+		$('.table-body ' + same_cells).removeClass('highlight');
+	});
+
+script(src="{{ url_for('static_attract', filename='assets/js/vendor/clipboard.min.js')}}")
+script(src="{{ url_for('static_attract', filename='assets/js/vendor/jquery-resizable.min.js')}}")
+script.
+	$("#col_main").resizable({
+		handleSelector: ".col-splitter",
+		resizeHeight: false
+	});
+
+	$(window).on('load resize', function(){
+		var window_height = $(window).height() - 50; // header is 50px
+		$('#shot-list').css({'height': window_height});
+		$('#item-details').css({'height': window_height});
+	});
+
+| {% endblock footer_scripts %}

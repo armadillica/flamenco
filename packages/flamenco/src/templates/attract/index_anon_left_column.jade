@@ -1,0 +1,30 @@
+
+.d-welcome
+	.welcome-logo
+		i.pi-attract
+	.welcome-title Welcome to Attract
+
+	.welcome-text
+		p Your Production Management Software
+
+h3.d-title Projects using Attract
+.d-projects
+	| {% for proj, summary in projs_with_summaries %}
+	.d-projects-item
+		a.d-projects-item-header(
+			href="{{ url_for('attract.shots.perproject.index', project_url=proj.url) }}")
+			img(src="{{ proj.picture_header.thumbnail('m', api=api) }}")
+		a.d-projects-item-title(
+			href="{{ url_for('attract.shots.perproject.index', project_url=proj.url) }}")
+			| {{ proj.name }}
+		.d-projects-item-stats
+			.progress
+				| {% for status, percentage in summary.percentages() %}
+				.progress-bar.bg-status(
+					class="status-{{status}}",
+					title="{{ status | undertitle }}",
+					role="progressbar",
+					style="width:{{percentage}}%")
+				| {% endfor %}
+
+	| {% endfor %}

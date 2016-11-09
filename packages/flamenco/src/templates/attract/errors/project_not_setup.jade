@@ -1,0 +1,12 @@
+| {% extends "attract/errors/layout.html" %}
+| {% block body %}
+#error_container.standalone
+	#error_box
+		.error-top-container
+			.error-title Project not set up for Attract.
+		.error-lead
+			p Currently Attract is in development, and only available to a select few.
+			hr
+			p If you want to use Attract, contact us at
+				a(href="mailto:cloudsupport@blender.institute") cloudsupport@blender.institute
+| {% endblock %}

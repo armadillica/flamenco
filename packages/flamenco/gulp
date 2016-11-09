@@ -1,0 +1,19 @@
+#!/bin/bash -ex
+
+GULP=./node_modules/.bin/gulp
+
+function install() {
+    npm install
+    touch $GULP  # installer doesn't always touch this after a build, so we do.
+}
+
+# Rebuild Gulp if missing or outdated.
+[ -e $GULP ] || install
+[ gulpfile.js -nt $GULP ] && install
+
+if [ "$1" == "watch" ]; then
+    # Treat "gulp watch" as "gulp && gulp watch"
+    $GULP
+fi
+
+exec $GULP "$@"

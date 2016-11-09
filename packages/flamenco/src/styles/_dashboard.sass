@@ -1,0 +1,105 @@
+.d-title
+	padding: 0 15px
+	text-align: center
+
+.d-welcome
+	height: 300px
+	margin: 0 auto
+	width: 100%
+	display: flex
+	flex-direction: column
+	align-items: center
+	justify-content: center
+	border-bottom: thin solid $color-background-dark
+
+	+media-xs
+		width: auto
+
+	.welcome-logo
+		font-size: 5em
+		color: $color-primary
+		background-color: white
+		text-align: center
+		border-radius: 50%
+		margin: 15px auto
+		box-shadow: 0 0 65px rgba(black, .1)
+
+		i
+			display: block
+			margin: 15px
+
+	.welcome-title
+		font-size: 1.8em
+		font-weight: lighter
+
+	.welcome-text
+		padding: 10px
+		color: $color-text-dark-primary
+
+.d-projects
+	display: flex
+	flex-wrap: wrap
+	justify-content: space-between
+	margin: 15px auto
+	padding-left: 15px
+	padding-right: 15px
+
+	+media-xs
+		display: block
+		width: 100%
+
+	.d-projects-item
+		display: flex
+		flex-direction: column
+		width: 32%
+		margin-bottom: 15px
+		+container-box
+
+		+media-sm
+			width: 50%
+		+media-xs
+			width: 100%
+
+		&:hover
+			img
+				opacity: .9
+
+	.d-projects-item-title
+		font-size: 1.2em
+		font-weight: lighter
+		padding: 6px 10px
+
+	.d-projects-item-stats
+		.progress
+			border-radius: 0
+			border-bottom-left-radius: 3px
+			border-bottom-right-radius: 3px
+			margin: 0
+			height: 4px
+
+	.d-projects-item-header
+		background-color: $color-primary
+		img
+			width: 100%
+			border-top-left-radius: 3px
+			border-top-right-radius: 3px
+			transition: opacity 150ms ease-in-out
+
+/* Dashboard specific styles */
+.dashboard
+	.d-stats
+		padding: 0 10px
+
+		.d-stats-card
+			+container-box
+			padding: 10px
+
+			.progress
+				margin-bottom: 0
+			h4
+				margin-top: 0
+
+	.d-activity
+		margin: 0 20px 15px
+		a
+			color: $color-text-dark-primary

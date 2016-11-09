@@ -1,0 +1,616 @@
+/* Collection of mixins that can be plugged everywhere */
+
+=clearfix
+	clear: both
+	&:after
+		// Basically same as .clearfix from bootstrap
+		clear: both
+		display: block
+		content: ' '
+
+
+@mixin button($mixin-color, $roundness, $filled: false)
+	font-family: $font-body
+	text-transform: uppercase
+	opacity: .9
+	padding:
+		left: 20px
+		right: 20px
+	border-radius: $roundness
+
+	@if $filled
+		background: linear-gradient(lighten($mixin-color, 2%), $mixin-color)
+		color: white
+		border: thin solid darken($mixin-color, 5%)
+		text-shadow: 1px 1px 0 rgba(black, .15)
+	@else
+		background-color: transparent
+		color: $mixin-color
+		border: thin solid $mixin-color
+		text-shadow: none
+
+	transition: color 350ms ease-out, border 150ms ease-in-out, opacity 150ms ease-in-out, background-color 150ms ease-in-out
+
+	&:hover
+		opacity: 1
+		cursor: pointer
+		text-decoration: none
+
+		@if $filled
+			background: linear-gradient(lighten($mixin-color, 5%), lighten($mixin-color, 5%))
+			color: white
+			border-color: lighten($mixin-color, 5%)
+		@else
+			background-color: rgba($mixin-color, .1)
+			color: $mixin-color
+			border-color: $mixin-color
+
+	&:active, &:focus
+		outline: none
+		border-color: $mixin-color
+		background-color: $mixin-color
+		color: white
+
+	i
+		margin-right: 10px
+	small
+		font-size: .6em
+
+	&:disabled
+		cursor: not-allowed
+		color: $color-text-dark-secondary
+		border-color: $color-text-dark-hint
+
+		&:hover
+			@if $filled
+				background: rgba($color-text-dark-hint, .2)
+			@else
+				background-color: rgba($color-text-dark-hint, .1)
+
+		@if $filled
+			background: rgba($color-text-dark-hint, .1)
+			text-shadow: none
+
+
+@mixin overlay($from-color, $from-percentage, $to-color, $to-percentage)
+	position: absolute
+	top: 0
+	left: 0
+	right: 0
+	bottom: 0
+	background: linear-gradient(to bottom, $from-color $from-percentage, $to-color $to-percentage)
+
+
+@mixin stripes($color-light, $color-dark, $deg, $size)
+	background-size: $size $size
+	background-image: linear-gradient($deg, $color-light 25%, $color-dark 25%, $color-dark 50%, $color-light 50%, $color-light 75%, $color-dark 75%, $color-dark)
+
+=stripes-animate
+	animation:
+		name: background-slide
+		duration: 1s
+		delay: 0s
+		// fill-mode: forwards
+		iteration-count: infinite
+		timing-function: linear
+
+=container-box
+	position: relative
+	background-color: white
+	border-radius: 3px
+	box-shadow: rgba(0, 0, 0, 0.298039) 0px 1px 4px -1px
+
+=text-overflow-ellipsis
+	overflow: hidden
+	white-space: nowrap
+	text-overflow: ellipsis
+
+=position-center-translate
+	position: absolute
+	top: 50%
+	left: 50%
+	transform: translate(-50%, -50%)
+
+=input-generic
+	color: $color-text-dark
+	box-shadow: none
+	font-family: $font-body
+	border-radius: 3px
+	border-color: $color-background-dark
+	background-color: $color-background-light
+
+	&:focus
+		border-color: $color-info
+		box-shadow: none
+
+=label-generic
+	color: $color-text-dark
+	font-family: $font-body
+	font-weight: 300
+
+@mixin badge($mixin-color, $roundness)
+	padding:
+		left: 10px
+		right: 10px
+
+	text-transform: uppercase
+
+	color: $mixin-color
+	border: 1px solid $mixin-color
+	border-radius: $roundness
+
+	i
+		margin-right: 10px
+
+/* Smallest, like phones on portrait.
+ **  Menu is collapsed, columns stack, no brand */
+=media-xs
+	@media (max-width: #{$screen-tablet - 1px})
+		@content
+
+/* Small but wide: phablets, iPads
+ **  Menu is collapsed, columns stack, no brand */
+=media-sm
+	@media (min-width: #{$screen-tablet}) and (max-width: #{$screen-desktop - 1px})
+		@content
+
+/* Tablets portrait.
+ **  Menu is expanded, but columns stack, brand is shown */
+=media-md
+	@media (min-width: #{$screen-desktop})
+		@content
+
+=media-lg
+	@media (min-width: #{$screen-lg-desktop})
+		@content
+
+=media-print
+	@media print
+		@content
+
+=spin
+	animation:
+		name: spin-once
+		duration: 1s
+		delay: 0s
+		fill-mode: forwards
+		iteration-count: infinite
+		timing-function: linear
+
+=spin-once
+	+spin
+	animation:
+		iteration-count: 1
+
+=pulse
+	animation:
+		name: pulse
+		duration: 1s
+		delay: 0s
+		fill-mode: forwards
+		iteration-count: infinite
+
+=pulse-75
+	animation:
+		name: pulse-75
+		duration: 1s
+		delay: 0
+		fill-mode: forwards
+		iteration-count: infinite
+
+=animation-wiggle
+	animation:
+		name: wiggle
+		duration: 1s
+		delay: 0s
+		fill-mode: forwards
+		iteration-count: infinite
+		timing-function: linear
+
+.spin
+	+spin
+	&:before, &:after
+		+spin
+
+@keyframes spin-once
+	from
+		transform: rotate(0deg)
+	to
+		transform: rotate(360deg)
+
+@keyframes wiggle
+	0
+		transform: rotate(0deg)
+	25%
+		transform: rotate(25deg)
+	75%
+		transform: rotate(-25deg)
+	100%
+		transform: rotate(0deg)
+
+@keyframes pulse
+	0
+		opacity: 1
+	50%
+		opacity: 0
+	100%
+		opacity: 1
+
+@keyframes pulse-75
+	0
+		opacity: 1
+	50%
+		opacity: .8
+	100%
+		opacity: 1
+
+@keyframes background-fill-left-right
+	from
+		background-position: right bottom
+	to
+		background-position: left bottom
+
+@keyframes grow-bounce-in
+	0
+		transform: scale(0.8)
+		opacity: 0
+	50%
+		transform: scale(1.05)
+		opacity: 1
+	85%
+		transform: scale(1.0)
+	90%
+		transform: scale(0.99)
+	100%
+		transform: scale(1.0)
+
+@keyframes grow-bounce-out
+	0
+		transform: scale(1.0)
+		opacity: 1
+	100%
+		transform: scale(0.9)
+		opacity: 0
+
+@keyframes background-slide
+	from
+		background-position: 0 0
+	to
+		background-position: 50px 50px
+
+@keyframes grow-bounce
+	0
+		transform: scale(1.0)
+		opacity: 1
+	50%
+		transform: scale(1.01)
+		opacity: .9
+	85%
+		transform: scale(1.0)
+	90%
+		transform: scale(0.99)
+		opacity: 1
+	100%
+		transform: scale(1.0)
+
+@keyframes grow-bounce-heartbeat
+	0
+		transform: scale(1.0)
+	85%
+		transform: scale(1.0)
+	90%
+		transform: scale(1.15)
+	94%
+		transform: scale(0.9)
+	96%
+		transform: scale(1.05)
+	100%
+		transform: scale(1.0)
+
+=list-bullets
+	ul
+		padding-left: 20px
+		list-style: none
+
+		li:before
+			content: '·'
+			font-weight: 400
+			position: relative
+			left: -10px
+
+
+=node-details-description
+	padding: 15px 0 25px 0
+	color: darken($color-text-dark, 5%)
+	font:
+		family: $font-body
+		weight: 300
+		size: 1.2em
+
+	word-break: break-word
+	clear: both
+	+clearfix
+
+	+media-xs
+		font-size: 1.1em
+
+	strong, b
+		font-weight: 400
+
+	a:not([class])
+		color: $color-text-dark-primary
+		text-decoration: underline
+
+		&:hover
+			color: $color-primary
+
+	p
+		padding:
+			left: 20px
+			right: 20px
+		margin-bottom: 20px
+		line-height: 1.5em
+		word-wrap: break-word
+
+	h1, h2, h3, h4, h5, h6
+		padding:
+			top: 20px
+			left: 20px
+			right: 20px
+
+	blockquote
+		background-color: lighten($color-background, 5%)
+		text-shadow: 1px 1px 0 rgba(white, .2)
+		margin:
+			left: 20px
+			right: 20px
+			bottom: 30px
+		font-size: 1em
+
+		p
+			padding: 0
+			margin: 0
+	ul li blockquote
+		margin:
+			left: 0
+			top: 15px
+
+	img,
+	p img,
+	ul li img
+		max-width: 100%
+		padding:
+			top: 25px
+			// bottom: 10px
+			bottom: 25px
+
+	h2
+		margin-bottom: 15px
+
+		+media-xs
+			font-size: 1.5em
+
+	/* e.g. YouTube embed */
+	iframe
+		margin-top: 20px
+		width: 100%
+		max-width: 100%
+		height: auto
+		min-height: 354px
+
+	+media-sm
+		iframe
+			min-height: 314px
+	+media-xs
+		iframe
+			min-height: 314px
+
+	iframe[src^="https://w.soundcloud"]
+		min-height: auto
+
+	+list-bullets
+
+	ul
+		padding-left: 40px
+		margin-bottom: 25px
+
+		li
+			margin-bottom: 7px
+			img
+				display: block
+				padding:
+					top: 25px
+					bottom: 10px
+
+			ul, ul li ul
+				margin-top: 15px
+				padding-left: 20px
+
+	code, kbd, pre, samp
+		font-size: 1.3rem
+
+	pre
+		background-color: lighten($color-background, 5%)
+		border-color: $color-background
+		border-radius: 3px
+		color: $color-text
+
+		/* when <pre> is outside <p> */
+		margin:
+			left: 20px
+			right: 20px
+	pre+p
+		margin-top: 30px
+
+	p+pre
+		/* a <pre> right after a <p> usually are related, remove some spacing */
+		margin-top: -10px
+
+	p
+		pre
+			/* We already have spacing on the sides inside <p> */
+			margin:
+				left: 0
+				right: 0
+
+
+=markdown-preview-container
+	border:
+		top: 1px solid $color-background
+		bottom: 1px solid $color-background
+	position: relative
+	margin: 40px auto 25px auto
+	padding: 10px 10px 25px 10px
+	color: $color-text-dark-primary
+	cursor: default
+	transition: all 150ms ease-in-out
+
+	+node-details-description
+
+	// Funny, normalize.css doesn't normalize when it's outside
+	h1
+		font-size: 2.8em
+	h2
+		margin-bottom: 15px
+
+
+=ribbon
+	background-color: $color-success
+	cursor: default
+	overflow: hidden
+	white-space: nowrap
+	position: absolute
+	right: -40px
+	top: 10px
+	-webkit-transform: rotate(45deg)
+	-moz-transform: rotate(45deg)
+	-ms-transform: rotate(45deg)
+	-o-transform: rotate(45deg)
+	transform: rotate(45deg)
+
+	span
+		border: thin dashed rgba(white, .5)
+		color: white
+		display: block
+		font-size: 70%
+		margin: 1px 0
+		padding: 3px 50px
+		text:
+			align: center
+			transform: uppercase
+
+@mixin text-background($text-color, $background-color, $roundness, $padding)
+	border-radius: $roundness
+	padding: $padding
+	background-color: rgba($background-color, .9)
+	box-shadow: 0.5em 0 0 rgba($background-color, .9),-0.5em 0 0 rgba($background-color, .9)
+	box-decoration-break: clone
+	color: $text-color
+
+=list-meta
+	margin: 0
+	padding: 0
+	list-style: none
+	color: $color-text-dark-primary
+
+	li
+		display: inline-block
+		padding-left: 15px
+		position: relative
+
+		&:before
+			content: '·'
+			position: relative
+			top: 1px
+			left: -7px
+			color: $color-text-dark-secondary
+
+		&:first-child
+			padding-left: 0
+
+			&:before
+				content: ''
+	a
+		color: $color-text-dark-secondary
+		&:hover
+			color: $color-primary
+
+/* Bootstrap's img-responsive class */
+=img-responsive
+	display: block
+	max-width: 100%
+	height: auto
+
+/* Set the color for a specified property
+ * 1: $property: e.g. background-color
+ * 2: $where: ':before', ' .class-name', etc.
+ * 3: $variation: 'light', 'dark', or empty
+ * e.g. @include status-color-property(background-color, ':before', 'light')
+ */
+@mixin status-color-property($property, $where: false, $variation: false)
+
+	@if not ($where)
+		$where: ''
+
+	&.status
+		&-invalid#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-invalid-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-invalid-dark
+			@else
+				#{$property}: $color-status-invalid
+		&-todo#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-todo-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-todo-dark
+			@else
+				#{$property}: $color-status-todo
+		&-in_progress#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-in_progress-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-in_progress-dark
+			@else
+				#{$property}: $color-status-in_progress
+		&-on_hold#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-on_hold-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-on_hold-dark
+			@else
+				#{$property}: $color-status-on_hold
+		&-approved#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-approved-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-approved-dark
+			@else
+				#{$property}: $color-status-approved
+		&-cbb#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-cbb-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-cbb-dark
+			@else
+				#{$property}: $color-status-cbb
+		&-final#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-final-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-final-dark
+			@else
+				#{$property}: $color-status-final
+		&-review#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-review-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-review-dark
+			@else
+				#{$property}: $color-status-review
+
+=sidebar-button-active
+	background-color: $color-background-nav
+	box-shadow: inset 2px 0 0 $color-primary
+	color: white

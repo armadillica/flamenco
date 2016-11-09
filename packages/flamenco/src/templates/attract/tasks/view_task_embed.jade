@@ -1,0 +1,176 @@
+.attract-box.task.with-status(
+	class="status-{{ task.properties.status }}")
+	form#task_form(onsubmit="return task_save('{{task._id}}', '{{ url_for('attract.tasks.perproject.save', project_url=project['url'], task_id=task._id) }}')")
+		input(type='hidden',name='_etag',value='{{ task._etag }}')
+		//- NOTE: if you add fields here, also add them read-only below.
+		.input-group
+			| {% if 'PUT' in task.allowed_methods %}
+			input.item-name(
+				name="name",
+				type="text",
+				placeholder='Task Title',
+				value="{{ task.name | hide_none }}")
+			| {% else %}
+			span.item-name {{ task.name | hide_none }}
+			| {% endif %}
+
+			.dropdown(style='margin-left: auto')
+				button#item-dropdown.btn.btn-default.dropdown-toggle(
+					type='button',
+					data-toggle='dropdown',
+					aria-haspopup='true', aria-expanded='true')
+					i.pi-more-vertical
+				ul.dropdown-menu(aria-labelledby='item-dropdown')
+					li.copy-to-clipboard-id(data-clipboard-text="{{ task._id }}")
+						a(href="javascript:void(0)")
+							i.pi-clipboard-copy
+							| Copy ID to Clipboard
+					| {% if task.properties.shortcode %}
+					li.copy-to-clipboard-shortcode(data-clipboard-text="[T{{ task.properties.shortcode }}]")
+						a(href="javascript:void(0)")
+							i.pi-clipboard-copy
+							| Copy Shortcode for SVN Commits to Clipboard
+					| {% endif %}
+					| {% if attract_context != 'shot' and task.parent %}
+					li
+						a(href="{{ url_for('attract.shots.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}")
+							i.pi-film-thick
+							| View in shot context
+					| {% endif %}
+					| {% if 'DELETE' in task.allowed_methods %}
+					li.divider(role='separator')
+					li.item-delete
+						a(href="javascript:task_delete('{{ task._id }}', '{{ task._etag }}', '{{ url_for('attract.tasks.delete', task_id=task._id, _method='DELETE') }}')")
+							i.pi-trash
+							| Delete Task
+					| {% endif %}
+
+		| {% if 'PUT' in task.allowed_methods %}
+		.input-group
+			textarea#item-description(
+				name="description",
+				type="text",
+				rows=1,
+				placeholder='Description') {{ task.description | hide_none }}
+
+		.input-group-flex
+			.input-group.field-type
+				label#task-task_type Type:
+				select(name="task_type",aria-describedby="task-task_type")
+					| {% for task_type in attract_props.task_types.attract_shot %}
+					| <option value="{{ task_type }}" {% if task_type == task.properties.task_type %}selected{% endif %}>{{ task_type | undertitle }}</option>
+					| {% endfor %}
+					| {% if task.properties.task_type not in attract_props.task_types.attract_shot %}
+					option(value="{{ task.properties.task_type }}",selected).invalid_task {{ task.properties.task_type | undertitle }}
+					| {% endif %}
+
+			.input-group
+				label#task-status-label Status:
+				select#item-status(
+					name="status",
+					aria-describedby="task-status-label")
+					| {% for status in task_node_type.dyn_schema.status.allowed %}
+					| <option value="{{ status }}" {% if status == task.properties.status %}selected{% endif %}>{{ status | undertitle }}</option>
+					| {% endfor %}
+
+		.input-group-separator
+
+		.input-group.select_multiple
+			label Assignees:
+			select#assignees(
+			name="users",
+			multiple,
+			placeholder="Assigned to"
+			aria-describedby="task-addon-users")
+				| {% for u in project.users %}
+				| <option value="{{ u._id }}" {% if task.properties.assigned_to.users and u._id in task.properties.assigned_to.users %}selected{% endif %}>{{ u.full_name }}</option>
+				| {% endfor %}
+
+		.input-group-separator
+
+		.input-group
+			button#item-save.btn.btn-default.btn-block(type='submit')
+				i.pi-check
+				| Save Task
+		| {% else %}
+		//- NOTE: read-only versions of the fields above.
+		| {% if task.description %}
+		p.item-description {{ task.description | hide_none }}
+		| {% endif %}
+
+		.table.item-properties
+			.table-body
+				.table-row
+					.table-cell Task Type
+					.table-cell {{ task.properties.task_type | undertitle }}
+				.table-row.properties-status.js-help(
+					data-url="{{ url_for('attract.help', project_url=project.url) }}")
+					.table-cell Status
+					.table-cell(class="status-{{ task.properties.status }}")
+						| {{ task.properties.status | undertitle }}
+				| {% if attract_context != 'shot' and task._parent_info %}
+				.table-row
+					.table-cell Shot
+					.table-cell
+						a(href="{{ url_for('attract.shots.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}") {{ task._parent_info.name }}
+				| {% endif %}
+				.table-row.properties-assignees
+					.table-cell Assignees
+					.table-cell
+						| {% for u in task.properties.assigned_to['users'] %}
+						span(title="{{ u.username }}") {{ u.full_name }}
+						| {% else %}
+						span.hint Not assigned yet
+						| {% endfor %}
+
+		| {% endif %}
+
+#item-view-feed
+	#activities
+	#comments-embed
+
+	| {% if config.DEBUG %}
+	.debug-info
+		a.debug-info-toggle(role='button',
+			data-toggle='collapse',
+			href='#debug-content',
+			aria-expanded='false',
+			aria-controls='debug-content')
+			i.pi-info
+			| Debug Info
+		#debug-content.collapse
+			pre.
+				{{ task.to_dict() | pprint }}
+		| {% endif %}
+
+script.
+	$("#assignees").select2();
+
+	if (ProjectUtils.context() == 'shot'){
+		$('.field-type').hide();
+	}
+
+	new Clipboard('.copy-to-clipboard-id')
+	.on('success', function(e) {
+		statusBarSet('info', 'Copied task ID to clipboard', 'pi-check');
+	});
+
+	new Clipboard('.copy-to-clipboard-shortcode')
+	.on('success', function(e) {
+		statusBarSet('info', 'Copied task shortcode to clipboard', 'pi-check');
+	});
+
+	loadActivities("{{ url_for('.activities', project_url=project.url, task_id=task['_id']) }}");  // from 10_tasks.js
+	loadComments("{{ url_for('nodes.comments_for_node', node_id=task['_id']) }}");
+
+	{% if 'PUT' in task.allowed_methods %}
+		$('#item-description')
+			.autoResize()
+			.blur();
+
+		$('#item-status').change(function(){
+			$("#item-save").trigger( "click" );
+		});
+	{% endif %}
+
+	$('.js-help').openModalUrl('Help', "{{ url_for('attract.help', project_url=project.url) }}");

@@ -1,0 +1,207 @@
+doctype html
+html(lang="en")
+	head
+		meta(charset="utf-8")
+		title {% if self.page_title() %}{% block page_title %}{% endblock %} — {% endif %}Attract
+		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+
+		| {% block head %}{% endblock %}
+
+		link(href='//fonts.googleapis.com/css?family=Roboto:300,400', rel='stylesheet', type='text/css')
+
+		link(href="{{ url_for('static_pillar', filename='assets/css/vendor/bootstrap.min.css') }}", rel="stylesheet")
+		link(href="{{ url_for('static_pillar', filename='assets/css/font-pillar.css', v=141020161) }}", rel="stylesheet")
+		link(href="{{ url_for('static_pillar', filename='assets/css/base.css', v=171020161) }}", rel="stylesheet")
+		link(href="{{ url_for('static_attract', filename='assets/css/main.css') }}", rel="stylesheet")
+		link(href="{{ url_for('static_attract', filename='assets/css/plugins/js_select2.css') }}", rel="stylesheet")
+		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery-3.1.0.min.js')}}")
+		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery.bootstrap-3.3.7.min.js') }}")
+		script(src="{{ url_for('static_pillar', filename='assets/js/tutti.min.js') }}")
+		script(src="{{ url_for('static_attract', filename='assets/js/generated/tutti.min.js') }}")
+
+		| {% block style %}{% endblock %}
+
+	body("{% block bodyattrs %}{% if project %}data-project-url='{{ project.url }}'{% endif %}{% endblock %}")
+		#app-main
+			#col_sidebar
+				nav.sidebar(role='navigation')
+					ul
+						li
+							a.navbar-item.cloud(href="{% if project %}{{url_for('projects.view', project_url=project.url)}}{% else %}{{ url_for('main.homepage') }}{% endif %}",
+								title='Blender Cloud')
+								i.pi-blender-cloud
+						li
+							a.navbar-item.attract(href="{{ url_for('attract.index') }}",
+								title='Attract')
+								i.pi-attract
+						| {% if project %}
+						li
+							a.navbar-item.tasks(href="{{ url_for('attract.tasks.perproject.index', project_url=project.url) }}",
+								title='Tasks for project {{ project.name }}') T
+						li
+							a.navbar-item.shots(href="{{ url_for('attract.shots.perproject.index', project_url=project.url) }}",
+								title='Shots for project {{ project.name }}') S
+						| {% else %}
+						| {% if current_user.is_authenticated %}
+						li
+							a.navbar-item.tasks(href="{{ url_for('attract.tasks.index') }}",
+								title='Your tasks') T
+						| {% endif %}
+						| {% endif %}
+
+					ul.bottom
+						| {% if project %}
+						li
+							button.js-help(
+								type="button",
+								title="Help",
+								data-url="{{ url_for('attract.help', project_url=project.url) }}")
+								i.pi-question
+						| {% endif %}
+
+						| {% if current_user.is_authenticated %}
+
+						| {% if current_user.has_role('demo') %}
+						| {% set subscription = 'demo' %}
+						| {% elif current_user.has_role('subscriber') %}
+						| {% set subscription = 'subscriber' %}
+						| {% else %}
+						| {% set subscription = 'none' %}
+						| {% endif %}
+
+						li.nav-notifications
+							a.navbar-item#notifications-toggle(
+								title="Notifications",
+								data-toggle="tooltip",
+								data-placement="bottom")
+								i.pi-notifications-none.nav-notifications-icon
+								span#notifications-count
+									span
+								.flyout-hat
+
+							#notifications.flyout.notifications
+								.flyout-content
+									span.flyout-title Notifications
+									a#notifications-markallread(
+										title="Mark All as Read",
+										href="/notifications/read-all")
+										| Mark All as Read
+
+									| {% include '_notifications.html' %}
+
+
+						li(class="dropdown{% if title in ['profile', 'billing-address', 'pledges', 'manage-collection']: %} active{% endif %}")
+							a.navbar-item.dropdown-toggle(href="#", data-toggle="dropdown", title="{{ current_user.email }}")
+								img.gravatar(
+									src="{{ current_user.gravatar }}",
+									class="{{ subscription }}",
+									alt="Avatar")
+								.special(class="{{ subscription }}")
+									| {% if subscription == 'subscriber' %}
+									i.pi-check
+									| {% elif subscription == 'demo' %}
+									i.pi-heart-filled
+									| {% else %}
+									i.pi-attention
+									| {% endif %}
+
+							ul.dropdown-menu
+								| {% if not current_user.has_role('protected') %}
+								li.subscription-status(class="{{ subscription }}")
+									| {% if subscription == 'subscriber' %}
+									a.navbar-item(
+										href="{{url_for('users.settings_billing')}}"
+										title="View subscription info")
+										i.pi-grin
+										span Your subscription is active!
+									| {% elif subscription == 'demo' %}
+									a.navbar-item(
+										href="{{url_for('users.settings_billing')}}"
+										title="View subscription info")
+										i.pi-heart-filled
+										span You have a free account.
+									| {% else %}
+									a.navbar-item(
+										href="https://store.blender.org/product/membership/"
+										title="Renew subscription")
+										i.pi-unhappy
+										span.info Your subscription is not active.
+											span.renew Click here to renew.
+									| {% endif %}
+
+								li
+									a.navbar-item(
+										href="{{ url_for('projects.home_project') }}"
+										title="Home")
+										i.pi-home
+										| Home
+
+								li
+									home_project
+									a.navbar-item(
+										href="{{ url_for('projects.index') }}"
+										title="My Projects")
+										i.pi-star
+										| My Projects
+
+								li
+									a.navbar-item(
+										href="{{ url_for('users.settings_profile') }}"
+										title="Settings")
+										i.pi-cog
+										| Settings
+								li
+									a.navbar-item(
+										href="{{ url_for('users.settings_billing') }}"
+										title="Billing")
+										i.pi-credit-card
+										| Subscription
+								li.divider(role="separator")
+								| {% endif %}
+								li
+									a.navbar-item(
+										href="{{ url_for('users.logout') }}")
+										i.pi-log-out(title="Log Out")
+										| Log out
+
+						| {% else %}
+						li
+							a.navbar-item(
+								href="{{ url_for('users.login') }}",
+								title="Sign in")
+								i.pi-log-in
+						| {% endif %}
+
+			| {% block body %}
+			#col_left
+			#col_main
+				h1 Main
+			#col_right
+				h1 Right
+			| {% endblock %}
+
+		.modal.fade#modal(role="dialog")
+			.modal-dialog
+				.modal-content
+					.modal-header
+						button.close(type="button", data-dismiss="modal", aria-label="Close")
+							i.pi-cancel
+						span.title
+					.modal-body
+
+		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery.select2.min.js') }}", async=true)
+		script.
+			{% if project %}
+			$('.js-help').openModalUrl('Help', "{{ url_for('attract.help', project_url=project.url) }}");
+			{% endif %}
+
+			$(document).ready(function() {
+				{% if current_user.is_authenticated %}
+					getNotificationsLoop(); // Check for new notifications in the background
+
+					// Resize #notifications and change overflow for scrollbars
+					$(window).on("resize", function() { notificationsResize(); });
+				{% endif %}
+			});
+
+		| {% block footer_scripts %}{% endblock %}

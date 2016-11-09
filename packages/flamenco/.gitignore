@@ -1,0 +1,14 @@
+.DS_Store
+.project
+.coverage
+*.pyc
+__pycache__
+
+/build
+/.cache
+/*.egg-info/
+/.eggs/
+/node_modules/
+/attract/templates/
+/attract/static/assets/css/
+/attract/static/assets/js/generated/

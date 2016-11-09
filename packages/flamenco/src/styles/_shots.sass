@@ -1,0 +1,183 @@
+#shot-list
+	overflow-x: hidden
+	.table
+		background-color: white
+		.table-row:hover
+			background-color: $color-background-light
+
+		.table-cell
+			&.shot-status
+				width: 5px
+				height: 100%
+		.table-head
+			.table-cell
+				text-align: center
+
+				&.highlight .collapser
+					color: $color-primary-dark
+
+				&.shot-thumbnail
+					width: $shots-list-thumbnail-width
+
+				&.task-type
+					text-transform: capitalize
+
+				span.collapser
+					cursor: pointer
+					width: 100%
+					display: inline-block
+					padding: 5px
+
+				&:hover
+					span.collapser
+						color: $color-primary
+
+		.table-body
+			display: table-row-group
+
+			.table-row
+				position: relative
+
+				&.active
+					background-color: $color-background-active
+
+					.table-cell
+						border-bottom-color: darken($color-background-active, 15%)
+					.table-cell:last-child
+						box-shadow: inset -5px 0 0 $color-primary
+
+				&.not-in-edit
+					+stripes(rgba($color-background, .1), rgba($color-background, .5), 90deg, 28px)
+
+					.table-cell
+						&.shot-name a
+							color: $color-text-dark-secondary
+
+						&.shot-status
+							opacity: .2
+
+						&.task-type .task-link
+							&:before
+								opacity: .3
+								background: transparent
+								border: 2px solid $color-text-dark-secondary
+
+						&.shot-thumbnail img
+							opacity: .5
+
+					&.active
+						+stripes(white, rgba($color-background-active, .8), 90deg, 28px)
+
+					&:hover, &.active
+						.table-cell
+							&.shot-thumbnail img
+								opacity: 1
+							&.task-type .task-link
+								@include status-color-property(background-color, ':before', '')
+
+								&:before
+									opacity: 1
+									border: none
+
+				@include status-color-property(background-color, ' .shot-status', '')
+
+			.table-cell
+				text-align: center
+				border-left: thin solid transparent
+				border-right: thin solid transparent
+
+				&.active
+					background-color: $color-background
+
+				&.highlight
+					background-color: $color-background-light
+
+				&.shot-name
+					text-align: left
+					position: relative
+					height: 100%
+					a
+						display: flex
+						padding: 5px 10px
+						color: $color-text-dark-primary
+
+						span
+							margin: auto 0
+
+				&.shot-thumbnail img
+					transition: opacity 150ms ease-in-out
+
+				&.task-type
+					position: relative
+					height: 100%
+					overflow: hidden
+					white-space: nowrap
+
+					a
+						display: inline-block /* Each task next to each other */
+						vertical-align: middle
+						height: 100%
+						min-height: 100%
+						padding: 15px
+						transition: all 150ms ease-in-out
+						position: relative
+
+						@include status-color-property(background-color, ':before', '')
+
+						&:focus
+							outline: none
+
+							&:before
+								transform: translate(-50%, -50%) scale(1.5)
+
+						&:before
+							display: block
+							content: ''
+							position: absolute
+							width: 16px
+							height: 16px
+							border-radius: 50%
+							border: 2px solid transparent
+							+position-center-translate
+							transition: all 150ms ease-in-out
+
+						span
+							display: block
+							+position-center-translate
+							z-index: 1
+							font:
+								weight: bold
+								size: .8em
+							text:
+								align: center
+								transform: capitalize
+							color: white
+
+						&.active
+							opacity: 1
+
+							&:before
+								transform: translate(-50%, -50%) scale(1.3)
+								border: 2px solid white
+								box-shadow: 0 0 5px 1px $color-background-dark, 1px 1px 0 rgba(black, .2)
+							&:hover
+								border-color: $color-primary-light
+
+						&.task-add
+							width: auto
+							border-radius: initial
+							opacity: 0
+							vertical-align: middle
+							padding: 5px
+							display: flex
+							justify-content: center
+
+							&:hover, &:focus
+								opacity: 1
+
+						&:hover
+							&:before
+								opacity: .8
+								transform: translate(-50%, -50%) scale(1.2)
+							&.active:before
+								transform: translate(-50%, -50%) scale(1.3)

@@ -1,0 +1,179 @@
+.attract-box
+	margin: 10px
+	padding: 10px
+	+container-box
+
+	&.with-status
+		border-top: thick solid $color-background-dark
+		@include status-color-property(border-top-color, '', 'dark')
+
+	.item-name
+		font-size: 1.6em
+		margin: 0
+
+		+text-overflow-ellipsis
+
+	span.item-name
+		padding-left: 5px
+		margin-top: 0
+		color: $color-text-dark-secondary
+
+	.item-description
+		padding: 10px 5px
+		color: $color-text-dark-primary
+
+	.dropdown button
+		height: 38px
+		margin-left: 10px
+
+	.dropdown-menu
+		top: 36px
+		left: initial
+		right: 0
+		padding-top: 0
+		padding-bottom: 0
+		border: thin solid $color-background
+		box-shadow: 1px 1px 2px rgba(black, .1), 0 5px 25px rgba(black, .1)
+
+		li
+			display: flex
+			height: 100%
+			width: 100%
+			padding: 0
+			margin: 0
+
+			&.divider
+				height: 2px
+
+			&.item-delete a:hover
+				color: $color-danger
+
+			a
+				padding: 10px 15px 10px 12px
+				flex: 1
+				height: 100%
+				color: $color-text-dark-primary
+				i
+					position: relative
+					top: -1px
+					left: -4px
+					font-size: .9em
+
+	.table.item-properties
+		.table-body
+			text-shadow: 1px 1px 0 white
+
+			.table-row
+				.table-cell
+					padding: 3px 10px
+					vertical-align: top
+					line-height: 1.6em
+					border: none
+					color: $color-text-dark-primary
+					@include status-color-property(color, '', 'dark')
+
+					&:first-child
+						width: 120px
+						max-width: 200px
+						text-align: right
+						font-weight: bold
+						padding-right: 10px
+						border-right: thin solid $color-background-dark
+						+text-overflow-ellipsis
+
+				&.properties-assignees
+					.table-cell span
+						display: block
+				&.properties-status
+					cursor: help
+
+.attract-box+.attract-box
+	margin-top: 0
+
+#task-list
+	overflow-x: hidden
+
+#task-add
+	margin-left: auto
+	font-size: .85em
+	color: $color-primary
+
+.status-indicator
+	background-color: white
+	height: 16px
+	width: 16px
+	min-width: 16px
+	margin-left: 10px
+	border-radius: 50%
+	transition: all 100ms ease-in-out
+
+.task-list-item
+	color: $color-text-dark
+
+	&:hover
+		text-decoration: none
+		color: $color-text-dark-primary
+		background-color: $color-background-light
+
+		.status-indicator
+			transform: scale(1.2)
+
+	&.active
+		text-decoration: none
+		background-color: $color-background-active
+		box-shadow: inset -5px 0 0 $color-primary
+		text-shadow: 1px 1px 0 white
+
+		.status-indicator
+			transform: scale(1.2)
+
+	.status, .type
+		display: inline-block
+		margin-right: 10px
+		text-transform: uppercase
+		font-size: .8em
+		text-decoration: none
+
+	.type
+		margin-left: auto
+		color: $color-text-dark-secondary
+		+text-overflow-ellipsis
+
+	.name
+		padding: 10px
+		+text-overflow-ellipsis
+
+	.shotname
+		color: $color-text-dark-secondary
+		margin-left: 10px
+		padding-right: 10px
+		position: relative
+		+text-overflow-ellipsis
+		&:after
+			position: absolute
+			width: 2px
+			height: 2px
+			right: 0
+			border-radius: 50%
+			bottom: 9px
+			display: block
+			content: ''
+			border: thin solid $color-text-dark-hint
+
+	@include status-color-property(background-color, ' .status-indicator', '')
+
+option.invalid_task
+	color: $color-danger
+	background-color: hsl(hue($color-danger), 80%, 90%)
+
+.task-list-header
+	a
+		color: $color-text-dark
+		+text-overflow-ellipsis
+	a.task-project
+		color: $color-text-dark-secondary
+		margin-left: 10px
+
+.input-group-separator
+	margin: 10px 0
+	border-top: thin solid $color-background
