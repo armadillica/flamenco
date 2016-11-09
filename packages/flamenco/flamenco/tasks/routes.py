@@ -10,12 +10,12 @@ from pillar.web.system_util import pillar_api
 import pillar.api.utils
 import pillar.web.subquery
 
-from attract.routes import attract_project_view
-from attract.node_types.task import node_type_task
-from attract import current_attract, ROLES_REQUIRED_TO_VIEW_ITEMS
+from flamenco.routes import flamenco_project_view
+from flamenco.node_types.task import node_type_task
+from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
 
-blueprint = Blueprint('attract.tasks', __name__, url_prefix='/tasks')
-perproject_blueprint = Blueprint('attract.tasks.perproject', __name__,
+blueprint = Blueprint('flamenco.tasks', __name__, url_prefix='/tasks')
+perproject_blueprint = Blueprint('flamenco.tasks.perproject', __name__,
                                  url_prefix='/<project_url>/tasks')
 log = logging.getLogger(__name__)
 
@@ -24,10 +24,10 @@ log = logging.getLogger(__name__)
 def index():
     user = flask_login.current_user
     if not user.is_authenticated:
-        return render_template('attract/tasks/index.html')
+        return render_template('flamenco/tasks/index.html')
 
-    tasks = current_attract.task_manager.tasks_for_user(user.objectid)
-    return render_template('attract/tasks/for_user.html',
+    tasks = current_flamenco.task_manager.tasks_for_user(user.objectid)
+    return render_template('flamenco/tasks/for_user.html',
                            tasks=tasks['_items'],
                            task_count=tasks['_meta']['total'])
 
@@ -37,24 +37,24 @@ def delete(task_id):
     log.info('Deleting task %s', task_id)
 
     etag = request.form['etag']
-    current_attract.task_manager.delete_task(task_id, etag)
+    current_flamenco.task_manager.delete_task(task_id, etag)
 
     return '', 204
 
 
 @perproject_blueprint.route('/', endpoint='index')
-@attract_project_view()
+@flamenco_project_view()
 def for_project(project, task_id=None):
-    tasks = current_attract.task_manager.tasks_for_project(project['_id'])
-    return render_template('attract/tasks/for_project.html',
+    tasks = current_flamenco.task_manager.tasks_for_project(project['_id'])
+    return render_template('flamenco/tasks/for_project.html',
                            tasks=tasks['_items'],
                            open_task_id=task_id,
                            project=project)
 
 
 @perproject_blueprint.route('/<task_id>')
-@attract_project_view(extension_props=True)
-def view_task(project, attract_props, task_id):
+@flamenco_project_view(extension_props=True)
+def view_task(project, flamenco_props, task_id):
     if not request.is_xhr:
         return for_project(project, task_id=task_id)
 
@@ -74,16 +74,16 @@ def view_task(project, attract_props, task_id):
         task.properties.assigned_to.users = [pillar.web.subquery.get_user_info(uid)
                                              for uid in task.properties.assigned_to.users]
 
-    return render_template('attract/tasks/view_task_embed.html',
+    return render_template('flamenco/tasks/view_task_embed.html',
                            task=task,
                            project=project,
                            task_node_type=node_type,
-                           attract_props=attract_props.to_dict(),
-                           attract_context=request.args.get('context'))
+                           flamenco_props=flamenco_props.to_dict(),
+                           flamenco_context=request.args.get('context'))
 
 
 @perproject_blueprint.route('/<task_id>', methods=['POST'])
-@attract_project_view()
+@flamenco_project_view()
 def save(project, task_id):
     log.info('Saving task %s', task_id)
     log.debug('Form data: %s', request.form)
@@ -91,18 +91,18 @@ def save(project, task_id):
     task_dict = request.form.to_dict()
     task_dict['users'] = request.form.getlist('users')
 
-    task = current_attract.task_manager.edit_task(task_id, **task_dict)
+    task = current_flamenco.task_manager.edit_task(task_id, **task_dict)
 
     return pillar.api.utils.jsonify(task.to_dict())
 
 
 @perproject_blueprint.route('/create', methods=['POST'])
-@attract_project_view()
+@flamenco_project_view()
 def create_task(project):
     task_type = request.form['task_type']
     parent = request.form.get('parent', None)
 
-    task = current_attract.task_manager.create_task(project,
+    task = current_flamenco.task_manager.create_task(project,
                                                     task_type=task_type,
                                                     parent=parent)
 
@@ -116,13 +116,13 @@ def create_task(project):
 
 
 @perproject_blueprint.route('/<task_id>/activities')
-@attract_project_view()
+@flamenco_project_view()
 def activities(project, task_id):
     if not request.is_xhr:
         return flask.redirect(flask.url_for('.view_task',
                                             project_url=project.url,
                                             task_id=task_id))
 
-    acts = current_attract.activities_for_node(task_id)
-    return flask.render_template('attract/tasks/view_activities_embed.html',
+    acts = current_flamenco.activities_for_node(task_id)
+    return flask.render_template('flamenco/tasks/view_activities_embed.html',
                                  activities=acts)

@@ -6,21 +6,21 @@ import werkzeug.exceptions as wz_exceptions
 from pillar.api.utils import jsonify
 from pillar.api.utils import authorization, authentication
 
-from attract import EXTENSION_NAME
-from attract.routes import attract_project_view
+from flamenco import EXTENSION_NAME
+from flamenco.routes import flamenco_project_view
 
-blueprint = Blueprint('attract.subversion', __name__, url_prefix='/')
-api_blueprint = Blueprint('attract.api.subversion', __name__, url_prefix='/api')
+blueprint = Blueprint('flamenco.subversion', __name__, url_prefix='/')
+api_blueprint = Blueprint('flamenco.api.subversion', __name__, url_prefix='/api')
 
 log = logging.getLogger(__name__)
 
 
 @blueprint.route('/<project_url>/subversion/kick')
-@attract_project_view(extension_props=True)
-def subversion_kick(project, attract_props):
-    from attract import subversion
+@flamenco_project_view(extension_props=True)
+def subversion_kick(project, flamenco_props):
+    from flamenco import subversion
 
-    svn_server_url = attract_props.svn_url  # 'svn://localhost/agent327'
+    svn_server_url = flamenco_props.svn_url  # 'svn://localhost/agent327'
     log.info('Re-examining SVN server %s', svn_server_url)
     client = subversion.obtain(svn_server_url)
 
@@ -80,14 +80,14 @@ def subversion_log(project_url):
                     project['url'], current_user_id, project['_id'])
         return 'Project not allowed', 403
 
-    from attract import subversion
+    from flamenco import subversion
 
     try:
-        attract_props = project['extension_props'][EXTENSION_NAME]
+        flamenco_props = project['extension_props'][EXTENSION_NAME]
     except KeyError:
-        return 'Not set up for Attract', 400
+        return 'Not set up for Flamenco', 400
 
-    svn_server_url = attract_props['svn_url']
+    svn_server_url = flamenco_props['svn_url']
     log.debug('Receiving commit from SVN server %s', svn_server_url)
     log_entry = subversion.create_log_entry(revision=revision,
                                             msg=commit_message,
@@ -97,4 +97,4 @@ def subversion_log(project_url):
     log.debug('Processing %s via %s', log_entry, observer)
     observer.process_log(log_entry)
 
-    return 'Registered in Attract'
+    return 'Registered in Flamenco'

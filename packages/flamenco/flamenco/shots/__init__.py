@@ -16,7 +16,7 @@ from pillar.web.system_util import pillar_api
 from pillar.api.nodes.custom import register_patch_handler
 from pillar import attrs_extra
 
-from attract.node_types import node_type_shot, node_type_task
+from flamenco.node_types import node_type_shot, node_type_task
 
 # From patch operation name to fields that operation may edit.
 VALID_PATCH_FIELDS = {
@@ -84,7 +84,7 @@ class ShotManager(object):
 
         :rtype: pillarsdk.Node
         """
-        from attract import shortcodes
+        from flamenco import shortcodes
 
         project_id = project['_id']
         self._log.info('Creating shot for project %s', project_id)
@@ -92,7 +92,7 @@ class ShotManager(object):
         api = pillar_api()
         node_type = project.get_node_type(node_type_shot['name'])
         if not node_type:
-            raise ValueError('Project %s not set up for Attract' % project_id)
+            raise ValueError('Project %s not set up for Flamenco' % project_id)
 
         node_props = dict(
             name='New shot',

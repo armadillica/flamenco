@@ -1,10 +1,10 @@
 import pillar.tests.common_test_data as ctd
-from abstract_attract_test import AbstractAttractTest, MOCK_SVN_URL
+from abstract_flamenco_test import AbstractFlamencoTest, MOCK_SVN_URL
 
 
-class TaskWorkflowTest(AbstractAttractTest):
+class TaskWorkflowTest(AbstractFlamencoTest):
     def setUp(self, **kwargs):
-        AbstractAttractTest.setUp(self, **kwargs)
+        AbstractFlamencoTest.setUp(self, **kwargs)
         self.create_user(user_id=ctd.EXAMPLE_PROJECT_OWNER_ID,
                          groups=[ctd.EXAMPLE_ADMIN_GROUP_ID])
         self.create_valid_auth_token(ctd.EXAMPLE_PROJECT_OWNER_ID, 'token')
@@ -16,12 +16,12 @@ class TaskWorkflowTest(AbstractAttractTest):
         with self.app.test_request_context():
             proj_coll = self.app.data.driver.db['projects']
             project = proj_coll.find_one({'_id': self.project_id})
-            aprops = project['extension_props']['attract']
+            aprops = project['extension_props']['flamenco']
             self.assertIsInstance(aprops, dict)
             self.assertEqual(MOCK_SVN_URL, aprops['svn_url'])
 
     def test_saving_api(self):
-        """Ensures that Eve accepts an Attract project as valid."""
+        """Ensures that Eve accepts an Flamenco project as valid."""
 
         import pillar.api.utils
 

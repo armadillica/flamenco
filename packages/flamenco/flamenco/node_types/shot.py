@@ -1,5 +1,5 @@
 node_type_shot = {
-    'name': 'attract_shot',
+    'name': 'flamenco_shot',
     'description': 'Shot Node Type, for shots',
     'dyn_schema': {
         # How many frames are trimmed from the start of the shot in the edit.

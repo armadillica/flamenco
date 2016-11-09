@@ -10,7 +10,7 @@ from pillar.api.activities import register_activity
 from pillar.web.system_util import pillar_api
 from pillar.api.utils import authentication
 
-from attract.node_types.task import node_type_task
+from flamenco.node_types.task import node_type_task
 
 
 @attr.s
@@ -28,7 +28,7 @@ class TaskManager(object):
         api = pillar_api()
         node_type = project.get_node_type(node_type_task['name'])
         if not node_type:
-            raise ValueError('Project %s not set up for Attract' % project._id)
+            raise ValueError('Project %s not set up for Flamenco' % project._id)
 
         node_props = dict(
             name='New task',
@@ -136,8 +136,8 @@ class TaskManager(object):
         """Blinker signal receiver; connects the logged commit with the task.
 
         :param sender: sender of the signal
-        :type sender: attract_server.subversion.CommitLogObserver
-        :type log_entry: attract.subversion.LogEntry
+        :type sender: flamenco_server.subversion.CommitLogObserver
+        :type log_entry: flamenco.subversion.LogEntry
         """
 
         self._log.info(u"Task '%s' logged in SVN by %s: %s...",
@@ -152,7 +152,7 @@ class TaskManager(object):
         # Find the author
         db = flask.current_app.db()
         proj = db['projects'].find_one({'_id': task['project']},
-                                      projection={'extension_props.attract': 1})
+                                      projection={'extension_props.flamenco': 1})
         if not proj:
             self._log.warning(u'Project %s for task %s not found, ignoring SVN commit.',
                               task['project'], task['_id'])
@@ -160,7 +160,7 @@ class TaskManager(object):
 
         # We have to have a user ID to register an activity, which is why we fall back
         # to the current user (the SVNer service account) if there is no mapping.
-        usermap = proj['extension_props'].get('attract', {}).get('svn_usermap', {})
+        usermap = proj['extension_props'].get('flamenco', {}).get('svn_usermap', {})
         user_id = usermap.get(log_entry.author, None)
         msg = 'committed SVN revision %s' % log_entry.revision
         if not user_id:

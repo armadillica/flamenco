@@ -6,7 +6,7 @@ Stupidly simple, only pushes this commit, doesn't register which commits were
 pushed and which weren't, doesn't retry anything later.
 
 Example call:
-    notify_attract.py "$REPOS" "$REV"
+    notify_flamenco.py "$REPOS" "$REV"
 """
 
 import json
@@ -23,10 +23,10 @@ except ImportError:
 
 import requests
 
-# ################# CONFIGURE THIS FOR YOUR OWN PROJECT/ATTRACT ##############################
+# ################# CONFIGURE THIS FOR YOUR OWN PROJECT/FLAMENCO ##############################
 AUTH_TOKEN = 'SRVNZNxzvaDnnewyoq7IGiHufcrT4nsXiay2W8Jz3AxA8A'
 PILLAR_URL = 'http://pillar-web:5001/'
-PROJECT_URLS = {  # Mapping from SVN repository name to Attract project URL.
+PROJECT_URLS = {  # Mapping from SVN repository name to Flamenco project URL.
     'repo': 'sybren',
 }
 # ################# END OF CONFIGURATION ##############################
@@ -40,7 +40,7 @@ try:
 except KeyError:
     raise SystemExit('Not configured for repository %r' % repo_basename)
 
-url = parse.urljoin(PILLAR_URL, '/attract/api/%s/subversion/log' % project_url)
+url = parse.urljoin(PILLAR_URL, '/flamenco/api/%s/subversion/log' % project_url)
 
 
 def svnlook(subcmd):

@@ -1,9 +1,9 @@
-| {% extends 'attract/layout.html' %}
+| {% extends 'flamenco/layout.html' %}
 | {% block bodyattrs %}{{ super() }} data-context='task'{% endblock %}
 | {% block page_title %}Tasks for You{% endblock %}
 | {% block body %}
 #col_main
-	| {% from "attract/tasks/task_list_for_user.html" import task_list_for_user %}
+	| {% from "flamenco/tasks/task_list_for_user.html" import task_list_for_user %}
 	| {{ task_list_for_user(task_count, tasks) }}
 .col-splitter
 
@@ -22,8 +22,8 @@ script.
 		$(function() { task_open('{{ open_task_id }}'); });
 	{% endif %}
 
-script(src="{{ url_for('static_attract', filename='assets/js/vendor/clipboard.min.js')}}")
-script(src="{{ url_for('static_attract', filename='assets/js/vendor/jquery-resizable.min.js')}}")
+script(src="{{ url_for('static_flamenco', filename='assets/js/vendor/clipboard.min.js')}}")
+script(src="{{ url_for('static_flamenco', filename='assets/js/vendor/jquery-resizable.min.js')}}")
 script.
 	$("#col_main").resizable({
 		handleSelector: ".col-splitter",

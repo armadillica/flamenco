@@ -1,5 +1,5 @@
-.attract-box.shot.with-status(class="status-{{ shot.properties.status }}")
-	form#shot_form(onsubmit="return shot_save('{{shot._id}}', '{{ url_for('attract.shots.perproject.save', project_url=project['url'], shot_id=shot._id) }}')")
+.flamenco-box.shot.with-status(class="status-{{ shot.properties.status }}")
+	form#shot_form(onsubmit="return shot_save('{{shot._id}}', '{{ url_for('flamenco.shots.perproject.save', project_url=project['url'], shot_id=shot._id) }}')")
 		input(type='hidden',name='_etag',value='{{ shot._etag }}')
 		.input-group
 			span.item-name(title="Shot names can only be updated from Blender.") {{ shot.name | hide_none }}
@@ -50,7 +50,7 @@
 		.table.item-properties
 			.table-body
 				.table-row.properties-status.js-help(
-					data-url="{{ url_for('attract.help', project_url=project.url) }}")
+					data-url="{{ url_for('flamenco.help', project_url=project.url) }}")
 					.table-cell Status
 					.table-cell(class="status-{{ shot.properties.status }}")
 						| {{ shot.properties.status | undertitle }}
@@ -62,7 +62,7 @@
 				| {% endif %}
 		| {% endif %}
 
-.attract-box
+.flamenco-box
 	.table.item-properties
 		.table-body
 			.table-row
@@ -130,7 +130,7 @@ script.
 		});
 	});
 
-	$('.js-help').openModalUrl('Help', "{{ url_for('attract.help', project_url=project.url) }}");
+	$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
 
 	{% if 'PUT' in shot.allowed_methods %}
 		/* Resize textareas */

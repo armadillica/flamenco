@@ -1,5 +1,5 @@
 node_type_task = {
-    'name': 'attract_task',
+    'name': 'flamenco_task',
     'description': 'Task Node Type, for tasks',
     'dyn_schema': {
         'status': {

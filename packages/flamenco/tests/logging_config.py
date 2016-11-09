@@ -12,7 +12,7 @@ LOGGING = {
     },
     'loggers': {
         'pillar': {'level': 'DEBUG'},
-        'attract': {'level': 'DEBUG'},
+        'flamenco': {'level': 'DEBUG'},
         'werkzeug': {'level': 'INFO'},
         'eve': {'level': 'WARNING'},
         # 'requests': {'level': 'DEBUG'},

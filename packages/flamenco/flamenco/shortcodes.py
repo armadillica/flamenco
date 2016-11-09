@@ -18,7 +18,7 @@ def generate_shortcode(project_id, node_type, prefix):
 
     :param project_id: project ID
     :type project_id: bson.ObjectId
-    :param node_type: the type, for now 'attract_task' or 'attract_shot', but can be extended.
+    :param node_type: the type, for now 'flamenco_task' or 'flamenco_shot', but can be extended.
     :type node_type: unicode
     :param prefix: one-letter prefix for these shortcodes
     :type prefix: unicode
@@ -27,7 +27,7 @@ def generate_shortcode(project_id, node_type, prefix):
     assert isinstance(project_id, ObjectId)
 
     db = current_app.db()
-    db_fieldname = 'extension_props.attract.last_used_shortcodes.%s' % node_type
+    db_fieldname = 'extension_props.flamenco.last_used_shortcodes.%s' % node_type
 
     log.debug('Incrementing project %s shortcode for type %r',
               project_id, node_type)
@@ -39,5 +39,5 @@ def generate_shortcode(project_id, node_type, prefix):
         return_document=pymongo.ReturnDocument.AFTER,
     )
 
-    shortcode = new_proj['extension_props']['attract']['last_used_shortcodes'][node_type]
+    shortcode = new_proj['extension_props']['flamenco']['last_used_shortcodes'][node_type]
     return '%s%i' % (prefix, shortcode)

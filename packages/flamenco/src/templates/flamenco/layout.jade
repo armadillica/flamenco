@@ -2,7 +2,7 @@ doctype html
 html(lang="en")
 	head
 		meta(charset="utf-8")
-		title {% if self.page_title() %}{% block page_title %}{% endblock %} — {% endif %}Attract
+		title {% if self.page_title() %}{% block page_title %}{% endblock %} — {% endif %}Flamenco
 		meta(name="viewport", content="width=device-width, initial-scale=1.0")
 
 		| {% block head %}{% endblock %}
@@ -12,12 +12,12 @@ html(lang="en")
 		link(href="{{ url_for('static_pillar', filename='assets/css/vendor/bootstrap.min.css') }}", rel="stylesheet")
 		link(href="{{ url_for('static_pillar', filename='assets/css/font-pillar.css', v=141020161) }}", rel="stylesheet")
 		link(href="{{ url_for('static_pillar', filename='assets/css/base.css', v=171020161) }}", rel="stylesheet")
-		link(href="{{ url_for('static_attract', filename='assets/css/main.css') }}", rel="stylesheet")
-		link(href="{{ url_for('static_attract', filename='assets/css/plugins/js_select2.css') }}", rel="stylesheet")
+		link(href="{{ url_for('static_flamenco', filename='assets/css/main.css') }}", rel="stylesheet")
+		link(href="{{ url_for('static_flamenco', filename='assets/css/plugins/js_select2.css') }}", rel="stylesheet")
 		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery-3.1.0.min.js')}}")
 		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery.bootstrap-3.3.7.min.js') }}")
 		script(src="{{ url_for('static_pillar', filename='assets/js/tutti.min.js') }}")
-		script(src="{{ url_for('static_attract', filename='assets/js/generated/tutti.min.js') }}")
+		script(src="{{ url_for('static_flamenco', filename='assets/js/generated/tutti.min.js') }}")
 
 		| {% block style %}{% endblock %}
 
@@ -31,20 +31,20 @@ html(lang="en")
 								title='Blender Cloud')
 								i.pi-blender-cloud
 						li
-							a.navbar-item.attract(href="{{ url_for('attract.index') }}",
-								title='Attract')
-								i.pi-attract
+							a.navbar-item.flamenco(href="{{ url_for('flamenco.index') }}",
+								title='Flamenco')
+								i.pi-flamenco
 						| {% if project %}
 						li
-							a.navbar-item.tasks(href="{{ url_for('attract.tasks.perproject.index', project_url=project.url) }}",
+							a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.perproject.index', project_url=project.url) }}",
 								title='Tasks for project {{ project.name }}') T
 						li
-							a.navbar-item.shots(href="{{ url_for('attract.shots.perproject.index', project_url=project.url) }}",
+							a.navbar-item.shots(href="{{ url_for('flamenco.shots.perproject.index', project_url=project.url) }}",
 								title='Shots for project {{ project.name }}') S
 						| {% else %}
 						| {% if current_user.is_authenticated %}
 						li
-							a.navbar-item.tasks(href="{{ url_for('attract.tasks.index') }}",
+							a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.index') }}",
 								title='Your tasks') T
 						| {% endif %}
 						| {% endif %}
@@ -55,7 +55,7 @@ html(lang="en")
 							button.js-help(
 								type="button",
 								title="Help",
-								data-url="{{ url_for('attract.help', project_url=project.url) }}")
+								data-url="{{ url_for('flamenco.help', project_url=project.url) }}")
 								i.pi-question
 						| {% endif %}
 
@@ -192,7 +192,7 @@ html(lang="en")
 		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery.select2.min.js') }}", async=true)
 		script.
 			{% if project %}
-			$('.js-help').openModalUrl('Help', "{{ url_for('attract.help', project_url=project.url) }}");
+			$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
 			{% endif %}
 
 			$(document).ready(function() {

@@ -1,6 +1,6 @@
-.attract-box.task.with-status(
+.flamenco-box.task.with-status(
 	class="status-{{ task.properties.status }}")
-	form#task_form(onsubmit="return task_save('{{task._id}}', '{{ url_for('attract.tasks.perproject.save', project_url=project['url'], task_id=task._id) }}')")
+	form#task_form(onsubmit="return task_save('{{task._id}}', '{{ url_for('flamenco.tasks.perproject.save', project_url=project['url'], task_id=task._id) }}')")
 		input(type='hidden',name='_etag',value='{{ task._etag }}')
 		//- NOTE: if you add fields here, also add them read-only below.
 		.input-group
@@ -31,16 +31,16 @@
 							i.pi-clipboard-copy
 							| Copy Shortcode for SVN Commits to Clipboard
 					| {% endif %}
-					| {% if attract_context != 'shot' and task.parent %}
+					| {% if flamenco_context != 'shot' and task.parent %}
 					li
-						a(href="{{ url_for('attract.shots.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}")
+						a(href="{{ url_for('flamenco.shots.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}")
 							i.pi-film-thick
 							| View in shot context
 					| {% endif %}
 					| {% if 'DELETE' in task.allowed_methods %}
 					li.divider(role='separator')
 					li.item-delete
-						a(href="javascript:task_delete('{{ task._id }}', '{{ task._etag }}', '{{ url_for('attract.tasks.delete', task_id=task._id, _method='DELETE') }}')")
+						a(href="javascript:task_delete('{{ task._id }}', '{{ task._etag }}', '{{ url_for('flamenco.tasks.delete', task_id=task._id, _method='DELETE') }}')")
 							i.pi-trash
 							| Delete Task
 					| {% endif %}
@@ -57,10 +57,10 @@
 			.input-group.field-type
 				label#task-task_type Type:
 				select(name="task_type",aria-describedby="task-task_type")
-					| {% for task_type in attract_props.task_types.attract_shot %}
+					| {% for task_type in flamenco_props.task_types.flamenco_shot %}
 					| <option value="{{ task_type }}" {% if task_type == task.properties.task_type %}selected{% endif %}>{{ task_type | undertitle }}</option>
 					| {% endfor %}
-					| {% if task.properties.task_type not in attract_props.task_types.attract_shot %}
+					| {% if task.properties.task_type not in flamenco_props.task_types.flamenco_shot %}
 					option(value="{{ task.properties.task_type }}",selected).invalid_task {{ task.properties.task_type | undertitle }}
 					| {% endif %}
 
@@ -104,15 +104,15 @@
 					.table-cell Task Type
 					.table-cell {{ task.properties.task_type | undertitle }}
 				.table-row.properties-status.js-help(
-					data-url="{{ url_for('attract.help', project_url=project.url) }}")
+					data-url="{{ url_for('flamenco.help', project_url=project.url) }}")
 					.table-cell Status
 					.table-cell(class="status-{{ task.properties.status }}")
 						| {{ task.properties.status | undertitle }}
-				| {% if attract_context != 'shot' and task._parent_info %}
+				| {% if flamenco_context != 'shot' and task._parent_info %}
 				.table-row
 					.table-cell Shot
 					.table-cell
-						a(href="{{ url_for('attract.shots.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}") {{ task._parent_info.name }}
+						a(href="{{ url_for('flamenco.shots.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}") {{ task._parent_info.name }}
 				| {% endif %}
 				.table-row.properties-assignees
 					.table-cell Assignees
@@ -173,4 +173,4 @@ script.
 		});
 	{% endif %}
 
-	$('.js-help').openModalUrl('Help', "{{ url_for('attract.help', project_url=project.url) }}");
+	$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");

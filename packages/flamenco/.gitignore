@@ -9,6 +9,6 @@ __pycache__
 /*.egg-info/
 /.eggs/
 /node_modules/
-/attract/templates/
-/attract/static/assets/css/
-/attract/static/assets/js/generated/
+/flamenco/templates/
+/flamenco/static/assets/css/
+/flamenco/static/assets/js/generated/

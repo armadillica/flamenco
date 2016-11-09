@@ -1,21 +1,21 @@
 
 .d-welcome
 	.welcome-logo
-		i.pi-attract
-	.welcome-title Welcome to Attract
+		i.pi-flamenco
+	.welcome-title Welcome to Flamenco
 
 	.welcome-text
 		p Your Production Management Software
 
-h3.d-title Projects using Attract
+h3.d-title Projects using Flamenco
 .d-projects
 	| {% for proj, summary in projs_with_summaries %}
 	.d-projects-item
 		a.d-projects-item-header(
-			href="{{ url_for('attract.shots.perproject.index', project_url=proj.url) }}")
+			href="{{ url_for('flamenco.shots.perproject.index', project_url=proj.url) }}")
 			img(src="{{ proj.picture_header.thumbnail('m', api=api) }}")
 		a.d-projects-item-title(
-			href="{{ url_for('attract.shots.perproject.index', project_url=proj.url) }}")
+			href="{{ url_for('flamenco.shots.perproject.index', project_url=proj.url) }}")
 			| {{ proj.name }}
 		.d-projects-item-stats
 			.progress

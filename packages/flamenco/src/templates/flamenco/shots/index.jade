@@ -1,12 +1,12 @@
-| {% extends 'attract/layout.html' %}
+| {% extends 'flamenco/layout.html' %}
 | {% block page_title %}Shots{% endblock %}
 | {% block body %}
 #col_main
-	h1 Attract projects
+	h1 Flamenco projects
 	ul
 		| {% for project in projects %}
 		li
-			a(href="{{ url_for('attract.shots.perproject.index', project_url=project.url) }}") {{ project.name }}
+			a(href="{{ url_for('flamenco.shots.perproject.index', project_url=project.url) }}") {{ project.name }}
 		| {% endfor %}
 #col_right
 	h1 Right

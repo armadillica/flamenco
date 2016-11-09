@@ -11,15 +11,15 @@ import pillar.tests
 import pillar.auth
 import pillar.tests.common_test_data as ctd
 
-from abstract_attract_test import AbstractAttractTest
+from abstract_flamenco_test import AbstractFlamencoTest
 
 
-class AbstractShotTest(AbstractAttractTest):
+class AbstractShotTest(AbstractFlamencoTest):
     def setUp(self, **kwargs):
-        AbstractAttractTest.setUp(self, **kwargs)
+        AbstractFlamencoTest.setUp(self, **kwargs)
 
-        self.tmngr = self.app.pillar_extensions['attract'].task_manager
-        self.smngr = self.app.pillar_extensions['attract'].shot_manager
+        self.tmngr = self.app.pillar_extensions['flamenco'].task_manager
+        self.smngr = self.app.pillar_extensions['flamenco'].shot_manager
 
         self.proj_id, self.project = self.ensure_project_exists()
 
@@ -148,7 +148,7 @@ class ShotManagerTest(AbstractShotTest):
 
 class NodeSetattrTest(unittest.TestCase):
     def test_simple(self):
-        from attract.shots import node_setattr
+        from flamenco.shots import node_setattr
 
         node = {}
         node_setattr(node, 'a', 5)
@@ -158,7 +158,7 @@ class NodeSetattrTest(unittest.TestCase):
         self.assertEqual({'a': 5, 'b': {'complexer': 'value'}}, node)
 
     def test_dotted(self):
-        from attract.shots import node_setattr
+        from flamenco.shots import node_setattr
 
         node = {}
         self.assertRaises(KeyError, node_setattr, node, 'a.b', 5)
@@ -176,7 +176,7 @@ class NodeSetattrTest(unittest.TestCase):
                                 'complex': {'yes': 5}}}, node)
 
     def test_none_simple(self):
-        from attract.shots import node_setattr
+        from flamenco.shots import node_setattr
 
         node = {}
         node_setattr(node, 'a', None)
@@ -184,7 +184,7 @@ class NodeSetattrTest(unittest.TestCase):
         self.assertEqual({None: 'b'}, node)
 
     def test_none_dotted(self):
-        from attract.shots import node_setattr
+        from flamenco.shots import node_setattr
 
         node = {}
         self.assertRaises(KeyError, node_setattr, node, 'a.b', None)
@@ -420,7 +420,7 @@ class PatchShotTest(AbstractShotTest):
 
 class RequiredAfterCreationTest(AbstractShotTest):
     """
-    This tests Pillar stuff, but requires attract_shot since that's what the
+    This tests Pillar stuff, but requires flamenco_shot since that's what the
     required_after_creation=False was created for.
 
     Placing the test here was easier than creating a node type in Pillar
@@ -429,7 +429,7 @@ class RequiredAfterCreationTest(AbstractShotTest):
     """
 
     def test_create_shot(self):
-        from attract.node_types import node_type_shot
+        from flamenco.node_types import node_type_shot
 
         self.user_id = self.create_project_admin(self.project)
         self.create_valid_auth_token(self.user_id, 'token')
@@ -464,7 +464,7 @@ class RequiredAfterCreationTest(AbstractShotTest):
 class ProjectSummaryTest(unittest.TestCase):
 
     def setUp(self):
-        from attract.shots import ProjectSummary
+        from flamenco.shots import ProjectSummary
 
         self.summ = ProjectSummary()
         self.summ.count(u'todo')

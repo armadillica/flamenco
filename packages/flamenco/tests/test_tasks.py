@@ -10,15 +10,15 @@ import pillar.tests
 import pillar.auth
 import pillar.tests.common_test_data as ctd
 
-from abstract_attract_test import AbstractAttractTest
+from abstract_flamenco_test import AbstractFlamencoTest
 from pillarsdk.utils import remove_private_keys
 
 
-class TaskWorkflowTest(AbstractAttractTest):
+class TaskWorkflowTest(AbstractFlamencoTest):
     def setUp(self, **kwargs):
-        AbstractAttractTest.setUp(self, **kwargs)
+        AbstractFlamencoTest.setUp(self, **kwargs)
 
-        self.mngr = self.app.pillar_extensions['attract'].task_manager
+        self.mngr = self.app.pillar_extensions['flamenco'].task_manager
         self.proj_id, self.project = self.ensure_project_exists()
 
         self.sdk_project = pillarsdk.Project(pillar.tests.mongo_to_sdk(self.project))

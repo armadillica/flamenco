@@ -1,5 +1,5 @@
-| {% extends 'attract/layout.html' %}
-| {% block page_title %}{{ project.name }} - Attract{% endblock %}
+| {% extends 'flamenco/layout.html' %}
+| {% block page_title %}{{ project.name }} - Flamenco{% endblock %}
 | {% block body %}
 #page-container
 	#page-content
@@ -7,7 +7,7 @@
 			h1 {{ project.name }}
 			ul
 				li
-					a(href="{{ url_for('attract.tasks.perproject.index', project_url=project.url) }}") Tasks
+					a(href="{{ url_for('flamenco.tasks.perproject.index', project_url=project.url) }}") Tasks
 				li
-					a(href="{{ url_for('attract.shots.perproject.index', project_url=project.url) }}") Shots
+					a(href="{{ url_for('flamenco.shots.perproject.index', project_url=project.url) }}") Shots
 | {% endblock %}

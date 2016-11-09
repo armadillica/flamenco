@@ -40,10 +40,10 @@ function item_open(item_id, item_type, pushState, project_url)
         $('#task-' + item_id).closest('.table-row').addClass('active');
     }
 
-    var item_url = '/attract/' + project_url + '/' + item_type + 's/' + item_id;
+    var item_url = '/flamenco/' + project_url + '/' + item_type + 's/' + item_id;
     var push_url = item_url;
     if (ProjectUtils.context() == 'shot' && item_type == 'task'){
-        push_url = '/attract/' + project_url + '/shots/with-task/' + item_id;
+        push_url = '/flamenco/' + project_url + '/shots/with-task/' + item_id;
     }
     item_url += '?context=' + ProjectUtils.context();
 
@@ -110,7 +110,7 @@ function shot_create(project_url)
     if (project_url === undefined) {
         throw new ReferenceError("shot_create(" + project_url+ ") called.");
     }
-    var url = '/attract/' + project_url + '/shots/create';
+    var url = '/flamenco/' + project_url + '/shots/create';
 
     data = {
         project_url: project_url
@@ -140,11 +140,11 @@ function task_add(shot_id, task_id, task_type)
     }
 
     var project_url = ProjectUtils.projectUrl();
-    var url = '/attract/' + project_url + '/tasks/' + task_id;
+    var url = '/flamenco/' + project_url + '/tasks/' + task_id;
     var context = ProjectUtils.context();
 
     if (context == 'task') {
-        /* WARNING: This is a copy of an element of attract/tasks/for_project #task-list.col-list
+        /* WARNING: This is a copy of an element of flamenco/tasks/for_project #task-list.col-list
          * If that changes, change this too. */
         $('#task-list').append('\
             <a class="col-list-item task-list-item status-todo task-link active"\
@@ -162,9 +162,9 @@ function task_add(shot_id, task_id, task_type)
         }
 
         var $shot_cell = $('#shot-' + shot_id + ' .table-cell.task-type.' + task_type);
-        var url = '/attract/' + project_url + '/shots/with-task/' + task_id;
+        var url = '/flamenco/' + project_url + '/shots/with-task/' + task_id;
 
-        /* WARNING: This is a copy of an element of attract/shots/for_project #task-list.col-list
+        /* WARNING: This is a copy of an element of flamenco/shots/for_project #task-list.col-list
          * If that changes, change this too. */
         $shot_cell.append('\
             <a class="status-todo task-link active"\
@@ -192,7 +192,7 @@ function task_create(shot_id, task_type)
     }
 
     var project_url = ProjectUtils.projectUrl();
-    var url = '/attract/' + project_url + '/tasks/create';
+    var url = '/flamenco/' + project_url + '/tasks/create';
     var has_shot_id = typeof shot_id !== 'undefined';
 
     data = {
@@ -217,11 +217,11 @@ function task_create(shot_id, task_type)
     });
 }
 
-function attract_form_save(form_id, item_id, item_save_url, options)
+function flamenco_form_save(form_id, item_id, item_save_url, options)
 {
     // Mandatory option.
     if (typeof options === 'undefined' || typeof options.type === 'undefined') {
-        throw new ReferenceError('attract_form_save(): options.type is mandatory.');
+        throw new ReferenceError('flamenco_form_save(): options.type is mandatory.');
     }
 
     var $form = $('#' + form_id);
@@ -269,7 +269,7 @@ function attract_form_save(form_id, item_id, item_save_url, options)
 }
 
 function task_save(task_id, task_url) {
-    return attract_form_save('task_form', 'task-' + task_id, task_url, {
+    return flamenco_form_save('task_form', 'task-' + task_id, task_url, {
         done: function($task, saved_task) {
             // Update the task list.
             // NOTE: this is tightly linked to the HTML of the task list in for_project.jade.
@@ -299,7 +299,7 @@ function task_save(task_id, task_url) {
 }
 
 function shot_save(shot_id, shot_url) {
-    return attract_form_save('shot_form', 'shot-' + shot_id, shot_url, {
+    return flamenco_form_save('shot_form', 'shot-' + shot_id, shot_url, {
         done: function($shot, saved_shot) {
             // Update the shot list.
             $('.shot-name-' + saved_shot._id).text(saved_shot.name);

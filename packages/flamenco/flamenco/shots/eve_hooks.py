@@ -3,7 +3,7 @@
 import itertools
 import logging
 
-from attract.node_types.shot import node_type_shot, human_readable_properties
+from flamenco.node_types.shot import node_type_shot, human_readable_properties
 from pillar.api.nodes import only_for_node_type_decorator
 import pillar.api.activities
 import pillar.api.utils.authentication

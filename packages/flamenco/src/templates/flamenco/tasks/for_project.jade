@@ -1,4 +1,4 @@
-| {% extends 'attract/layout.html' %}
+| {% extends 'flamenco/layout.html' %}
 | {% block bodyattrs %}{{ super() }} data-context='task'{% endblock %}
 | {% block page_title %}Tasks - {{ project.name }} {% endblock %}
 | {% block body %}
@@ -17,7 +17,7 @@
 			id="task-{{task._id}}",
 			data-task-id="{{task._id}}",
 			class="status-{{ task.properties.status }} task-link",
-			href="{{ url_for('attract.tasks.perproject.view_task', project_url=project.url, task_id=task._id) }}")
+			href="{{ url_for('flamenco.tasks.perproject.view_task', project_url=project.url, task_id=task._id) }}")
 			span.status-indicator(title="Status: {{ task.properties.status | undertitle }}")
 			| {% if task._parent_info %}
 			span.shotname(title="Shot {{ task._parent_info.name }}") {{ task._parent_info.name }}
@@ -43,8 +43,8 @@ script.
 		$(function() { item_open('{{ open_task_id }}', 'task', false); });
 	{% endif %}
 
-script(src="{{ url_for('static_attract', filename='assets/js/vendor/clipboard.min.js')}}")
-script(src="{{ url_for('static_attract', filename='assets/js/vendor/jquery-resizable.min.js')}}")
+script(src="{{ url_for('static_flamenco', filename='assets/js/vendor/clipboard.min.js')}}")
+script(src="{{ url_for('static_flamenco', filename='assets/js/vendor/jquery-resizable.min.js')}}")
 
 script.
 	$("#col_main").resizable({

@@ -9,20 +9,20 @@ from pillar.web.nodes.routes import url_for_node
 
 import pillarsdk
 
-import attract.tasks
-import attract.shots
+import flamenco.tasks
+import flamenco.shots
 
-EXTENSION_NAME = 'attract'
+EXTENSION_NAME = 'flamenco'
 
 # Roles required to view task or shot details.
 ROLES_REQUIRED_TO_VIEW_ITEMS = {u'demo', u'subscriber', u'admin'}
 
 
-class AttractExtension(PillarExtension):
+class FlamencoExtension(PillarExtension):
     def __init__(self):
-        self._log = logging.getLogger('%s.AttractExtension' % __name__)
-        self.task_manager = attract.tasks.TaskManager()
-        self.shot_manager = attract.shots.ShotManager()
+        self._log = logging.getLogger('%s.FlamencoExtension' % __name__)
+        self.task_manager = flamenco.tasks.TaskManager()
+        self.shot_manager = flamenco.shots.ShotManager()
 
     @property
     def name(self):
@@ -63,17 +63,17 @@ class AttractExtension(PillarExtension):
         """
 
         from . import routes
-        import attract.tasks.routes
-        import attract.shots.routes
-        import attract.subversion.routes
+        import flamenco.tasks.routes
+        import flamenco.shots.routes
+        import flamenco.subversion.routes
 
         return [
             routes.blueprint,
-            attract.tasks.routes.blueprint,
-            attract.tasks.routes.perproject_blueprint,
-            attract.shots.routes.perproject_blueprint,
-            attract.subversion.routes.blueprint,
-            attract.subversion.routes.api_blueprint,
+            flamenco.tasks.routes.blueprint,
+            flamenco.tasks.routes.perproject_blueprint,
+            flamenco.shots.routes.perproject_blueprint,
+            flamenco.subversion.routes.blueprint,
+            flamenco.subversion.routes.api_blueprint,
         ]
 
     @property
@@ -100,8 +100,8 @@ class AttractExtension(PillarExtension):
         # Imports for side-effects
         from . import node_url_finders
 
-    def attract_projects(self):
-        """Returns projects set up for Attract.
+    def flamenco_projects(self):
+        """Returns projects set up for Flamenco.
 
         :returns: {'_items': [proj, proj, ...], '_meta': Eve metadata}
         """
@@ -112,19 +112,19 @@ class AttractExtension(PillarExtension):
 
         api = pillar_api()
 
-        # Find projects that are set up for Attract.
+        # Find projects that are set up for Flamenco.
         projects = pillarsdk.Project.all({
             'where': {
-                'extension_props.attract': {'$exists': 1},
+                'extension_props.flamenco': {'$exists': 1},
                 'node_types.name': node_type_shot['name'],
             }}, api=api)
 
         return projects
 
-    def is_attract_project(self, project, test_extension_props=True):
-        """Returns whether the project is set up for Attract.
+    def is_flamenco_project(self, project, test_extension_props=True):
+        """Returns whether the project is set up for Flamenco.
 
-        Requires the task node type and Attract extension properties.
+        Requires the task node type and Flamenco extension properties.
         Testing the latter can be skipped with test_extension_props=False.
         """
 
@@ -141,7 +141,7 @@ class AttractExtension(PillarExtension):
         try:
             pprops = project.extension_props[EXTENSION_NAME]
         except AttributeError:
-            self._log.warning("is_attract_project: Project url=%r doesn't have any "
+            self._log.warning("is_flamenco_project: Project url=%r doesn't have any "
                               "extension properties.", project['url'])
             if self._log.isEnabledFor(logging.DEBUG):
                 import pprint
@@ -149,19 +149,19 @@ class AttractExtension(PillarExtension):
             return False
 
         if pprops is None:
-            self._log.warning("is_attract_project: Project url=%r doesn't have Attract"
+            self._log.warning("is_flamenco_project: Project url=%r doesn't have Flamenco"
                               " extension properties.", project['url'])
             return False
         return True
 
     def sidebar_links(self, project):
 
-        if not self.is_attract_project(project):
+        if not self.is_flamenco_project(project):
             return ''
 
-        # Temporarily disabled until Attract is nicer to look at.
+        # Temporarily disabled until Flamenco is nicer to look at.
         return ''
-        # return flask.render_template('attract/sidebar.html',
+        # return flask.render_template('flamenco/sidebar.html',
         #                              project=project)
 
     def activities_for_node(self, node_id, max_results=20, page=1):
@@ -205,25 +205,25 @@ class AttractExtension(PillarExtension):
 
         if act.node_type == node_type_task['name']:
             if act.context_object:
-                return flask.url_for('attract.shots.perproject.with_task',
+                return flask.url_for('flamenco.shots.perproject.with_task',
                                      project_url=act.project.url,
                                      task_id=act.object)
-            return flask.url_for('attract.tasks.perproject.view_task',
+            return flask.url_for('flamenco.tasks.perproject.view_task',
                                  project_url=act.project.url,
                                  task_id=act.object)
         elif act.node_type == node_type_shot['name']:
-            return flask.url_for('attract.shots.perproject.view_shot',
+            return flask.url_for('flamenco.shots.perproject.view_shot',
                                  project_url=act.project.url,
                                  shot_id=act.object)
 
         return url_for_node(node_id=act.object)
 
 
-def _get_current_attract():
-    """Returns the Attract extension of the current application."""
+def _get_current_flamenco():
+    """Returns the Flamenco extension of the current application."""
 
     return flask.current_app.pillar_extensions[EXTENSION_NAME]
 
 
-current_attract = LocalProxy(_get_current_attract)
-"""Attract extension of the current app."""
+current_flamenco = LocalProxy(_get_current_flamenco)
+"""Flamenco extension of the current app."""

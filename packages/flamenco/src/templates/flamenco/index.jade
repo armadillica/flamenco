@@ -1,4 +1,4 @@
-| {% extends 'attract/layout.html' %}
+| {% extends 'flamenco/layout.html' %}
 | {% block bodyattrs %}{{ super() }} data-context='dashboard'{% endblock %}
 | {% block page_title %}Dashboard{% endblock %}
 
@@ -7,13 +7,13 @@
 	.dashboard
 		.d-stats
 			h3
-				i.pi-attract
-				|  Attract
+				i.pi-flamenco
+				|  Flamenco
 	| {% if current_user.is_authenticated %}
-	| {% from "attract/tasks/task_list_for_user.html" import task_list_for_user %}
+	| {% from "flamenco/tasks/task_list_for_user.html" import task_list_for_user %}
 	| {{ task_list_for_user(tasks['_meta']['total'], tasks['_items']) }}
 	| {% else %}
-	| {% include "attract/index_anon_left_column.html" %}
+	| {% include "flamenco/index_anon_left_column.html" %}
 	| {% endif %}
 
 #col_right
@@ -24,12 +24,12 @@
 			| {% for proj, summary in projs_with_summaries %}
 			.d-stats-card
 				h4
-					a(href="{{ url_for('attract.shots.perproject.index', project_url=proj.url) }}") {{ proj.name }}
+					a(href="{{ url_for('flamenco.shots.perproject.index', project_url=proj.url) }}") {{ proj.name }}
 
 					span.pull-right
-						a(href="{{ url_for('attract.shots.perproject.index', project_url=proj.url) }}") Shots&nbsp;
+						a(href="{{ url_for('flamenco.shots.perproject.index', project_url=proj.url) }}") Shots&nbsp;
 						| |
-						a(href="{{ url_for('attract.tasks.perproject.index', project_url=proj.url) }}")  Tasks
+						a(href="{{ url_for('flamenco.tasks.perproject.index', project_url=proj.url) }}")  Tasks
 				.progress
 					| {% for status, percentage in summary.percentages() %}
 					.progress-bar.bg-status(

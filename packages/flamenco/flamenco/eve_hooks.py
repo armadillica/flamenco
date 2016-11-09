@@ -1,4 +1,4 @@
-"""Attract-wide Eve hooks."""
+"""Flamenco-wide Eve hooks."""
 
 import logging
 
@@ -9,10 +9,10 @@ from .node_types import NODE_TYPES
 
 log = logging.getLogger(__name__)
 
-attract_nodes_only = only_for_node_type_decorator(*(nt['name'] for nt in NODE_TYPES))
+flamenco_nodes_only = only_for_node_type_decorator(*(nt['name'] for nt in NODE_TYPES))
 
 
-@attract_nodes_only
+@flamenco_nodes_only
 def set_default_status(node):
     """Sets the default status based on the project node type dynamic schema."""
 

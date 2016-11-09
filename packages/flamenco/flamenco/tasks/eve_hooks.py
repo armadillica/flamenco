@@ -10,7 +10,7 @@ import pillar.api.activities
 import pillar.api.utils.authentication
 import pillar.web.jinja
 
-from attract.node_types.task import node_type_task
+from flamenco.node_types.task import node_type_task
 
 log = logging.getLogger(__name__)
 only_for_task = only_for_node_type_decorator(node_type_task['name'])
@@ -178,7 +178,7 @@ def activity_after_deleting_task(task):
 
 @only_for_task
 def create_shortcode(task):
-    from attract import shortcodes
+    from flamenco import shortcodes
 
     shortcode = shortcodes.generate_shortcode(task['project'], task['node_type'], u'T')
     task.setdefault('properties', {})['shortcode'] = shortcode

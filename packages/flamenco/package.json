@@ -1,10 +1,10 @@
 {
-	"name": "attract",
+	"name": "flamenco",
 	"license": "GPL",
 	"author": "Blender Institute",
 	"repository": {
 		"type": "git",
-		"url": "git://git.blender.org/attract-server.git"
+		"url": "git://git.blender.org/flamenco-server.git"
 	},
 	"devDependencies": {
 		"gulp": "~3.9.1",

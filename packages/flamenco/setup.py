@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-"""Setup file for the Attract extension."""
+"""Setup file for the Flamenco extension."""
 
 import setuptools
 
 setuptools.setup(
-    name='attract',
+    name='flamenco',
     version='1.0',
     packages=setuptools.find_packages('.', exclude=['test']),
     install_requires=[

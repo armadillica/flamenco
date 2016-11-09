@@ -9,11 +9,11 @@ import pillar.web.subquery
 from pillar.web.system_util import pillar_api
 import pillarsdk
 
-from attract import current_attract
-from attract.node_types.task import node_type_task
-from attract.node_types.shot import node_type_shot
+from flamenco import current_flamenco
+from flamenco.node_types.task import node_type_task
+from flamenco.node_types.shot import node_type_shot
 
-blueprint = Blueprint('attract', __name__)
+blueprint = Blueprint('flamenco', __name__)
 log = logging.getLogger(__name__)
 
 
@@ -23,23 +23,23 @@ def index():
 
     user = flask_login.current_user
     if user.is_authenticated:
-        tasks = current_attract.task_manager.tasks_for_user(user.objectid)
+        tasks = current_flamenco.task_manager.tasks_for_user(user.objectid)
 
     else:
         tasks = None
 
     # TODO: add projections.
-    projects = current_attract.attract_projects()
+    projects = current_flamenco.flamenco_projects()
 
     for project in projects['_items']:
         attach_project_pictures(project, api)
 
     projs_with_summaries = [
-        (proj, current_attract.shot_manager.shot_status_summary(proj['_id']))
+        (proj, current_flamenco.shot_manager.shot_status_summary(proj['_id']))
         for proj in projects['_items']
         ]
 
-    # Fetch all activities for all Attract projects.
+    # Fetch all activities for all Flamenco projects.
     id_to_proj = {p['_id']: p for p in projects['_items']}
     activities = pillarsdk.Activity.all({
         'where': {
@@ -54,28 +54,28 @@ def index():
         act.actor_user = pillar.web.subquery.get_user_info(act.actor_user)
         act.project = id_to_proj[act.project]
         try:
-            act.link = current_attract.link_for_activity(act)
+            act.link = current_flamenco.link_for_activity(act)
         except ValueError:
             act.link = None
 
-    return render_template('attract/index.html',
+    return render_template('flamenco/index.html',
                            tasks=tasks,
                            projs_with_summaries=projs_with_summaries,
                            activities=activities)
 
 
-def error_project_not_setup_for_attract():
-    return render_template('attract/errors/project_not_setup.html')
+def error_project_not_setup_for_flamenco():
+    return render_template('flamenco/errors/project_not_setup.html')
 
 
-def attract_project_view(extra_project_projections=None, extension_props=False):
+def flamenco_project_view(extra_project_projections=None, extension_props=False):
     """Decorator, replaces the first parameter project_url with the actual project.
 
     Assumes the first parameter to the decorated function is 'project_url'. It then
-    looks up that project, checks that it's set up for Attract, and passes it to the
+    looks up that project, checks that it's set up for Flamenco, and passes it to the
     decorated function.
 
-    If not set up for attract, uses error_project_not_setup_for_attract() to render
+    If not set up for flamenco, uses error_project_not_setup_for_flamenco() to render
     the response.
 
     :param extra_project_projections: extra projections to use on top of the ones already
@@ -89,7 +89,7 @@ def attract_project_view(extra_project_projections=None, extension_props=False):
     from . import EXTENSION_NAME
 
     if callable(extra_project_projections):
-        raise TypeError('Use with @attract_project_view() <-- note the parentheses')
+        raise TypeError('Use with @flamenco_project_view() <-- note the parentheses')
 
     projections = {
         '_id': 1,
@@ -120,13 +120,13 @@ def attract_project_view(extra_project_projections=None, extension_props=False):
                 {'projection': projections},
                 api=api)
 
-            is_attract = current_attract.is_attract_project(project,
+            is_flamenco = current_flamenco.is_flamenco_project(project,
                                                             test_extension_props=extension_props)
-            if not is_attract:
-                return error_project_not_setup_for_attract()
+            if not is_flamenco:
+                return error_project_not_setup_for_flamenco()
 
             if extension_props:
-                pprops = project.extension_props.attract
+                pprops = project.extension_props.flamenco
                 return wrapped(project, pprops, *args, **kwargs)
             return wrapped(project, *args, **kwargs)
 
@@ -136,15 +136,15 @@ def attract_project_view(extra_project_projections=None, extension_props=False):
 
 
 @blueprint.route('/<project_url>')
-@attract_project_view(extension_props=True)
-def project_index(project, attract_props):
-    return render_template('attract/project.html',
+@flamenco_project_view(extension_props=True)
+def project_index(project, flamenco_props):
+    return render_template('flamenco/project.html',
                            project=project,
-                           attract_props=attract_props)
+                           flamenco_props=flamenco_props)
 
 
 @blueprint.route('/<project_url>/help')
-@attract_project_view(extension_props=False)
+@flamenco_project_view(extension_props=False)
 def help(project):
     nt_task = project.get_node_type(node_type_task['name'])
     nt_shot = project.get_node_type(node_type_shot['name'])
@@ -152,4 +152,4 @@ def help(project):
     statuses = set(nt_task['dyn_schema']['status']['allowed'] +
                    nt_shot['dyn_schema']['status']['allowed'])
 
-    return render_template('attract/help.html', statuses=statuses)
+    return render_template('flamenco/help.html', statuses=statuses)

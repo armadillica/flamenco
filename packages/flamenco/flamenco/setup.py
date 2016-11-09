@@ -1,4 +1,4 @@
-"""Setting up projects for Attract.
+"""Setting up projects for Flamenco.
 
 This is intended to be used by the CLI and unittests only, not tested
 for live/production situations.
@@ -58,11 +58,11 @@ def _update_project(project):
         raise RuntimeError("Can't update project %s, issues: %s", project_id, result)
 
 
-def setup_for_attract(project_url, replace=False, svn_url=None):
-    """Adds Attract node types to the project.
+def setup_for_flamenco(project_url, replace=False, svn_url=None):
+    """Adds Flamenco node types to the project.
 
-    Use --replace to replace pre-existing Attract node types
-    (by default already existing Attract node types are skipped).
+    Use --replace to replace pre-existing Flamenco node types
+    (by default already existing Flamenco node types are skipped).
 
     Returns the updated project.
     """
@@ -91,21 +91,21 @@ def setup_for_attract(project_url, replace=False, svn_url=None):
     # Set default extension properties. Be careful not to overwrite any properties that
     # are already there.
     eprops = project.setdefault('extension_props', {})
-    attract_props = eprops.setdefault(EXTENSION_NAME, {
+    flamenco_props = eprops.setdefault(EXTENSION_NAME, {
         'last_used_shortcodes': {},
         'svn_usermap': {},  # mapping from SVN username to Pillar user ObjectID.
     })
 
     if svn_url:
         log.info('Setting SVN URL to %s', svn_url)
-        attract_props['svn_url'] = svn_url
+        flamenco_props['svn_url'] = svn_url
 
     # Set up task types
-    task_types = attract_props.setdefault('task_types', {})
+    task_types = flamenco_props.setdefault('task_types', {})
     task_types.setdefault(shot.node_type_shot['name'], shot.task_types)
 
     _update_project(project)
 
-    log.info('Project %s was updated for Attract.', project_url)
+    log.info('Project %s was updated for Flamenco.', project_url)
 
     return project

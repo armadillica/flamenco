@@ -15,22 +15,22 @@ import svn.common
 from pillar.tests import common_test_data as ctd
 
 import logging_config
-from attract import subversion
-from abstract_attract_test import AbstractAttractTest
+from flamenco import subversion
+from abstract_flamenco_test import AbstractFlamencoTest
 
 SVN_SERVER_URL = 'svn://biserver/agent327'
 
 
-class ShortcodeTest(AbstractAttractTest):
+class ShortcodeTest(AbstractFlamencoTest):
     def setUp(self, **kwargs):
-        AbstractAttractTest.setUp(self, **kwargs)
+        AbstractFlamencoTest.setUp(self, **kwargs)
 
-        self.mngr = self.app.pillar_extensions['attract'].task_manager
+        self.mngr = self.app.pillar_extensions['flamenco'].task_manager
         self.proj_id, self.project = self.ensure_project_exists()
 
     def test_increment_simple(self):
 
-        from attract import shortcodes
+        from flamenco import shortcodes
 
         with self.app.test_request_context():
             code = shortcodes.generate_shortcode(self.proj_id, u'jemoeder', u'ø')

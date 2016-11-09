@@ -14,7 +14,7 @@ import mock
 import svn.common
 
 import logging_config
-from abstract_attract_test import AbstractAttractTest
+from abstract_flamenco_test import AbstractFlamencoTest
 
 SVN_SERVER_URL = 'svn://biserver/agent327'
 
@@ -63,7 +63,7 @@ SVN_LOG_BATCH_WITH_TASK_MARKERS = [
 
 class TestCommitLogObserver(unittest.TestCase):
     def setUp(self):
-        from attract import subversion
+        from flamenco import subversion
 
         self.client = subversion.obtain(SVN_SERVER_URL)
         # Passing in a real client to Mock() will ensure that isinstance() checks return True.
@@ -76,7 +76,7 @@ class TestCommitLogObserver(unittest.TestCase):
         Keep the underscore in the name when committing, and don't call it from
         anywhere. Unit tests shouldn't be dependent on network connections.
         """
-        from attract import subversion
+        from flamenco import subversion
 
         observer = subversion.CommitLogObserver(self.client)
         observer.fetch_and_observe()
@@ -111,7 +111,7 @@ class TestCommitLogObserver(unittest.TestCase):
         self.assertEqual(self.observer.last_seen_revision, 51)
 
     def test_task_markers(self):
-        from attract import subversion
+        from flamenco import subversion
 
         self.mock_client.log_default = mock.Mock(name='log_default',
                                                  return_value=SVN_LOG_BATCH_WITH_TASK_MARKERS)
@@ -135,7 +135,7 @@ class TestCommitLogObserver(unittest.TestCase):
 
     def test_svn_error(self):
         """SVN errors should not crash the observer."""
-        from attract import subversion
+        from flamenco import subversion
 
         self.mock_client.log_default = mock.Mock(name='log_default',
                                                  side_effect=svn.common.SvnException('unittest'))
@@ -150,7 +150,7 @@ class TestCommitLogObserver(unittest.TestCase):
         self.mock_client.log_default.assert_called_once()
 
     def test_create_log_entry(self):
-        from attract import subversion
+        from flamenco import subversion
 
         entry = subversion.create_log_entry(date_text=u'2016-10-21 17:40:17 +0200',
                                             msg=u'Ünicøde is good',
@@ -198,15 +198,15 @@ class TestCommitLogObserver(unittest.TestCase):
         ))
 
 
-class PushCommitTest(AbstractAttractTest):
+class PushCommitTest(AbstractFlamencoTest):
     def setUp(self, **kwargs):
-        AbstractAttractTest.setUp(self, **kwargs)
+        AbstractFlamencoTest.setUp(self, **kwargs)
 
-        self.mngr = self.app.pillar_extensions['attract'].task_manager
+        self.mngr = self.app.pillar_extensions['flamenco'].task_manager
         self.proj_id, self.project = self.ensure_project_exists()
 
     def test_push_happy(self):
-        from attract import cli, subversion
+        from flamenco import cli, subversion
 
         with self.app.test_request_context():
             _, token = cli.create_svner_account('svner@example.com', self.project['url'])
@@ -226,7 +226,7 @@ class PushCommitTest(AbstractAttractTest):
             'date': '2016-10-21 17:40:17 +0200',
         }
 
-        self.post('/attract/api/%s/subversion/log' % self.project['url'],
+        self.post('/flamenco/api/%s/subversion/log' % self.project['url'],
                   json=push_data,
                   auth_token=token['token'])
 
