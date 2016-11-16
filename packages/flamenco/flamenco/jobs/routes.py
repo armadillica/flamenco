@@ -1,6 +1,6 @@
 import logging
 
-from flask import Blueprint, render_template, request, current_app
+from flask import Blueprint, render_template, request
 import flask
 import flask_login
 import werkzeug.exceptions as wz_exceptions
@@ -11,7 +11,6 @@ import pillar.api.utils
 import pillar.web.subquery
 
 from flamenco.routes import flamenco_project_view
-from flamenco.node_types.job import node_type_job
 from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
 
 blueprint = Blueprint('flamenco.jobs', __name__, url_prefix='/jobs')
@@ -64,7 +63,7 @@ def view_job(project, flamenco_props, job_id):
 
     api = pillar_api()
     job = pillarsdk.Node.find(job_id, api=api)
-    node_type = project.get_node_type(node_type_job['name'])
+    # node_type = project.get_node_type(node_type_job['name'])
 
     # Fetch project users so that we can assign them jobs
     if 'PUT' in job.allowed_methods:
@@ -77,7 +76,6 @@ def view_job(project, flamenco_props, job_id):
     return render_template('flamenco/jobs/view_job_embed.html',
                            job=job,
                            project=project,
-                           job_node_type=node_type,
                            flamenco_props=flamenco_props.to_dict(),
                            flamenco_context=request.args.get('context'))
 
@@ -103,8 +101,8 @@ def create_job(project):
     parent = request.form.get('parent', None)
 
     job = current_flamenco.job_manager.create_job(project,
-                                                    job_type=job_type,
-                                                    parent=parent)
+                                                  job_type=job_type,
+                                                  parent=parent)
 
     resp = flask.make_response()
     resp.headers['Location'] = flask.url_for('.view_job',
@@ -113,16 +111,3 @@ def create_job(project):
     resp.status_code = 201
 
     return flask.make_response(flask.jsonify({'job_id': job['_id']}), 201)
-
-
-@perproject_blueprint.route('/<job_id>/activities')
-@flamenco_project_view()
-def activities(project, job_id):
-    if not request.is_xhr:
-        return flask.redirect(flask.url_for('.view_job',
-                                            project_url=project.url,
-                                            job_id=job_id))
-
-    acts = current_flamenco.activities_for_node(job_id)
-    return flask.render_template('flamenco/jobs/view_activities_embed.html',
-                                 activities=acts)

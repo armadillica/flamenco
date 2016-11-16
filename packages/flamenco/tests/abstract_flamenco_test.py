@@ -15,9 +15,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
     pillar_server_class = FlamencoTestServer
 
     def tearDown(self):
-        from flamenco import subversion
 
-        subversion.task_logged._clear_state()
         self.unload_modules('flamenco')
 
         AbstractPillarTest.tearDown(self)
@@ -30,7 +28,8 @@ class AbstractFlamencoTest(AbstractPillarTest):
             picture_square=None,
             **(project_overrides or {})
         )
-        proj_id, project = AbstractPillarTest.ensure_project_exists(self, project_overrides)
+        proj_id, project = AbstractPillarTest.ensure_project_exists(
+            self, project_overrides)
 
         with self.app.test_request_context():
             flamenco_project = setup_for_flamenco(project['url'],

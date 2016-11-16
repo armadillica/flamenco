@@ -11,7 +11,6 @@ import pillar.api.utils
 import pillar.web.subquery
 
 from flamenco.routes import flamenco_project_view
-from flamenco.node_types.task import node_type_task
 from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
 
 blueprint = Blueprint('flamenco.tasks', __name__, url_prefix='/tasks')
@@ -64,7 +63,6 @@ def view_task(project, flamenco_props, task_id):
 
     api = pillar_api()
     task = pillarsdk.Node.find(task_id, api=api)
-    node_type = project.get_node_type(node_type_task['name'])
 
     # Fetch project users so that we can assign them tasks
     if 'PUT' in task.allowed_methods:

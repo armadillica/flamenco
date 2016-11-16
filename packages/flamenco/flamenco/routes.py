@@ -10,9 +10,7 @@ from pillar.web.system_util import pillar_api
 import pillarsdk
 
 from flamenco import current_flamenco
-from flamenco.node_types.job import node_type_job
-from flamenco.node_types.manager import node_type_manager
-from flamenco.node_types.task import node_type_task
+
 
 blueprint = Blueprint('flamenco', __name__)
 log = logging.getLogger(__name__)
@@ -121,8 +119,8 @@ def flamenco_project_view(extra_project_projections=None, extension_props=False)
                 {'projection': projections},
                 api=api)
 
-            is_flamenco = current_flamenco.is_flamenco_project(project,
-                                                            test_extension_props=extension_props)
+            is_flamenco = current_flamenco.is_flamenco_project(
+                project, test_extension_props=extension_props)
             if not is_flamenco:
                 return error_project_not_setup_for_flamenco()
 
@@ -144,15 +142,3 @@ def project_index(project, flamenco_props):
                            flamenco_props=flamenco_props)
 
 
-@blueprint.route('/<project_url>/help')
-@flamenco_project_view(extension_props=False)
-def help(project):
-    nt_job = project.get_node_type(node_type_job['name'])
-    nt_task = project.get_node_type(node_type_task['name'])
-    nt_manager = project.get_node_type(node_type_manager['name'])
-
-    statuses = set(nt_manager['dyn_schema']['status']['allowed'] +
-                   nt_jobs['dyn_schema']['status']['allowed'] +
-                   nt_tasks['dyn_schema']['status']['allowed'])
-
-    return render_template('flamenco/help.html', statuses=statuses)

@@ -1,52 +1,34 @@
 """Job management."""
 
 import attr
-import flask
 import flask_login
-
 import pillarsdk
 from pillar import attrs_extra
-from pillar.api.activities import register_activity
 from pillar.web.system_util import pillar_api
-from pillar.api.utils import authentication
-
-from flamenco.node_types.job import node_type_job
 
 
 @attr.s
 class JobManager(object):
     _log = attrs_extra.log('%s.JobManager' % __name__)
 
-    def create_job(self, project, job_type=None, parent=None):
+    def create_job(self, project, job_type):
         """Creates a new job, owned by the current user.
 
         :rtype: pillarsdk.Node
         """
 
-        from pillar.web.jinja import format_undertitle
-
         api = pillar_api()
-        node_type = project.get_node_type(node_type_job['name'])
-        if not node_type:
-            raise ValueError('Project %s not set up for Flamenco' % project._id)
 
-        node_props = dict(
+        job = dict(
             name='New job',
+            job_type=job_type,
             project=project['_id'],
             user=flask_login.current_user.objectid,
-            node_type=node_type['name'],
-            properties={
-                'status': node_type['dyn_schema']['status']['default'],
-            },
+            settings={},
         )
 
-        if job_type:
-            node_props['name'] = format_undertitle(job_type)
-            node_props['properties']['job_type'] = job_type
-        if parent:
-            node_props['parent'] = parent
-
-        job = pillarsdk.Node(node_props)
+        job = pillarsdk.Resource(job)
+        job.path = 'flamenco/jobs'
         job.create(api=api)
         return job
 
@@ -83,7 +65,8 @@ class JobManager(object):
         api = pillar_api()
 
         self._log.info('Deleting job %s', job_id)
-        job = pillarsdk.Node({'_id': job_id, '_etag': etag})
+        job = pillarsdk.Resource({'_id': job_id, '_etag': etag})
+        job.path = 'flamenco/jobs'
         job.delete(api=api)
 
     def jobs_for_user(self, user_id):
@@ -95,10 +78,11 @@ class JobManager(object):
         api = pillar_api()
 
         # TODO: also include jobs assigned to any of the user's groups.
-        jobs = pillarsdk.Node.all({
+        jobs = pillarsdk.resource.List()
+        jobs.list_class.path = 'flamenco/jobs'
+        jobs.all({
             'where': {
-                'properties.assigned_to.users': user_id,
-                'node_type': node_type_job['name'],
+                'user': user_id,
             }
         }, api=api)
 
@@ -111,26 +95,13 @@ class JobManager(object):
         """
 
         api = pillar_api()
-        jobs = pillarsdk.Node.all({
+        jobs = pillarsdk.resource.List()
+        jobs.list_class.path = 'flamenco/jobs'
+        jobs.all({
             'where': {
                 'project': project_id,
-                'node_type': node_type_job['name'],
             }}, api=api)
         return jobs
-
-    def api_job_for_shortcode(self, shortcode):
-        """Returns the job for the given shortcode.
-
-        :returns: the job Node, or None if not found.
-        """
-
-        db = flask.current_app.db()
-        job = db['nodes'].find_one({
-            'properties.shortcode': shortcode,
-            'node_type': node_type_job['name'],
-        })
-
-        return job
 
 
 def setup_app(app):
