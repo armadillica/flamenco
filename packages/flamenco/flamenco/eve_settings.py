@@ -188,10 +188,12 @@ _managers = {
 
 _jobs = {
     'schema': jobs_schema,
+    'item_methods': ['GET', 'PUT', 'DELETE', 'PATCH'],
 }
 
 _tasks = {
     'schema': tasks_schema,
+    'item_methods': ['GET', 'PUT', 'DELETE', 'PATCH'],
 }
 
 DOMAIN = {

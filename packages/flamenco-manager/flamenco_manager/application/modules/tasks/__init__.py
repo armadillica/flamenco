@@ -11,6 +11,7 @@ from flask import request
 from flask import send_from_directory
 from flask import send_file
 from flask import abort
+from flask import current_app
 from flask.ext.restful import Resource
 from flask.ext.restful import reqparse
 from flask.ext.restful import marshal_with
@@ -18,7 +19,7 @@ from flask.ext.restful import fields
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from pillarsdk import Api
+import pillarsdk
 
 from application import http_request
 from application import db
@@ -27,6 +28,7 @@ from application import app
 from application.helpers import get_flamenco_server_api_object
 from application.modules.workers.model import Worker
 from application.modules.settings.model import Setting
+from application.helpers.tasks import Task
 
 log = logging.getLogger(__name__)
 
@@ -215,8 +217,12 @@ class TaskManagementApi(Resource):
 
         return r, 200
         """
-
-        task = Task.get_new(api=get_flamenco_server_api_object())
+        tasks_url = '{}{}'.format(
+            'http://pillar:5000/flamenco',
+            '/scheduler/tasks'
+        )
+        r = requests.get(tasks_url)
+        task = r.json()
         if not task:
             return abort(404)
         return task

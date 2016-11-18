@@ -8,7 +8,7 @@ class Config(object):
     PORT = 7777
     HOST = '0.0.0.0'  # or 'localhost'
     NAME = 'My Manager'  # or use socket.gethostname()
-    FLAMENCO_SERVER = 'http://localhost:9999'
+    FLAMENCO_SERVER = 'http://pillar:5000/api/flamenco'
     FLAMENCO_SERVER_TOKEN = ''
 
     DATABASE_URI = 'mysql://root:root@mysql'
