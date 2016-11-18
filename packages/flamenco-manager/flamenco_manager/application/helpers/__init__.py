@@ -10,7 +10,7 @@ except ImportError:
     from urllib import urlencode
 
 from threading import Thread
-from flamencosdk import Api
+from pillarsdk import Api
 from application import app
 
 def http_request(ip_address, command, method, params=None, files=None):

@@ -18,8 +18,7 @@ from flask.ext.restful import fields
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from flamencosdk import Task
-from flamencosdk import Api
+from pillarsdk import Api
 
 from application import http_request
 from application import db
