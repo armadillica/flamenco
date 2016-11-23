@@ -46,6 +46,7 @@ def delete(job_id):
 def for_project(project, job_id=None):
     jobs = current_flamenco.job_manager.jobs_for_project(project['_id'])
     return render_template('flamenco/jobs/for_project.html',
+                           stats={'nr_of_jobs': 0, 'total_frame_count': 0},
                            jobs=jobs['_items'],
                            open_job_id=job_id,
                            project=project)

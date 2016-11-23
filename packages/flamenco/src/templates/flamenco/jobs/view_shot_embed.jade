@@ -1,5 +1,5 @@
 .flamenco-box.shot.with-status(class="status-{{ shot.properties.status }}")
-	form#shot_form(onsubmit="return shot_save('{{shot._id}}', '{{ url_for('flamenco.jobs.perproject.save', project_url=project['url'], shot_id=shot._id) }}')")
+	form#shot_form(onsubmit="return shot_save('{{shot._id}}', '{{ url_for('flamenco.jobs.perproject.save', project_url=project['url'], job_id=shot._id) }}')")
 		input(type='hidden',name='_etag',value='{{ shot._etag }}')
 		.input-group
 			span.item-name(title="Shot names can only be updated from Blender.") {{ shot.name | hide_none }}
@@ -119,7 +119,7 @@ script.
 		statusBarSet('info', 'Copied shot ID to clipboard', 'pi-check');
 	});
 
-	var activities_url = "{{ url_for('.activities', project_url=project.url, shot_id=shot['_id']) }}";
+	var activities_url = "{{ url_for('.activities', project_url=project.url, job_id=shot['_id']) }}";
 	loadActivities(activities_url);  // from 10_tasks.js
 	loadComments("{{ url_for('nodes.comments_for_node', node_id=shot['_id']) }}");
 

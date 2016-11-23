@@ -89,9 +89,9 @@ function task_open(task_id, project_url)
     item_open(task_id, 'task', true, project_url);
 }
 
-function shot_open(shot_id)
+function shot_open(job_id)
 {
-    item_open(shot_id, 'shot');
+    item_open(job_id, 'shot');
 }
 
 window.onpopstate = function(event)
@@ -117,7 +117,7 @@ function shot_create(project_url)
     };
 
     $.post(url, data, function(shot_data) {
-        shot_open(shot_data.shot_id);
+        shot_open(shot_data.job_id);
     })
     .fail(function(xhr) {
         if (console) {
@@ -131,12 +131,12 @@ function shot_create(project_url)
 /**
  * Adds the task item to the jobs/tasks list.
  *
- * 'shot_id' can be undefined if the task isn't attached to a shot.
+ * 'job_id' can be undefined if the task isn't attached to a shot.
  */
-function task_add(shot_id, task_id, task_type)
+function task_add(job_id, task_id, task_type)
 {
     if (task_id === undefined || task_type === undefined) {
-        throw new ReferenceError("task_add(" + shot_id + ", " + task_id + ", " + task_type + ") called.");
+        throw new ReferenceError("task_add(" + job_id + ", " + task_id + ", " + task_type + ") called.");
     }
 
     var project_url = ProjectUtils.projectUrl();
@@ -157,11 +157,11 @@ function task_add(shot_id, task_id, task_type)
             </a>\
             ');
     } else if (context == 'shot') {
-        if (shot_id === undefined) {
-            throw new ReferenceError("task_add(" + shot_id + ", " + task_id + ", " + task_type + ") called in shot context.");
+        if (job_id === undefined) {
+            throw new ReferenceError("task_add(" + job_id + ", " + task_id + ", " + task_type + ") called in shot context.");
         }
 
-        var $shot_cell = $('#shot-' + shot_id + ' .table-cell.task-type.' + task_type);
+        var $shot_cell = $('#shot-' + job_id + ' .table-cell.task-type.' + task_type);
         var url = '/flamenco/' + project_url + '/jobs/with-task/' + task_id;
 
         /* WARNING: This is a copy of an element of flamenco/jobs/for_project #task-list.col-list
@@ -182,28 +182,28 @@ function task_add(shot_id, task_id, task_type)
 /**
  * Create a task and show it in the #item-details div.
  *
- * 'shot_id' may be undefined, in which case the task will not
+ * 'job_id' may be undefined, in which case the task will not
  * be attached to a shot.
  */
-function task_create(shot_id, task_type)
+function task_create(job_id, task_type)
 {
     if (task_type === undefined) {
-        throw new ReferenceError("task_create(" + shot_id + ", " + task_type + ") called.");
+        throw new ReferenceError("task_create(" + job_id + ", " + task_type + ") called.");
     }
 
     var project_url = ProjectUtils.projectUrl();
     var url = '/flamenco/' + project_url + '/tasks/create';
-    var has_shot_id = typeof shot_id !== 'undefined';
+    var has_job_id = typeof job_id !== 'undefined';
 
     data = {
         task_type: task_type,
     };
-    if (has_shot_id) data.parent = shot_id;
+    if (has_job_id) data.parent = job_id;
 
     $.post(url, data, function(task_data) {
         if (console) console.log('Task created:', task_data);
         task_open(task_data.task_id);
-        task_add(shot_id, task_data.task_id, task_type);
+        task_add(job_id, task_data.task_id, task_type);
     })
     .fail(function(xhr) {
         if (console) {
@@ -298,8 +298,8 @@ function task_save(task_id, task_url) {
     });
 }
 
-function shot_save(shot_id, shot_url) {
-    return flamenco_form_save('shot_form', 'shot-' + shot_id, shot_url, {
+function shot_save(job_id, shot_url) {
+    return flamenco_form_save('shot_form', 'shot-' + job_id, shot_url, {
         done: function($shot, saved_shot) {
             // Update the shot list.
             $('.shot-name-' + saved_shot._id).text(saved_shot.name);
@@ -308,7 +308,7 @@ function shot_save(shot_id, shot_url) {
                 .addClass('status-' + saved_shot.properties.status)
                 .flashOnce()
             ;
-            shot_open(shot_id);
+            shot_open(job_id);
         },
         fail: function($item, xhr_or_response_data) {
             if (xhr_or_response_data.status == 412) {
@@ -388,8 +388,8 @@ $(function() {
         e.preventDefault();
         // delegateTarget is the thing the event hander was attached to,
         // rather than the thing we clicked on.
-        var shot_id = e.delegateTarget.dataset.shotId;
-        shot_open(shot_id);
+        var job_id = e.delegateTarget.dataset.shotId;
+        shot_open(job_id);
     });
 
     $("a.task-link[data-task-id]").click(function(e) {

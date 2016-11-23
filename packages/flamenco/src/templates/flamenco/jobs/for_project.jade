@@ -1,5 +1,5 @@
 | {% extends 'flamenco/layout.html' %}
-| {% block bodyattrs %}{{ super() }} data-context='shot'{% endblock %}
+| {% block bodyattrs %}{{ super() }} data-context='job'{% endblock %}
 | {% block page_title %}Jobs - {{ project.name }}{% endblock %}
 | {% block body %}
 #col_main
@@ -8,66 +8,39 @@
 		a.task-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
 
 		| {# Not allowed for the moment. Jobs are added via the Sequencer
-		a#task-add(href="javascript:shot_create('{{ project.url }}');") + Create Shot
+		a#task-add(href="javascript:job_create('{{ project.url }}');") + Create Shot
 		| #}
 
-	#shot-list
+	#job-list
 		.table
 			.table-head
 				.table-row
-					.table-cell.shot-status
-					.table-cell.shot-thumbnail
+					.table-cell.job-status
+					.table-cell.job-thumbnail
 						span.collapser.thumbnails(title="Collapse thumbnails") Thumbnail
-					.table-cell.shot-name
+					.table-cell.job-name
 						span.collapser(title="Collapse name column") Name
-					| {% for task_type in task_types %}
-					.table-cell.task-type(class="{{ task_type }}")
-						span.collapser(title="Collapse {{ task_type or 'Other' }} column") {{ task_type or 'other' }}
-					| {% endfor %}
 
 			.table-body.has-thumbnails
-				| {% for shot in jobs %}
+				| {% for job in jobs %}
 				.table-row(
-					id="shot-{{ shot._id }}",
-					class="status-{{ shot.properties.status }} {{ shot.properties.used_in_edit | yesno(' ,not-in-edit, ') }}")
-					.table-cell.shot-status
-					.table-cell.shot-thumbnail
+					id="job-{{ job._id }}",
+					class="status-{{ job.properties.status }} }}")
+					.table-cell.job-status
+					.table-cell.job-thumbnail
 						a(
-							data-shot-id="{{ shot._id }}",
-							href="{{ url_for('flamenco.jobs.perproject.view_shot', project_url=project.url, shot_id=shot._id) }}",
-							class="status-{{ shot.properties.status }} shot-link")
-							img(src="{{ shot._thumbnail }}",
+							data-job-id="{{ job._id }}",
+							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}",
+							class="status-{{ job.properties.status }} job-link")
+							img(src="{{ job._thumbnail }}",
 								alt="Thumbnail",
-								style='width: 110px; height: {{ shot._thumbnail_height }}')
-					.table-cell.shot-name
+								style='width: 110px; height: {{ job._thumbnail_height }}')
+					.table-cell.job-name
 						a(
-							data-shot-id="{{ shot._id }}",
-							href="{{ url_for('flamenco.jobs.perproject.view_shot', project_url=project.url, shot_id=shot._id) }}",
-							class="status-{{ shot.properties.status }} shot-link")
-							span(class="shot-name-{{ shot._id }}") {{ shot.name }}
-					| {% for task_type in task_types %}
-					.table-cell.task-type(class="{{ task_type }}")
-						| {% for task in tasks_for_jobs[shot._id][task_type] %}
-						a(
-							data-task-id="{{ task._id }}",
-							id="task-{{ task._id }}",
-							href="{{ url_for('flamenco.jobs.perproject.with_task', project_url=project.url, task_id=task._id) }}",
-							class="status-{{ task.properties.status }} task-link",
-							title="{{ task.properties.status | undertitle }} task: {{ task.name }}")
-							| {# First letter of the status. Disabled until we provide the user setting to turn it off
-							span {{ task.properties.status[0] }}
-							| #}
-						| {% endfor %}
-						//- Dirty hack, assume a user can create a task for a shot if they can edit the shot.
-						| {% if 'PUT' in shot.allowed_methods %}
-						a.task-add(
-							title="Add a new '{{ task_type }}' task",
-							class="task-add-link {% if tasks_for_jobs[shot._id][task_type] %}hidden{% endif %}"
-							href="javascript:task_create('{{ shot._id }}', '{{ task_type }}');")
-							i.pi-plus
-							| Task
-						| {% endif %}
-					| {% endfor %}
+							data-job-id="{{ job._id }}",
+							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}",
+							class="status-{{ job.properties.status }} job-link")
+							span(class="job-name-{{ job._id }}") {{ job.name }}
 				| {% endfor %}
 
 .col-splitter
@@ -86,8 +59,8 @@ script.
 	{% if open_task_id %}
 		$(function() { item_open('{{ open_task_id }}', 'task', false); });
 	{% endif %}
-	{% if open_shot_id %}
-		$(function() { item_open('{{ open_shot_id }}', 'shot', false); });
+	{% if open_job_id %}
+		$(function() { item_open('{{ open_job_id }}', 'job', false); });
 	{% endif %}
 
 	var same_cells;
@@ -137,7 +110,7 @@ script.
 
 	$(window).on('load resize', function(){
 		var window_height = $(window).height() - 50; // header is 50px
-		$('#shot-list').css({'height': window_height});
+		$('#job-list').css({'height': window_height});
 		$('#item-details').css({'height': window_height});
 	});
 
