@@ -1,13 +1,13 @@
 | {% extends 'flamenco/layout.html' %}
 | {% block bodyattrs %}{{ super() }} data-context='shot'{% endblock %}
-| {% block page_title %}Shots - {{ project.name }}{% endblock %}
+| {% block page_title %}Jobs - {{ project.name }}{% endblock %}
 | {% block body %}
 #col_main
 	.col_header.task-list-header
-		span(title='In the edit') {{ stats.nr_of_shots }} shots | {{ stats.total_frame_count }} frames
+		span(title='In the edit') {{ stats.nr_of_jobs }} jobs | {{ stats.total_frame_count }} frames
 		a.task-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
 
-		| {# Not allowed for the moment. Shots are added via the Sequencer
+		| {# Not allowed for the moment. Jobs are added via the Sequencer
 		a#task-add(href="javascript:shot_create('{{ project.url }}');") + Create Shot
 		| #}
 
@@ -26,7 +26,7 @@
 					| {% endfor %}
 
 			.table-body.has-thumbnails
-				| {% for shot in shots %}
+				| {% for shot in jobs %}
 				.table-row(
 					id="shot-{{ shot._id }}",
 					class="status-{{ shot.properties.status }} {{ shot.properties.used_in_edit | yesno(' ,not-in-edit, ') }}")
@@ -34,7 +34,7 @@
 					.table-cell.shot-thumbnail
 						a(
 							data-shot-id="{{ shot._id }}",
-							href="{{ url_for('flamenco.shots.perproject.view_shot', project_url=project.url, shot_id=shot._id) }}",
+							href="{{ url_for('flamenco.jobs.perproject.view_shot', project_url=project.url, shot_id=shot._id) }}",
 							class="status-{{ shot.properties.status }} shot-link")
 							img(src="{{ shot._thumbnail }}",
 								alt="Thumbnail",
@@ -42,16 +42,16 @@
 					.table-cell.shot-name
 						a(
 							data-shot-id="{{ shot._id }}",
-							href="{{ url_for('flamenco.shots.perproject.view_shot', project_url=project.url, shot_id=shot._id) }}",
+							href="{{ url_for('flamenco.jobs.perproject.view_shot', project_url=project.url, shot_id=shot._id) }}",
 							class="status-{{ shot.properties.status }} shot-link")
 							span(class="shot-name-{{ shot._id }}") {{ shot.name }}
 					| {% for task_type in task_types %}
 					.table-cell.task-type(class="{{ task_type }}")
-						| {% for task in tasks_for_shots[shot._id][task_type] %}
+						| {% for task in tasks_for_jobs[shot._id][task_type] %}
 						a(
 							data-task-id="{{ task._id }}",
 							id="task-{{ task._id }}",
-							href="{{ url_for('flamenco.shots.perproject.with_task', project_url=project.url, task_id=task._id) }}",
+							href="{{ url_for('flamenco.jobs.perproject.with_task', project_url=project.url, task_id=task._id) }}",
 							class="status-{{ task.properties.status }} task-link",
 							title="{{ task.properties.status | undertitle }} task: {{ task.name }}")
 							| {# First letter of the status. Disabled until we provide the user setting to turn it off
@@ -62,7 +62,7 @@
 						| {% if 'PUT' in shot.allowed_methods %}
 						a.task-add(
 							title="Add a new '{{ task_type }}' task",
-							class="task-add-link {% if tasks_for_shots[shot._id][task_type] %}hidden{% endif %}"
+							class="task-add-link {% if tasks_for_jobs[shot._id][task_type] %}hidden{% endif %}"
 							href="javascript:task_create('{{ shot._id }}', '{{ task_type }}');")
 							i.pi-plus
 							| Task

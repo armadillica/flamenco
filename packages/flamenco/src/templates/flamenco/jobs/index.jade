@@ -1,12 +1,12 @@
 | {% extends 'flamenco/layout.html' %}
-| {% block page_title %}Shots{% endblock %}
+| {% block page_title %}Jobs{% endblock %}
 | {% block body %}
 #col_main
 	h1 Flamenco projects
 	ul
 		| {% for project in projects %}
 		li
-			a(href="{{ url_for('flamenco.shots.perproject.index', project_url=project.url) }}") {{ project.name }}
+			a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}") {{ project.name }}
 		| {% endfor %}
 #col_right
 	h1 Right

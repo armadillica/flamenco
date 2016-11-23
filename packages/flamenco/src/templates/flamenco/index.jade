@@ -24,10 +24,10 @@
 			| {% for proj, summary in projs_with_summaries %}
 			.d-stats-card
 				h4
-					a(href="{{ url_for('flamenco.shots.perproject.index', project_url=proj.url) }}") {{ proj.name }}
+					a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=proj.url) }}") {{ proj.name }}
 
 					span.pull-right
-						a(href="{{ url_for('flamenco.shots.perproject.index', project_url=proj.url) }}") Shots&nbsp;
+						a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=proj.url) }}") Jobs&nbsp;
 						| |
 						a(href="{{ url_for('flamenco.tasks.perproject.index', project_url=proj.url) }}")  Tasks
 				.progress

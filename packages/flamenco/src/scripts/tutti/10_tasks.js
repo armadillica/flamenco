@@ -13,7 +13,7 @@ function _remove_task_from_list(task_id) {
 }
 
 /**
- * Open an item such as tasks/shots in the #item-details div
+ * Open an item such as tasks/jobs in the #item-details div
  */
 function item_open(item_id, item_type, pushState, project_url)
 {
@@ -43,7 +43,7 @@ function item_open(item_id, item_type, pushState, project_url)
     var item_url = '/flamenco/' + project_url + '/' + item_type + 's/' + item_id;
     var push_url = item_url;
     if (ProjectUtils.context() == 'shot' && item_type == 'task'){
-        push_url = '/flamenco/' + project_url + '/shots/with-task/' + item_id;
+        push_url = '/flamenco/' + project_url + '/jobs/with-task/' + item_id;
     }
     item_url += '?context=' + ProjectUtils.context();
 
@@ -103,14 +103,14 @@ window.onpopstate = function(event)
 
 /**
  * Create a task and show it in the #item-details div.
- * NOTE: Not used at the moment, we're creating shots via Blender's VSE
+ * NOTE: Not used at the moment, we're creating jobs via Blender's VSE
  */
 function shot_create(project_url)
 {
     if (project_url === undefined) {
         throw new ReferenceError("shot_create(" + project_url+ ") called.");
     }
-    var url = '/flamenco/' + project_url + '/shots/create';
+    var url = '/flamenco/' + project_url + '/jobs/create';
 
     data = {
         project_url: project_url
@@ -129,7 +129,7 @@ function shot_create(project_url)
 }
 
 /**
- * Adds the task item to the shots/tasks list.
+ * Adds the task item to the jobs/tasks list.
  *
  * 'shot_id' can be undefined if the task isn't attached to a shot.
  */
@@ -162,9 +162,9 @@ function task_add(shot_id, task_id, task_type)
         }
 
         var $shot_cell = $('#shot-' + shot_id + ' .table-cell.task-type.' + task_type);
-        var url = '/flamenco/' + project_url + '/shots/with-task/' + task_id;
+        var url = '/flamenco/' + project_url + '/jobs/with-task/' + task_id;
 
-        /* WARNING: This is a copy of an element of flamenco/shots/for_project #task-list.col-list
+        /* WARNING: This is a copy of an element of flamenco/jobs/for_project #task-list.col-list
          * If that changes, change this too. */
         $shot_cell.append('\
             <a class="status-todo task-link active"\

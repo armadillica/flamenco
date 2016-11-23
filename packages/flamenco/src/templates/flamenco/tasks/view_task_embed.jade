@@ -33,7 +33,7 @@
 					| {% endif %}
 					| {% if flamenco_context != 'shot' and task.parent %}
 					li
-						a(href="{{ url_for('flamenco.shots.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}")
+						a(href="{{ url_for('flamenco.jobs.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}")
 							i.pi-film-thick
 							| View in shot context
 					| {% endif %}
@@ -112,7 +112,7 @@
 				.table-row
 					.table-cell Shot
 					.table-cell
-						a(href="{{ url_for('flamenco.shots.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}") {{ task._parent_info.name }}
+						a(href="{{ url_for('flamenco.jobs.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}") {{ task._parent_info.name }}
 				| {% endif %}
 				.table-row.properties-assignees
 					.table-cell Assignees
