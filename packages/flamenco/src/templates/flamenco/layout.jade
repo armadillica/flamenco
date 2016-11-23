@@ -39,7 +39,7 @@ html(lang="en")
 							a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.perproject.index', project_url=project.url) }}",
 								title='Tasks for project {{ project.name }}') T
 						li
-							a.navbar-item.shots(href="{{ url_for('flamenco.shots.perproject.index', project_url=project.url) }}",
+							a.navbar-item.shots(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}",
 								title='Shots for project {{ project.name }}') S
 						| {% else %}
 						| {% if current_user.is_authenticated %}

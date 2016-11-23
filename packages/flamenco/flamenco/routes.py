@@ -120,7 +120,7 @@ def flamenco_project_view(extra_project_projections=None, extension_props=False)
                 api=api)
 
             is_flamenco = current_flamenco.is_flamenco_project(
-                project, test_extension_props=extension_props)
+                project)
             if not is_flamenco:
                 return error_project_not_setup_for_flamenco()
 
@@ -142,3 +142,7 @@ def project_index(project, flamenco_props):
                            flamenco_props=flamenco_props)
 
 
+@blueprint.route('/<project_url>/help')
+@flamenco_project_view(extension_props=False)
+def help(project):
+    return render_template('flamenco/help.html', statuses=[])

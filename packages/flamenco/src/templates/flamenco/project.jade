@@ -7,7 +7,7 @@
 			h1 {{ project.name }}
 			ul
 				li
-					a(href="{{ url_for('flamenco.tasks.perproject.index', project_url=project.url) }}") Tasks
+					a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}") Jobs
 				li
-					a(href="{{ url_for('flamenco.shots.perproject.index', project_url=project.url) }}") Shots
+					a(href="{{ url_for('flamenco.tasks.perproject.index', project_url=project.url) }}") Tasks
 | {% endblock %}

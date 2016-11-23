@@ -80,13 +80,13 @@ class JobManager(object):
         # TODO: also include jobs assigned to any of the user's groups.
         jobs = pillarsdk.resource.List()
         jobs.list_class.path = 'flamenco/jobs'
-        jobs.all({
+        j = jobs.all({
             'where': {
                 'user': user_id,
             }
         }, api=api)
 
-        return jobs
+        return j
 
     def jobs_for_project(self, project_id):
         """Returns the jobs for the given project.
@@ -97,11 +97,11 @@ class JobManager(object):
         api = pillar_api()
         jobs = pillarsdk.resource.List()
         jobs.list_class.path = 'flamenco/jobs'
-        jobs.all({
+        j = jobs.all({
             'where': {
                 'project': project_id,
             }}, api=api)
-        return jobs
+        return j
 
 
 def setup_app(app):

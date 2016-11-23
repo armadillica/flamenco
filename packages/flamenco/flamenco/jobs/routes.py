@@ -42,7 +42,7 @@ def delete(job_id):
 
 
 @perproject_blueprint.route('/', endpoint='index')
-@flamenco_project_view()
+@flamenco_project_view(extension_props=True)
 def for_project(project, job_id=None):
     jobs = current_flamenco.job_manager.jobs_for_project(project['_id'])
     return render_template('flamenco/jobs/for_project.html',
