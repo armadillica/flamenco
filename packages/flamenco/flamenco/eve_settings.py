@@ -28,7 +28,7 @@ jobs_schema = {
         'required': True,
     },
     # Remarks about the settings, the author or the system
-    'notes': {
+    'description': {
         'type': 'string',
     },
     'project': {
@@ -93,7 +93,7 @@ jobs_schema = {
         'type': 'dict',
         # TODO: introduce dynamic validator, based on job_type/task_type
         'allow_unknown': True,
-    }
+    },
 }
 
 tasks_schema = {

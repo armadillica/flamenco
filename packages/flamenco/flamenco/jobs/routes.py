@@ -13,6 +13,8 @@ import pillar.web.subquery
 from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
 
+from . import Job
+
 blueprint = Blueprint('flamenco.jobs', __name__, url_prefix='/jobs')
 perproject_blueprint = Blueprint('flamenco.jobs.perproject', __name__,
                                  url_prefix='/<project_url>/jobs')
@@ -43,7 +45,7 @@ def delete(job_id):
 
 @perproject_blueprint.route('/', endpoint='index')
 @flamenco_project_view(extension_props=True)
-def for_project(project, job_id=None):
+def for_project(project, flamenco_props, job_id=None):
     jobs = current_flamenco.job_manager.jobs_for_project(project['_id'])
     return render_template('flamenco/jobs/for_project.html',
                            stats={'nr_of_jobs': 0, 'total_frame_count': 0},
@@ -56,14 +58,14 @@ def for_project(project, job_id=None):
 @flamenco_project_view(extension_props=True)
 def view_job(project, flamenco_props, job_id):
     if not request.is_xhr:
-        return for_project(project, job_id=job_id)
+        return for_project(project, flamenco_props, job_id=job_id)
 
     # Job list is public, job details are not.
     if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
         raise wz_exceptions.Forbidden()
 
     api = pillar_api()
-    job = pillarsdk.Node.find(job_id, api=api)
+    job = Job.find(job_id, api=api)
     # node_type = project.get_node_type(node_type_job['name'])
 
     # Fetch project users so that we can assign them jobs

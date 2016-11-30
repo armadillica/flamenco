@@ -4,6 +4,7 @@ import logging
 
 from flask import abort
 from eve.methods.post import post_internal
+from pillar.api.utils.authorization import check_permissions
 
 from flamenco.job_compilers import compilers
 
@@ -52,6 +53,16 @@ def create_task(job, commands, name, parents=None):
         return abort(r[3])
 
 
+def before_returning_job_permissions(response):
+    # Run validation process, since GET on nodes entry point is public
+    check_permissions('flamenco.jobs', response, 'GET',
+                      append_allowed_methods=True)
+
+
 def setup_app(app):
     app.on_inserted_jobs = after_inserting_jobs
-    pass
+    app.on_fetched_item_jobs += before_returning_job_permissions
+    # app.on_fetched_resource_projects += hooks.before_returning_project_resource_permissions
+    # app.on_fetched_item_projects += hooks.project_node_type_has_method
+    # app.on_fetched_resource_projects += hooks.projects_node_type_has_method
+

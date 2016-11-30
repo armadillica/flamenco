@@ -2,18 +2,38 @@
 
 import attr
 
-import pillarsdk
 from pillar import attrs_extra
 from pillar.web.system_util import pillar_api
+
+from pillarsdk.resource import List
+from pillarsdk.resource import Find
+from pillarsdk.resource import Create
+from pillarsdk.resource import Post
+from pillarsdk.resource import Update
+from pillarsdk.resource import Delete
+from pillarsdk.resource import Replace
+from pillarsdk.exceptions import ResourceNotFound
+
+
+class Task(List, Find, Create, Post, Update, Delete, Replace):
+    """Job class wrapping the REST nodes endpoint
+    """
+    path = 'flamenco/tasks'
+    ensure_query_projections = {'project': 1, 'job': 1}
 
 
 @attr.s
 class TaskManager(object):
     _log = attrs_extra.log('%s.TaskManager' % __name__)
 
-    def delete_task(self, task_id, etag):
+    def tasks_for_job(self, job_id, status=None, page=1):
+        self._log.info('Fetching task for job %s', job_id)
         api = pillar_api()
-        self._log.info('Deleting task %s', task_id)
-        task = pillarsdk.Resource({'_id': task_id, '_etag': etag})
-        task.path = 'flamenco/tasks'
-        task.delete(api=api)
+        payload = {
+            'where': {
+                'job': job_id,
+            }}
+        if status:
+            payload['where']['status'] = status
+        tasks = Task.all(payload, api=api)
+        return tasks

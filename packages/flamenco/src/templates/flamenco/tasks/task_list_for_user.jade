@@ -6,9 +6,9 @@
 	| {% for task in tasks if tasks %}
 	//- NOTE: this is tightly linked to the JS in tasks.js, function task_add()
 	a.col-list-item.task-list-item(
-		class="status-{{ task.properties.status }} task-link",
-		title="In project '{{ task._project_info.name }}'",
-		href="{{ url_for('flamenco.tasks.perproject.view_task', project_url=task._project_info.url, task_id=task._id) }}")
+	class="status-{{ task.properties.status }} task-link",
+	title="In project '{{ task._project_info.name }}'",
+	href="{{ url_for('flamenco.tasks.perproject.view_task', project_url=task._project_info.url, task_id=task._id) }}")
 		span.status-indicator
 		| {% if include_shotname and task._parent_info %}
 		span.shotname {{ task._parent_info.name }}

@@ -21,24 +21,12 @@ log = logging.getLogger(__name__)
 
 @blueprint.route('/')
 def index():
-    user = flask_login.current_user
-    if not user.is_authenticated:
-        return render_template('flamenco/tasks/index.html')
-
-    tasks = current_flamenco.task_manager.tasks_for_user(user.objectid)
-    return render_template('flamenco/tasks/for_user.html',
+    job_id = request.args.get('job_id')
+    embed = '_embed' if request.args.get('embed') else ''
+    tasks = current_flamenco.task_manager.tasks_for_job(job_id)
+    return render_template('flamenco/tasks/for_job{}.html'.format(embed),
                            tasks=tasks['_items'],
                            task_count=tasks['_meta']['total'])
-
-
-@blueprint.route('/<task_id>', methods=['DELETE'])
-def delete(task_id):
-    log.info('Deleting task %s', task_id)
-
-    etag = request.form['etag']
-    current_flamenco.task_manager.delete_task(task_id, etag)
-
-    return '', 204
 
 
 @perproject_blueprint.route('/', endpoint='index')
@@ -94,33 +82,3 @@ def save(project, task_id):
     return pillar.api.utils.jsonify(task.to_dict())
 
 
-@perproject_blueprint.route('/create', methods=['POST'])
-@flamenco_project_view()
-def create_task(project):
-    task_type = request.form['task_type']
-    parent = request.form.get('parent', None)
-
-    task = current_flamenco.task_manager.create_task(project,
-                                                    task_type=task_type,
-                                                    parent=parent)
-
-    resp = flask.make_response()
-    resp.headers['Location'] = flask.url_for('.view_task',
-                                             project_url=project['url'],
-                                             task_id=task['_id'])
-    resp.status_code = 201
-
-    return flask.make_response(flask.jsonify({'task_id': task['_id']}), 201)
-
-
-@perproject_blueprint.route('/<task_id>/activities')
-@flamenco_project_view()
-def activities(project, task_id):
-    if not request.is_xhr:
-        return flask.redirect(flask.url_for('.view_task',
-                                            project_url=project.url,
-                                            task_id=task_id))
-
-    acts = current_flamenco.activities_for_node(task_id)
-    return flask.render_template('flamenco/tasks/view_activities_embed.html',
-                                 activities=acts)

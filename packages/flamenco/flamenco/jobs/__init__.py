@@ -6,6 +6,44 @@ import pillarsdk
 from pillar import attrs_extra
 from pillar.web.system_util import pillar_api
 
+from pillarsdk.resource import List
+from pillarsdk.resource import Find
+from pillarsdk.resource import Create
+from pillarsdk.resource import Post
+from pillarsdk.resource import Update
+from pillarsdk.resource import Delete
+from pillarsdk.resource import Replace
+from pillarsdk.exceptions import ResourceNotFound
+from pillarsdk import utils as pillarsdk_utils
+from pillarsdk import Api
+
+
+class Job(List, Find, Create, Post, Update, Delete, Replace):
+    """Job class wrapping the REST nodes endpoint
+    """
+    path = 'flamenco/jobs'
+    ensure_query_projections = {'project': 1}
+
+    @classmethod
+    def find_one(cls, params, api=None):
+        """Get one resource starting from parameters different than the resource
+        id. TODO if more than one match for the query is found, raise exception.
+        """
+        api = api or Api.Default()
+
+        # Force delivery of only 1 result
+        params['max_results'] = 1
+        cls._ensure_projections(params, cls.ensure_query_projections)
+        url = pillarsdk_utils.join_url_params(cls.path, params)
+
+        response = api.get(url)
+        # Keep the response a dictionary, and cast it later into an object.
+        if response['_items']:
+            item = pillarsdk_utils.convert_datetime(response['_items'][0])
+            return cls(item)
+        else:
+            raise ResourceNotFound(response)
+
 
 @attr.s
 class JobManager(object):
