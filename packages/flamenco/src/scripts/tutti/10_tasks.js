@@ -168,7 +168,7 @@ function job_save(job_id, job_url) {
             $('.job-name-' + saved_job._id).text(saved_job.name);
             $job
                 .removeClassPrefix('status-')
-                .addClass('status-' + saved_job.properties.status)
+                .addClass('status-' + saved_job.status)
                 .flashOnce()
             ;
             job_open(job_id);

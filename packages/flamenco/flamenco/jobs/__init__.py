@@ -84,7 +84,7 @@ class JobManager(object):
         job._etag = fields.pop('_etag')
         job.name = fields.pop('name')
         job.description = fields.pop('description')
-        job.properties.status = fields.pop('status')
+        job.status = fields.pop('status')
         job.properties.job_type = fields.pop('job_type', '').strip() or None
 
         users = fields.pop('users', None)
