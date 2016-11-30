@@ -553,62 +553,48 @@
 		$where: ''
 
 	&.status
-		&-invalid#{$where}
+		&-queued#{$where}
 			@if ($variation == 'light')
-				#{$property}: $color-status-invalid-light
+				#{$property}: $color-status-queued-light
 			@else if ($variation == 'dark')
-				#{$property}: $color-status-invalid-dark
+				#{$property}: $color-status-queued-dark
 			@else
-				#{$property}: $color-status-invalid
-		&-todo#{$where}
+				#{$property}: $color-status-queued
+		&-canceled#{$where}
 			@if ($variation == 'light')
-				#{$property}: $color-status-todo-light
+				#{$property}: $color-status-canceled-light
 			@else if ($variation == 'dark')
-				#{$property}: $color-status-todo-dark
+				#{$property}: $color-status-canceled-dark
 			@else
-				#{$property}: $color-status-todo
-		&-in_progress#{$where}
+				#{$property}: $color-status-canceled
+		&-failed#{$where}
 			@if ($variation == 'light')
-				#{$property}: $color-status-in_progress-light
+				#{$property}: $color-status-failed-light
 			@else if ($variation == 'dark')
-				#{$property}: $color-status-in_progress-dark
+				#{$property}: $color-status-failed-dark
 			@else
-				#{$property}: $color-status-in_progress
-		&-on_hold#{$where}
+				#{$property}: $color-status-failed
+		&-processing#{$where}
 			@if ($variation == 'light')
-				#{$property}: $color-status-on_hold-light
+				#{$property}: $color-status-processing-light
 			@else if ($variation == 'dark')
-				#{$property}: $color-status-on_hold-dark
+				#{$property}: $color-status-processing-dark
 			@else
-				#{$property}: $color-status-on_hold
-		&-approved#{$where}
+				#{$property}: $color-status-processing
+		&-completed#{$where}
 			@if ($variation == 'light')
-				#{$property}: $color-status-approved-light
+				#{$property}: $color-status-completed-light
 			@else if ($variation == 'dark')
-				#{$property}: $color-status-approved-dark
+				#{$property}: $color-status-completed-dark
 			@else
-				#{$property}: $color-status-approved
-		&-cbb#{$where}
+				#{$property}: $color-status-completed
+		&-active#{$where}
 			@if ($variation == 'light')
-				#{$property}: $color-status-cbb-light
+				#{$property}: $color-status-active-light
 			@else if ($variation == 'dark')
-				#{$property}: $color-status-cbb-dark
+				#{$property}: $color-status-active-dark
 			@else
-				#{$property}: $color-status-cbb
-		&-final#{$where}
-			@if ($variation == 'light')
-				#{$property}: $color-status-final-light
-			@else if ($variation == 'dark')
-				#{$property}: $color-status-final-dark
-			@else
-				#{$property}: $color-status-final
-		&-review#{$where}
-			@if ($variation == 'light')
-				#{$property}: $color-status-review-light
-			@else if ($variation == 'dark')
-				#{$property}: $color-status-review-dark
-			@else
-				#{$property}: $color-status-review
+				#{$property}: $color-status-active
 
 =sidebar-button-active
 	background-color: $color-background-nav
