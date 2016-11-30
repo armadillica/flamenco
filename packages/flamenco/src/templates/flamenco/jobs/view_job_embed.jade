@@ -1,5 +1,5 @@
-.flamenco-box.job.with-status(class="status-{{ job.properties.status }}")
-	form#job_form(onsubmit="return job_save('{{job._id}}', '{{ url_for('flamenco.jobs.perproject.save', project_url=project['url'], job_id=job._id) }}')")
+.flamenco-box.job.with-status(class="status-{{ job.status }}")
+	form#item_form(onsubmit="return job_save('{{job._id}}', '{{ url_for('flamenco.jobs.perproject.save', project_url=project['url'], job_id=job._id) }}')")
 		input(type='hidden',name='_etag',value='{{ job._etag }}')
 		| {% if 'PUT' in job.allowed_methods %}
 		.input-group

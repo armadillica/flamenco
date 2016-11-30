@@ -10,5 +10,6 @@
 	href="#")
 		span.status-indicator
 		span.name {{ task.name }}
+		span.type {{ task.status }} - {{ task.job_type | undertitle }}
 	| {% endfor %}
 | {%- endmacro %}

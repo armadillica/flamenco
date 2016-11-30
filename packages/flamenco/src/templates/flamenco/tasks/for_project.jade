@@ -5,12 +5,12 @@
 #col_main
 	.col_header.task-list-header
 		| Tasks ({{ tasks | count }})
-		a.task-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
+		a.item-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
 		//- Dirty hack, assume a user can create a task if they can edit the project.
 		| {% if 'PUT' in project.allowed_methods %}
-		a#task-add(href="javascript:task_create(undefined, 'generic');") + Create Task
+		a#item-add(href="javascript:task_create(undefined, 'generic');") + Create Task
 		| {% endif %}
-	#task-list.col-list
+	.item-list.task.col-list.col-scrollable
 		| {% for task in tasks %}
 		//- NOTE: this is tightly linked to the JS in tasks.js, function task_add()
 		a.col-list-item.task-list-item(
@@ -23,7 +23,7 @@
 			span.shotname(title="Shot {{ task._parent_info.name }}") {{ task._parent_info.name }}
 			| {% endif %}
 			span.name {{ task.name }}
-			span.type {{ task.properties.task_type }}
+			span.status {{ task.status }}
 		| {% endfor %}
 
 .col-splitter

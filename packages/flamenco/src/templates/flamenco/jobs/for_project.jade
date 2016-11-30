@@ -3,44 +3,56 @@
 | {% block page_title %}Jobs - {{ project.name }}{% endblock %}
 | {% block body %}
 #col_main
-	.col_header.task-list-header
+	.col_header.item-list-header
 		span(title='In the edit') {{ stats.nr_of_jobs }} jobs | {{ stats.total_frame_count }} frames
-		a.task-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
+		a.item-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
 
-		| {# Not allowed for the moment. Jobs are added via the Sequencer
-		a#task-add(href="javascript:job_create('{{ project.url }}');") + Create Shot
-		| #}
-
-	#job-list
+	.item-list.col-scrollable
 		.table
 			.table-head
 				.table-row
-					.table-cell.job-status
-					.table-cell.job-thumbnail
+					.table-cell.item-status
+					.table-cell.item-thumbnail
 						span.collapser.thumbnails(title="Collapse thumbnails") Thumbnail
-					.table-cell.job-name
+					.table-cell.item-name
 						span.collapser(title="Collapse name column") Name
+					.table-cell.item-progress
+						span.collapser(title="Collapse progress column") Progress
+					.table-cell.item-priority
+						span.collapser(title="Collapse priority column") Priority
 
 			.table-body.has-thumbnails
 				| {% for job in jobs %}
 				.table-row(
 					id="job-{{ job._id }}",
-					class="status-{{ job.properties.status }} }}")
-					.table-cell.job-status
-					.table-cell.job-thumbnail
-						a(
-							data-job-id="{{ job._id }}",
+					class="status-{{ job.status }}")
+					.table-cell.item-status
+					.table-cell.item-thumbnail
+						a(data-job-id="{{ job._id }}",
 							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}",
-							class="status-{{ job.properties.status }} job-link")
+							class="status-{{ job.status }} job-link")
+							| {% if job._thumbnail %}
 							img(src="{{ job._thumbnail }}",
 								alt="Thumbnail",
 								style='width: 110px; height: {{ job._thumbnail_height }}')
-					.table-cell.job-name
-						a(
-							data-job-id="{{ job._id }}",
+							| {% else %}
+							img(src="{{ url_for('static_flamenco', filename='assets/img/placeholder.jpg') }}",
+								alt="Thumbnail",
+								style='width: 110px; height: 26px')
+							| {% endif %}
+					.table-cell.item-name
+						a(data-job-id="{{ job._id }}",
 							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}",
-							class="status-{{ job.properties.status }} job-link")
+							class="job-link")
 							span(class="job-name-{{ job._id }}") {{ job.name }}
+					.table-cell.item-progress
+						a(data-job-id="{{ job._id }}",
+							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}")
+							span(class="job-progress-{{ job._id }}") 99%
+					.table-cell.item-priority
+						a(data-job-id="{{ job._id }}",
+							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}")
+							span(class="job-priority-{{ job._id }}") {{ job.priority }}
 				| {% endfor %}
 
 .col-splitter
@@ -51,7 +63,7 @@
 		#status-bar
 	#item-details
 		.item-details-empty
-			| Select a Shot or Job
+			| Select a Job
 			| {{ open_job_id }}
 
 | {% endblock %}
