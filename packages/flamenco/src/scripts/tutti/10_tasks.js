@@ -16,12 +16,12 @@ function item_open(item_id, item_type, pushState, project_url)
 
     $('#col_right .col_header span.header_text').text(item_type + ' details');
 
-    // Style elements starting with item_type and dash, e.g. "#shot-uuid"
+    // Style elements starting with item_type and dash, e.g. "#job-uuid"
     $('[id^="' + item_type + '-"]').removeClass('active');
     $('#' + item_type + '-' + item_id).addClass('active');
 
-    // Special case to highlight the job row when opening task in shot context
-    if (ProjectUtils.context() == 'shot' && item_type == 'task'){
+    // Special case to highlight the job row when opening task in job context
+    if (ProjectUtils.context() == 'job' && item_type == 'task'){
         $('[id^="job-"]').removeClass('active');
         $('#task-' + item_id).closest('.table-row').addClass('active');
     }
@@ -75,10 +75,6 @@ function job_open(job_id, project_url)
     item_open(job_id, 'job', true, project_url);
 }
 
-function shot_open(job_id)
-{
-    item_open(job_id, 'shot');
-}
 
 window.onpopstate = function(event)
 {
@@ -102,8 +98,8 @@ function job_create(project_url)
         project_url: project_url
     };
 
-    $.post(url, data, function(shot_data) {
-        shot_open(shot_data.job_id);
+    $.post(url, data, function(job_data) {
+        job_open(job_data.job_id);
     })
     .fail(function(xhr) {
         if (console) {
@@ -229,7 +225,7 @@ $(function() {
         // delegateTarget is the thing the event hander was attached to,
         // rather than the thing we clicked on.
         var job_id = e.delegateTarget.dataset.jobId;
-        shot_open(job_id);
+        job_open(job_id);
     });
 
     $("a.task-link[data-task-id]").click(function(e) {

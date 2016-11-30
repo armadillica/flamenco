@@ -31,7 +31,7 @@
 							i.pi-clipboard-copy
 							| Copy Shortcode for SVN Commits to Clipboard
 					| {% endif %}
-					| {% if flamenco_context != 'shot' and task.parent %}
+					| {% if flamenco_context != 'job' and task.parent %}
 					li
 						a(href="{{ url_for('flamenco.jobs.perproject.with_task', project_url=project['url'], task_id=task['_id']) }}")
 							i.pi-film-thick
@@ -108,7 +108,7 @@
 					.table-cell Status
 					.table-cell(class="status-{{ task.properties.status }}")
 						| {{ task.properties.status | undertitle }}
-				| {% if flamenco_context != 'shot' and task._parent_info %}
+				| {% if flamenco_context != 'job' and task._parent_info %}
 				.table-row
 					.table-cell Shot
 					.table-cell
@@ -146,7 +146,7 @@
 script.
 	$("#assignees").select2();
 
-	if (ProjectUtils.context() == 'shot'){
+	if (ProjectUtils.context() == 'job'){
 		$('.field-type').hide();
 	}
 
