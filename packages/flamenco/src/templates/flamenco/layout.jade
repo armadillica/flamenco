@@ -36,16 +36,16 @@ html(lang="en")
 								i.pi-flamenco
 						| {% if project %}
 						li
+							a.navbar-item.jobs(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}",
+							title='Jobs for project {{ project.name }}') J
+						li
 							a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.perproject.index', project_url=project.url) }}",
 								title='Tasks for project {{ project.name }}') T
-						li
-							a.navbar-item.jobs(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}",
-								title='Jobs for project {{ project.name }}') S
 						| {% else %}
 						| {% if current_user.is_authenticated %}
 						li
-							a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.index') }}",
-								title='Your tasks') T
+							a.navbar-item.tasks(href="{{ url_for('flamenco.jobs.index') }}",
+								title='All jobs') J
 						| {% endif %}
 						| {% endif %}
 
