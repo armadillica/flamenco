@@ -23,6 +23,8 @@ def generate_tasks():
     - Query by manager and job_type (sort by priority and creation date)
     - TODO: allow multiple tasks to be requested
     - Optionally handle the 'worker' arg
+
+    This is an API endpoint, so we interface directly with the database.
     """
 
     job_type = request.args.get('job_type', None)
