@@ -546,7 +546,7 @@ def register():
     # Chunk Size
     wm.flamenco_chunkSize = IntProperty(
         name="Chunk Size",
-        description="Number of chunks in which the render will be divided.",
+        description="Number of chunks in which the render will be divided",
         default=5,
         soft_min=1,
         options={'HIDDEN', 'SKIP_SAVE'})
@@ -561,7 +561,7 @@ def register():
     # Priority
     wm.flamenco_priority = IntProperty(
         name="Priority",
-        description="A value between 0 and 100. The closer to 100, the higher the priority.",
+        description="A value between 0 and 100. The closer to 100, the higher the priority",
         default=50,
         soft_min=0,
         soft_max=100,
@@ -569,41 +569,41 @@ def register():
     # Start Job
     wm.flamenco_startJob = BoolProperty(
         name="Start Job",
-        description="As soon the file is sent to the server, the job will be started.",
+        description="As soon the file is sent to the server, the job will be started",
         options={'HIDDEN', 'SKIP_SAVE'})
     # Send Packed file
     wm.flamenco_submit_archive = BoolProperty(
         name="Send Packed File",
         description="If unchecked, the file will be BAM packed, but not sent to the server. \
-This will have to be done by hand.",
+This will have to be done by hand",
         options={'HIDDEN', 'SKIP_SAVE'},
         default=True)
     # Pack Alembic Caches
     wm.flamenco_pack_alembic_caches = BoolProperty(
         name="Pack Alembic Caches",
         description="If checked, .abc caches will be added to the bam archive. \
-This can generate very large files.",
+This can generate very large files",
         options={'HIDDEN', 'SKIP_SAVE'},
         default=False)
     # Pack EXR files
     wm.flamenco_pack_exr_sequences = BoolProperty(
         name="Pack EXR sequences",
         description="If checked, .exr image sequences will be included in the bam archive. \
-This can generate very large files.",
+This can generate very large files",
         options={'HIDDEN', 'SKIP_SAVE'},
         default=False)
     # Pack movie files
     wm.flamenco_pack_movie_files = BoolProperty(
         name="Pack movie files",
         description="If checked, .mov and .avi files will be included in the bam archive. \
-This can generate very large files.",
+This can generate very large files",
         options={'HIDDEN', 'SKIP_SAVE'},
         default=False)
     # Pack movie files
     wm.flamenco_pack_audio_files = BoolProperty(
         name="Pack audio files",
         description="If checked, .wav and .mp3 files will be included in the bam archive. \
-    This can generate very large files.",
+    This can generate very large files",
         options={'HIDDEN', 'SKIP_SAVE'},
         default=False)
 
