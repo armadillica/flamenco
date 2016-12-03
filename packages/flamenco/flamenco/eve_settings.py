@@ -51,6 +51,7 @@ jobs_schema = {
     },
     'project': {
         'type': 'objectid',
+        'required': True,
         'data_relation': {
             'resource': 'projects',
             'field': '_id',
@@ -127,6 +128,15 @@ tasks_schema = {
         'type': 'objectid',
         'data_relation': {
             'resource': 'managers',
+            'field': '_id',
+            'embeddable': True
+        },
+    },
+    'user': {
+        'type': 'objectid',
+        'required': True,
+        'data_relation': {
+            'resource': 'users',
             'field': '_id',
             'embeddable': True
         },
