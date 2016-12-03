@@ -49,27 +49,6 @@ class Job(List, Find, Create, Post, Update, Delete, Replace):
 class JobManager(object):
     _log = attrs_extra.log('%s.JobManager' % __name__)
 
-    def create_job(self, project, job_type):
-        """Creates a new job, owned by the current user.
-
-        :rtype: pillarsdk.Node
-        """
-
-        api = pillar_api()
-
-        job = dict(
-            name='New job',
-            job_type=job_type,
-            project=project['_id'],
-            user=flask_login.current_user.objectid,
-            settings={},
-        )
-
-        job = pillarsdk.Resource(job)
-        job.path = 'flamenco/jobs'
-        job.create(api=api)
-        return job
-
     def edit_job(self, job_id, **fields):
         """Edits a job.
 

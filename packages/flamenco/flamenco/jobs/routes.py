@@ -95,22 +95,3 @@ def save(project, job_id):
     job = current_flamenco.job_manager.edit_job(job_id, **job_dict)
 
     return pillar.api.utils.jsonify(job.to_dict())
-
-
-@perproject_blueprint.route('/create', methods=['POST'])
-@flamenco_project_view()
-def create_job(project):
-    job_type = request.form['job_type']
-    parent = request.form.get('parent', None)
-
-    job = current_flamenco.job_manager.create_job(project,
-                                                  job_type=job_type,
-                                                  parent=parent)
-
-    resp = flask.make_response()
-    resp.headers['Location'] = flask.url_for('.view_job',
-                                             project_url=project['url'],
-                                             job_id=job['_id'])
-    resp.status_code = 201
-
-    return flask.make_response(flask.jsonify({'job_id': job['_id']}), 201)
