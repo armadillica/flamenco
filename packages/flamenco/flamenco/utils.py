@@ -1,5 +1,9 @@
 def frame_range_parse(frame_range=None):
     """Given a range of frames, return a list containing each frame.
+
+    :type frame_range: str
+    :rtype: list
+
     :Example:
     >>> frames = "1,3-5,8"
     >>> frame_range_parse(frames)
@@ -27,6 +31,10 @@ def frame_range_parse(frame_range=None):
 
 def frame_range_merge(frames_list=None):
     """Given a frames list, merge them and return them as range of frames.
+
+    :type frames_list: list
+    :rtype: str
+
     :Example:
     >>> frames = [1, 3, 4, 5, 8]
     >>> frame_range_merge(frames)
