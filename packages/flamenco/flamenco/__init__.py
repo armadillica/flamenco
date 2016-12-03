@@ -116,11 +116,14 @@ class FlamencoExtension(PillarExtension):
 
         return projects
 
-    def is_flamenco_project(self, project):
+    def is_flamenco_project(self, project, test_extension_props=True):
         """Returns whether the project is set up for Flamenco.
 
         Requires Flamenco extension properties.
         """
+
+        if not test_extension_props:
+            return True
 
         try:
             pprops = project.extension_props[EXTENSION_NAME]

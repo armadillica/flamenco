@@ -49,3 +49,16 @@ class TaskManager(object):
             payload['where']['status'] = status
         tasks = Task.all(payload, api=api)
         return tasks
+
+    def tasks_for_project(self, project_id):
+        """Returns the tasks for the given project.
+
+        :returns: {'_items': [task, task, ...], '_meta': {Eve metadata}}
+        """
+
+        api = pillar_api()
+        tasks = Task.all({
+            'where': {
+                'project': project_id,
+            }}, api=api)
+        return tasks

@@ -93,7 +93,6 @@ def flamenco_project_view(extra_project_projections=None, extension_props=False)
     projections = {
         '_id': 1,
         'name': 1,
-        'node_types': 1,
         # We don't need this here, but this way the wrapped function has access
         # to the orignal URL passed to it.
         'url': 1,
@@ -120,7 +119,7 @@ def flamenco_project_view(extra_project_projections=None, extension_props=False)
                 api=api)
 
             is_flamenco = current_flamenco.is_flamenco_project(
-                project)
+                project, test_extension_props=extension_props)
             if not is_flamenco:
                 return error_project_not_setup_for_flamenco()
 
