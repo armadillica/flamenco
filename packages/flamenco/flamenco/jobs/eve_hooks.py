@@ -62,7 +62,4 @@ def before_returning_job_permissions(response):
 def setup_app(app):
     app.on_inserted_jobs = after_inserting_jobs
     app.on_fetched_item_jobs += before_returning_job_permissions
-    # app.on_fetched_resource_projects += hooks.before_returning_project_resource_permissions
-    # app.on_fetched_item_projects += hooks.project_node_type_has_method
-    # app.on_fetched_resource_projects += hooks.projects_node_type_has_method
 
