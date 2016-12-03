@@ -1,6 +1,7 @@
 """Job management."""
 
 import attr
+import collections
 import flask_login
 import pillarsdk
 from pillar import attrs_extra
@@ -16,6 +17,38 @@ from pillarsdk.resource import Replace
 from pillarsdk.exceptions import ResourceNotFound
 from pillarsdk import utils as pillarsdk_utils
 from pillarsdk import Api
+
+
+class ProjectSummary(object):
+    """Summary of the jobs in a project."""
+
+    def __init__(self):
+        self._counts = collections.defaultdict(int)
+        self._total = 0
+
+    def count(self, status):
+        self._counts[status] += 1
+        self._total += 1
+
+    def percentages(self):
+        """Generator, yields (status, percentage) tuples.
+
+        The percentage is on a 0-100 scale.
+        """
+
+        remaining = 100
+        last_index = len(self._counts) - 1
+
+        for idx, status in enumerate(sorted(self._counts.keys())):
+            if idx == last_index:
+                yield (status, remaining)
+                continue
+
+            perc = float(self._counts[status]) / self._total
+            whole_perc = int(round(perc * 100))
+            remaining -= whole_perc
+
+            yield (status, whole_perc)
 
 
 class Job(List, Find, Create, Post, Update, Delete, Replace):
@@ -119,6 +152,35 @@ class JobManager(object):
                 'project': project_id,
             }}, api=api)
         return j
+
+    def job_status_summary(self, project_id):
+        """Returns number of shots per shot status for the given project.
+
+                :rtype: ProjectSummary
+                """
+
+        api = pillar_api()
+
+        # TODO: turn this into an aggregation call to do the counting on
+        # MongoDB.
+        jobs = Job.all({
+            'where': {
+                'project': project_id,
+            },
+            'projection': {
+                'status': 1,
+            },
+            'order': [
+                ('status', 1),
+            ],
+        }, api=api)
+
+        # FIXME: this breaks when we hit the pagination limit.
+        summary = ProjectSummary()
+        for job in jobs['_items']:
+            summary.count(job['status'])
+
+        return summary
 
 
 def setup_app(app):

@@ -37,3 +37,15 @@ class TaskManager(object):
             payload['where']['status'] = status
         tasks = Task.all(payload, api=api)
         return tasks
+
+    def tasks_for_user(self, user_id, status=None, page=1):
+        self._log.info('Fetching task for user %s', user_id)
+        api = pillar_api()
+        payload = {
+            'where': {
+                'user': user_id,
+            }}
+        if status:
+            payload['where']['status'] = status
+        tasks = Task.all(payload, api=api)
+        return tasks
