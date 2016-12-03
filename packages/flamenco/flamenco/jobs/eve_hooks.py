@@ -37,12 +37,13 @@ def create_tasks(job):
 def create_task(job, commands, name, parents=None):
     task = {
         'job': job['_id'],
+        'manager': job['manager'],
+        'user': job['user'],
         'name': name,
+        'status': 'queued',
         'job_type': job['job_type'],
         'commands': commands,
-        'status': 'queued',
         'priority': job['priority'],
-        'manager': job['manager'],
     }
     # Insertion of None parents is not supported
     if parents:
