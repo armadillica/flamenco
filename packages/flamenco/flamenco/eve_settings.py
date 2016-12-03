@@ -3,16 +3,31 @@ managers_schema = {
         'type': 'string',
         'required': True,
     },
+    # Short description of the manager
     'description': {
         'type': 'string',
     },
+    # Used in the interface, should be a web address for a picture or logo
+    # representing the manager
     'picture': {
         'type': 'string',
     },
+    # Full web address of the host. Use for internal queries about status of
+    # workders or other operations.
     'host': {
         'type': 'string',
         'required': True
-    }
+    },
+    # The jobs supported by the manager. This means that the manager has a task
+    # compiler capable of handling the tasks provided by the server so that
+    # the workers can understand them. Both server and manager need to agree
+    # on how a job type looks like (in terms of tasks).
+    'job_types': {
+        'type': 'list',
+        'schema': {
+            'type': 'string'
+        }
+    },
     # TODO: add user so that we can authenticate the manager itself. The user
     # will be of type 'service', 'flamenco_manager'. The user will be part of
     # a group together with the users of the project it's used it. A sparate
