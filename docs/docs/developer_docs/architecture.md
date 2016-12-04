@@ -1,5 +1,5 @@
 
-# System Architecture
+# System architecture
 
 
 The Flamenco architecture is based on the following scheme.
