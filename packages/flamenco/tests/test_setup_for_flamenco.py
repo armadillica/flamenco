@@ -1,5 +1,5 @@
 import pillar.tests.common_test_data as ctd
-from abstract_flamenco_test import AbstractFlamencoTest, MOCK_SVN_URL
+from abstract_flamenco_test import AbstractFlamencoTest
 
 
 class TaskWorkflowTest(AbstractFlamencoTest):
@@ -18,7 +18,6 @@ class TaskWorkflowTest(AbstractFlamencoTest):
             project = proj_coll.find_one({'_id': self.project_id})
             aprops = project['extension_props']['flamenco']
             self.assertIsInstance(aprops, dict)
-            self.assertEqual(MOCK_SVN_URL, aprops['svn_url'])
 
     def test_saving_api(self):
         """Ensures that Eve accepts an Flamenco project as valid."""
