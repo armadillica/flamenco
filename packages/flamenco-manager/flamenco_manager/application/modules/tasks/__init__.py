@@ -221,10 +221,13 @@ class TaskManagementApi(Resource):
             'http://pillar:5000/flamenco',
             '/scheduler/tasks'
         )
-        r = requests.get(tasks_url)
-        task = r.json()
-        if not task:
+
+        response = requests.get(tasks_url)
+
+        if response.status_code == 404:
             return abort(404)
+
+        task = response.json()
         return task
 
     #@marshal_with(task_fields)
