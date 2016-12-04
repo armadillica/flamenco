@@ -11,6 +11,8 @@ venv/
 *.log
 *.ropeproject*
 config_local.py
+docs/site/
+
 /flamenco/config.py
 /flamenco/server/application/config.py
 /flamenco/manager/application/config.py
