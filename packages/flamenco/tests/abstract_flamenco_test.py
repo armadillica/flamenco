@@ -13,10 +13,12 @@ class AbstractFlamencoTest(AbstractPillarTest):
     pillar_server_class = FlamencoTestServer
 
     def tearDown(self):
-
         self.unload_modules('flamenco')
-
         AbstractPillarTest.tearDown(self)
+
+    @property
+    def flamenco(self):
+        return self.app.pillar_extensions['flamenco']
 
     def ensure_project_exists(self, project_overrides=None):
         from flamenco.setup import setup_for_flamenco
