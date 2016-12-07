@@ -1,3 +1,19 @@
+_os_var_schema = {
+    # TODO: Turn this name into the key of a dict
+    'name': {
+        'type': 'string',
+    },
+    'linux': {
+        'type': 'string'
+    },
+    'darwin': {
+        'type': 'string'
+    },
+    'win': {
+        'type': 'string'
+    }
+}
+
 managers_schema = {
     'name': {
         'type': 'string',
@@ -25,7 +41,26 @@ managers_schema = {
     'job_types': {
         'type': 'list',
         'schema': {
-            'type': 'string'
+            'type': 'dict',
+            'schema': {
+                # TODO: Turn this name into the key of a dict
+                'name': {
+                    'type': 'string',
+                    'required': True,
+                },
+                'vars': {
+                    'type': 'list',
+                    'schema': {
+                        'type': 'dict',
+                        'schema': _os_var_schema
+                    }
+                },
+                # This is used to dynamically generate the interface form for
+                # submitting a new job.
+                'settings_schema': {
+                    'type': 'dict',
+                }
+            }
         }
     },
     # TODO: add user so that we can authenticate the manager itself. The user
