@@ -19,7 +19,25 @@ The Manager collection on Flamenco Server will store all manager configuration. 
 					'linux': '/render',
 					'darwin': '/Volumes/render',
 				}
-			]
+			],
+			'settings_schema': {
+				'frames': {
+					'type': 'string',
+					# '1-20,21,25-30'
+				},
+				'chunk_size': {
+					'type': 'integer',
+					# 5
+				},
+				'filepath': {
+					'type': 'string',
+					# '/shared/shot1.blend'
+				},
+				'render_output': {
+					'type': 'string',
+					# '{render}/shot1/'
+				}
+			}
 		}
 	]
 }
