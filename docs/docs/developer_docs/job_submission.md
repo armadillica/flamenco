@@ -3,26 +3,47 @@
 
 The Manager collection on Flamenco Server will store all manager configuration. This will be queried by manager on demand.
 
+```
+{
+	'job_types': [
+		{
+			'name': 'blender_resumable_render',
+			'vars': [
+				{
+					'name': 'blender',
+					'linux': '/shared/software/blender',
+					'darwin': '/Volumes/shared/software/blender',
+				},
+				{
+					'name': 'render',
+					'linux': '/render',
+					'darwin': '/Volumes/render',
+				}
+			]
+		}
+	]
+}
+```
+
+In the future, the model will evolve to the following:
 
 ```
 {
 	'job_types': {
 		'blender_resumable_render':{
-			'commands': {
-				'blender' : {
-					'linux': '/dalai/blender',
-				}
+			'blender': {
+				'linux': '/shared/software/blender',
+				'darwin': '/Volumes/shared/software/blender',
 			},
-			'paths' {
-				'shared': {
-					'linux': '/shared',
-					'osx': '/Volumes/shared',
-				}
+			'render': {
+				'linux': '/render',
+				'darwin': '/Volumes/render',
 			}
 		}
 	}
 }
 ```
+
 
 This allows us to provide extra info about a job, once we create it via the client (Blender Cloud add-on).
 
