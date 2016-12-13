@@ -61,3 +61,17 @@ def frame_range_merge(frames_list=None):
     else:
         ranges.append("{0}-{1}".format(start_frame, current_frame))
     return ",".join(ranges)
+
+
+def iter_frame_range(merged_frame_range, chunk_size):
+    """Generator, iterates over frame chunks.
+
+    Yields lists of frame numbers. Each except the last list is exactly
+    'chunk_size' frame numbers long.
+    """
+
+    parsed_frames = frame_range_parse(merged_frame_range)
+
+    for chunk_start in range(0, len(parsed_frames), chunk_size):
+        chunk_frames = parsed_frames[chunk_start:chunk_start + chunk_size]
+        yield chunk_frames
