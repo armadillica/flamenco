@@ -1,18 +1,3 @@
-_os_var_schema = {
-    # TODO: Turn this name into the key of a dict
-    'name': {
-        'type': 'string',
-    },
-    'linux': {
-        'type': 'string'
-    },
-    'darwin': {
-        'type': 'string'
-    },
-    'win': {
-        'type': 'string'
-    }
-}
 
 managers_schema = {
     'name': {
@@ -39,20 +24,27 @@ managers_schema = {
     # the workers can understand them. Both server and manager need to agree
     # on how a job type looks like (in terms of tasks).
     'job_types': {
-        'type': 'list',
-        'schema': {
+        'type': 'dict',
+        # TODO: will be renamed to 'keyschema' in Cerberus 1.0
+        'propertyschema': {  # name of the job type
+            'type': 'string',
+        },
+        'valueschema': {  # configuration of the job type
             'type': 'dict',
             'schema': {
-                # TODO: Turn this name into the key of a dict
-                'name': {
-                    'type': 'string',
-                    'required': True,
-                },
                 'vars': {
-                    'type': 'list',
-                    'schema': {
+                    'type': 'dict',
+                    # TODO: will be renamed to 'keyschema' in Cerberus 1.0
+                    'propertyschema': {  # name of the variable
+                        'type': 'string',
+                    },
+                    'valueschema': {  # variable values for different platforms.
                         'type': 'dict',
-                        'schema': _os_var_schema
+                        'schema': {
+                            'linux': {'type': 'string'},
+                            'darwin': {'type': 'string'},
+                            'win': {'type': 'string'},
+                        }
                     }
                 },
                 # This is used to dynamically generate the interface form for
