@@ -13,16 +13,16 @@ def after_inserting_jobs(jobs):
     for job in jobs:
         # Prepare storage dir for the job files?
         # Generate tasks
-        log.debug('Generating tasks for job {}'.format(job['_id']))
+        log.info('Generating tasks for job {}'.format(job['_id']))
         job_compilers.compile_job(job)
 
 
 def before_returning_job_permissions(response):
     # Run validation process, since GET on nodes entry point is public
-    check_permissions('flamenco.jobs', response, 'GET',
+    check_permissions('flamenco_jobs', response, 'GET',
                       append_allowed_methods=True)
 
 
 def setup_app(app):
-    app.on_inserted_jobs = after_inserting_jobs
-    app.on_fetched_item_jobs += before_returning_job_permissions
+    app.on_inserted_flamenco_jobs = after_inserting_jobs
+    app.on_fetched_item_flamenco_jobs += before_returning_job_permissions

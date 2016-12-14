@@ -36,11 +36,11 @@ class TaskManagerTest(AbstractFlamencoTest):
 
         # Now test the database contents.
         with self.app.test_request_context():
-            tests_coll = self.flamenco.db('tasks')
-            dbtasks = list(tests_coll.find())
-            self.assertEqual(1, len(dbtasks))
+            tasks_coll = self.flamenco.db('tasks')
+            dbtasks = list(tasks_coll.find())
+            self.assertEqual(3, len(dbtasks))  # 2 of compiled job + the one we added after.
 
-            dbtask = dbtasks[0]
+            dbtask = dbtasks[-1]
 
             self.assertEqual({
                 u'name': u'echo',

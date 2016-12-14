@@ -53,7 +53,7 @@ class TaskManager(object):
         self._log.info('Creating task %s for manager %s, user %s',
                        name, job['manager'], job['user'])
 
-        r, _, _, status = post_internal('flamenco.tasks', task)
+        r, _, _, status = post_internal('flamenco_tasks', task)
         if status != 201:
             self._log.error('Error %i creating task %s: %s',
                             status, task, r)

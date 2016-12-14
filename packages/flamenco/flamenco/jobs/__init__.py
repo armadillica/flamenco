@@ -81,7 +81,7 @@ class JobManager(object):
         self._log.info('Creating job %r for user %s and manager %s',
                        job_name, user_id, manager_id)
 
-        r, _, _, status = post_internal('flamenco.jobs', job)
+        r, _, _, status = post_internal('flamenco_jobs', job)
         if status != 201:
             self._log.error('Status should be 201, not %i: %s' % (status, r))
             raise ValueError('Unable to create Flamenco job, status code %i' % status)

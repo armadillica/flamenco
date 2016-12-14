@@ -150,7 +150,7 @@ class FlamencoExtension(PillarExtension):
 
     def db(self, collection_name):
         """Returns a Flamenco-specific MongoDB collection."""
-        return flask.current_app.db()['flamenco.%s' % collection_name]
+        return flask.current_app.db()['flamenco_%s' % collection_name]
 
     def link_for_activity(self, act):
         """Returns the URL for the activity.

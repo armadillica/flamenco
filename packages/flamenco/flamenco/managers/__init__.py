@@ -47,7 +47,7 @@ class ManagerManager(object):
         else:
             self._log.info('Creating manager %r', name)
 
-        r, _, _, status = post_internal('flamenco.managers', mngr_doc)
+        r, _, _, status = post_internal('flamenco_managers', mngr_doc)
         if status != 201:
             self._log.error('Status should be 201, not %i: %s' % (status, r))
             raise ValueError('Unable to create Flamenco manager, status code %i' % status)

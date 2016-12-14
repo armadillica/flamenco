@@ -1,5 +1,5 @@
 import logging
-from flask import Blueprint, current_app, abort, request
+from flask import Blueprint, abort, request
 from eve.methods.put import put_internal
 from pillar.api.utils import jsonify, remove_private_keys
 
@@ -27,10 +27,13 @@ def schedule_tasks():
     This is an API endpoint, so we interface directly with the database.
     """
 
+    from flamenco import current_flamenco
+
     # TODO: LOGGING!
 
     job_type = request.args.get('job_type', None)
-    tasks = current_app.db()['flamenco.tasks']
+    tasks = current_flamenco.db('tasks')
+
     payload = {'status': 'queued'}
     if job_type:
         payload['job_type'] = job_type
@@ -41,7 +44,7 @@ def schedule_tasks():
     task_id = task['_id']
 
     task['status'] = 'processing'
-    r, _, _, status = put_internal('tasks', remove_private_keys(task),
+    r, _, _, status = put_internal('flamenco_tasks', remove_private_keys(task),
                                    _id=task_id)
     task.update(r)
     resp = jsonify(task, status=status)
