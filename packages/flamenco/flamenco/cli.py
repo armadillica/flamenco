@@ -40,7 +40,8 @@ def create_manager(email, name, description):
     mngr_doc = flamenco.current_flamenco.manager_manager.create_manager(name, description)
     manager_id = mngr_doc['_id']
 
-    log.info('Created a new manager:\n%s', dumps(mngr_doc, indent=4))
+    print('Created a new manager:')
+    print(dumps(mngr_doc, indent=4))
 
     service_name = u'flamenco_manager'
 
