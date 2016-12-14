@@ -100,7 +100,7 @@ jobs_schema = {
     'manager': {
         'type': 'objectid',
         'data_relation': {
-            'resource': 'managers',
+            'resource': 'flamenco.managers',
             'field': '_id',
             'embeddable': True
         },
@@ -146,7 +146,7 @@ tasks_schema = {
     'job': {
         'type': 'objectid',
         'data_relation': {
-            'resource': 'jobs',
+            'resource': 'flamenco.jobs',
             'field': '_id',
             'embeddable': True
         },
@@ -154,7 +154,7 @@ tasks_schema = {
     'manager': {
         'type': 'objectid',
         'data_relation': {
-            'resource': 'managers',
+            'resource': 'flamenco.managers',
             'field': '_id',
             'embeddable': True
         },
@@ -226,7 +226,7 @@ tasks_schema = {
         'schema': {
             'type': 'objectid',
             'data_relation': {
-                'resource': 'tasks',
+                'resource': 'flamenco.tasks',
                 'field': '_id',
                 'embeddable': True
             }
@@ -252,7 +252,7 @@ _tasks = {
 }
 
 DOMAIN = {
-    'managers': _managers,
-    'jobs': _jobs,
-    'tasks': _tasks
+    'flamenco.managers': _managers,
+    'flamenco.jobs': _jobs,
+    'flamenco.tasks': _tasks
 }
