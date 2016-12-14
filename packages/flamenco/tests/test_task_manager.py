@@ -15,7 +15,7 @@ class TaskManagerTest(AbstractFlamencoTest):
             job_doc = self.jmngr.api_create_job(
                 'test job',
                 u'Wörk wørk w°rk.',
-                'sleep_simple', {
+                'sleep', {
                     'frames': '12-18, 20-22',
                     'chunk_size': 7,
                     'time_in_seconds': 3,

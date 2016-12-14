@@ -13,7 +13,7 @@ def register_compiler(job_type):
 
 
 # Import subpackages to register the compilers
-from . import sleep_simple
+from . import sleep
 
 
 def compile_job(job):

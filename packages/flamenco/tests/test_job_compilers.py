@@ -7,7 +7,7 @@ from bson import ObjectId
 
 class SleepSimpleTest(unittest.TestCase):
     def test_job_compilation(self):
-        from flamenco.job_compilers import sleep_simple, commands
+        from flamenco.job_compilers import sleep, commands
 
         job_doc = {
             '_id': ObjectId(24 * 'f'),
@@ -18,7 +18,7 @@ class SleepSimpleTest(unittest.TestCase):
             }
         }
         task_manager = mock.Mock()
-        compiler = sleep_simple.SleepSimple(task_manager=task_manager)
+        compiler = sleep.Sleep(task_manager=task_manager)
         compiler.compile(job_doc)
 
         task_manager.api_create_task.assert_has_calls([

@@ -3,7 +3,7 @@ from . import commands, register_compiler
 
 
 @register_compiler('sleep')
-class SleepSimple(AbstractJobCompiler):
+class Sleep(AbstractJobCompiler):
     """Sleeps for N seconds for each frame chunk."""
 
     def compile(self, job):
@@ -23,4 +23,4 @@ class SleepSimple(AbstractJobCompiler):
             self.task_manager.api_create_task(job, task_cmds, name)
             task_count += 1
 
-        self._log.info('Created %i tasks for job %s', job['_id'])
+        self._log.info('Created %i tasks for job %s', task_count, job['_id'])

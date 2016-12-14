@@ -36,7 +36,7 @@ class ManagerManager(object):
             'name': name,
             'description': description,
             'job_types': {
-                'sleep_simple': {
+                'sleep': {
                     'vars': {}
                 }
             },
