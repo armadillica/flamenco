@@ -6,12 +6,14 @@
 .DS_Store
 *.sqlite
 .idea
-/temp/*
+/temp/
 venv/
 *.log
 *.ropeproject*
 config_local.py
 docs/site/
+
+/.cache/
 
 /flamenco/config.py
 /flamenco/server/application/config.py
@@ -20,8 +22,8 @@ docs/site/
 /flamenco/worker/application/config.py
 
 /flamenco/server/render
-/flamenco/manager/application/static/storage/*
-/flamenco/server/application/static/storage/*
+/flamenco/manager/application/static/storage/
+/flamenco/server/application/static/storage/
 
 /flamenco/dashboard/application/static/css/main.css
 /flamenco/dashboard/node_modules/
