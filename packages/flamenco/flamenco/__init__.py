@@ -1,13 +1,9 @@
 import logging
+import os.path
 
 import flask
 from werkzeug.local import LocalProxy
 from pillar.extension import PillarExtension
-import pillar.web.subquery
-from pillar.web.system_util import pillar_api
-from pillar.web.nodes.routes import url_for_node
-
-import pillarsdk
 
 import flamenco.jobs
 import flamenco.tasks
@@ -78,12 +74,10 @@ class FlamencoExtension(PillarExtension):
 
     @property
     def template_path(self):
-        import os.path
         return os.path.join(os.path.dirname(__file__), 'templates')
 
     @property
     def static_path(self):
-        import os.path
         return os.path.join(os.path.dirname(__file__), 'static')
 
     def setup_app(self, app):
@@ -150,6 +144,10 @@ class FlamencoExtension(PillarExtension):
         return ''
         # return flask.render_template('flamenco/sidebar.html',
         #                              project=project)
+
+    def db(self, collection_name):
+        """Returns a Flamenco-specific MongoDB collection."""
+        return flask.current_app.db()['flamenco.%s' % collection_name]
 
 
 def _get_current_flamenco():
