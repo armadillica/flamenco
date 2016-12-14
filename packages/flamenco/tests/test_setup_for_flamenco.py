@@ -5,10 +5,8 @@ from abstract_flamenco_test import AbstractFlamencoTest
 class TaskWorkflowTest(AbstractFlamencoTest):
     def setUp(self, **kwargs):
         AbstractFlamencoTest.setUp(self, **kwargs)
-        self.create_user(user_id=ctd.EXAMPLE_PROJECT_OWNER_ID,
-                         groups=[ctd.EXAMPLE_ADMIN_GROUP_ID])
-        self.create_valid_auth_token(ctd.EXAMPLE_PROJECT_OWNER_ID, 'token')
         self.project_id, _ = self.ensure_project_exists()
+        self.create_valid_auth_token(ctd.EXAMPLE_PROJECT_OWNER_ID, 'token')
 
     def test_custom_properties(self):
         """Projects should get their properties dict."""
@@ -20,11 +18,12 @@ class TaskWorkflowTest(AbstractFlamencoTest):
             self.assertIsInstance(aprops, dict)
 
     def test_saving_api(self):
-        """Ensures that Eve accepts an Flamenco project as valid."""
+        """Ensures that Eve accepts a Flamenco project as valid."""
 
         import pillar.api.utils
 
         url = '/api/projects/%s' % self.project_id
+
         resp = self.get(url)
         proj = resp.json()
 

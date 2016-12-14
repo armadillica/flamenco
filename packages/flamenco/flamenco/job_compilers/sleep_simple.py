@@ -1,27 +1,26 @@
-from flamenco.utils import frame_range_parse
-from flamenco.utils import frame_range_merge
+from .abstract_compiler import AbstractJobCompiler
+from . import commands, register_compiler
 
 
-def compile_sleep_simple(job, create_task):
-    job_settings = job['settings']
-    parsed_frames = frame_range_parse(job_settings['frames'])
-    chunk_size = job_settings['chunk_size']
-    # Loop to generate all tasks
-    for i in range(0, len(parsed_frames), chunk_size):
-        commands = []
-        cmd_echo = {
-            'name': 'echo',
-            'settings': {
-                'message': 'Preparing to sleep'
-            }
-        }
-        commands.append(cmd_echo)
-        cmd_sleep = {
-            'name': 'sleep',
-            'settings': {
-                'time_in_seconds': job_settings['time_in_seconds'],
-            }
-        }
-        commands.append(cmd_sleep)
-        name = frame_range_merge(parsed_frames[i:i + chunk_size])
-        create_task(job, commands, name)
+@register_compiler('sleep')
+class SleepSimple(AbstractJobCompiler):
+    """Sleeps for N seconds for each frame chunk."""
+
+    def compile(self, job):
+        from flamenco.utils import iter_frame_range, frame_range_merge
+
+        self._log.info('Compiling job %s', job['_id'])
+
+        job_settings = job['settings']
+        task_count = 0
+        for chunk_frames in iter_frame_range(job_settings['frames'], job_settings['chunk_size']):
+            task_cmds = [
+                commands.Echo(message=u'Preparing to sleep'),
+                commands.Sleep(time_in_seconds=job_settings['time_in_seconds']),
+            ]
+            name = 'sleep-%s' % frame_range_merge(chunk_frames)
+
+            self.task_manager.api_create_task(job, task_cmds, name)
+            task_count += 1
+
+        self._log.info('Created %i tasks for job %s', job['_id'])

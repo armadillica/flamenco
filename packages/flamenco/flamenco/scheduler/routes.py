@@ -12,7 +12,7 @@ blueprint = Blueprint('flamenco.scheduler', __name__, url_prefix='/scheduler')
 
 
 @blueprint.route('/tasks')
-def generate_tasks():
+def schedule_tasks():
     """Upon request from a manager, picks the first task available and returns
     it in JSON format.
     Read from request args:
@@ -27,8 +27,10 @@ def generate_tasks():
     This is an API endpoint, so we interface directly with the database.
     """
 
+    # TODO: LOGGING!
+
     job_type = request.args.get('job_type', None)
-    tasks = current_app.data.driver.db['flamenco.tasks']
+    tasks = current_app.db()['flamenco.tasks']
     payload = {'status': 'queued'}
     if job_type:
         payload['job_type'] = job_type

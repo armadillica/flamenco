@@ -1,8 +1,9 @@
 """Job management."""
 
-import attr
 import collections
-import flask_login
+import copy
+
+import attr
 import pillarsdk
 from pillar import attrs_extra
 from pillar.web.system_util import pillar_api
@@ -14,9 +15,6 @@ from pillarsdk.resource import Post
 from pillarsdk.resource import Update
 from pillarsdk.resource import Delete
 from pillarsdk.resource import Replace
-from pillarsdk.exceptions import ResourceNotFound
-from pillarsdk import utils as pillarsdk_utils
-from pillarsdk import Api
 
 
 class ProjectSummary(object):
@@ -61,6 +59,35 @@ class Job(List, Find, Create, Post, Update, Delete, Replace):
 @attr.s
 class JobManager(object):
     _log = attrs_extra.log('%s.JobManager' % __name__)
+
+    def api_create_job(self, job_name, job_desc, job_type, job_settings,
+                       project_id, user_id, manager_id):
+        """Creates a job, returning a dict with its generated fields."""
+
+        from eve.methods.post import post_internal
+
+        job = {
+            'name': job_name,
+            'description': job_desc,
+            'job_type': job_type,
+            'project': project_id,
+            'user': user_id,
+            'manager': manager_id,
+            'status': 'queued',
+            'priority': 50,
+            'settings': copy.deepcopy(job_settings),
+        }
+
+        self._log.info('Creating job %r for user %s and manager %s',
+                       job_name, user_id, manager_id)
+
+        r, _, _, status = post_internal('flamenco.jobs', job)
+        if status != 201:
+            self._log.error('Status should be 201, not %i: %s' % (status, r))
+            raise ValueError('Unable to create Flamenco job, status code %i' % status)
+
+        job.update(r)
+        return job
 
     def edit_job(self, job_id, **fields):
         """Edits a job.

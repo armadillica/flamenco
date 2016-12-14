@@ -4,6 +4,8 @@ from flamenco.utils import frame_range_parse
 from flamenco.utils import frame_range_merge
 
 
+# TODO: Refactor to use the new AbstractCommand and AbstractJobCompiler stuff, see sleep_simple.py
+
 def compile_blender_simple_render(job, create_task):
     """The basic Blender render job."""
     job_settings = job['settings']
