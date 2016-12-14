@@ -23,6 +23,8 @@ class FrameRangeTest(unittest.TestCase):
         self.assertEqual('', frame_range_merge(None))
         self.assertEqual('', frame_range_merge([]))
         self.assertEqual('1', frame_range_merge([1]))
+        self.assertEqual('18,20,21', frame_range_merge([18, 20, 21]))
+        self.assertEqual('18,20,21,23-25', frame_range_merge([18, 20, 21, 23, 24, 25]))
         self.assertEqual('1-3', frame_range_merge([1, 2, 3]))
         self.assertEqual('51,66-103', frame_range_merge([51] + list(range(66, 104))))
         self.assertEqual('0,531443,5315886,9999993414-9999993416',
