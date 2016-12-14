@@ -1,3 +1,5 @@
+import os.path
+
 from flamenco.utils import frame_range_parse
 from flamenco.utils import frame_range_merge
 
@@ -7,14 +9,16 @@ def compile_blender_simple_render(job, create_task):
     job_settings = job['settings']
     parsed_frames = frame_range_parse(job_settings['frames'])
     chunk_size = job_settings['chunk_size']
+
     try:
         render_output = job_settings['render_output']
     except KeyError:
         render_output = None
+
     for i in range(0, len(parsed_frames), chunk_size):
         commands = []
 
-        if not job_settings['filepath'].startswith('/'):
+        if os.path.isabs(job_settings['filepath']):
             cmd_download = {
                 'name': 'download',
                 'settings': {}
