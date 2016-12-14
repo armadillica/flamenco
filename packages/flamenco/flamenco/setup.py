@@ -58,7 +58,7 @@ def _update_project(project):
         raise RuntimeError("Can't update project %s, issues: %s", project_id, result)
 
 
-def setup_for_flamenco(project_url, replace=False, svn_url=None):
+def setup_for_flamenco(project_url, replace=False):
     """Adds Flamenco node types to the project.
 
     Use --replace to replace pre-existing Flamenco node types
@@ -74,14 +74,9 @@ def setup_for_flamenco(project_url, replace=False, svn_url=None):
     # Set default extension properties. Be careful not to overwrite any
     # properties that are already there.
     eprops = project.setdefault('extension_props', {})
-    flamenco_props = eprops.setdefault(EXTENSION_NAME, {
-        'last_used_shortcodes': {},
-        'svn_usermap': {},  # mapping from SVN username to Pillar user ObjectID.
+    eprops.setdefault(EXTENSION_NAME, {
+        'managers': [],  # List of Flamenco manager IDs that have access to this project.
     })
-
-    if svn_url:
-        log.info('Setting SVN URL to %s', svn_url)
-        flamenco_props['svn_url'] = svn_url
 
     _update_project(project)
 

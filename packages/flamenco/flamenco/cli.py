@@ -18,8 +18,7 @@ manager_flamenco = Manager(current_app, usage="Perform Flamenco operations")
 @manager_flamenco.command
 @manager_flamenco.option('-r', '--replace', dest='replace', action='store_true',
                          default=False)
-@manager_flamenco.option('-s', '--svn', dest='svn_url', nargs='?')
-def setup_for_flamenco(project_url, replace=False, svn_url=None):
+def setup_for_flamenco(project_url, replace=False):
     """Adds Flamenco node types to the project.
 
     Use --replace to replace pre-existing Flamenco node types
@@ -27,7 +26,6 @@ def setup_for_flamenco(project_url, replace=False, svn_url=None):
     """
 
     authentication.force_cli_user()
-    flamenco.setup.setup_for_flamenco(project_url, replace=replace,
-                                      svn_url=svn_url)
+    flamenco.setup.setup_for_flamenco(project_url, replace=replace)
 
 manager.add_command("flamenco", manager_flamenco)
