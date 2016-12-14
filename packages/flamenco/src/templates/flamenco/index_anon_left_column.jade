@@ -13,7 +13,9 @@ h3.d-title Projects using Flamenco
 	.d-projects-item
 		a.d-projects-item-header(
 			href="{{ url_for('flamenco.jobs.perproject.index', project_url=proj.url) }}")
+			| {% if proj.picture_header %}
 			img(src="{{ proj.picture_header.thumbnail('m', api=api) }}")
+			| {% endif %}
 		a.d-projects-item-title(
 			href="{{ url_for('flamenco.jobs.perproject.index', project_url=proj.url) }}")
 			| {{ proj.name }}
