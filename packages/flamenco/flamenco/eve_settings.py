@@ -14,10 +14,9 @@ managers_schema = {
         'type': 'string',
     },
     # Full web address of the host. Use for internal queries about status of
-    # workders or other operations.
-    'host': {
+    # workers or other operations.
+    'url': {
         'type': 'string',
-        'required': True
     },
     # The jobs supported by the manager. This means that the manager has a task
     # compiler capable of handling the tasks provided by the server so that

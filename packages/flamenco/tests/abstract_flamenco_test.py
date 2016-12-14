@@ -1,12 +1,8 @@
 # -*- encoding: utf-8 -*-
-import copy
-
-from eve.methods.post import post_internal
 
 import pillarsdk
 import pillar.tests
 import pillar.auth
-import pillar.tests.common_test_data as ctd
 from pillar.tests import PillarTestServer, AbstractPillarTest
 
 
@@ -57,20 +53,11 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
     def create_manager(self):
 
-        mngr_doc = {
-            'name': u'tēst mānēgūr',
-            'description': u'£euk h€',
-            'host': 'https://[::1]:8123/',
-            'job_types': {
-                'sleep_simple': {
-                    'vars': {}
-                }
-            },
-        }
         with self.app.test_request_context():
-            r, _, _, status = post_internal('flamenco.managers', mngr_doc)
+            mngr_doc = self.flamenco.manager_manager.create_manager(
+                u'tēst mānēgūr',
+                u'£euk h€',
+                u'https://username:password@[fe80::42:99ff:fe66:91bd]:5123/path/to/the%20thing'
+            )
 
-        self.assertEqual(201, status, 'Status %i creating manager: %s' % (status, r))
-
-        mngr_doc.update(r)
         return mngr_doc

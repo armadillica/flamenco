@@ -5,9 +5,6 @@ import flask
 from werkzeug.local import LocalProxy
 from pillar.extension import PillarExtension
 
-import flamenco.jobs
-import flamenco.tasks
-
 EXTENSION_NAME = 'flamenco'
 
 # Roles required to view job, manager or task details.
@@ -17,8 +14,14 @@ ROLES_REQUIRED_TO_VIEW_ITEMS = {u'demo', u'subscriber', u'admin'}
 class FlamencoExtension(PillarExtension):
     def __init__(self):
         self._log = logging.getLogger('%s.FlamencoExtension' % __name__)
+
+        import flamenco.jobs
+        import flamenco.tasks
+        import flamenco.managers
+
         self.job_manager = flamenco.jobs.JobManager()
         self.task_manager = flamenco.tasks.TaskManager()
+        self.manager_manager = flamenco.managers.ManagerManager()
 
     @property
     def name(self):
