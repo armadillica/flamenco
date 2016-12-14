@@ -52,12 +52,21 @@ class AbstractFlamencoTest(AbstractPillarTest):
         return proj_id, flamenco_project
 
     def create_manager(self):
-
         with self.app.test_request_context():
             mngr_doc = self.flamenco.manager_manager.create_manager(
                 u'tēst mānēgūr',
                 u'£euk h€',
-                u'https://username:password@[fe80::42:99ff:fe66:91bd]:5123/path/to/the%20thing'
+                u'https://username:password@[fe80::42:99ff:fe66:91bd]:5123/path/to/'
             )
 
         return mngr_doc
+
+    def create_manager_service_account(self):
+        from flamenco.setup import create_manager
+
+        with self.app.test_request_context():
+            mngr_doc, account, token = create_manager(u'testmanager@example.com',
+                                                      u'tēst mānēgūr',
+                                                      u'descr')
+
+        return mngr_doc, account, token

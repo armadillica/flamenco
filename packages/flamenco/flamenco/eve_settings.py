@@ -174,10 +174,11 @@ tasks_schema = {
     'status': {
         'type': 'string',
         'allowed': [
+            'queued',
+            'claimed-by-manager',
             'completed',
             'active',
             'canceled',
-            'queued',
             'processing',
             'failed'],
         'default': 'queued'

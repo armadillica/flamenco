@@ -6,14 +6,11 @@ for live/production situations.
 
 from __future__ import print_function, division
 
-import copy
 import logging
 
 from bson import ObjectId
 from eve.methods.put import put_internal
 from flask import current_app
-
-from pillar.api.utils import node_type_utils
 
 from . import EXTENSION_NAME
 
@@ -83,3 +80,33 @@ def setup_for_flamenco(project_url, replace=False):
     log.info('Project %s was updated for Flamenco.', project_url)
 
     return project
+
+
+def create_manager(email, name, description):
+    """Creates a Flamenco manager with service account.
+
+    :returns: tuple (mngr_doc, account, token)
+    """
+
+    from pillar.cli import create_service_account
+    from flamenco import current_flamenco
+
+    mngr_doc = current_flamenco.manager_manager.create_manager(name, description)
+    manager_id = mngr_doc['_id']
+
+    service_name = u'flamenco_manager'
+
+    def update_existing(service):
+        if service_name in service:
+            service[service_name].setdefault(u'managers', [])
+            service[service_name][u'managers'].append(manager_id)
+        else:
+            service[service_name] = service_info
+
+    service_info = {u'managers': [manager_id]}
+    account, token = create_service_account(email,
+                                            [service_name],
+                                            {service_name: service_info},
+                                            update_existing=update_existing)
+
+    return mngr_doc, account, token
