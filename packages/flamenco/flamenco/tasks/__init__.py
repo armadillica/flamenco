@@ -45,6 +45,7 @@ class TaskManager(object):
             'job_type': job['job_type'],
             'commands': [cmd.to_dict() for cmd in commands],
             'priority': job['priority'],
+            'project': job['project'],
         }
         # Insertion of None parents is not supported
         if parents:

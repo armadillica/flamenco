@@ -158,6 +158,15 @@ tasks_schema = {
             'embeddable': True
         },
     },
+    'project': {
+        'type': 'objectid',
+        'required': True,
+        'data_relation': {
+            'resource': 'projects',
+            'field': '_id',
+            'embeddable': True
+        },
+    },
     'user': {
         'type': 'objectid',
         'required': True,
