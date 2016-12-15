@@ -54,10 +54,17 @@ managers_schema = {
             }
         }
     },
-    # TODO: add user so that we can authenticate the manager itself. The user
-    # will be of type 'service', 'flamenco_manager'. The user will be part of
-    # a group together with the users of the project it's used it. A sparate
-    # permission system will manage access to GET, PUT, DELETE or PATCH
+    # Project IDs this manager is associated with.
+    'projects': {
+        'type': 'list',
+        'schema': {
+            'type': 'objectid',
+            'data_relation': {
+                'resource': 'projects',
+                'field': '_id',
+            }
+        },
+    }
 }
 
 jobs_schema = {
