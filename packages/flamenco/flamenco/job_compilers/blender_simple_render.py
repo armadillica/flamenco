@@ -1,57 +1,34 @@
 import os.path
 
-from flamenco.utils import frame_range_parse
-from flamenco.utils import frame_range_merge
+from .abstract_compiler import AbstractJobCompiler
+from . import commands, register_compiler
 
 
-# TODO: Refactor to use the new AbstractCommand and AbstractJobCompiler stuff, see sleep.py
+@register_compiler('blender-simple-render')
+class BlenderSimpleRender(AbstractJobCompiler):
+    """Basic Blender render job."""
 
-def compile_blender_simple_render(job, create_task):
-    """The basic Blender render job."""
-    job_settings = job['settings']
-    parsed_frames = frame_range_parse(job_settings['frames'])
-    chunk_size = job_settings['chunk_size']
+    def compile(self, job):
+        from flamenco.utils import iter_frame_range, frame_range_merge
 
-    try:
-        render_output = job_settings['render_output']
-    except KeyError:
-        render_output = None
+        self._log.info('Compiling job %s', job['_id'])
 
-    for i in range(0, len(parsed_frames), chunk_size):
-        commands = []
+        job_settings = job['settings']
 
-        if os.path.isabs(job_settings['filepath']):
-            cmd_download = {
-                'name': 'download',
-                'settings': {}
-            }
-            commands.append(cmd_download)
+        task_count = 0
+        for chunk_frames in iter_frame_range(job_settings['frames'], job_settings['chunk_size']):
+            frame_range = frame_range_merge(chunk_frames)
 
-            cmd_unzip = {
-                'name': 'unzip',
-                'settings': {}
-            }
-            commands.append(cmd_unzip)
+            task_cmds = [
+                commands.BlenderRender(
+                    filepath=job_settings['filepath'],
+                    format=job_settings['format'],
+                    render_output=job_settings.get('render_output'),
+                    frames=frame_range)
+            ]
 
-        frames = frame_range_merge(parsed_frames[i:i + chunk_size])
-        cmd_render = {
-            'name': 'blender_render',
-            'settings': {
-                'filepath': job_settings['filepath'],
-                'format': job_settings['format'],
-                'frames': frames
-            }
-        }
-        if render_output:
-            cmd_render['settings']['render_output'] = render_output
+            name = 'blender-simple-render-%s' % frame_range
+            self.task_manager.api_create_task(job, task_cmds, name)
+            task_count += 1
 
-        commands.append(cmd_render)
-
-        if not render_output:
-            cmd_upload = {
-                'name': 'upload',
-                'settings': {}
-            }
-            commands.append(cmd_upload)
-
-        create_task(job, commands, frames)
+        self._log.info('Created %i tasks for job %s', task_count, job['_id'])
