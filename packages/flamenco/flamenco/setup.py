@@ -97,13 +97,19 @@ def create_manager(email, name, description):
     service_name = u'flamenco_manager'
 
     def update_existing(service):
-        if service_name in service:
-            service[service_name].setdefault(u'managers', [])
-            service[service_name][u'managers'].append(manager_id)
-        else:
-            service[service_name] = service_info
+        service_info = service[service_name]
+        if u'managers' in service_info:
+            log.warning('WARNING: decoupling service account from existing manager %s',
+                        service_info[u'managers'])
+            del service_info[u'managers']
 
-    service_info = {u'managers': [manager_id]}
+        if u'manager' in service_info:
+            log.warning('WARNING: decoupling service account from existing manager %s',
+                        service_info[u'manager'])
+
+        service_info[u'manager'] = manager_id
+
+    service_info = {u'manager': manager_id}
     account, token = create_service_account(email,
                                             [service_name],
                                             {service_name: service_info},
