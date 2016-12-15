@@ -81,7 +81,6 @@ jobs_schema = {
         'data_relation': {
             'resource': 'projects',
             'field': '_id',
-            'embeddable': True
         },
     },
     'user': {
@@ -90,7 +89,6 @@ jobs_schema = {
         'data_relation': {
             'resource': 'users',
             'field': '_id',
-            'embeddable': True
         },
     },
     # We currently say that a job, and all its tasks, will be assigned to one
@@ -101,7 +99,6 @@ jobs_schema = {
         'data_relation': {
             'resource': 'flamenco_managers',
             'field': '_id',
-            'embeddable': True
         },
     },
     'status': {
@@ -147,7 +144,6 @@ tasks_schema = {
         'data_relation': {
             'resource': 'flamenco_jobs',
             'field': '_id',
-            'embeddable': True
         },
     },
     'manager': {
@@ -155,7 +151,6 @@ tasks_schema = {
         'data_relation': {
             'resource': 'flamenco_managers',
             'field': '_id',
-            'embeddable': True
         },
     },
     'project': {
@@ -164,7 +159,6 @@ tasks_schema = {
         'data_relation': {
             'resource': 'projects',
             'field': '_id',
-            'embeddable': True
         },
     },
     'user': {
@@ -173,7 +167,6 @@ tasks_schema = {
         'data_relation': {
             'resource': 'users',
             'field': '_id',
-            'embeddable': True
         },
     },
     'name': {
@@ -237,7 +230,6 @@ tasks_schema = {
             'data_relation': {
                 'resource': 'flamenco_tasks',
                 'field': '_id',
-                'embeddable': True
             }
         },
     },
