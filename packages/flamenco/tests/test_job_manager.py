@@ -7,9 +7,12 @@ from abstract_flamenco_test import AbstractFlamencoTest
 
 class JobManagerTest(AbstractFlamencoTest):
     def test_create_job(self):
-        manager = self.create_manager()
+        from pillar.api.utils.authentication import force_cli_user
+
+        manager, _, _ = self.create_manager_service_account()
 
         with self.app.test_request_context():
+            force_cli_user()
             self.jmngr.api_create_job(
                 'test job',
                 u'Wörk wørk w°rk.',
@@ -25,29 +28,35 @@ class JobManagerTest(AbstractFlamencoTest):
             )
 
         # Test the jobs
-        jobs = self.get('/api/flamenco/jobs').json()
-        self.assertEqual(1, jobs['_meta']['total'])
-        job = jobs['_items'][0]
+        with self.app.test_request_context():
+            jobs_coll = self.flamenco.db('jobs')
 
-        self.assertEqual(u'Wörk wørk w°rk.', job['description'])
-        self.assertEqual(u'sleep', job['job_type'])
+            jobs = list(jobs_coll.find())
+            self.assertEqual(1, len(jobs))
+            job = jobs[0]
+
+            self.assertEqual(u'Wörk wørk w°rk.', job['description'])
+            self.assertEqual(u'sleep', job['job_type'])
 
         # Test the tasks
-        tasks = self.get('/api/flamenco/tasks').json()
-        self.assertEqual(2, tasks['_meta']['total'])
+        with self.app.test_request_context():
+            tasks_coll = self.flamenco.db('tasks')
 
-        task = tasks['_items'][0]
-        self.assertEqual(u'sleep-12-16', task['name'])
-        self.assertEqual({
-            u'name': u'echo',
-            u'settings': {
-                u'message': u'Preparing to sleep',
-            }
-        }, task['commands'][0])
+            tasks = list(tasks_coll.find())
+            self.assertEqual(2, len(tasks))
+            task = tasks[0]
 
-        self.assertEqual({
-            u'name': u'sleep',
-            u'settings': {
-                u'time_in_seconds': 3,
-            }
-        }, task['commands'][1])
+            self.assertEqual(u'sleep-12-16', task['name'])
+            self.assertEqual({
+                u'name': u'echo',
+                u'settings': {
+                    u'message': u'Preparing to sleep',
+                }
+            }, task['commands'][0])
+
+            self.assertEqual({
+                u'name': u'sleep',
+                u'settings': {
+                    u'time_in_seconds': 3,
+                }
+            }, task['commands'][1])

@@ -98,3 +98,9 @@ class TaskManager(object):
                 'project': project_id,
             }}, api=api)
         return tasks
+
+
+def setup_app(app):
+    from . import eve_hooks
+
+    eve_hooks.setup_app(app)

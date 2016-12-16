@@ -64,7 +64,16 @@ managers_schema = {
                 'field': '_id',
             }
         },
-    }
+    },
+    # The service account of this manager.
+    'service_account': {
+        'type': 'objectid',
+        'required': True,
+        'data_relation': {
+            'resource': 'users',
+            'field': '_id',
+        },
+    },
 }
 
 jobs_schema = {
@@ -247,16 +256,23 @@ tasks_schema = {
 
 _managers = {
     'schema': managers_schema,
+    'item_methods': ['GET', 'PUT', 'PATCH'],
+    'public_methods': [],
+    'public_item_methods': [],
 }
 
 _jobs = {
     'schema': jobs_schema,
     'item_methods': ['GET', 'PUT', 'DELETE', 'PATCH'],
+    'public_methods': [],
+    'public_item_methods': [],
 }
 
 _tasks = {
     'schema': tasks_schema,
     'item_methods': ['GET', 'PUT', 'DELETE', 'PATCH'],
+    'public_methods': [],
+    'public_item_methods': [],
 }
 
 DOMAIN = {

@@ -88,11 +88,14 @@ class FlamencoExtension(PillarExtension):
         submodules.
         """
 
-        from . import jobs, tasks, scheduler
+        from . import managers, jobs, tasks
 
+        managers.setup_app(app)
         jobs.setup_app(app)
+        tasks.setup_app(app)
 
         # Imports for side-effects
+        from . import scheduler
 
     def flamenco_projects(self):
         """Returns projects set up for Flamenco.

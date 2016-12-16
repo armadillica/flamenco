@@ -10,6 +10,8 @@ blueprint = flask.Blueprint('flamenco.scheduler', __name__, url_prefix='/schedul
 # - generating a task (or task list) for each manager request
 # - update the task list according to external changes
 
+CLAIMED_STATUS = 'claimed-by-manager'
+
 
 @blueprint.route('/tasks/<manager_id>')
 @authorization.require_login(require_roles={u'service', u'flamenco_manager'}, require_all=True)
@@ -29,7 +31,7 @@ def schedule_tasks(manager_id):
     """
 
     from flamenco import current_flamenco
-    from pillar.api.utils import jsonify, remove_private_keys, str2id
+    from pillar.api.utils import jsonify, str2id
 
     manager_id = str2id(manager_id)
     chunk_size = int(flask.request.args.get('chunk_size', 1))
@@ -45,26 +47,23 @@ def schedule_tasks(manager_id):
 
     tasks = []
     for task in tasks_coll.find(query):
-        task['status'] = 'claimed-by-manager'
-        r, _, _, status = flask.current_app.put_internal(
-            'flamenco_tasks',
-            remove_private_keys(task),
-            _id=task['_id'])
-
-        if status != 200:
-            # When there is an error updating the task, it's simply not returned, and doesn't
-            # count towards the chunk size.
-            log.warning('Error %i updating Flamenco task %s: %s',
-                        status, task['_id'], r)
-            continue
-
-        r.pop('_status', None)  # this is the status of the PUT we just did, not of the task itself.
-
-        task.update(r)
+        # The _updated and _etag fields will be wrong due to the update below, so
+        # let's remove them from the response.
+        task['status'] = CLAIMED_STATUS
+        task.pop('_etag', None)
+        task.pop('_updated', None)
         tasks.append(task)
 
         if len(tasks) >= chunk_size:
             break
+
+    # Do an update directly via MongoDB and not via Eve. Doing it via Eve
+    # requires permissions to do a GET on the task, which we don't want
+    # to allow to managers (to force them to use the scheduler).
+    tasks_coll.update_many(
+        {'_id': {'$in': [task['_id'] for task in tasks]}},
+        {'$set': {'status': CLAIMED_STATUS}}
+    )
 
     resp = jsonify(tasks)
     return resp

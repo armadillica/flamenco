@@ -7,11 +7,13 @@ from abstract_flamenco_test import AbstractFlamencoTest
 
 class TaskManagerTest(AbstractFlamencoTest):
     def test_create_task(self):
+        from pillar.api.utils.authentication import force_cli_user
         from flamenco.job_compilers import commands
 
-        manager = self.create_manager()
+        manager, _, _ = self.create_manager_service_account()
 
         with self.app.test_request_context():
+            force_cli_user()
             job_doc = self.jmngr.api_create_job(
                 'test job',
                 u'Wörk wørk w°rk.',

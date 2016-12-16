@@ -11,11 +11,14 @@ class TaskSchedulerTest(AbstractFlamencoTest):
     def setUp(self, **kwargs):
         AbstractFlamencoTest.setUp(self, **kwargs)
 
+        from pillar.api.utils.authentication import force_cli_user
+
         mngr_doc, account, token = self.create_manager_service_account()
         self.mngr_id = mngr_doc['_id']
         self.mngr_token = token['token']
 
         with self.app.test_request_context():
+            force_cli_user()
             self.jmngr.api_create_job(
                 'test job',
                 u'Wörk wørk w°rk.',
@@ -57,8 +60,6 @@ class TaskSchedulerTest(AbstractFlamencoTest):
             self._assert_sleep_task('sleep-12-14', 'claimed-by-manager', task)
 
     def test_chunked(self):
-        from flamenco import current_flamenco
-
         chunk = self.get('/flamenco/scheduler/tasks/%s?chunk_size=2' % self.mngr_id,
                          auth_token=self.mngr_token).json()
 
@@ -68,6 +69,6 @@ class TaskSchedulerTest(AbstractFlamencoTest):
 
         # Check that the last task hasn't been touched yet.
         with self.app.test_request_context():
-            tasks_coll = current_flamenco.db('tasks')
+            tasks_coll = self.flamenco.db('tasks')
             task = tasks_coll.find_one({'name': 'sleep-18,20,21'})
             self._assert_sleep_task('sleep-18,20,21', 'queued', task)

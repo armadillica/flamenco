@@ -82,7 +82,7 @@ def setup_for_flamenco(project_url, replace=False):
     return project
 
 
-def create_manager(email, name, description):
+def create_manager(email, name, description, url=None):
     """Creates a Flamenco manager with service account.
 
     :returns: tuple (mngr_doc, account, token)
@@ -91,28 +91,14 @@ def create_manager(email, name, description):
     from pillar.cli import create_service_account
     from flamenco import current_flamenco
 
-    mngr_doc = current_flamenco.manager_manager.create_manager(name, description)
-    manager_id = mngr_doc['_id']
-
-    service_name = u'flamenco_manager'
-
     def update_existing(service):
-        service_info = service[service_name]
-        if u'managers' in service_info:
-            log.warning('WARNING: decoupling service account from existing manager %s',
-                        service_info[u'managers'])
-            del service_info[u'managers']
-
-        if u'manager' in service_info:
-            log.warning('WARNING: decoupling service account from existing manager %s',
-                        service_info[u'manager'])
-
-        service_info[u'manager'] = manager_id
-
-    service_info = {u'manager': manager_id}
+        pass
     account, token = create_service_account(email,
-                                            [service_name],
-                                            {service_name: service_info},
+                                            [u'flamenco_manager'],
+                                            {u'flamenco_manager': {}},
                                             update_existing=update_existing)
+
+    mngr_doc = current_flamenco.manager_manager.create_manager(
+        account['_id'], name, description, url)
 
     return mngr_doc, account, token

@@ -5,6 +5,7 @@
 attrs==16.2.0
 svn==0.3.43
 python-dateutil==2.5.3
+pylru==1.0.4
 
 # Testing requirements:
 pytest==3.0.1

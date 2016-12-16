@@ -3,7 +3,9 @@
 import pillarsdk
 import pillar.tests
 import pillar.auth
+
 from pillar.tests import PillarTestServer, AbstractPillarTest
+from pillar.tests import common_test_data as ctd
 
 
 class FlamencoTestServer(PillarTestServer):
@@ -51,22 +53,17 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
         return proj_id, flamenco_project
 
-    def create_manager(self):
-        with self.app.test_request_context():
-            mngr_doc = self.flamenco.manager_manager.create_manager(
-                u'tēst mānēgūr',
-                u'£euk h€',
-                u'https://username:password@[fe80::42:99ff:fe66:91bd]:5123/path/to/'
-            )
-
-        return mngr_doc
-
-    def create_manager_service_account(self,
-                                       email=u'testmanager@example.com',
-                                       name=u'tēst mānēgūr'):
+    def create_manager_service_account(
+            self,
+            email=u'testmanager@example.com',
+            name=u'tēst mānēgūr',
+            url=u'https://username:password@[fe80::42:99ff:fe66:91bd]:5123/path/to/'):
         from flamenco.setup import create_manager
+        from pillar.api.utils.authentication import force_cli_user
 
+        # Main project will have a manager, job, and tasks.
         with self.app.test_request_context():
-            mngr_doc, account, token = create_manager(email, name, u'descr')
+            force_cli_user()
+            mngr_doc, account, token = create_manager(email, name, u'descr', url)
 
         return mngr_doc, account, token
