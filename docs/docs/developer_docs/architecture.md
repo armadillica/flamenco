@@ -28,7 +28,7 @@ This allows us to have loops only at the worker level, and keep the infarstructu
 as responsive and available a possible.
 
 
-##Jobs, tasks and commands
+## Jobs, tasks and commands
 Flamenco is designed to handle several types of jobs, mostly serving computer
 animated film production, for example:
 
@@ -43,7 +43,7 @@ In order to use the computing power of multiple machines, we split the Job into
 Tasks, according to the instructions provided. This process is called Job
 compilation.
 
-##Server
+## Server
 
 In a Flamenco network, there can be only one server. The functionality of the
 server consists in:
