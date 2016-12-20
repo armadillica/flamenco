@@ -56,6 +56,8 @@ def patch_set_task_status(task_id, patch):
     """Updates a task's status in the database."""
 
     from flamenco import eve_settings
+    import datetime
+    from bson import tz_util
 
     # TODO: also inspect other tasks of the same job, and possibly update the job status as well.
 
@@ -70,7 +72,8 @@ def patch_set_task_status(task_id, patch):
     tasks_coll = current_flamenco.db('tasks')
     result = tasks_coll.update_one(
         {'_id': task_id},
-        {'$set': {'status': new_status}}
+        {'$set': {'status': new_status,
+                  '_updated': datetime.datetime.now(tz=tz_util.utc)}}
     )
 
     if result.matched_count < 1:
