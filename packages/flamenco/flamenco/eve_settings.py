@@ -270,7 +270,7 @@ _jobs = {
 
 _tasks = {
     'schema': tasks_schema,
-    'item_methods': ['GET', 'PUT', 'DELETE', 'PATCH'],
+    'item_methods': ['GET', 'PUT', 'DELETE'],
     'public_methods': [],
     'public_item_methods': [],
 }
