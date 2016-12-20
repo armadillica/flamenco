@@ -55,9 +55,7 @@ def patch_task(task_id):
 def patch_set_task_status(task_id, patch):
     """Updates a task's status in the database."""
 
-    from flask import jsonify
     from flamenco import eve_settings
-    from flamenco import current_flamenco
 
     # TODO: also inspect other tasks of the same job, and possibly update the job status as well.
 
