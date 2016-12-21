@@ -41,7 +41,10 @@ def schedule_tasks(manager_id):
 
     # TODO: properly order tasks based on parents' status etc.
     tasks_coll = current_flamenco.db('tasks')
-    query = {'status': 'queued'}
+    query = {
+        'status': 'queued',
+        'manager': manager_id,
+    }
     if job_type:
         query['job_type'] = job_type
 
