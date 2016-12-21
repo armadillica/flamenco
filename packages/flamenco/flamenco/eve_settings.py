@@ -74,6 +74,22 @@ managers_schema = {
             'field': '_id',
         },
     },
+
+    # Received from the manager itself at startup.
+    'variables': {
+        'type': 'dict',
+        'allow_unknown': True,
+    },
+    'stats': {
+        'type': 'dict',
+        'schema': {
+            # TODO: determine which statistics should be stored here.
+            'nr_of_workers': {
+                'type': 'integer',
+            }
+        }
+    }
+
 }
 
 jobs_schema = {

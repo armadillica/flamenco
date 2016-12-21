@@ -75,8 +75,7 @@ class ManagerManager(object):
         from flamenco import current_flamenco
 
         if not self.user_is_manager():
-            self._log.debug('user_manages(%s): user is not a Flamenco manager service account',
-                            mngr_doc_id)
+            self._log.debug('user_manages(...): user is not a Flamenco manager service account')
             return False
 
         if mngr_doc is None:
@@ -98,6 +97,7 @@ class ManagerManager(object):
 
 
 def setup_app(app):
-    from . import eve_hooks
+    from . import eve_hooks, api
 
     eve_hooks.setup_app(app)
+    api.setup_app(app)
