@@ -36,6 +36,7 @@ def create_manager(email, name, description):
 
     from pillar.api.utils import dumps
 
+    authentication.force_cli_user()
     mngr_doc, account, token = flamenco.setup.create_manager(email, name, description)
 
     print('Created a new manager:')
