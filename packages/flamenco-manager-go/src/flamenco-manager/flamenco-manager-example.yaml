@@ -1,0 +1,18 @@
+database_url: mongodb://localhost/flamanager
+listen: '[::0]:8083'
+own_url: http://192.168.3.108:8083/
+flamenco: https://cloud.blender.org/
+manager_id: 58514ce59837734ea16e9060
+manager_secret: theworldistheworld
+tlskey: tls/privkey.pem
+tlscert: tls/cert.pem
+download_task_sleep_seconds: 300
+
+# Set to -1 to never kick the downloader when a worker asks for tasks.
+download_task_recheck_throttle_seconds: 10
+
+variables:
+    blender:
+        windows: c:/temp/blender.exe
+        linux: /opt/myblenderbuild/blender
+        darwin: /opt/myblenderbuild/blender
