@@ -18,7 +18,7 @@ func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 	log.Println(r.RemoteAddr, "Worker registering")
 
 	// Parse the given worker information.
-	winfo := Worker{}
+	winfo := WorkerRegistration{}
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 
@@ -28,7 +28,11 @@ func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 	}
 
 	// Store it in MongoDB after hashing the password and assigning an ID.
-	if err = StoreWorker(&winfo, db); err != nil {
+	worker := Worker{}
+	worker.Secret = winfo.Secret
+	worker.Platform = winfo.Platform
+	worker.SupportedJobTypes = winfo.SupportedJobTypes
+	if err = StoreWorker(&worker, db); err != nil {
 		log.Println(r.RemoteAddr, "Unable to store worker:", err)
 
 		w.WriteHeader(500)
@@ -40,7 +44,7 @@ func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
-	encoder.Encode(winfo)
+	encoder.Encode(worker)
 }
 
 func StoreWorker(winfo *Worker, db *mgo.Database) error {

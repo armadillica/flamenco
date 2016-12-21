@@ -29,15 +29,20 @@ type Task struct {
 	Worker   string          `bson:"worker,omitempty" json:"worker,omitempty"`
 }
 
+type WorkerRegistration struct {
+	Secret            string   `json:"secret"`
+	Platform          string   `bson:"platform" json:"platform"`
+	SupportedJobTypes []string `json:"supported_job_types"`
+}
+
 type Worker struct {
 	Id                bson.ObjectId `bson:"_id,omitempty" json:"_id,omitempty"`
-	Secret            string        `bson:"-" json:"secret"`
+	Secret            string        `bson:"-" json:"-"`
 	HashedSecret      []byte        `bson:"hashed_secret" json:"-"`
 	Address           string        `bson:"address" json:"address"`
 	Status            string        `bson:"status" json:"status"`
 	Platform          string        `bson:"platform" json:"platform"`
 	CurrentTask       bson.ObjectId `bson:"current_task,omitempty" json:"current_task,omitempty"`
-	Log               string        `bson:"log,omitempty" json:"log,omitempty"`
 	TimeCost          int           `bson:"time_cost" json:"time_cost"`
 	LastActivity      time.Time     `bson:"last_activity" json:"last_activity"`
 	SupportedJobTypes []string      `bson:"supported_job_types" json:"supported_job_types"`
