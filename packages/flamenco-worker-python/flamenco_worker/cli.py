@@ -1,20 +1,8 @@
 """Commandline interface entry points."""
 
 import argparse
-import collections
-import configparser
 import logging
 import logging.config
-import os
-
-DEFAULT_CONFIG = {
-    'flamenco-worker': collections.OrderedDict([
-        ('manager_url', 'http://flamenco-manager/'),
-        ('job_types', 'sleep blender_render_simple'),
-        ('worker_id', ''),
-        ('worker_secret', ''),
-    ])
-}
 
 
 def main():
@@ -61,40 +49,21 @@ def main():
     log.debug('Starting')
 
     # Load configuration
-    confparser = configparser.ConfigParser()
-    confparser.read_dict(DEFAULT_CONFIG)
+    from . import config
 
-    if args.config:
-        log.info('Loading configuration from %s', args.config)
-        confparser.read(args.config, encoding='utf8')
-    else:
-        from . import config as config_module
-        config_files = [config_module.GLOBAL_CONFIG_FILE,
-                        config_module.HOME_CONFIG_FILE]
-        log.info('Loading configuration from %s', ', '.join(config_files))
-        confparser.read(config_files, encoding='utf8')
-
-    from .config import CONFIG_SECTION
-    if args.verbose:
-        import sys
-        log.info('Effective configuration:')
-        to_show = configparser.ConfigParser()
-        to_show.read_dict(confparser)
-        if to_show.get(CONFIG_SECTION, 'worker_secret'):
-            to_show.set(CONFIG_SECTION, 'worker_secret', '-hidden-')
-        to_show.write(sys.stderr)
+    confparser = config.load_config(args.config, args.verbose)
 
     from . import worker, upstream
 
     fmanager = upstream.FlamencoManager(
-        manager_url=confparser.get(CONFIG_SECTION, 'manager_url'),
+        manager_url=confparser.get(config.CONFIG_SECTION, 'manager_url'),
     )
 
     fworker = worker.FlamencoWorker(
         manager=fmanager,
-        job_types=confparser.get(CONFIG_SECTION, 'job_types').split(),
-        worker_id=confparser.get(CONFIG_SECTION, 'worker_id'),
-        worker_secret=confparser.get(CONFIG_SECTION, 'worker_secret'),
+        job_types=confparser.get(config.CONFIG_SECTION, 'job_types').split(),
+        worker_id=confparser.get(config.CONFIG_SECTION, 'worker_id'),
+        worker_secret=confparser.get(config.CONFIG_SECTION, 'worker_secret'),
     )
     try:
         fworker.startup()
