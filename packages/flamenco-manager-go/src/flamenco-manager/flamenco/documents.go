@@ -29,6 +29,17 @@ type Task struct {
 	Worker   string          `bson:"worker,omitempty" json:"worker,omitempty"`
 }
 
+type TaskUpdate struct {
+	TaskId                    bson.ObjectId `bson:"task_id" json:"-"`
+	TaskStatus                string        `bson:"task_status,omitempty" json:"task_status,omitempty"`
+	ReceivedOnManager         time.Time     `bson:"received_on_manager" json:"-"`
+	Activity                  string        `bson:"activity,omitempty" json:"activity,omitempty"`
+	TaskProgressPercentage    int           `bson:"task_progress_percentage,omitempty" json:"task_progress_percentage,omitempty"`
+	CurrentCommandIdx         int           `bson:"current_command_idx,omitempty" json:"current_command_idx,omitempty"`
+	CommandProgressPercentage int           `bson:"command_progress_percentage,omitempty" json:"command_progress_percentage,omitempty"`
+	Log                       string        `bson:"log,omitempty" json:"log,omitempty"`
+}
+
 type WorkerRegistration struct {
 	Secret            string   `json:"secret"`
 	Platform          string   `bson:"platform" json:"platform"`

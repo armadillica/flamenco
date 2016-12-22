@@ -7,6 +7,7 @@ This is the Flamenco Manager implementation in Go.
 `$FM` denotes the directory containing a checkout of Flamenco Manager, that is, the
 absolute path of this `flamenco-manager-go` directory.
 
+0. Install Go 1.7 or newer
 1. `export GOPATH=$FM`
 2. `cd $FM/src/flamenco-manager`
 3. Download all dependencies with `go get`

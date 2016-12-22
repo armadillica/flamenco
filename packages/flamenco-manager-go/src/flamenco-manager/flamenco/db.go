@@ -42,6 +42,17 @@ func ensure_indices(session *mgo.Session) {
 	if err := db.C("flamenco_tasks").EnsureIndex(index); err != nil {
 		panic(err)
 	}
+
+	index = mgo.Index{
+		Key:        []string{"task_id", "received_on_manager"},
+		Unique:     false,
+		DropDups:   false,
+		Background: false,
+		Sparse:     false,
+	}
+	if err := db.C("task_update_queue").EnsureIndex(index); err != nil {
+		panic(err)
+	}
 }
 
 /**

@@ -19,11 +19,7 @@ func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 
 	// Parse the given worker information.
 	winfo := WorkerRegistration{}
-	decoder := json.NewDecoder(r.Body)
-	defer r.Body.Close()
-
-	if err = decoder.Decode(&winfo); err != nil {
-		log.Println(r.RemoteAddr, "Unable to decode worker JSON:", err)
+	if err = DecodeJson(w, r.Body, &winfo, fmt.Sprintf("%s RegisterWorker:", r.RemoteAddr)); err != nil {
 		return
 	}
 

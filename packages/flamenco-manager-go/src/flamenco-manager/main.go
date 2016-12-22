@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 
 	auth "github.com/abbot/go-http-auth"
 
@@ -39,6 +41,22 @@ func http_kick(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
+func http_task_update(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
+	mongo_sess := session.Copy()
+	defer mongo_sess.Close()
+
+	vars := mux.Vars(&r.Request)
+	task_id := vars["task-id"]
+
+	if !bson.IsObjectIdHex(task_id) {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Invalid ObjectID passed as task ID: %s\n", task_id)
+		return
+	}
+
+	flamenco.HandleTaskUpdate(w, r, mongo_sess.DB(""), bson.ObjectIdHex(task_id))
+}
+
 func worker_secret(user, realm string) string {
 	mongo_sess := session.Copy()
 	defer mongo_sess.Close()
@@ -61,6 +79,7 @@ func main() {
 	router.HandleFunc("/", http_status).Methods("GET")
 	router.HandleFunc("/register-worker", http_register_worker).Methods("POST")
 	router.HandleFunc("/task", worker_authenticator.Wrap(http_schedule_task)).Methods("POST")
+	router.HandleFunc("/tasks/{task-id}/update", worker_authenticator.Wrap(http_task_update)).Methods("POST")
 	router.HandleFunc("/kick", http_kick)
 	log.Println("Listening at            :", config.Listen)
 
