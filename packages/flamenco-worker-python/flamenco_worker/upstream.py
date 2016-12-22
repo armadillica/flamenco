@@ -3,6 +3,9 @@ import requests
 
 from . import attrs_extra
 
+HTTP_RETRY_COUNT = 5
+HTTP_TIMEOUT = 3  # in seconds
+
 
 @attr.s
 class FlamencoManager:
@@ -10,19 +13,19 @@ class FlamencoManager:
     session = attr.ib(default=None, init=False)
     _log = attrs_extra.log('%s.FlamencoManager' % __name__)
 
-    def get(self, *args, **kwargs):
+    def get(self, *args, **kwargs) -> requests.Response:
         return self.client_request('GET', *args, **kwargs)
 
-    def post(self, *args, **kwargs):
+    def post(self, *args, **kwargs) -> requests.Response:
         return self.client_request('POST', *args, **kwargs)
 
-    def put(self, *args, **kwargs):
+    def put(self, *args, **kwargs) -> requests.Response:
         return self.client_request('PUT', *args, **kwargs)
 
-    def delete(self, *args, **kwargs):
+    def delete(self, *args, **kwargs) -> requests.Response:
         return self.client_request('DELETE', *args, **kwargs)
 
-    def patch(self, *args, **kwargs):
+    def patch(self, *args, **kwargs) -> requests.Response:
         return self.client_request('PATCH', *args, **kwargs)
 
     def client_request(self, method, url,
@@ -32,16 +35,14 @@ class FlamencoManager:
                        cookies=None,
                        files=None,
                        auth=None,
-                       timeout=None,
+                       timeout=HTTP_TIMEOUT,
                        allow_redirects=True,
                        proxies=None,
                        hooks=None,
                        stream=None,
                        verify=None,
                        cert=None,
-                       json=None,
-                       *,
-                       expected_status=200) -> requests.Response:
+                       json=None) -> requests.Response:
         """Performs a HTTP request to the server.
 
         Creates and re-uses the HTTP session, to have efficient communication.
@@ -50,8 +51,11 @@ class FlamencoManager:
         import urllib.parse
 
         if not self.session:
-            self.session = requests.session()
+            from requests.adapters import HTTPAdapter
+
             self._log.debug('Creating new HTTP session')
+            self.session = requests.session()
+            self.session.mount(self.manager_url, HTTPAdapter(max_retries=HTTP_RETRY_COUNT))
 
         abs_url = urllib.parse.urljoin(self.manager_url, url)
         self._log.debug('%s %s', method, abs_url)
