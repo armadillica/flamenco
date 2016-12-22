@@ -58,9 +58,9 @@ func main() {
 	// Set up our own HTTP server
 	worker_authenticator := auth.NewBasicAuthenticator("Flamenco Manager", worker_secret)
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", http_status)
-	router.HandleFunc("/register-worker", http_register_worker)
-	router.HandleFunc("/task", worker_authenticator.Wrap(http_schedule_task))
+	router.HandleFunc("/", http_status).Methods("GET")
+	router.HandleFunc("/register-worker", http_register_worker).Methods("POST")
+	router.HandleFunc("/task", worker_authenticator.Wrap(http_schedule_task)).Methods("POST")
 	router.HandleFunc("/kick", http_kick)
 	log.Println("Listening at            :", config.Listen)
 
