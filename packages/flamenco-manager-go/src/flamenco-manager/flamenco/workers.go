@@ -71,6 +71,10 @@ func StoreWorker(winfo *Worker, db *mgo.Database) error {
  * Returns the hashed secret of the worker.
  */
 func WorkerSecret(user string, db *mgo.Database) string {
+	if !bson.IsObjectIdHex(user) {
+		log.Printf("WorkerSecret: Invalid ObjectID passed as username: %s\n", user)
+		return ""
+	}
 	workers_coll := db.C("flamenco_workers")
 	worker := Worker{}
 
@@ -79,7 +83,7 @@ func WorkerSecret(user string, db *mgo.Database) string {
 
 	if err := workers_coll.Find(query).Select(projection).One(&worker); err != nil {
 		log.Println("Error fetching hashed password: ", err)
-		return "" // TODO: check that this disallows access!
+		return ""
 	}
 
 	return string(worker.HashedSecret)
