@@ -13,12 +13,16 @@ FETCH_TASK_EMPTY_RETRY_DELAY = 5  # when there are no tasks to perform
 @attr.s
 class FlamencoWorker:
     manager = attr.ib(validator=attr.validators.instance_of(upstream.FlamencoManager))
+    trunner = attr.ib()  # Instance of flamenco_worker.runner.TaskRunner
     job_types = attr.ib(validator=attr.validators.instance_of(list))
     worker_id = attr.ib(validator=attr.validators.instance_of(str))
     worker_secret = attr.ib(validator=attr.validators.instance_of(str))
 
-    loop = attr.ib(init=False, validator=attr.validators.instance_of(asyncio.AbstractEventLoop))
-    fetch_task_handle = attr.ib(
+    loop = attr.ib(validator=attr.validators.instance_of(asyncio.AbstractEventLoop))
+    shutdown_future = attr.ib(
+        validator=attr.validators.optional(attr.validators.instance_of(asyncio.Future)))
+
+    fetch_task_task = attr.ib(
         default=None,
         init=False,
         validator=attr.validators.optional(attr.validators.instance_of(asyncio.Task)))
@@ -27,7 +31,6 @@ class FlamencoWorker:
 
     def startup(self):
         self._log.info('Starting up')
-        self.loop = asyncio.get_event_loop()
 
         if not self.worker_id or not self.worker_secret:
             self.register_at_manager()
@@ -65,6 +68,8 @@ class FlamencoWorker:
     def mainloop(self):
         self._log.info('Entering main loop')
 
+        # TODO: add "watchdog" task that checks the asyncio loop and ensures there is
+        # always either a task being executed or a task fetch scheduled.
         self.schedule_fetch_task()
         self.loop.run_forever()
 
@@ -76,14 +81,28 @@ class FlamencoWorker:
         :param delay: delay in seconds, after which the task fetch will be performed.
         """
 
-        if self.fetch_task_handle:
-            self.fetch_task_handle.cancel()
-        self.fetch_task_handle = self.loop.call_later(delay, self._fetch_task)
+        if self.fetch_task_task:
+            self.fetch_task_task.cancel()
 
-    def _fetch_task(self):
-        """Fetches a single task to perform from Flamenco Manager."""
+        self.fetch_task_task = asyncio.ensure_future(self.fetch_task(delay), loop=self.loop)
+
+    def shutdown(self):
+        """Gracefully shuts down any asynchronous tasks."""
+
+        if self.fetch_task_task and not self.fetch_task_task.done():
+            self._log.info('Cancelling task fetching task %s', self.fetch_task_task)
+            self.fetch_task_task.cancel()
+
+    async def fetch_task(self, delay: float):
+        """Fetches a single task to perform from Flamenco Manager.
+
+        :param delay: waits this many seconds before fetching a task.
+        """
 
         import requests
+
+        self._log.debug('Going to fetch task in %s seconds', delay)
+        await asyncio.sleep(delay)
 
         # TODO: use exponential backoff instead of retrying every fixed N seconds.
         self._log.info('Fetching task')
@@ -109,8 +128,44 @@ class FlamencoWorker:
             return
 
         task_info = resp.json()
-        self._log.info('Received task: %s', task_info['_id'])
+        task_id = task_info['_id']
+        self._log.info('Received task: %s', task_id)
         self._log.debug('Received task: %s', task_info)
+
+        try:
+            await self.trunner.execute(task_info, self)
+        except Exception as ex:
+            self._log.exception('Uncaught exception executing task %s' % task_id)
+            self.send_task_update(
+                task_id,
+                'failed',
+                'Uncaught exception: %s' % ex
+            )
+        finally:
+            # Always schedule a new task run.
+            self.schedule_fetch_task(0)
+
+    def send_task_update(self, task_id, new_activity_descr: str = None,
+                         task_status: str = None):
+        """Updates a task's status and activity description."""
+
+        import requests
+
+        self._log.info('Updating task %s with new status %r and activity %r',
+                       task_id, task_status, new_activity_descr)
+
+        payload = {'activity_descr': new_activity_descr}
+        if task_status:
+            payload['task_status'] = task_status
+
+        resp = self.manager.post('/tasks/%s/update' % task_id,
+                                 json=payload,
+                                 auth=(self.worker_id, self.worker_secret))
+        self._log.debug('Sent task %s update to manager', task_id)
+        try:
+            resp.raise_for_status()
+        except requests.HTTPError as ex:
+            self._log.error('Unable to send status update to manager, update is lost: %s', ex)
 
 
 def generate_secret() -> str:
