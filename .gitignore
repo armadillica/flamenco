@@ -50,3 +50,4 @@ docs/site/
 /packages/flamenco-manager-go/src/flamenco-manager/docker/flamenco-manager-*.docker.tgz
 
 /packages/flamenco-worker-python/flamenco_worker.egg-info/
+/packages/flamenco-worker-python/.coverage

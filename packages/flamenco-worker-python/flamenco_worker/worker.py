@@ -44,7 +44,7 @@ class FlamencoWorker:
                 'supported_job_types': self.job_types,
             })
 
-        # TODO: check response code / raise blablabla
+        resp.raise_for_status()
 
         result = resp.json()
         self._log.info('Response: %s', result)
