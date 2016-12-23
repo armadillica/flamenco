@@ -87,19 +87,19 @@ func main() {
 
 	// Fall back to insecure server if TLS certificate/key is not defined.
 	if config.TLSCert == "" || config.TLSKey == "" {
-		log.Println("WARNING: TLS not enabled!")
-
 		config.OwnUrl = strings.Replace(config.OwnUrl, "https://", "http://", 1)
 		log.Println("My URL is               :", config.OwnUrl)
+		log.Println("WARNING: TLS not enabled!")
+
 		log.Fatal(http.ListenAndServe(config.Listen, router))
+	} else {
+		config.OwnUrl = strings.Replace(config.OwnUrl, "http://", "https://", 1)
+		log.Println("My URL is               :", config.OwnUrl)
+
+		log.Fatal(http.ListenAndServeTLS(
+			config.Listen,
+			config.TLSCert,
+			config.TLSKey,
+			router))
 	}
-
-	config.OwnUrl = strings.Replace(config.OwnUrl, "http://", "https://", 1)
-	log.Println("My URL is               :", config.OwnUrl)
-
-	log.Fatal(http.ListenAndServeTLS(
-		config.Listen,
-		config.TLSCert,
-		config.TLSKey,
-		router))
 }
