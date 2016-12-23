@@ -70,6 +70,10 @@ func Count(coll *mgo.Collection) (int, error) {
 	pipe := coll.Pipe(aggr_ops)
 	result := countresult{}
 	if err := pipe.One(&result); err != nil {
+		if err == mgo.ErrNotFound {
+			// An empty collection is not an error.
+			return 0, nil
+		}
 		return -1, err
 	}
 
