@@ -137,7 +137,7 @@ func upload_task_status(config *Conf, task *Task) {
 
 func (self *UpstreamConnection) download_task_loop() {
 	timer_chan := Timer("download_task_loop",
-		time.Duration(self.config.DownloadTaskSleep)*time.Second,
+		self.config.DownloadTaskSleep,
 		self.done,
 		self.done_wg,
 	)

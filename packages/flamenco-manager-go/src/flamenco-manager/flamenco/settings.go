@@ -6,27 +6,31 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Conf struct {
-	DatabaseUrl       string   `yaml:"database_url"`
-	Listen            string   `yaml:"listen"`
-	OwnUrl            string   `yaml:"own_url"`
-	FlamencoStr       string   `yaml:"flamenco"`
-	Flamenco          *url.URL `yaml:"-"`
-	ManagerId         string   `yaml:"manager_id"`
-	ManagerSecret     string   `yaml:"manager_secret"`
-	TLSKey            string   `yaml:"tlskey"`
-	TLSCert           string   `yaml:"tlscert"`
-	DownloadTaskSleep int64    `yaml:"download_task_sleep_seconds"`
+	DatabaseUrl   string   `yaml:"database_url"`
+	Listen        string   `yaml:"listen"`
+	OwnUrl        string   `yaml:"own_url"`
+	FlamencoStr   string   `yaml:"flamenco"`
+	Flamenco      *url.URL `yaml:"-"`
+	ManagerId     string   `yaml:"manager_id"`
+	ManagerSecret string   `yaml:"manager_secret"`
+	TLSKey        string   `yaml:"tlskey"`
+	TLSCert       string   `yaml:"tlscert"`
+
+	DownloadTaskSleep_ int           `yaml:"download_task_sleep_seconds"`
+	DownloadTaskSleep  time.Duration `yaml:"-"`
 
 	/* The number of seconds between rechecks when there are no more tasks for workers.
 	 * If set to 0, will not throttle at all.
 	 * If set to -1, will never check when a worker asks for a task (so only every
 	 * download_task_sleep_seconds seconds). */
-	DownloadTaskRecheckThrottle int64 `yaml:"download_task_recheck_throttle_seconds"`
+	DownloadTaskRecheckThrottle_ int           `yaml:"download_task_recheck_throttle_seconds"`
+	DownloadTaskRecheckThrottle  time.Duration `yaml:"-"`
 
 	/* Variables, stored differently in YAML and these settings.
 	 * Variables:             variable name -> platform -> value
@@ -64,6 +68,9 @@ func GetConf() Conf {
 		}
 	}
 
+	// Convert durations. TODO: use actual unmarshaling code for this.
+	c.DownloadTaskSleep = time.Duration(c.DownloadTaskSleep_) * time.Second
+	c.DownloadTaskRecheckThrottle = time.Duration(c.DownloadTaskRecheckThrottle_) * time.Second
 	return c
 }
 

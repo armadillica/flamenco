@@ -62,7 +62,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 		ReturnNew: true,
 	}
 
-	dtrt := time.Duration(ts.config.DownloadTaskRecheckThrottle) * time.Second
+	dtrt := ts.config.DownloadTaskRecheckThrottle
 
 	for attempt := 0; attempt < 2; attempt++ {
 		// TODO: possibly sort on something else.
