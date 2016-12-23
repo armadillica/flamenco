@@ -38,6 +38,10 @@ type Conf struct {
 	 */
 	VariablesByVarname  map[string]map[string]string `yaml:"variables"`
 	VariablesByPlatform map[string]map[string]string `yaml:"-"`
+
+	TaskUpdatePushMaxInterval_ int           `yaml:"task_update_push_max_interval_seconds"`
+	TaskUpdatePushMaxInterval  time.Duration `yaml:"-"`
+	TaskUpdatePushMaxCount     int           `yaml:"task_update_push_max_count"`
 }
 
 func GetConf() Conf {
@@ -45,7 +49,14 @@ func GetConf() Conf {
 	if err != nil {
 		log.Printf("GetConf err   #%v ", err)
 	}
-	c := Conf{}
+
+	// Construct the struct with some more or less sensible defaults.
+	c := Conf{
+		DownloadTaskSleep_:           300,
+		DownloadTaskRecheckThrottle_: 10,
+		TaskUpdatePushMaxInterval_:   30,
+		TaskUpdatePushMaxCount:       10,
+	}
 	err = yaml.Unmarshal(yamlFile, &c)
 	if err != nil {
 		log.Fatalf("Unmarshal: %v", err)
@@ -71,6 +82,8 @@ func GetConf() Conf {
 	// Convert durations. TODO: use actual unmarshaling code for this.
 	c.DownloadTaskSleep = time.Duration(c.DownloadTaskSleep_) * time.Second
 	c.DownloadTaskRecheckThrottle = time.Duration(c.DownloadTaskRecheckThrottle_) * time.Second
+	c.TaskUpdatePushMaxInterval = time.Duration(c.TaskUpdatePushMaxInterval_) * time.Second
+
 	return c
 }
 

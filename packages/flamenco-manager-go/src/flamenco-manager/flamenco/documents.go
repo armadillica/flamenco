@@ -30,9 +30,10 @@ type Task struct {
 }
 
 type TaskUpdate struct {
-	TaskId                    bson.ObjectId `bson:"task_id" json:"-"`
+	Id                        bson.ObjectId `bson:"_id" json:"-"`
+	TaskId                    bson.ObjectId `bson:"task_id" json:"task_id,omitempty"`
 	TaskStatus                string        `bson:"task_status,omitempty" json:"task_status,omitempty"`
-	ReceivedOnManager         time.Time     `bson:"received_on_manager" json:"-"`
+	ReceivedOnManager         time.Time     `bson:"received_on_manager" json:"received_on_manager,omitempty"`
 	Activity                  string        `bson:"activity,omitempty" json:"activity,omitempty"`
 	TaskProgressPercentage    int           `bson:"task_progress_percentage" json:"task_progress_percentage"`
 	CurrentCommandIdx         int           `bson:"current_command_idx" json:"current_command_idx"`

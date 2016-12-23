@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	auth "github.com/abbot/go-http-auth"
@@ -12,25 +13,39 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func HandleTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.Database,
+const QUEUE_MGO_COLLECTION = "task_update_queue"
+const TASK_QUEUE_INSPECT_PERIOD = 1 * time.Second
+
+type TaskUpdatePusher struct {
+	config   *Conf
+	upstream *UpstreamConnection
+	session  *mgo.Session
+
+	// For allowing shutdown.
+	done    chan bool
+	done_wg *sync.WaitGroup
+}
+
+func QueueTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.Database,
 	task_id bson.ObjectId) {
 	log.Printf("%s Received task update for task %s\n", r.RemoteAddr, task_id.Hex())
 
 	// Parse the task JSON
 	tupdate := TaskUpdate{}
 	defer r.Body.Close()
-	if err := DecodeJson(w, r.Body, &tupdate, fmt.Sprintf("%s HandleTaskUpdate:", r.RemoteAddr)); err != nil {
+	if err := DecodeJson(w, r.Body, &tupdate, fmt.Sprintf("%s QueueTaskUpdate:", r.RemoteAddr)); err != nil {
 		return
 	}
 
 	// For ensuring the ordering of updates. time.Time has nanosecond precision.
 	tupdate.ReceivedOnManager = time.Now().UTC()
 	tupdate.TaskId = task_id
+	tupdate.Id = bson.NewObjectId()
 
 	// Store the update in the queue for sending to the Flamenco Server later.
-	task_update_queue := db.C("task_update_queue")
+	task_update_queue := db.C(QUEUE_MGO_COLLECTION)
 	if err := task_update_queue.Insert(&tupdate); err != nil {
-		log.Printf("%s HandleTaskUpdate: error inserting task update in queue: %s",
+		log.Printf("%s QueueTaskUpdate: error inserting task update in queue: %s",
 			r.RemoteAddr, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Unable to store update: %s\n", err)
@@ -38,4 +53,90 @@ func HandleTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *m
 	}
 
 	w.WriteHeader(204)
+}
+
+func CreateTaskUpdatePusher(config *Conf, upstream *UpstreamConnection, session *mgo.Session) *TaskUpdatePusher {
+	return &TaskUpdatePusher{
+		config,
+		upstream,
+		session,
+		make(chan bool),
+		new(sync.WaitGroup),
+	}
+}
+
+func (self *TaskUpdatePusher) Go() {
+	log.Println("TaskUpdatePusher: Starting")
+	mongo_sess := self.session.Copy()
+	defer mongo_sess.Close()
+
+	var last_push time.Time
+	queue := mongo_sess.DB("").C(QUEUE_MGO_COLLECTION)
+
+	// Investigate the queue periodically.
+	timer_chan := Timer("TaskUpdatePusherTimer",
+		TASK_QUEUE_INSPECT_PERIOD, self.done, self.done_wg)
+
+	for _ = range timer_chan {
+		// log.Println("TaskUpdatePusher: checking task update queue")
+		update_count, err := Count(queue)
+		if err != nil {
+			log.Printf("TaskUpdatePusher: ERROR checking queue: %s\n", err)
+			continue
+		}
+
+		if update_count == 0 {
+			continue
+		}
+
+		if update_count < self.config.TaskUpdatePushMaxCount && time.Now().Sub(last_push) < self.config.TaskUpdatePushMaxInterval {
+			continue
+		}
+
+		// Time to push!
+		log.Printf("TaskUpdatePusher: %d updates are queued", update_count)
+		if err := self.push(queue); err != nil {
+			log.Println("TaskUpdatePusher: unable to push to upstream Flamenco Server:", err)
+			continue
+		}
+
+		// Only remember we've pushed after it was succesful.
+		last_push = time.Now()
+	}
+}
+
+/* NOTE: this function assumes there is only one thread/process doing the pushing,
+ * and that we can safely leave documents in the queue until they have been pushed. */
+func (self *TaskUpdatePusher) push(queue *mgo.Collection) error {
+	var result []TaskUpdate
+
+	// Figure out what to send.
+	query := queue.Find(bson.M{}).Limit(self.config.TaskUpdatePushMaxCount)
+	if err := query.All(&result); err != nil {
+		return err
+	}
+
+	// Perform the sending.
+	log.Printf("TaskUpdatePusher: pushing %d updates to upstream Flamenco Server", len(result))
+	if err := self.upstream.SendTaskUpdates(&result); err != nil {
+		return err
+	}
+
+	// If succesful, remove the sent updates from the queue.
+	all_ids := make([]bson.ObjectId, len(result))
+	for idx, item := range result {
+		all_ids[idx] = item.Id
+	}
+	change_info, err := queue.RemoveAll(bson.M{"_id": bson.M{"$in": all_ids}})
+	if err != nil {
+		log.Printf("TaskUpdatePusher: This is awkward; we have already sent the task updates")
+		log.Println("upstream, but now we cannot un-queue them. Expect duplicates.")
+		return err
+	}
+
+	// If these numbers differ, it's because something strange is going on, for example
+	// someone else modified the database at the same time. For now, we don't handle this.
+	log.Printf("TaskUpdatePusher: un-queued %d of %d items.", change_info.Removed, len(result))
+
+	return nil
 }

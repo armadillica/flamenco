@@ -249,6 +249,64 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	}
 }
 
+func (self *UpstreamConnection) ResolveUrl(relative_url string, a ...interface{}) (*url.URL, error) {
+	rel_url, err := url.Parse(fmt.Sprintf(relative_url, a...))
+	if err != nil {
+		return &url.URL{}, err
+	}
+	url := self.config.Flamenco.ResolveReference(rel_url)
+
+	return url, nil
+}
+
+func (self *UpstreamConnection) SendJson(logprefix, method string, url *url.URL,
+	payload interface{}, bodyhandler func([]byte) error) error {
+
+	payload_bytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("%s: ERROR: Unable to marshal JSON: %s\n", logprefix, err)
+		return err
+	}
+
+	req, err := http.NewRequest("POST", url.String(), bytes.NewBuffer(payload_bytes))
+	if err != nil {
+		log.Printf("%s: ERROR: Unable to create request: %s\n", logprefix, err)
+		return err
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.SetBasicAuth(self.config.ManagerSecret, "")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("%s: ERROR: Unable to POST to %s: %s\n", logprefix, url, err)
+		return err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		log.Printf("%s: ERROR: Error %d POSTing to %s: %s\n",
+			logprefix, resp.StatusCode, url, err)
+		return err
+	}
+
+	if resp.StatusCode >= 300 {
+		log.Printf("%s: ERROR: Error %d POSTing to %s\n",
+			logprefix, resp.StatusCode, url)
+		if resp.StatusCode != 404 {
+			log.Printf("    body:\n%s\n", body)
+		}
+		return fmt.Errorf("%s: Error %d POSTing to %s", logprefix, resp.StatusCode, url)
+	}
+
+	if bodyhandler != nil {
+		return bodyhandler(body)
+	}
+
+	return nil
+}
+
 /**
  * Sends a StartupNotification document to upstream Flamenco Server.
  * Keeps trying in a goroutine until the notification was succesful.
@@ -261,50 +319,19 @@ func (self *UpstreamConnection) SendStartupNotification() {
 		NumberOfWorkers:    0,
 	}
 
-	rel_url, _ := url.Parse(fmt.Sprintf(
-		"/api/flamenco/managers/%s/startup",
-		self.config.ManagerId))
-	url := self.config.Flamenco.ResolveReference(rel_url)
+	url, err := self.ResolveUrl("/api/flamenco/managers/%s/startup", self.config.ManagerId)
+	if err != nil {
+		panic(fmt.Sprintf("SendStartupNotification: unable to construct URL: %s\n", err))
+	}
 
 	// Performs the actual sending.
 	send_startup_notification := func(mongo_sess *mgo.Session) error {
 		notification.NumberOfWorkers = WorkerCount(mongo_sess.DB(""))
 
-		notif_bytes, err := json.Marshal(notification)
+		err := self.SendJson("SendStartupNotification", "POST", url, &notification, nil)
 		if err != nil {
-			log.Printf("SendStartupNotification: ERROR: Unable to marshal JSON: %s\n", err)
+			log.Printf("SendStartupNotification: ERROR: Unable to send: %s\n", err)
 			return err
-		}
-		req, err := http.NewRequest("POST", url.String(), bytes.NewBuffer(notif_bytes))
-		if err != nil {
-			log.Printf("SendStartupNotification: ERROR: Unable to create request: %s\n", err)
-			return err
-		}
-		req.Header.Add("Content-Type", "application/json")
-		req.SetBasicAuth(self.config.ManagerSecret, "")
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Printf("SendStartupNotification: ERROR: Unable to POST to %s: %s\n", url, err)
-			return err
-		}
-
-		body, err := ioutil.ReadAll(resp.Body)
-		defer resp.Body.Close()
-		if err != nil {
-			log.Printf("SendStartupNotification: ERROR: Error %d POSTing to %s: %s\n",
-				resp.StatusCode, url, err)
-			return err
-		}
-
-		if resp.StatusCode >= 300 {
-			log.Printf("SendStartupNotification: ERROR: Error %d POSTing to %s\n",
-				resp.StatusCode, url)
-			if resp.StatusCode != 404 {
-				log.Printf("    body:\n%s\n", body)
-			}
-			return fmt.Errorf("Error %d POSTing to %s", resp.StatusCode, url)
 		}
 
 		log.Printf("SendStartupNotification: Done sending notification to upstream Flamenco\n")
@@ -333,4 +360,14 @@ func (self *UpstreamConnection) SendStartupNotification() {
 
 		log.Println("SendStartupNotification: shutting down without succesfully sending notification.")
 	}()
+}
+
+func (self *UpstreamConnection) SendTaskUpdates(updates *[]TaskUpdate) error {
+	url, err := self.ResolveUrl("/api/flamenco/managers/%s/task-update-batch",
+		self.config.ManagerId)
+	if err != nil {
+		panic(fmt.Sprintf("SendTaskUpdates: unable to construct URL: %s\n", err))
+	}
+
+	return self.SendJson("SendTaskUpdates", "POST", url, updates, nil)
 }

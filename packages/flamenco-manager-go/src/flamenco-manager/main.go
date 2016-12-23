@@ -21,6 +21,7 @@ var session *mgo.Session
 var config flamenco.Conf
 var upstream *flamenco.UpstreamConnection
 var task_scheduler *flamenco.TaskScheduler
+var task_update_pusher *flamenco.TaskUpdatePusher
 
 func http_status(w http.ResponseWriter, r *http.Request) {
 	flamenco.SendStatusReport(w, r, session)
@@ -54,7 +55,7 @@ func http_task_update(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
 		return
 	}
 
-	flamenco.HandleTaskUpdate(w, r, mongo_sess.DB(""), bson.ObjectIdHex(task_id))
+	flamenco.QueueTaskUpdate(w, r, mongo_sess.DB(""), bson.ObjectIdHex(task_id))
 }
 
 func worker_secret(user, realm string) string {
@@ -72,6 +73,7 @@ func main() {
 	session = flamenco.MongoSession(&config)
 	upstream = flamenco.ConnectUpstream(&config, session)
 	task_scheduler = flamenco.CreateTaskScheduler(&config, upstream, session)
+	task_update_pusher = flamenco.CreateTaskUpdatePusher(&config, upstream, session)
 
 	// Set up our own HTTP server
 	worker_authenticator := auth.NewBasicAuthenticator("Flamenco Manager", worker_secret)
@@ -84,6 +86,7 @@ func main() {
 	log.Println("Listening at            :", config.Listen)
 
 	upstream.SendStartupNotification()
+	go task_update_pusher.Go()
 
 	// Fall back to insecure server if TLS certificate/key is not defined.
 	if config.TLSCert == "" || config.TLSKey == "" {
