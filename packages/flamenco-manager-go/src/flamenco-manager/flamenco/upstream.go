@@ -4,7 +4,6 @@
 package flamenco
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -260,51 +259,14 @@ func (self *UpstreamConnection) ResolveUrl(relative_url string, a ...interface{}
 }
 
 func (self *UpstreamConnection) SendJson(logprefix, method string, url *url.URL,
-	payload interface{}, bodyhandler func([]byte) error) error {
-
-	payload_bytes, err := json.Marshal(payload)
-	if err != nil {
-		log.Printf("%s: ERROR: Unable to marshal JSON: %s\n", logprefix, err)
-		return err
+	payload interface{},
+	responsehandler func(resp *http.Response, body []byte) error,
+) error {
+	authenticate := func(req *http.Request) {
+		req.SetBasicAuth(self.config.ManagerSecret, "")
 	}
 
-	req, err := http.NewRequest("POST", url.String(), bytes.NewBuffer(payload_bytes))
-	if err != nil {
-		log.Printf("%s: ERROR: Unable to create request: %s\n", logprefix, err)
-		return err
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.SetBasicAuth(self.config.ManagerSecret, "")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Printf("%s: ERROR: Unable to POST to %s: %s\n", logprefix, url, err)
-		return err
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		log.Printf("%s: ERROR: Error %d POSTing to %s: %s\n",
-			logprefix, resp.StatusCode, url, err)
-		return err
-	}
-
-	if resp.StatusCode >= 300 {
-		log.Printf("%s: ERROR: Error %d POSTing to %s\n",
-			logprefix, resp.StatusCode, url)
-		if resp.StatusCode != 404 {
-			log.Printf("    body:\n%s\n", body)
-		}
-		return fmt.Errorf("%s: Error %d POSTing to %s", logprefix, resp.StatusCode, url)
-	}
-
-	if bodyhandler != nil {
-		return bodyhandler(body)
-	}
-
-	return nil
+	return SendJson(logprefix, method, url, payload, authenticate, responsehandler)
 }
 
 /**
