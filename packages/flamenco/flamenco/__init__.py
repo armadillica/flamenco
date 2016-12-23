@@ -88,6 +88,11 @@ class FlamencoExtension(PillarExtension):
         submodules.
         """
 
+        # Create the flamenco_task_logs collection with a compressing storage engine.
+        # If the zlib compression is too CPU-intensive, switch to Snappy instead.
+        with app.app_context():
+            self._create_collections(app.db())
+
         from . import managers, jobs, tasks
 
         managers.setup_app(app)
@@ -96,6 +101,27 @@ class FlamencoExtension(PillarExtension):
 
         # Imports for side-effects
         from . import scheduler
+
+    def _create_collections(self, db):
+        import pymongo
+
+        if 'flamenco_task_logs' not in db.collection_names(include_system_collections=False):
+            self._log.info('Creating flamenco_task_logs collection.')
+            db.create_collection('flamenco_task_logs',
+                                 storageEngine={
+                                     'wiredTiger': {'configString': 'block_compressor=zlib'}
+                                 })
+        else:
+            self._log.info('Not creating flamenco_task_logs collection, already exists.')
+
+        self._log.info('Creating index on flamenco_task_logs collection')
+        db.flamenco_task_logs.create_index(
+            [('task_id', pymongo.ASCENDING),
+             ('received_on_manager', pymongo.ASCENDING)],
+            background=True,
+            unique=False,
+            sparse=False,
+        )
 
     def flamenco_projects(self):
         """Returns projects set up for Flamenco.

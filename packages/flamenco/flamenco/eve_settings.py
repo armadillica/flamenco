@@ -268,6 +268,34 @@ tasks_schema = {
     'worker': {
         'type': 'string',
     },
+    'task_progress_percentage': {
+        'type': 'integer',
+    },
+    'current_command_index': {
+        'type': 'integer',
+    },
+    'command_progress_percentage': {
+        'type': 'integer',
+    },
+}
+
+task_logs_schema = {
+    'task': {
+        'type': 'objectid',
+        'data_relation': {
+            'resource': 'flamenco_tasks',
+            'field': '_id',
+        },
+        'required': True,
+    },
+    'received_on_manager': {
+        'type': 'datetime',
+        'required': True,
+    },
+    'log': {
+        'type': 'string',
+        'required': True,
+    },
 }
 
 _managers = {
@@ -291,8 +319,16 @@ _tasks = {
     'public_item_methods': [],
 }
 
+_task_logs = {
+    'schema': task_logs_schema,
+    'item_methods': ['GET', 'DELETE'],
+    'public_methods': [],
+    'public_item_methods': [],
+}
+
 DOMAIN = {
     'flamenco_managers': _managers,
     'flamenco_jobs': _jobs,
-    'flamenco_tasks': _tasks
+    'flamenco_tasks': _tasks,
+    'flamenco_task_logs': _task_logs,
 }
