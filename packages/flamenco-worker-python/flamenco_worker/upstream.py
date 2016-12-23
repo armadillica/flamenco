@@ -58,7 +58,7 @@ class FlamencoManager:
             self.session.mount(self.manager_url, HTTPAdapter(max_retries=HTTP_RETRY_COUNT))
 
         abs_url = urllib.parse.urljoin(self.manager_url, url)
-        self._log.debug('%s %s', method, abs_url)
+        self._log.debug('%s %s JSON: %s', method, abs_url, json)
 
         resp = self.session.request(
             method, abs_url,

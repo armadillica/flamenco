@@ -7,8 +7,7 @@ import attr
 class Activity:
     """Activity on a task."""
 
-    description = attr.ib(validator=attr.validators.instance_of(str))
-    current_cmd_name = attr.ib(validator=attr.validators.instance_of(str))
-    percentage_complete_task = attr.ib(validator=attr.validators.instance_of(int))
-    percentage_complete_command = attr.ib(validator=attr.validators.instance_of(int))
-
+    activity = attr.ib(default='', validator=attr.validators.instance_of(str))
+    current_command_idx = attr.ib(default=0, validator=attr.validators.instance_of(int))
+    task_progress_percentage = attr.ib(default=0, validator=attr.validators.instance_of(int))
+    command_progress_percentage = attr.ib(default=0, validator=attr.validators.instance_of(int))
