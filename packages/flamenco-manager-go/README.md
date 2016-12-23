@@ -28,7 +28,5 @@ absolute path of this `flamenco-manager-go` directory.
 
 In no particular order:
 
-- Heartbeat receiver from workers.
-- Remove address & status from worker registration payload.
 - Way for Flamenco Server to get an overview of Workers, and set their status.
-- Receive parsed logs from Flamenco Worker.
+- Update worker address upon communication (currently only stored when registering)

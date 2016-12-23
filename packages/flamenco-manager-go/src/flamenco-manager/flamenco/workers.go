@@ -29,7 +29,8 @@ func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 	worker.Secret = winfo.Secret
 	worker.Platform = winfo.Platform
 	worker.SupportedJobTypes = winfo.SupportedJobTypes
-	if err = StoreWorker(&worker, db); err != nil {
+	worker.Address = r.RemoteAddr
+	if err = StoreNewWorker(&worker, db); err != nil {
 		log.Println(r.RemoteAddr, "Unable to store worker:", err)
 
 		w.WriteHeader(500)
@@ -44,7 +45,7 @@ func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 	encoder.Encode(worker)
 }
 
-func StoreWorker(winfo *Worker, db *mgo.Database) error {
+func StoreNewWorker(winfo *Worker, db *mgo.Database) error {
 	var err error
 
 	// Store it in MongoDB after hashing the password and assigning an ID.
