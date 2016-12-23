@@ -32,14 +32,34 @@ class AbstractWorkerTest(unittest.TestCase):
     def setUp(self):
         from flamenco_worker.upstream import FlamencoManager
         from flamenco_worker.worker import FlamencoWorker
+        from flamenco_worker.runner import TaskRunner
+
+        self.asyncio_loop = asyncio.get_event_loop()
+        self.shutdown_future = self.asyncio_loop.create_future()
 
         self.manager = Mock(spec=FlamencoManager)
+        self.trunner = Mock(spec=TaskRunner)
+
+        self.trunner.execute = self.mock_task_execute
+
         self.worker = FlamencoWorker(
             manager=self.manager,
+            trunner=self.trunner,
             job_types=['sleep', 'unittest'],
             worker_id='1234',
-            worker_secret='jemoeder'
+            worker_secret='jemoeder',
+            loop=self.asyncio_loop,
+            shutdown_future=self.shutdown_future,
         )
+
+    def tearDown(self):
+        self.shutdown_future.cancel()
+        self.worker.shutdown()
+
+    async def mock_task_execute(self, task: dict, fworker):
+        """Mock task execute function that does nothing but sleep a bit."""
+
+        await asyncio.sleep(1)
 
 
 class WorkerStartupTest(AbstractWorkerTest):
