@@ -30,3 +30,4 @@ In no particular order:
 
 - Way for Flamenco Server to get an overview of Workers, and set their status.
 - Update worker address upon communication (currently only stored when registering)
+- the Task struct in documents.go should be synced with the Eve schema.
