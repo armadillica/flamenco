@@ -135,41 +135,12 @@ func upload_task_status(config *Conf, task *Task) {
 	log.Printf("Done sending task %s to upstream Flamenco\n", task.Id)
 }
 
-func (self *UpstreamConnection) timer(name string, sleep_after time.Duration) chan bool {
-	timer_chan := make(chan bool, 1) // don't let the timer block
-
-	go func() {
-		self.done_wg.Add(1)
-		defer self.done_wg.Done()
-		defer close(timer_chan)
-
-		last_timer := time.Time{}
-
-		for {
-			select {
-			case <-self.done:
-				log.Printf("Timer '%s' goroutine shutting down.\n", name)
-				return
-			default:
-				// Only sleep a little bit, so that we can check 'done' quite often.
-				time.Sleep(50 * time.Millisecond)
-			}
-
-			now := time.Now()
-			if now.Sub(last_timer) > sleep_after {
-				// Timeout occurred
-				last_timer = now
-				timer_chan <- true
-			}
-		}
-	}()
-
-	return timer_chan
-}
-
 func (self *UpstreamConnection) download_task_loop() {
-	timer_chan := self.timer("download_task_loop",
-		time.Duration(self.config.DownloadTaskSleep)*time.Second)
+	timer_chan := Timer("download_task_loop",
+		time.Duration(self.config.DownloadTaskSleep)*time.Second,
+		self.done,
+		self.done_wg,
+	)
 
 	go func() {
 		mongo_sess := self.session.Copy()
@@ -349,7 +320,8 @@ func (self *UpstreamConnection) SendStartupNotification() {
 		defer mongo_sess.Close()
 
 		time.Sleep(STARTUP_NOTIFICATION_INITIAL_DELAY)
-		timer_chan := self.timer("SendStartupNotification", STARTUP_NOTIFICATION_RETRY)
+		timer_chan := Timer("SendStartupNotification", STARTUP_NOTIFICATION_RETRY,
+			self.done, self.done_wg)
 
 		for _ = range timer_chan {
 			log.Println("SendStartupNotification: trying to send notification.")
