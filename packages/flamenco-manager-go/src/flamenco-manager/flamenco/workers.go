@@ -2,6 +2,7 @@ package flamenco
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -67,22 +68,30 @@ func StoreWorker(winfo *Worker, db *mgo.Database) error {
  * Returns the hashed secret of the worker.
  */
 func WorkerSecret(user string, db *mgo.Database) string {
-	if !bson.IsObjectIdHex(user) {
-		log.Printf("WorkerSecret: Invalid ObjectID passed as username: %s\n", user)
-		return ""
-	}
-	workers_coll := db.C("flamenco_workers")
-	worker := Worker{}
-
-	query := bson.M{"_id": bson.ObjectIdHex(user)}
 	projection := bson.M{"hashed_secret": 1}
+	worker, err := FindWorker(user, projection, db)
 
-	if err := workers_coll.Find(query).Select(projection).One(&worker); err != nil {
+	if err != nil {
 		log.Println("Error fetching hashed password: ", err)
 		return ""
 	}
 
 	return string(worker.HashedSecret)
+}
+
+/**
+ * Returns the worker given its ID.
+ */
+func FindWorker(worker_id string, projection interface{}, db *mgo.Database) (*Worker, error) {
+	worker := Worker{}
+
+	if !bson.IsObjectIdHex(worker_id) {
+		return &worker, errors.New("Invalid ObjectID")
+	}
+	workers_coll := db.C("flamenco_workers")
+	err := workers_coll.FindId(bson.ObjectIdHex(worker_id)).Select(projection).One(&worker)
+
+	return &worker, err
 }
 
 /**

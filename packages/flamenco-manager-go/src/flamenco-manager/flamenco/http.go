@@ -46,6 +46,7 @@ func SendJson(logprefix, method string, url *url.URL,
 		return err
 	}
 
+	// TODO Sybren: enable GZip compression.
 	req, err := http.NewRequest("POST", url.String(), bytes.NewBuffer(payload_bytes))
 	if err != nil {
 		log.Printf("%s: ERROR: Unable to create request: %s\n", logprefix, err)

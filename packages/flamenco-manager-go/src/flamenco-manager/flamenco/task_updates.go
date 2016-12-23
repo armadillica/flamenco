@@ -30,6 +30,16 @@ func QueueTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mg
 	task_id bson.ObjectId) {
 	log.Printf("%s Received task update for task %s\n", r.RemoteAddr, task_id.Hex())
 
+	// Get the worker
+	worker, err := FindWorker(r.Username, bson.M{"address": 1}, db)
+	if err != nil {
+		log.Printf("%s QueueTaskUpdate: Unable to find worker address: %s\n",
+			r.RemoteAddr, err)
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(w, "Unable to find worker address: %s", err)
+		return
+	}
+
 	// Parse the task JSON
 	tupdate := TaskUpdate{}
 	defer r.Body.Close()
@@ -41,6 +51,7 @@ func QueueTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mg
 	tupdate.ReceivedOnManager = time.Now().UTC()
 	tupdate.TaskId = task_id
 	tupdate.Id = bson.NewObjectId()
+	tupdate.Worker = worker.Address
 
 	// Store the update in the queue for sending to the Flamenco Server later.
 	task_update_queue := db.C(QUEUE_MGO_COLLECTION)
@@ -118,25 +129,22 @@ func (self *TaskUpdatePusher) push(queue *mgo.Collection) error {
 
 	// Perform the sending.
 	log.Printf("TaskUpdatePusher: pushing %d updates to upstream Flamenco Server", len(result))
-	if err := self.upstream.SendTaskUpdates(&result); err != nil {
+	response, err := self.upstream.SendTaskUpdates(&result)
+	if err != nil {
+		// TODO Sybren: implement some exponential backoff when things fail to get sent.
 		return err
 	}
 
-	// If succesful, remove the sent updates from the queue.
-	all_ids := make([]bson.ObjectId, len(result))
-	for idx, item := range result {
-		all_ids[idx] = item.Id
-	}
-	change_info, err := queue.RemoveAll(bson.M{"_id": bson.M{"$in": all_ids}})
+	// If succesful, remove the accepted updates from the queue.
+	_, err = queue.RemoveAll(bson.M{"_id": bson.M{"$in": response.HandledUpdateIds}})
 	if err != nil {
 		log.Printf("TaskUpdatePusher: This is awkward; we have already sent the task updates")
 		log.Println("upstream, but now we cannot un-queue them. Expect duplicates.")
 		return err
 	}
 
-	// If these numbers differ, it's because something strange is going on, for example
-	// someone else modified the database at the same time. For now, we don't handle this.
-	log.Printf("TaskUpdatePusher: un-queued %d of %d items.", change_info.Removed, len(result))
+	log.Printf("TaskUpdatePusher: server accepted %d of %d items.",
+		len(response.HandledUpdateIds), len(result))
 
 	return nil
 }

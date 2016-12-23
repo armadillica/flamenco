@@ -30,15 +30,21 @@ type Task struct {
 }
 
 type TaskUpdate struct {
-	Id                        bson.ObjectId `bson:"_id" json:"-"`
+	Id                        bson.ObjectId `bson:"_id" json:"_id"`
 	TaskId                    bson.ObjectId `bson:"task_id" json:"task_id,omitempty"`
 	TaskStatus                string        `bson:"task_status,omitempty" json:"task_status,omitempty"`
-	ReceivedOnManager         time.Time     `bson:"received_on_manager" json:"received_on_manager,omitempty"`
+	ReceivedOnManager         time.Time     `bson:"received_on_manager" json:"received_on_manager"`
 	Activity                  string        `bson:"activity,omitempty" json:"activity,omitempty"`
 	TaskProgressPercentage    int           `bson:"task_progress_percentage" json:"task_progress_percentage"`
 	CurrentCommandIdx         int           `bson:"current_command_idx" json:"current_command_idx"`
 	CommandProgressPercentage int           `bson:"command_progress_percentage" json:"command_progress_percentage"`
 	Log                       string        `bson:"log,omitempty" json:"log,omitempty"`
+	Worker                    string        `bson:"worker" json:"worker"`
+}
+
+type TaskUpdateResponse struct {
+	ModifiedCount    int             `json:"modified_count"`
+	HandledUpdateIds []bson.ObjectId `json:"handled_update_ids"`
 }
 
 type WorkerRegistration struct {

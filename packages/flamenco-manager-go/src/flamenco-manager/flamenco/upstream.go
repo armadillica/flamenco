@@ -324,12 +324,22 @@ func (self *UpstreamConnection) SendStartupNotification() {
 	}()
 }
 
-func (self *UpstreamConnection) SendTaskUpdates(updates *[]TaskUpdate) error {
+func (self *UpstreamConnection) SendTaskUpdates(updates *[]TaskUpdate) (*TaskUpdateResponse, error) {
 	url, err := self.ResolveUrl("/api/flamenco/managers/%s/task-update-batch",
 		self.config.ManagerId)
 	if err != nil {
 		panic(fmt.Sprintf("SendTaskUpdates: unable to construct URL: %s\n", err))
 	}
 
-	return self.SendJson("SendTaskUpdates", "POST", url, updates, nil)
+	response := TaskUpdateResponse{}
+	parse_response := func(resp *http.Response, body []byte) error {
+		err := json.Unmarshal(body, &response)
+		if err != nil {
+			log.Printf("SendTaskUpdates: error parsing server response: %s", err)
+		}
+		return err
+	}
+	err = self.SendJson("SendTaskUpdates", "POST", url, updates, parse_response)
+
+	return &response, err
 }
