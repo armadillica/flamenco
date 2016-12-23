@@ -35,6 +35,8 @@ class FlamencoWorker:
         if not self.worker_id or not self.worker_secret:
             self.register_at_manager()
 
+        self.schedule_fetch_task()
+
     def register_at_manager(self):
         self._log.info('Registering at manager')
 
@@ -70,7 +72,6 @@ class FlamencoWorker:
 
         # TODO: add "watchdog" task that checks the asyncio loop and ensures there is
         # always either a task being executed or a task fetch scheduled.
-        self.schedule_fetch_task()
         self.loop.run_forever()
 
     def schedule_fetch_task(self, delay=0):
