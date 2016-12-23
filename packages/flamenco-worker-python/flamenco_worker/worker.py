@@ -223,8 +223,11 @@ class FlamencoWorker:
         for key, value in kwargs.items():
             setattr(self.last_task_activity, key, value)
 
-        task_status_changed = self.current_task_status != task_status
-        self.current_task_status = task_status
+        if task_status is None:
+            task_status_changed = False
+        else:
+            task_status_changed = self.current_task_status != task_status
+            self.current_task_status = task_status
 
         if task_status_changed:
             self._log.info('Task changed status to %s, pushing to master', task_status)
