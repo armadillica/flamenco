@@ -237,7 +237,10 @@ class FlamencoWorker:
     def register_log(self, log_entry):
         """Registers a log entry, and possibly sends all queued log entries to upstream Master."""
 
-        self.queued_log_entries.append(log_entry)
+        from . import tz
+
+        now = datetime.datetime.now(tz.tzutc()).isoformat()
+        self.queued_log_entries.append('%s: %s' % (now, log_entry))
 
         if len(self.queued_log_entries) > PUSH_LOG_MAX_ENTRIES:
             self._log.info('Queued up more than %i log entries, pushing to master',
