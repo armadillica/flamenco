@@ -157,7 +157,12 @@ class FlamencoWorker:
         self._log.debug('Received task: %s', task_info)
 
         try:
-            await self.trunner.execute(task_info, self)
+            self.register_task_update(task_status='active')
+            ok = await self.trunner.execute(task_info, self)
+            if ok:
+                self.register_task_update(task_status='completed')
+            else:
+                self.register_task_update(task_status='failed')
         except Exception as ex:
             self._log.exception('Uncaught exception executing task %s' % self.task_id)
             try:
@@ -176,6 +181,8 @@ class FlamencoWorker:
     def push_to_master(self):
         """Updates a task's status and activity.
         """
+
+        # TODO Sybren: do this in a separate thread, as to not block the task runner.
 
         import requests
 
