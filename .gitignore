@@ -1,35 +1,11 @@
 *.pyc
 *.bak
-*.sqlite
 /temp/
-venv/
-config_local.py
 docs/site/
 
 /.cache/
 
-/flamenco/config.py
-/flamenco/server/application/config.py
-/flamenco/manager/application/config.py
-/flamenco/dashboard/application/config.py
-/flamenco/worker/application/config.py
-
-/flamenco/server/render
-/flamenco/manager/application/static/storage/
-/flamenco/server/application/static/storage/
-
-/flamenco/dashboard/application/static/css/main.css
-/flamenco/dashboard/node_modules/
-/flamenco/dashboard/.sass-cache/
 *.css.map
-
-/flamenco/dashboard/application/templates/layout.html
-/flamenco/dashboard/application/templates/workers/index.html
-/flamenco/dashboard/application/templates/managers/index.html
-/flamenco/dashboard/application/templates/managers/view.html
-
-/flamenco/dashboard/application/templates/errors/404.html
-/flamenco/dashboard/application/templates/errors/500.html
 
 /packages/flamenco-manager-go/bin/
 /packages/flamenco-manager-go/pkg/
