@@ -186,3 +186,64 @@ class SleepCommand(AbstractCommand):
         self.worker.register_log('Sleeping for %s seconds' % time_in_seconds)
         await asyncio.sleep(time_in_seconds)
         self.worker.register_log('Done sleeping for %s seconds' % time_in_seconds)
+
+
+class AbstractSubprocessCommand(AbstractCommand):
+    async def subprocess(self, args, cwd=None):
+
+        import subprocess
+
+        # TODO: convert to asyncio subprocess support for more control over timeouts etc.
+        proc = subprocess.Popen(
+            args,
+            bufsize=1, universal_newlines=True,  # line buffered
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            close_fds=True,
+        )
+
+        while True:
+            data = proc.stdout.read()
+
+            if data is not None:
+                for line in data.split('\n'):
+                    line = self.process_line(line)
+                    if line is not None:
+                        self._log.info('Read line: %s', line)
+                        self.worker.register_log(line)
+
+            retcode = proc.poll()
+            if retcode is None:
+                continue
+
+            self._log.info('Command %r stopped with status code %s', args, retcode)
+
+            if retcode < 0:
+                raise RuntimeError('Command failed with status %s' % retcode)
+
+            self.worker.register_log('Command completed')
+            return
+
+    def process_line(self, line: str) -> str:
+        """Processes the line, returning None to ignore it."""
+
+        return line
+
+
+@command_executor('exec')
+class ExecCommand(AbstractSubprocessCommand):
+    def validate(self, settings: dict):
+        try:
+            cmd = settings['cmd']
+        except KeyError:
+            return 'Missing "cmd"'
+
+        if not isinstance(cmd, str):
+            return '"cmd" must be a string'
+        if not cmd:
+            return '"cmd" may not be empty'
+
+    async def execute(self, settings: dict):
+        import shlex
+        await super().subprocess(shlex.split(settings['cmd']))
