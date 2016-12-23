@@ -1,15 +1,8 @@
-*.sublime-project
-*.sublime-workspace
 *.pyc
-*.swp
 *.bak
-.DS_Store
 *.sqlite
-.idea
 /temp/
 venv/
-*.log
-*.ropeproject*
 config_local.py
 docs/site/
 
