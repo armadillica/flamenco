@@ -63,6 +63,22 @@ func QueueTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mg
 		return
 	}
 
+	// Locally apply the change to our cached version of the task too.
+	task_coll := db.C("flamenco_tasks")
+	updates := bson.M{}
+	if tupdate.TaskStatus != "" {
+		updates["status"] = tupdate.TaskStatus
+	}
+	if tupdate.Activity != "" {
+		updates["activity"] = tupdate.Activity
+	}
+	if len(updates) > 0 {
+		if err := task_coll.UpdateId(task_id, bson.M{"$set": updates}); err != nil {
+			log.Printf("%s QueueTaskUpdate: error updating local task cache: %s",
+				r.RemoteAddr, err)
+		}
+	}
+
 	w.WriteHeader(204)
 }
 
