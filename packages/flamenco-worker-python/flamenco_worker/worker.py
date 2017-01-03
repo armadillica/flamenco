@@ -238,10 +238,17 @@ class FlamencoWorker:
                            PUSH_ACT_MAX_INTERVAL)
             self.push_to_manager()
 
-    def register_log(self, log_entry):
-        """Registers a log entry, and possibly sends all queued log entries to upstream Master."""
+    def register_log(self, log_entry, *fmt_args):
+        """Registers a log entry, and possibly sends all queued log entries to upstream Manager.
+
+        Supports variable arguments, just like the logger.{info,warn,error}(...) family
+        of methods.
+        """
 
         from . import tz
+
+        if fmt_args:
+            log_entry %= fmt_args
 
         now = datetime.datetime.now(tz.tzutc()).isoformat()
         self.queued_log_entries.append('%s: %s' % (now, log_entry))

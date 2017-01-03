@@ -193,6 +193,8 @@ class AbstractSubprocessCommand(AbstractCommand):
 
         import subprocess
 
+        self.worker.register_log('Executing %r', args)
+
         # TODO: convert to asyncio subprocess support for more control over timeouts etc.
         proc = subprocess.Popen(
             args,
