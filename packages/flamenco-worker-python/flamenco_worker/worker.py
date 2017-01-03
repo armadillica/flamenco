@@ -10,6 +10,7 @@ from . import upstream
 # All durations/delays/etc are in seconds.
 FETCH_TASK_FAILED_RETRY_DELAY = 10  # when we failed obtaining a task
 FETCH_TASK_EMPTY_RETRY_DELAY = 5  # when there are no tasks to perform
+FETCH_TASK_DONE_SCHEDULE_NEW_DELAY = 3  # after a task is completed
 
 PUSH_LOG_MAX_ENTRIES = 10
 PUSH_LOG_MAX_INTERVAL = datetime.timedelta(seconds=5)
@@ -176,7 +177,7 @@ class FlamencoWorker:
         finally:
             # Always schedule a new task run; after a little delay to not hammer the world
             # when we're in some infinite failure loop.
-            self.schedule_fetch_task(3)
+            self.schedule_fetch_task(FETCH_TASK_DONE_SCHEDULE_NEW_DELAY)
 
     def push_to_manager(self):
         """Updates a task's status and activity.
