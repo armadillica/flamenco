@@ -90,6 +90,7 @@ class FlamencoWorker:
                     'platform': platform,
                     'supported_job_types': self.job_types,
                 },
+                auth=None,  # explicitly do not use authentication
             )
         except requests.ConnectionError:
             self._log.error('Unable to register at manager, aborting.')
@@ -170,8 +171,7 @@ class FlamencoWorker:
         # TODO: use exponential backoff instead of retrying every fixed N seconds.
         self._log.info('Fetching task')
         try:
-            resp = self.manager.post('/task',
-                                     auth=(self.worker_id, self.worker_secret))
+            resp = self.manager.post('/task')
         except requests.exceptions.RequestException as ex:
             self._log.warning('Error fetching new task, will retry in %i seconds: %s',
                               FETCH_TASK_FAILED_RETRY_DELAY, ex)
@@ -242,9 +242,7 @@ class FlamencoWorker:
                 self._queued_log_entries.clear()
                 self.last_log_push = now
 
-        resp = self.manager.post('/tasks/%s/update' % self.task_id,
-                                 json=payload,
-                                 auth=(self.worker_id, self.worker_secret))
+        resp = self.manager.post('/tasks/%s/update' % self.task_id, json=payload)
         self._log.debug('Sent task %s update to manager', self.task_id)
         try:
             resp.raise_for_status()

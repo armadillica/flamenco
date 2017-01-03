@@ -101,7 +101,8 @@ class WorkerStartupTest(AbstractWorkerTest):
                 'platform': detect_platform(),
                 'supported_job_types': ['sleep', 'unittest'],
                 'secret': self.worker.worker_secret,
-            }
+            },
+            auth=None,
         )
 
     def test_startup_registration_unhappy(self):
@@ -126,7 +127,8 @@ class WorkerStartupTest(AbstractWorkerTest):
                 'platform': detect_platform(),
                 'supported_job_types': ['sleep', 'unittest'],
                 'secret': self.worker.worker_secret,
-            }
+            },
+            auth=None,
         )
 
 
@@ -181,16 +183,16 @@ class TestWorkerTaskFetch(AbstractWorkerTest):
         self.assertNotEqual(self.worker.fetch_task_task, interesting_task)
 
         self.manager.post.assert_has_calls([
-            call('/task', auth=(self.worker.worker_id, self.worker.worker_secret)),
+            call('/task'),
             call('/tasks/58514d1e9837734f2e71b479/update',
                  json={'task_progress_percentage': 0, 'activity': '',
                        'command_progress_percentage': 0, 'task_status': 'active',
                        'current_command_idx': 0},
-                 auth=(self.worker.worker_id, self.worker.worker_secret)),
+                 ),
             call('/tasks/58514d1e9837734f2e71b479/update',
                  json={'task_progress_percentage': 0, 'activity': '',
                        'command_progress_percentage': 0, 'task_status': 'completed',
                        'current_command_idx': 0},
-                 auth=(self.worker.worker_id, self.worker.worker_secret)),
+                 ),
         ])
         self.assertEqual(self.manager.post.call_count, 3)

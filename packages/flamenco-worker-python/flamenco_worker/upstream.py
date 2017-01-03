@@ -11,6 +11,8 @@ HTTP_TIMEOUT = 3  # in seconds
 class FlamencoManager:
     manager_url = attr.ib(validator=attr.validators.instance_of(str))
     session = attr.ib(default=None, init=False)
+    auth = attr.ib(default=None, init=False)  # tuple (worker_id, worker_secret)
+
     _log = attrs_extra.log('%s.FlamencoManager' % __name__)
 
     def get(self, *args, **kwargs) -> requests.Response:
@@ -34,7 +36,7 @@ class FlamencoManager:
                        headers=None,
                        cookies=None,
                        files=None,
-                       auth=None,
+                       auth=...,
                        timeout=HTTP_TIMEOUT,
                        allow_redirects=True,
                        proxies=None,
@@ -46,6 +48,8 @@ class FlamencoManager:
         """Performs a HTTP request to the server.
 
         Creates and re-uses the HTTP session, to have efficient communication.
+
+        if 'auth=...' (the default), self.auth is used. If 'auth=None', no authentication is used.
         """
 
         import urllib.parse
@@ -67,7 +71,7 @@ class FlamencoManager:
             headers=headers,
             cookies=cookies,
             files=files,
-            auth=auth,
+            auth=self.auth if auth is ... else auth,
             timeout=timeout,
             allow_redirects=allow_redirects,
             proxies=proxies,
