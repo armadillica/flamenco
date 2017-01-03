@@ -41,6 +41,7 @@ class AbstractCommand(metaclass=abc.ABCMeta):
 
         verr = self.validate(settings)
         if verr is not None:
+            self._log.warning('%s: Error in settings: %s', self.identifier, verr)
             await self.register_log('%s: Error in settings: %s', self.identifier, verr)
             await self.worker.register_task_update(
                 task_status='failed',
