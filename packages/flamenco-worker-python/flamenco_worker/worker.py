@@ -112,14 +112,28 @@ class FlamencoWorker:
         # The current task may still be running, as fetch_task() calls schedule_fetch_task() to
         # schedule a future run. This may result in the task not being awaited when we are
         # shutting down.
+        if self.shutdown_future.done():
+            self.log.warning('Shutting down, not scheduling another fetch-task task.')
+            return
+
         self.fetch_task_task = asyncio.ensure_future(self.fetch_task(delay), loop=self.loop)
 
     def shutdown(self):
         """Gracefully shuts down any asynchronous tasks."""
 
-        if self.fetch_task_task and not self.fetch_task_task.done():
-            self._log.info('Cancelling task fetching task %s', self.fetch_task_task)
-            self.fetch_task_task.cancel()
+        if self.fetch_task_task is None or self.fetch_task_task.done():
+            return
+
+        self._log.info('shutdown(): Cancelling task fetching task %s', self.fetch_task_task)
+        self.fetch_task_task.cancel()
+
+        # This prevents a 'Task was destroyed but it is pending!' warning on the console.
+        # Sybren: I've only seen this in unit tests, so maybe this code should be moved
+        # there, instead.
+        try:
+            self.loop.run_until_complete(self.fetch_task_task)
+        except asyncio.CancelledError:
+            pass
 
     async def fetch_task(self, delay: float):
         """Fetches a single task to perform from Flamenco Manager.

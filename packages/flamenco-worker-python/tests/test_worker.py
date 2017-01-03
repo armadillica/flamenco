@@ -28,6 +28,20 @@ class JsonResponse:
         raise requests.HTTPError(self.status_code)
 
 
+@attr.s
+class EmptyResponse:
+    """Mocked HTTP response returning an empty 204.
+
+    Maybe we want to switch to using unittest.mock.Mock for this,
+    or to using the responses package.
+    """
+
+    status_code = attr.ib(default=204, validator=attr.validators.instance_of(int))
+
+    def raise_for_status(self):
+        pass
+
+
 class AbstractWorkerTest(unittest.TestCase):
     def setUp(self):
         from flamenco_worker.upstream import FlamencoManager
@@ -132,26 +146,47 @@ class TestWorkerTaskFetch(AbstractWorkerTest):
         self.loop.run_until_complete(stop_loop())
 
     def test_fetch_task_happy(self):
-        self.manager.post = Mock(return_value=JsonResponse({
-            '_id': '58514d1e9837734f2e71b479',
-            'job': '58514d1e9837734f2e71b477',
-            'manager': '585a795698377345814d2f68',
-            'project': '',
-            'user': '580f8c66983773759afdb20e',
-            'name': 'sleep-14-26',
-            'status': 'processing',
-            'priority': 50,
-            'job_type': 'sleep',
-            'commands': [
-                {'name': 'echo', 'settings': {'message': 'Preparing to sleep'}},
-                {'name': 'sleep', 'settings': {'time_in_seconds': 3}}
-            ]
-        }))
+        from unittest.mock import call
+
+        self.manager.post = Mock()
+        self.manager.post.side_effect = [
+            # response when fetching a task
+            JsonResponse({
+                '_id': '58514d1e9837734f2e71b479',
+                'job': '58514d1e9837734f2e71b477',
+                'manager': '585a795698377345814d2f68',
+                'project': '',
+                'user': '580f8c66983773759afdb20e',
+                'name': 'sleep-14-26',
+                'status': 'processing',
+                'priority': 50,
+                'job_type': 'sleep',
+                'commands': [
+                    {'name': 'echo', 'settings': {'message': 'Preparing to sleep'}},
+                    {'name': 'sleep', 'settings': {'time_in_seconds': 3}}
+                ]
+            }),
+            # Responses after status updates
+            EmptyResponse(),  # task becoming active
+            EmptyResponse(),  # task becoming complete
+        ]
 
         self.worker.schedule_fetch_task()
         self.manager.post.assert_not_called()
 
-        self.run_loop_for(0.5)
-        self.manager.post.assert_called_once_with(
-            '/task',
-            auth=(self.worker.worker_id, self.worker.worker_secret))
+        interesting_task = self.worker.fetch_task_task
+        self.loop.run_until_complete(self.worker.fetch_task_task)
+
+        # Another fetch-task task should have been scheduled.
+        self.assertNotEqual(self.worker.fetch_task_task, interesting_task)
+
+        self.manager.post.assert_has_calls([
+            call('/task', auth=(self.worker.worker_id, self.worker.worker_secret)),
+            call('/tasks/58514d1e9837734f2e71b479/update',
+                 json={'task_progress_percentage': 0, 'activity': '', 'command_progress_percentage': 0, 'task_status': 'active', 'current_command_idx': 0},
+                 auth=(self.worker.worker_id, self.worker.worker_secret)),
+            call('/tasks/58514d1e9837734f2e71b479/update',
+                 json={'task_progress_percentage': 0, 'activity': '', 'command_progress_percentage': 0, 'task_status': 'completed', 'current_command_idx': 0},
+                 auth=(self.worker.worker_id, self.worker.worker_secret)),
+        ])
+        self.assertEqual(self.manager.post.call_count, 3)
