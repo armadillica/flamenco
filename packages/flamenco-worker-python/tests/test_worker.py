@@ -11,18 +11,21 @@ class AbstractWorkerTest(unittest.TestCase):
         from flamenco_worker.upstream import FlamencoManager
         from flamenco_worker.worker import FlamencoWorker
         from flamenco_worker.runner import TaskRunner
+        from flamenco_worker.upstream_update_queue import TaskUpdateQueue
 
         self.asyncio_loop = asyncio.get_event_loop()
         self.shutdown_future = self.asyncio_loop.create_future()
 
         self.manager = Mock(spec=FlamencoManager)
         self.trunner = Mock(spec=TaskRunner)
+        self.tuqueue = Mock(spec=TaskUpdateQueue)
 
         self.trunner.execute = self.mock_task_execute
 
         self.worker = FlamencoWorker(
             manager=self.manager,
             trunner=self.trunner,
+            tuqueue=self.tuqueue,
             job_types=['sleep', 'unittest'],
             worker_id='1234',
             worker_secret='jemoeder',
@@ -44,6 +47,7 @@ class WorkerStartupTest(AbstractWorkerTest):
     def test_startup_already_registered(self):
         self.worker.startup()
         self.manager.post.assert_not_called()
+        self.tuqueue.queue.assert_not_called()
 
     def test_startup_registration(self):
         from flamenco_worker.worker import detect_platform
@@ -118,26 +122,27 @@ class TestWorkerTaskFetch(AbstractWorkerTest):
         from mock_responses import JsonResponse, EmptyResponse
 
         self.manager.post = Mock()
-        self.manager.post.side_effect = [
-            # response when fetching a task
-            JsonResponse({
-                '_id': '58514d1e9837734f2e71b479',
-                'job': '58514d1e9837734f2e71b477',
-                'manager': '585a795698377345814d2f68',
-                'project': '',
-                'user': '580f8c66983773759afdb20e',
-                'name': 'sleep-14-26',
-                'status': 'processing',
-                'priority': 50,
-                'job_type': 'sleep',
-                'commands': [
-                    {'name': 'echo', 'settings': {'message': 'Preparing to sleep'}},
-                    {'name': 'sleep', 'settings': {'time_in_seconds': 3}}
-                ]
-            }),
+        # response when fetching a task
+        self.manager.post.return_value = JsonResponse({
+            '_id': '58514d1e9837734f2e71b479',
+            'job': '58514d1e9837734f2e71b477',
+            'manager': '585a795698377345814d2f68',
+            'project': '',
+            'user': '580f8c66983773759afdb20e',
+            'name': 'sleep-14-26',
+            'status': 'processing',
+            'priority': 50,
+            'job_type': 'sleep',
+            'commands': [
+                {'name': 'echo', 'settings': {'message': 'Preparing to sleep'}},
+                {'name': 'sleep', 'settings': {'time_in_seconds': 3}}
+            ]
+        })
+
+        self.tuqueue.queue.side_effect = [
             # Responses after status updates
-            EmptyResponse(),  # task becoming active
-            EmptyResponse(),  # task becoming complete
+            None,  # task becoming active
+            None,  # task becoming complete
         ]
 
         self.worker.schedule_fetch_task()
@@ -149,17 +154,15 @@ class TestWorkerTaskFetch(AbstractWorkerTest):
         # Another fetch-task task should have been scheduled.
         self.assertNotEqual(self.worker.fetch_task_task, interesting_task)
 
-        self.manager.post.assert_has_calls([
-            call('/task'),
+        self.manager.post.assert_called_once_with('/task')
+        self.tuqueue.queue.assert_has_calls([
             call('/tasks/58514d1e9837734f2e71b479/update',
-                 json={'task_progress_percentage': 0, 'activity': '',
-                       'command_progress_percentage': 0, 'task_status': 'active',
-                       'current_command_idx': 0},
-                 ),
+                 {'task_progress_percentage': 0, 'activity': '',
+                  'command_progress_percentage': 0, 'task_status': 'active',
+                  'current_command_idx': 0}),
             call('/tasks/58514d1e9837734f2e71b479/update',
-                 json={'task_progress_percentage': 0, 'activity': '',
-                       'command_progress_percentage': 0, 'task_status': 'completed',
-                       'current_command_idx': 0},
-                 ),
+                 {'task_progress_percentage': 0, 'activity': '',
+                  'command_progress_percentage': 0, 'task_status': 'completed',
+                  'current_command_idx': 0}),
         ])
-        self.assertEqual(self.manager.post.call_count, 3)
+        self.assertEqual(self.tuqueue.queue.call_count, 2)

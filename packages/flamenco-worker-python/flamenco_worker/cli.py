@@ -61,24 +61,33 @@ def main():
     shutdown_future = loop.create_future()
 
     # Piece all the components together.
-    from . import runner, worker, upstream
+    from . import runner, worker, upstream, upstream_update_queue
 
     fmanager = upstream.FlamencoManager(
         manager_url=confparser.get(config.CONFIG_SECTION, 'manager_url'),
     )
 
+    tuqueue = upstream_update_queue.TaskUpdateQueue(
+        db_fname=confparser.get(config.CONFIG_SECTION, 'task_update_queue_db'),
+        manager=fmanager,
+        shutdown_future=shutdown_future,
+    )
     trunner = runner.TaskRunner(
         shutdown_future=shutdown_future)
 
     fworker = worker.FlamencoWorker(
         manager=fmanager,
         trunner=trunner,
+        tuqueue=tuqueue,
         job_types=confparser.get(config.CONFIG_SECTION, 'job_types').split(),
         worker_id=confparser.get(config.CONFIG_SECTION, 'worker_id'),
         worker_secret=confparser.get(config.CONFIG_SECTION, 'worker_secret'),
         loop=loop,
         shutdown_future=shutdown_future,
     )
+
+    # Start the task update queue worker loop.
+    asyncio.ensure_future(tuqueue.work(loop=loop))
 
     try:
         fworker.startup()
@@ -95,6 +104,7 @@ def main():
             log.info('Waiting to give tasks the time to stop gracefully')
             await asyncio.sleep(2)
             loop.stop()
+
         loop.run_until_complete(stop_loop())
     except:
         log.exception('Uncaught exception!')

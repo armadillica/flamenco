@@ -9,6 +9,7 @@ HTTP_TIMEOUT = 3  # in seconds
 
 @attr.s
 class FlamencoManager:
+    # TODO Sybren: make all functions async
     manager_url = attr.ib(validator=attr.validators.instance_of(str))
     session = attr.ib(default=None, init=False)
     auth = attr.ib(default=None, init=False)  # tuple (worker_id, worker_secret)

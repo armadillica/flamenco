@@ -6,6 +6,7 @@ import attr
 from . import attrs_extra
 from . import documents
 from . import upstream
+from . import upstream_update_queue
 
 # All durations/delays/etc are in seconds.
 FETCH_TASK_FAILED_RETRY_DELAY = 10  # when we failed obtaining a task
@@ -28,6 +29,7 @@ class UnableToRegisterError(Exception):
 class FlamencoWorker:
     manager = attr.ib(validator=attr.validators.instance_of(upstream.FlamencoManager))
     trunner = attr.ib()  # Instance of flamenco_worker.runner.TaskRunner
+    tuqueue = attr.ib(validator=attr.validators.instance_of(upstream_update_queue.TaskUpdateQueue))
     job_types = attr.ib(validator=attr.validators.instance_of(list))
     worker_id = attr.ib(validator=attr.validators.instance_of(str))
     worker_secret = attr.ib(validator=attr.validators.instance_of(str))
@@ -221,11 +223,9 @@ class FlamencoWorker:
 
     async def push_to_manager(self):
         """Updates a task's status and activity.
+
+        Uses the TaskUpdateQueue to handle persistent queueing.
         """
-
-        # TODO Sybren: do this in a separate thread, as to not block the task runner.
-
-        import requests
 
         self._log.info('Updating task %s with status %r and activity %r',
                        self.task_id, self.current_task_status, self.last_task_activity)
@@ -242,12 +242,7 @@ class FlamencoWorker:
                 self._queued_log_entries.clear()
                 self.last_log_push = now
 
-        resp = self.manager.post('/tasks/%s/update' % self.task_id, json=payload)
-        self._log.debug('Sent task %s update to manager', self.task_id)
-        try:
-            resp.raise_for_status()
-        except requests.HTTPError as ex:
-            self._log.error('Unable to send status update to manager, update is lost: %s', ex)
+        await self.tuqueue.queue('/tasks/%s/update' % self.task_id, payload)
 
     async def register_task_update(self, *,
                                    task_status: str = None,

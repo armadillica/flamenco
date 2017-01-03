@@ -13,6 +13,7 @@ DEFAULT_CONFIG = {
     'flamenco-worker': collections.OrderedDict([
         ('manager_url', 'http://flamenco-manager/'),
         ('job_types', 'sleep blender_render_simple'),
+        ('task_update_queue_db', 'flamenco-worker.db'),
         ('worker_id', ''),
         ('worker_secret', ''),
     ])
