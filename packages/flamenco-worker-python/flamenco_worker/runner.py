@@ -41,15 +41,15 @@ class AbstractCommand(metaclass=abc.ABCMeta):
 
         verr = self.validate(settings)
         if verr is not None:
-            self.register_log('%s: Error in settings: %s' % (self.identifier, verr))
-            self.worker.register_task_update(
+            await self.register_log('%s: Error in settings: %s', self.identifier, verr)
+            await self.worker.register_task_update(
                 task_status='failed',
                 activity='%s: Invalid settings: %s' % (self.identifier, verr),
             )
             return False
 
-        self.worker.register_log('%s: Starting' % self.command_name)
-        self.worker.register_task_update(
+        await self.worker.register_log('%s: Starting' % self.command_name)
+        await self.worker.register_task_update(
             activity='starting %s' % self.command_name,
             current_command_idx=self.command_idx,
             command_progress_percentage=0
@@ -59,15 +59,15 @@ class AbstractCommand(metaclass=abc.ABCMeta):
             await self.execute(settings)
         except Exception as ex:
             self._log.exception('Error executing.')
-            self.worker.register_log('%s: Error executing: %s' % (self.identifier, ex))
-            self.worker.register_task_update(
+            await self.worker.register_log('%s: Error executing: %s' % (self.identifier, ex))
+            await self.worker.register_task_update(
                 task_status='failed',
                 activity='%s: Error executing: %s' % (self.identifier, ex),
             )
             return False
 
-        self.worker.register_log('%s: Finished' % self.command_name)
-        self.worker.register_task_update(
+        await self.worker.register_log('%s: Finished' % self.command_name)
+        await self.worker.register_task_update(
             activity='finished %s' % self.command_name,
             current_command_idx=self.command_idx,
             command_progress_percentage=100
@@ -167,7 +167,7 @@ class EchoCommand(AbstractCommand):
             return 'Message must be a string'
 
     async def execute(self, settings: dict):
-        self.worker.register_log(settings['message'])
+        await self.worker.register_log(settings['message'])
 
 
 @command_executor('sleep')
@@ -183,9 +183,9 @@ class SleepCommand(AbstractCommand):
 
     async def execute(self, settings: dict):
         time_in_seconds = settings['time_in_seconds']
-        self.worker.register_log('Sleeping for %s seconds' % time_in_seconds)
+        await self.worker.register_log('Sleeping for %s seconds' % time_in_seconds)
         await asyncio.sleep(time_in_seconds)
-        self.worker.register_log('Done sleeping for %s seconds' % time_in_seconds)
+        await self.worker.register_log('Done sleeping for %s seconds' % time_in_seconds)
 
 
 class AbstractSubprocessCommand(AbstractCommand):
@@ -193,7 +193,7 @@ class AbstractSubprocessCommand(AbstractCommand):
 
         import subprocess
 
-        self.worker.register_log('Executing %r', args)
+        await self.worker.register_log('Executing %r', args)
 
         # TODO: convert to asyncio subprocess support for more control over timeouts etc.
         proc = subprocess.Popen(
@@ -213,7 +213,7 @@ class AbstractSubprocessCommand(AbstractCommand):
                     line = self.process_line(line)
                     if line is not None:
                         self._log.info('Read line: %s', line)
-                        self.worker.register_log(line)
+                        await self.worker.register_log(line)
 
             retcode = proc.poll()
             if retcode is None:
@@ -224,7 +224,7 @@ class AbstractSubprocessCommand(AbstractCommand):
             if retcode < 0:
                 raise RuntimeError('Command failed with status %s' % retcode)
 
-            self.worker.register_log('Command completed')
+            await self.worker.register_log('Command completed')
             return
 
     def process_line(self, line: str) -> str:

@@ -108,6 +108,9 @@ class FlamencoWorker:
         :param delay: delay in seconds, after which the task fetch will be performed.
         """
 
+        # The current task may still be running, as fetch_task() calls schedule_fetch_task() to
+        # schedule a future run. This may result in the task not being awaited when we are
+        # shutting down.
         self.fetch_task_task = asyncio.ensure_future(self.fetch_task(delay), loop=self.loop)
 
     def shutdown(self):
@@ -158,17 +161,18 @@ class FlamencoWorker:
         self._log.debug('Received task: %s', task_info)
 
         try:
-            self.register_task_update(task_status='active')
+            await self.register_task_update(task_status='active')
             ok = await self.trunner.execute(task_info, self)
-            if ok:
-                self.register_task_update(task_status='completed')
+            if ok or ok is None:
+                await self.register_task_update(task_status='completed')
             else:
-                self.register_task_update(task_status='failed')
+                self._log.error('Task %s failed', self.task_id)
+                await self.register_task_update(task_status='failed')
         except Exception as ex:
             self._log.exception('Uncaught exception executing task %s' % self.task_id)
             try:
                 self.queued_log_entries.append(traceback.format_exc())
-                self.register_task_update(
+                await self.register_task_update(
                     task_status='failed',
                     activity='Uncaught exception: %s %s' % (type(ex).__name__, ex),
                 )
@@ -179,7 +183,7 @@ class FlamencoWorker:
             # when we're in some infinite failure loop.
             self.schedule_fetch_task(FETCH_TASK_DONE_SCHEDULE_NEW_DELAY)
 
-    def push_to_manager(self):
+    async def push_to_manager(self):
         """Updates a task's status and activity.
         """
 
@@ -210,9 +214,9 @@ class FlamencoWorker:
         except requests.HTTPError as ex:
             self._log.error('Unable to send status update to manager, update is lost: %s', ex)
 
-    def register_task_update(self, *,
-                             task_status: str = None,
-                             **kwargs):
+    async def register_task_update(self, *,
+                                   task_status: str = None,
+                                   **kwargs):
         """Stores the task status and activity, and possibly sends to Flamenco Manager.
 
         If the last update to Manager was long enough ago, or the task status changed,
@@ -232,13 +236,13 @@ class FlamencoWorker:
 
         if task_status_changed:
             self._log.info('Task changed status to %s, pushing to manager', task_status)
-            self.push_to_manager()
+            await self.push_to_manager()
         elif datetime.datetime.now() - self.last_activity_push > PUSH_ACT_MAX_INTERVAL:
             self._log.info('More than %s since last activity update, pushing to manager',
                            PUSH_ACT_MAX_INTERVAL)
-            self.push_to_manager()
+            await self.push_to_manager()
 
-    def register_log(self, log_entry, *fmt_args):
+    async def register_log(self, log_entry, *fmt_args):
         """Registers a log entry, and possibly sends all queued log entries to upstream Manager.
 
         Supports variable arguments, just like the logger.{info,warn,error}(...) family
@@ -256,11 +260,11 @@ class FlamencoWorker:
         if len(self.queued_log_entries) > PUSH_LOG_MAX_ENTRIES:
             self._log.info('Queued up more than %i log entries, pushing to manager',
                            PUSH_LOG_MAX_ENTRIES)
-            self.push_to_manager()
+            await self.push_to_manager()
         elif datetime.datetime.now() - self.last_log_push > PUSH_LOG_MAX_INTERVAL:
             self._log.info('More than %s since last log update, pushing to manager',
                            PUSH_LOG_MAX_INTERVAL)
-            self.push_to_manager()
+            await self.push_to_manager()
 
 
 def generate_secret() -> str:
