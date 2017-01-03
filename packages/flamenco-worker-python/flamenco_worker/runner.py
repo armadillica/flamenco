@@ -253,4 +253,4 @@ class ExecCommand(AbstractSubprocessCommand):
 
     async def execute(self, settings: dict):
         import shlex
-        await super().subprocess(shlex.split(settings['cmd']))
+        await self.subprocess(shlex.split(settings['cmd']))
