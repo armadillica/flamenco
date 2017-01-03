@@ -30,7 +30,7 @@ type TaskUpdatePusher struct {
 }
 
 /**
- * Receives a task update from a worker, and queues it.
+ * Receives a task update from a worker, and queues it for sending to Flamenco Server.
  */
 func QueueTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.Database,
 	task_id bson.ObjectId) {
