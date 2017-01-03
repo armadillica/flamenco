@@ -1,3 +1,6 @@
+/*
+ * Receives task updates from workers, queues them, and forwards them to the Flamenco Server.
+ */
 package flamenco
 
 import (
@@ -26,6 +29,9 @@ type TaskUpdatePusher struct {
 	done_wg *sync.WaitGroup
 }
 
+/**
+ * Receives a task update from a worker, and queues it.
+ */
 func QueueTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.Database,
 	task_id bson.ObjectId) {
 	log.Printf("%s Received task update for task %s\n", r.RemoteAddr, task_id.Hex())
