@@ -48,7 +48,7 @@ class FlamencoWorker:
         default=datetime.datetime.now(),
         validator=attr.validators.optional(attr.validators.instance_of(datetime.datetime)))
 
-    # Kept in sync with the task updates we send to upstream Master, so that we can send
+    # Kept in sync with the task updates we send to upstream Manager, so that we can send
     # a complete Activity each time.
     last_task_activity = attr.ib(default=attr.Factory(documents.Activity))
 
@@ -178,7 +178,7 @@ class FlamencoWorker:
             # when we're in some infinite failure loop.
             self.schedule_fetch_task(3)
 
-    def push_to_master(self):
+    def push_to_manager(self):
         """Updates a task's status and activity.
         """
 
@@ -212,10 +212,10 @@ class FlamencoWorker:
     def register_task_update(self, *,
                              task_status: str = None,
                              **kwargs):
-        """Stores the task status and activity, and possibly sends to Flamenco Master.
+        """Stores the task status and activity, and possibly sends to Flamenco Manager.
 
-        If the last update to Master was long enough ago, or the task status changed,
-        the info is sent to Master. This way we can update command progress percentage
+        If the last update to Manager was long enough ago, or the task status changed,
+        the info is sent to Manager. This way we can update command progress percentage
         hundreds of times per second, without worrying about network overhead.
         """
 
@@ -230,12 +230,12 @@ class FlamencoWorker:
             self.current_task_status = task_status
 
         if task_status_changed:
-            self._log.info('Task changed status to %s, pushing to master', task_status)
-            self.push_to_master()
+            self._log.info('Task changed status to %s, pushing to manager', task_status)
+            self.push_to_manager()
         elif datetime.datetime.now() - self.last_activity_push > PUSH_ACT_MAX_INTERVAL:
-            self._log.info('More than %s since last activity update, pushing to master',
+            self._log.info('More than %s since last activity update, pushing to manager',
                            PUSH_ACT_MAX_INTERVAL)
-            self.push_to_master()
+            self.push_to_manager()
 
     def register_log(self, log_entry):
         """Registers a log entry, and possibly sends all queued log entries to upstream Master."""
@@ -246,13 +246,13 @@ class FlamencoWorker:
         self.queued_log_entries.append('%s: %s' % (now, log_entry))
 
         if len(self.queued_log_entries) > PUSH_LOG_MAX_ENTRIES:
-            self._log.info('Queued up more than %i log entries, pushing to master',
+            self._log.info('Queued up more than %i log entries, pushing to manager',
                            PUSH_LOG_MAX_ENTRIES)
-            self.push_to_master()
+            self.push_to_manager()
         elif datetime.datetime.now() - self.last_log_push > PUSH_LOG_MAX_INTERVAL:
-            self._log.info('More than %s since last log update, pushing to master',
+            self._log.info('More than %s since last log update, pushing to manager',
                            PUSH_LOG_MAX_INTERVAL)
-            self.push_to_master()
+            self.push_to_manager()
 
 
 def generate_secret() -> str:
