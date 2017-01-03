@@ -77,8 +77,12 @@ class AbstractCommand(metaclass=abc.ABCMeta):
         return True
 
     @abc.abstractmethod
-    async def execute(self, settings: dict):
-        """Executes the command."""
+    async def execute(self, settings: dict) -> bool:
+        """Executes the command.
+
+        Returns an 'ok' boolean flag, which must be False when the command failed.
+        A None return value should be interpreted as 'ok'.
+        """
 
     def validate(self, settings: dict) -> str:
         """Validates the settings for this command.
