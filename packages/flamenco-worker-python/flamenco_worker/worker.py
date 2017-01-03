@@ -17,6 +17,13 @@ PUSH_LOG_MAX_INTERVAL = datetime.timedelta(seconds=5)
 PUSH_ACT_MAX_INTERVAL = datetime.timedelta(seconds=10)
 
 
+class UnableToRegisterError(Exception):
+    """Raised when the worker can't register at the manager.
+
+    Will cause an immediate shutdown.
+    """
+
+
 @attr.s
 class FlamencoWorker:
     manager = attr.ib(validator=attr.validators.instance_of(upstream.FlamencoManager))
@@ -62,19 +69,32 @@ class FlamencoWorker:
         if not self.worker_id or not self.worker_secret:
             self.register_at_manager()
 
+        # Once we know our ID and secret, update the manager object so that we
+        # don't have to pass our authentication info each and every call.
+        self.manager.auth = (self.worker_id, self.worker_secret)
         self.schedule_fetch_task()
 
     def register_at_manager(self):
+        import requests
+
         self._log.info('Registering at manager')
 
         self.worker_secret = generate_secret()
         platform = detect_platform()
-        resp = self.manager.post(
-            '/register-worker', json={
-                'secret': self.worker_secret,
-                'platform': platform,
-                'supported_job_types': self.job_types,
-            })
+
+        try:
+            resp = self.manager.post(
+                '/register-worker',
+                json={
+                    'secret': self.worker_secret,
+                    'platform': platform,
+                    'supported_job_types': self.job_types,
+                },
+            )
+        except requests.ConnectionError:
+            self._log.error('Unable to register at manager, aborting.')
+            # TODO Sybren: implement a retry loop instead of aborting immediately.
+            raise UnableToRegisterError()
 
         resp.raise_for_status()
 

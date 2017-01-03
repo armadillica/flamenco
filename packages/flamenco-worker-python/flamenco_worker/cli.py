@@ -83,6 +83,9 @@ def main():
     try:
         fworker.startup()
         fworker.mainloop()
+    except worker.UnableToRegisterError:
+        # The worker will have logged something, we'll just shut down cleanly.
+        pass
     except KeyboardInterrupt:
         log.warning('Shutting down due to keyboard interrupt')
         shutdown_future.cancel()
