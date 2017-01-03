@@ -139,10 +139,12 @@ class TestWorkerTaskFetch(AbstractWorkerTest):
             ]
         })
 
+        async def async_none(): return None
+
         self.tuqueue.queue.side_effect = [
             # Responses after status updates
-            None,  # task becoming active
-            None,  # task becoming complete
+            async_none(),  # task becoming active
+            async_none(),  # task becoming complete
         ]
 
         self.worker.schedule_fetch_task()
