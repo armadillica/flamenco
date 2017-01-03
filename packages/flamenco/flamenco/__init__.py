@@ -151,6 +151,9 @@ class FlamencoExtension(PillarExtension):
         if not test_extension_props:
             return True
 
+        if not project.extension_props:
+            return False
+
         try:
             pprops = project.extension_props[EXTENSION_NAME]
         except AttributeError:
