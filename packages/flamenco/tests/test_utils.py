@@ -31,6 +31,23 @@ class FrameRangeTest(unittest.TestCase):
                          frame_range_merge(
                              [0, 531443, 5315886, 9999993414, 9999993415, 9999993416]))
 
+    def test_frame_range_merge_blender_style(self):
+        from flamenco.utils import frame_range_merge
+
+        self.assertEqual('', frame_range_merge(None, blender_style=True))
+        self.assertEqual('', frame_range_merge([], blender_style=True))
+        self.assertEqual('1', frame_range_merge([1], blender_style=True))
+        self.assertEqual('18,20,21', frame_range_merge([18, 20, 21], blender_style=True))
+        self.assertEqual('18,20,21,23..25',
+                         frame_range_merge([18, 20, 21, 23, 24, 25], blender_style=True))
+        self.assertEqual('1..3', frame_range_merge([1, 2, 3], blender_style=True))
+        self.assertEqual('51,66..103',
+                         frame_range_merge([51] + list(range(66, 104)), blender_style=True))
+        self.assertEqual('0,531443,5315886,9999993414..9999993416',
+                         frame_range_merge(
+                             [0, 531443, 5315886, 9999993414, 9999993415, 9999993416],
+                             blender_style=True))
+
     def test_iter_frame_range(self):
         from flamenco.utils import iter_frame_range
 

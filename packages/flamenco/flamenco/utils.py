@@ -29,19 +29,26 @@ def frame_range_parse(frame_range=None):
     return frames_list
 
 
-def frame_range_merge(frames_list=None):
+def frame_range_merge(frames_list=None, blender_style=False):
     """Given a frames list, merge them and return them as range of frames.
 
     :type frames_list: list
+    :type blender_style: bool
+    :param blender_style: whether to use Blender style frame range notation (3..5) or not (3-5).
     :rtype: str
 
     :Example:
     >>> frames = [1, 3, 4, 5, 8]
     >>> frame_range_merge(frames)
     '1,3-5,8'
+    >>> frame_range_merge(frames, blender_style=True)
+    '1,3..5,8'
     """
     if not frames_list:
         return ""
+
+    range_sep = '..' if blender_style else '-'
+
     ranges = []
     current_frame = start_frame = prev_frame = frames_list[0]
     n = len(frames_list)
@@ -56,7 +63,7 @@ def frame_range_merge(frames_list=None):
                 ranges.append(str(start_frame))
                 ranges.append(str(prev_frame))
             else:
-                ranges.append("{0}-{1}".format(start_frame, prev_frame))
+                ranges.append("{}{}{}".format(start_frame, range_sep, prev_frame))
             start_frame = current_frame
         prev_frame = current_frame
     if start_frame == current_frame:
@@ -65,7 +72,7 @@ def frame_range_merge(frames_list=None):
         ranges.append(str(start_frame))
         ranges.append(str(current_frame))
     else:
-        ranges.append("{0}-{1}".format(start_frame, current_frame))
+        ranges.append("{}{}{}".format(start_frame, range_sep, current_frame))
     return ",".join(ranges)
 
 
