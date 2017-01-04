@@ -298,6 +298,7 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
     re_time = attr.ib(init=False)
     re_remaining = attr.ib(init=False)
     re_status = attr.ib(init=False)
+    re_path_not_found = attr.ib(init=False)
 
     def __attrs_post_init__(self):
         super().__attrs_post_init__()
@@ -310,6 +311,7 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
         self.re_remaining = re.compile(
             r'\| Remaining:((?P<hours>\d+):)?(?P<minutes>\d+):(?P<seconds>\d+)\.(?P<hunds>\d+) ')
         self.re_status = re.compile(r'\| (?P<status>[^\|]+)\s*$')
+        self.re_path_not_found = re.compile(r"Warning: Path '.*' not found")
 
     def _setting(self, settings: dict, key: str, is_required: bool) -> (
             typing.Any, typing.Optional[str]):
@@ -411,6 +413,11 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
 
     async def process_line(self, line: str) -> typing.Optional[str]:
         """Processes the line, returning None to ignore it."""
+
+        # See if there are any warnings about missing files. If so, we simply abort the render.
+        if 'Warning: Unable to open' in line or self.re_path_not_found.search(line):
+            await self.worker.register_task_update(activity=line)
+            raise CommandExecutionError(line)
 
         render_info = self.parse_render_line(line)
         if render_info:

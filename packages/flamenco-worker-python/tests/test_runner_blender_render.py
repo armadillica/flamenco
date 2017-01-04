@@ -50,3 +50,21 @@ class BlenderRenderTest(AbstractCommandTest):
              'status': 'Computing cosmic flöw 110/13005',
              }
         )
+
+    def test_missing_files(self):
+        """Missing files should abort the render."""
+
+        from flamenco_worker.runner import CommandExecutionError
+
+        line = 'Warning: Unable to open je moeder'
+        self.assertRaises(CommandExecutionError,
+                          self.loop.run_until_complete,
+                          self.cmd.process_line(line))
+        self.fworker.register_task_update.assert_called_once_with(activity=line)
+
+        line = "Warning: Path 'je moeder' not found"
+        self.fworker.register_task_update.reset_mock()
+        self.assertRaises(CommandExecutionError,
+                          self.loop.run_until_complete,
+                          self.cmd.process_line(line))
+        self.fworker.register_task_update.assert_called_once_with(activity=line)
