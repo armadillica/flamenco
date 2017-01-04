@@ -63,6 +63,25 @@ class FlamencoWorker:
     # a complete Activity each time.
     last_task_activity = attr.ib(default=attr.Factory(documents.Activity))
 
+    # Configuration
+    push_log_max_interval = attr.ib(default=PUSH_LOG_MAX_INTERVAL,
+                                    validator=attr.validators.instance_of(datetime.timedelta))
+    push_log_max_entries = attr.ib(default=PUSH_LOG_MAX_ENTRIES,
+                                   validator=attr.validators.instance_of(int))
+    push_act_max_interval = attr.ib(default=PUSH_ACT_MAX_INTERVAL,
+                                    validator=attr.validators.instance_of(datetime.timedelta))
+
+    # Futures that represent delayed calls to push_to_master().
+    # They are scheduled when logs & activities are registered but not yet pushed. They are
+    # cancelled when a push_to_master() actually happens for another reason. There are different
+    # futures for activity and log pushing, as these can have different max intervals.
+    _push_log_to_manager = attr.ib(
+        default=None, init=False,
+        validator=attr.validators.optional(attr.validators.instance_of(asyncio.Future)))
+    _push_act_to_manager = attr.ib(
+        default=None, init=False,
+        validator=attr.validators.optional(attr.validators.instance_of(asyncio.Future)))
+
     _log = attrs_extra.log('%s.FlamencoWorker' % __name__)
 
     async def startup(self):
@@ -228,11 +247,16 @@ class FlamencoWorker:
             # when we're in some infinite failure loop.
             self.schedule_fetch_task(FETCH_TASK_DONE_SCHEDULE_NEW_DELAY)
 
-    async def push_to_manager(self):
+    async def push_to_manager(self, *, delay: datetime.timedelta=None):
         """Updates a task's status and activity.
 
         Uses the TaskUpdateQueue to handle persistent queueing.
         """
+
+        if delay is not None:
+            delay_sec = delay.total_seconds()
+            self._log.debug('Scheduled delayed push to master in %r seconds', delay_sec)
+            await asyncio.sleep(delay_sec)
 
         self._log.info('Updating task %s with status %r and activity %r',
                        self.task_id, self.current_task_status, self.last_task_activity)
@@ -243,11 +267,19 @@ class FlamencoWorker:
         now = datetime.datetime.now()
         self.last_activity_push = now
 
+        # Cancel any pending push task, as we're pushing activities now.
+        if self._push_act_to_manager is not None:
+            self._push_act_to_manager.cancel()
+
         with (await self._queue_lock):
             if self._queued_log_entries:
                 payload['log'] = '\n'.join(self._queued_log_entries)
                 self._queued_log_entries.clear()
                 self.last_log_push = now
+
+                # Cancel any pending push task, as we're pushing logs now.
+                if self._push_log_to_manager is not None:
+                    self._push_log_to_manager.cancel()
 
         self.tuqueue.queue('/tasks/%s/update' % self.task_id, payload, loop=self.loop)
 
@@ -276,10 +308,14 @@ class FlamencoWorker:
         if task_status_changed:
             self._log.info('Task changed status to %s, pushing to manager', task_status)
             await self.push_to_manager()
-        elif datetime.datetime.now() - self.last_activity_push > PUSH_ACT_MAX_INTERVAL:
+        elif datetime.datetime.now() - self.last_activity_push > self.push_act_max_interval:
             self._log.info('More than %s since last activity update, pushing to manager',
-                           PUSH_ACT_MAX_INTERVAL)
+                           self.push_act_max_interval)
             await self.push_to_manager()
+        elif self._push_act_to_manager is None or self._push_act_to_manager.done():
+            # Schedule a future push to manager.
+            self._push_act_to_manager = asyncio.ensure_future(
+                self.push_to_manager(delay=self.push_act_max_interval))
 
     async def register_log(self, log_entry, *fmt_args):
         """Registers a log entry, and possibly sends all queued log entries to upstream Manager.
@@ -298,14 +334,18 @@ class FlamencoWorker:
             self._queued_log_entries.append('%s: %s' % (now, log_entry))
             queue_size = len(self._queued_log_entries)
 
-        if queue_size > PUSH_LOG_MAX_ENTRIES:
+        if queue_size > self.push_log_max_entries:
             self._log.info('Queued up more than %i log entries, pushing to manager',
-                           PUSH_LOG_MAX_ENTRIES)
+                           self.push_log_max_entries)
             await self.push_to_manager()
-        elif datetime.datetime.now() - self.last_log_push > PUSH_LOG_MAX_INTERVAL:
+        elif datetime.datetime.now() - self.last_log_push > self.push_log_max_interval:
             self._log.info('More than %s since last log update, pushing to manager',
-                           PUSH_LOG_MAX_INTERVAL)
+                           self.push_log_max_interval)
             await self.push_to_manager()
+        elif self._push_log_to_manager is None or self._push_log_to_manager.done():
+            # Schedule a future push to manager.
+            self._push_log_to_manager = asyncio.ensure_future(
+                self.push_to_manager(delay=self.push_log_max_interval))
 
 
 def generate_secret() -> str:

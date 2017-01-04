@@ -180,3 +180,113 @@ class TestWorkerTaskFetch(AbstractFWorkerTest):
                  )
         ])
         self.assertEqual(self.tuqueue.queue.call_count, 2)
+
+
+class WorkerPushToMasterTest(AbstractFWorkerTest):
+    def test_one_activity(self):
+        """A single activity should be sent to master within reasonable time."""
+
+        from datetime import timedelta
+
+        queue_pushed_future = asyncio.Future()
+
+        def queue_pushed(*args, **kwargs):
+            queue_pushed_future.set_result(True)
+
+        self.tuqueue.queue.side_effect = queue_pushed
+        self.worker.push_act_max_interval = timedelta(milliseconds=500)
+
+        asyncio.ensure_future(
+            self.worker.register_task_update(activity='test'),
+            loop=self.asyncio_loop)
+
+        self.asyncio_loop.run_until_complete(
+            asyncio.wait_for(queue_pushed_future, 1))
+
+        # Queue push should only be done once
+        self.assertEqual(self.tuqueue.queue.call_count, 1)
+
+    def test_two_activities(self):
+        """A single non-status-changing and then a status-changing act should push once."""
+
+        from datetime import timedelta
+
+        queue_pushed_future = asyncio.Future()
+
+        def queue_pushed(*args, **kwargs):
+            queue_pushed_future.set_result(True)
+
+        self.tuqueue.queue.side_effect = queue_pushed
+        self.worker.push_act_max_interval = timedelta(milliseconds=500)
+
+        # Non-status-changing
+        asyncio.ensure_future(
+            self.worker.register_task_update(activity='test'),
+            loop=self.asyncio_loop)
+
+        # Status-changing
+        asyncio.ensure_future(
+            self.worker.register_task_update(task_status='changed'),
+            loop=self.asyncio_loop)
+
+        self.asyncio_loop.run_until_complete(
+            asyncio.wait_for(queue_pushed_future, 1))
+
+        # Queue push should only be done once
+        self.assertEqual(self.tuqueue.queue.call_count, 1)
+
+        # The scheduled task should be cancelled.
+        self.assertTrue(self.worker._push_act_to_manager.cancelled())
+
+    def test_one_log(self):
+        """A single log should be sent to master within reasonable time."""
+
+        from datetime import timedelta
+
+        queue_pushed_future = asyncio.Future()
+
+        def queue_pushed(*args, **kwargs):
+            queue_pushed_future.set_result(True)
+
+        self.tuqueue.queue.side_effect = queue_pushed
+        self.worker.push_log_max_interval = timedelta(milliseconds=500)
+
+        asyncio.ensure_future(
+            self.worker.register_log('unit tests are ünits'),
+            loop=self.asyncio_loop)
+
+        self.asyncio_loop.run_until_complete(
+            asyncio.wait_for(queue_pushed_future, 1))
+
+        # Queue push should only be done once
+        self.assertEqual(self.tuqueue.queue.call_count, 1)
+
+    def test_two_logs(self):
+        """Logging once and then again should push once."""
+
+        queue_pushed_future = asyncio.Future()
+
+        def queue_pushed(*args, **kwargs):
+            queue_pushed_future.set_result(True)
+
+        self.tuqueue.queue.side_effect = queue_pushed
+        self.worker.push_log_max_entries = 1  # max 1 queued, will push at 2
+
+        # Queued, will schedule push
+        asyncio.ensure_future(
+            self.worker.register_log('first line'),
+            loop=self.asyncio_loop)
+
+        # Max queued reached, will cause immediate push
+        asyncio.ensure_future(
+            self.worker.register_log('second line'),
+            loop=self.asyncio_loop)
+
+        self.asyncio_loop.run_until_complete(
+            asyncio.wait_for(queue_pushed_future, 1))
+
+        # Queue push should only be done once
+        self.assertEqual(self.tuqueue.queue.call_count, 1)
+
+        # The scheduled task should be cancelled.
+        self.assertTrue(self.worker._push_log_to_manager.cancelled())
