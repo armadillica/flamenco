@@ -37,7 +37,7 @@ def schedule_tasks(manager_id):
     chunk_size = int(flask.request.args.get('chunk_size', 1))
     job_type = flask.request.args.get('job_type')
 
-    log.info('Handing over max %i tasks to manager %s', chunk_size, manager_id)
+    log.debug('Handing over max %i tasks to manager %s', chunk_size, manager_id)
 
     # TODO: properly order tasks based on parents' status etc.
     tasks_coll = current_flamenco.db('tasks')
@@ -67,6 +67,9 @@ def schedule_tasks(manager_id):
         {'_id': {'$in': [task['_id'] for task in tasks]}},
         {'$set': {'status': CLAIMED_STATUS}}
     )
+
+    if tasks:
+        log.info('Handing over %i tasks to manager %s', len(tasks), manager_id)
 
     resp = jsonify(tasks)
     return resp
