@@ -17,6 +17,7 @@ class AbstractFWorkerTest(AbstractWorkerTest):
         from flamenco_worker.upstream_update_queue import TaskUpdateQueue
 
         self.asyncio_loop = construct_asyncio_loop()
+        self.asyncio_loop.set_debug(True)
         self.shutdown_future = self.asyncio_loop.create_future()
 
         self.manager = Mock(spec=FlamencoManager)
@@ -39,6 +40,7 @@ class AbstractFWorkerTest(AbstractWorkerTest):
     def tearDown(self):
         self.shutdown_future.cancel()
         self.worker.shutdown()
+        self.asyncio_loop.close()
 
     async def mock_task_execute(self, task: dict, fworker):
         """Mock task execute function that does nothing but sleep a bit."""
