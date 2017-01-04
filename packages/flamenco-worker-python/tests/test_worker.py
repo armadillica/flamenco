@@ -125,15 +125,6 @@ class TestWorkerTaskFetch(AbstractFWorkerTest):
         self.loop = construct_asyncio_loop()
         self.worker.loop = self.loop
 
-    def run_loop_for(self, seconds: float):
-        """Runs the loop for 'seconds' seconds."""
-
-        async def stop_loop():
-            await asyncio.sleep(seconds)
-            self.loop.stop()
-
-        self.loop.run_until_complete(stop_loop())
-
     def test_fetch_task_happy(self):
         from unittest.mock import call
         from mock_responses import JsonResponse, CoroMock
@@ -160,8 +151,8 @@ class TestWorkerTaskFetch(AbstractFWorkerTest):
 
         self.tuqueue.queue.side_effect = [
             # Responses after status updates
-            async_none(),  # task becoming active
-            async_none(),  # task becoming complete
+            None,  # task becoming active
+            None,  # task becoming complete
         ]
 
         self.worker.schedule_fetch_task()
@@ -178,11 +169,14 @@ class TestWorkerTaskFetch(AbstractFWorkerTest):
             call('/tasks/58514d1e9837734f2e71b479/update',
                  {'task_progress_percentage': 0, 'activity': '',
                   'command_progress_percentage': 0, 'task_status': 'active',
-                  'current_command_idx': 0}
+                  'current_command_idx': 0},
+                 loop=self.loop,
                  ),
             call('/tasks/58514d1e9837734f2e71b479/update',
                  {'task_progress_percentage': 0, 'activity': '',
                   'command_progress_percentage': 0, 'task_status': 'completed',
-                  'current_command_idx': 0}),
+                  'current_command_idx': 0},
+                 loop=self.loop,
+                 )
         ])
         self.assertEqual(self.tuqueue.queue.call_count, 2)

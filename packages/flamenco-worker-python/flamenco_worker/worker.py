@@ -243,7 +243,7 @@ class FlamencoWorker:
                 self._queued_log_entries.clear()
                 self.last_log_push = now
 
-        await self.tuqueue.queue('/tasks/%s/update' % self.task_id, payload)
+        self.tuqueue.queue('/tasks/%s/update' % self.task_id, payload, loop=self.loop)
 
     async def register_task_update(self, *,
                                    task_status: str = None,

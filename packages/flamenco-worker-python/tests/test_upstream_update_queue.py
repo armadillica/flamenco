@@ -76,7 +76,7 @@ class TaskUpdateQueueTest(AbstractWorkerTest):
 
         self.manager.post.side_effect = push_callback
 
-        asyncio.ensure_future(self.tuqueue.queue('/push/here', payload), loop=self.asyncio_loop)
+        self.tuqueue.queue('/push/here', payload, loop=self.asyncio_loop)
 
         # Run the loop for 2 seconds. This should be enough for 3 retries of 0.3 seconds + handling
         # the actual payload.
@@ -102,7 +102,8 @@ class TaskUpdateQueueTest(AbstractWorkerTest):
         payload = {'key': 'value',
                    'sub': {'some': 13,
                            'values': datetime.datetime.now()}}
-        self.asyncio_loop.run_until_complete(self.tuqueue.queue('/push/there', payload))
+        self.asyncio_loop.run_until_complete(
+            self.tuqueue.queue('/push/there', payload, loop=self.asyncio_loop))
         self.manager.post.assert_not_called()
         self.tuqueue._disconnect_db()
 

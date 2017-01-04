@@ -42,7 +42,7 @@ class TaskUpdateQueue:
         self._db.close()
         self._db = None
 
-    async def queue(self, url, payload):
+    def queue(self, url, payload, *, loop: asyncio.AbstractEventLoop) -> asyncio.Future:
         """Push some payload onto the queue."""
 
         if self._db is None:
@@ -50,11 +50,16 @@ class TaskUpdateQueue:
 
         # Store the pickled payload in the SQLite database.
         pickled = pickle.dumps(payload)
-        self._db.execute('INSERT INTO fworker_queue (url, payload) values (?, ?)', (url, pickled))
-        self._db.commit()
 
-        # Notify the work loop that stuff has been queued.
-        self._stuff_queued.set()
+        async def do_db_push():
+            self._db.execute('INSERT INTO fworker_queue (url, payload) values (?, ?)',
+                             (url, pickled))
+            self._db.commit()
+
+            # Notify the work loop that stuff has been queued.
+            self._stuff_queued.set()
+
+        return asyncio.ensure_future(do_db_push(), loop=loop)
 
     async def work(self, *, loop=None):
         """Loop that pushes queued payloads to the Flamenco Manager.
