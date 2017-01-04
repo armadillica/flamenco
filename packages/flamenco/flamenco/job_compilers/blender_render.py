@@ -4,8 +4,8 @@ from .abstract_compiler import AbstractJobCompiler
 from . import commands, register_compiler
 
 
-@register_compiler('blender-simple-render')
-class BlenderSimpleRender(AbstractJobCompiler):
+@register_compiler('blender-render')
+class BlenderRender(AbstractJobCompiler):
     """Basic Blender render job."""
 
     def compile(self, job):
@@ -18,16 +18,17 @@ class BlenderSimpleRender(AbstractJobCompiler):
         task_count = 0
         for chunk_frames in iter_frame_range(job_settings['frames'], job_settings['chunk_size']):
             frame_range = frame_range_merge(chunk_frames)
+            frame_range_bstyle = frame_range_merge(chunk_frames, blender_style=True)
 
             task_cmds = [
                 commands.BlenderRender(
                     filepath=job_settings['filepath'],
                     format=job_settings['format'],
                     render_output=job_settings.get('render_output'),
-                    frames=frame_range)
+                    frames=frame_range_bstyle)
             ]
 
-            name = 'blender-simple-render-%s' % frame_range
+            name = 'blender-render-%s' % frame_range
             self.task_manager.api_create_task(job, task_cmds, name)
             task_count += 1
 
