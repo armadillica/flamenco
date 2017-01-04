@@ -5,8 +5,10 @@ from unittest.mock import Mock
 import asyncio
 import requests
 
+from abstract_worker_test import AbstractWorkerTest
 
-class AbstractWorkerTest(unittest.TestCase):
+
+class AbstractFWorkerTest(AbstractWorkerTest):
     def setUp(self):
         from flamenco_worker.cli import construct_asyncio_loop
         from flamenco_worker.upstream import FlamencoManager
@@ -42,9 +44,10 @@ class AbstractWorkerTest(unittest.TestCase):
         """Mock task execute function that does nothing but sleep a bit."""
 
         await asyncio.sleep(1)
+        return True
 
 
-class WorkerStartupTest(AbstractWorkerTest):
+class WorkerStartupTest(AbstractFWorkerTest):
     # Mock merge_with_home_config() so that it doesn't overwrite actual config.
     @unittest.mock.patch('flamenco_worker.config.merge_with_home_config')
     def test_startup_already_registered(self, mock_merge_with_home_config):
@@ -114,7 +117,7 @@ class WorkerStartupTest(AbstractWorkerTest):
         )
 
 
-class TestWorkerTaskFetch(AbstractWorkerTest):
+class TestWorkerTaskFetch(AbstractFWorkerTest):
     def setUp(self):
         super().setUp()
         from flamenco_worker.cli import construct_asyncio_loop
