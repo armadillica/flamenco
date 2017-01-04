@@ -221,7 +221,10 @@ class FlamencoWorker:
             await self.register_task_update(task_status='active')
             ok = await self.trunner.execute(task_info, self)
             if ok:
-                await self.register_task_update(task_status='completed')
+                await self.register_task_update(
+                    task_status='completed',
+                    activity='Task completed',
+                )
             else:
                 self._log.error('Task %s failed', self.task_id)
                 await self.register_task_update(task_status='failed')
