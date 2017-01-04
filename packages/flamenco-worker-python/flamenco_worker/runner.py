@@ -3,6 +3,8 @@
 import abc
 import asyncio
 import logging
+import re
+import typing
 
 import attr
 
@@ -255,9 +257,9 @@ class AbstractSubprocessCommand(AbstractCommand):
                 raise CommandExecutionError('Command produced non-UTF8 output, aborting: %s' % ex)
 
             line = line.rstrip()
+            self._log.info('Read line: %s', line)
             line = await self.process_line(line)
             if line is not None:
-                self._log.info('Read line: %s', line)
                 await self.worker.register_log(line)
 
         retcode = await proc.wait()
@@ -266,7 +268,7 @@ class AbstractSubprocessCommand(AbstractCommand):
         if retcode:
             raise CommandExecutionError('Command failed with status %s' % retcode)
 
-    async def process_line(self, line: str) -> str:
+    async def process_line(self, line: str) -> typing.Optional[str]:
         """Processes the line, returning None to ignore it."""
 
         return '> %s' % line
@@ -288,3 +290,142 @@ class ExecCommand(AbstractSubprocessCommand):
     async def execute(self, settings: dict):
         import shlex
         await self.subprocess(shlex.split(settings['cmd']))
+
+
+@command_executor('blender_render')
+class BlenderRenderCommand(AbstractSubprocessCommand):
+    re_global_progress = attr.ib(init=False)
+    re_time = attr.ib(init=False)
+    re_remaining = attr.ib(init=False)
+    re_status = attr.ib(init=False)
+
+    def __attrs_post_init__(self):
+        super().__attrs_post_init__()
+
+        # Delay regexp compilation until a BlenderRenderCommand is actually constructed.
+        self.re_global_progress = re.compile(
+            r"^Fra:(?P<fra>\d+) Mem:(?P<mem>[^ ]+) \(.*?, Peak (?P<peakmem>[^ ]+)\)")
+        self.re_time = re.compile(
+            r'\| Time:((?P<hours>\d+):)?(?P<minutes>\d+):(?P<seconds>\d+)\.(?P<hunds>\d+) ')
+        self.re_remaining = re.compile(
+            r'\| Remaining:((?P<hours>\d+):)?(?P<minutes>\d+):(?P<seconds>\d+)\.(?P<hunds>\d+) ')
+        self.re_status = re.compile(r'\| (?P<status>[^\|]+)\s*$')
+
+    def _setting(self, settings: dict, key: str, is_required: bool) -> (
+            typing.Any, typing.Optional[str]):
+        """Parses a setting, returns either (value, None) or (None, errormsg)"""
+
+        try:
+            value = settings[key]
+        except KeyError:
+            if is_required:
+                return None, 'Missing "%s"' % key
+            return None, None
+
+        if not isinstance(value, str):
+            return None, '"%s" must be a string' % key
+
+        return value, None
+
+    def validate(self, settings: dict):
+        import os.path
+
+        blender_cmd, err = self._setting(settings, 'blender_cmd', True)
+        if err:
+            return err
+        if not os.path.exists(blender_cmd):
+            return 'blender_cmd %r does not exist' % blender_cmd
+
+        filepath, err = self._setting(settings, 'filepath', True)
+        if err:
+            return err
+        if not os.path.exists(filepath):
+            return 'filepath %r does not exist' % filepath
+
+        render_output, err = self._setting(settings, 'render_output', False)
+        if err:
+            return err
+        if render_output:
+            dirname = os.path.dirname(render_output)
+            if not os.path.exists(dirname):
+                return '"render_output": dir %s does not exist' % dirname
+
+        _, err = self._setting(settings, 'frames', False)
+        if err:
+            return err
+        _, err = self._setting(settings, 'render_format', False)
+        if err:
+            return err
+
+        return None
+
+    async def execute(self, settings: dict):
+        cmd = [
+            settings['blender_cmd'],
+            '--enable-autoexec',
+            '-noaudio',
+            '--background',
+            settings['filepath'],
+        ]
+        if 'render_output' in settings:
+            cmd.extend(['--render-output', settings['render_output']])
+        if 'format' in settings:
+            cmd.extend(['--render-format', settings['format']])
+        if 'frames' in settings:
+            cmd.extend(['--render-frame', settings['frames']])
+
+        await self.worker.register_task_update(activity='Starting Blender')
+        await self.subprocess(cmd)
+
+    def parse_render_line(self, line: str) -> typing.Optional[dict]:
+        """Parses a single line of render progress.
+
+        Returns None if this line does not contain render progress.
+        """
+
+        m = self.re_global_progress.search(line)
+        if not m:
+            return None
+        info = m.groupdict()
+        info['fra'] = int(info['fra'])
+
+        m = self.re_time.search(line)
+        if m:
+            info['time_sec'] = (3600 * int(m.group('hours') or 0) +
+                                60 * int(m.group('minutes')) +
+                                int(m.group('seconds')) +
+                                int(m.group('hunds')) / 100)
+
+        m = self.re_remaining.search(line)
+        if m:
+            info['remaining_sec'] = (3600 * int(m.group('hours') or 0) +
+                                     60 * int(m.group('minutes')) +
+                                     int(m.group('seconds')) +
+                                     int(m.group('hunds')) / 100)
+
+        m = self.re_status.search(line)
+        if m:
+            info['status'] = m.group('status')
+
+        return info
+
+    async def process_line(self, line: str) -> typing.Optional[str]:
+        """Processes the line, returning None to ignore it."""
+
+        render_info = self.parse_render_line(line)
+        if render_info:
+            # Render progress. Not interesting to log all of them, but we do use
+            # them to update the render progress.
+            # TODO: For now we return this as a string, but at some point we may want
+            # to consider this as a subdocument.
+            if 'remaining_sec' in render_info:
+                fmt = 'Fra:{fra} Mem:{mem} | Time:{time_sec} | Remaining:{remaining_sec} | {status}'
+                activity = fmt.format(**render_info)
+            else:
+                self._log.debug('Unable to find remaining time in line: %s', line)
+                activity = line
+            await self.worker.register_task_update(activity=activity)
+            return None
+
+        # Not a render progress line; just log it for now.
+        return '> %s' % line
