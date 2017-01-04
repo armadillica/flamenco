@@ -206,6 +206,9 @@ class FlamencoWorker:
             else:
                 self._log.error('Task %s failed', self.task_id)
                 await self.register_task_update(task_status='failed')
+
+            # Always end with a push to master, to flush whatever we still have queued.
+            await self.push_to_manager()
         except Exception as ex:
             self._log.exception('Uncaught exception executing task %s' % self.task_id)
             try:
@@ -215,7 +218,10 @@ class FlamencoWorker:
                     task_status='failed',
                     activity='Uncaught exception: %s %s' % (type(ex).__name__, ex),
                 )
-            except:
+
+                # Always end with a push to master, to flush whatever we still have queued.
+                await self.push_to_manager()
+            except Exception:
                 self._log.exception('While notifying manager of failure, another error happened.')
         finally:
             # Always schedule a new task run; after a little delay to not hammer the world
