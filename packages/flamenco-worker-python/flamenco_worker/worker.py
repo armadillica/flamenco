@@ -53,10 +53,10 @@ class FlamencoWorker:
     _queued_log_entries = attr.ib(default=attr.Factory(list), init=False)
     _queue_lock = attr.ib(default=attr.Factory(asyncio.Lock), init=False)
     last_log_push = attr.ib(
-        default=datetime.datetime.now(),
+        default=attr.Factory(datetime.datetime.now),
         validator=attr.validators.optional(attr.validators.instance_of(datetime.datetime)))
     last_activity_push = attr.ib(
-        default=datetime.datetime.now(),
+        default=attr.Factory(datetime.datetime.now),
         validator=attr.validators.optional(attr.validators.instance_of(datetime.datetime)))
 
     # Kept in sync with the task updates we send to upstream Manager, so that we can send
