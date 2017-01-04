@@ -90,7 +90,7 @@ def main():
     asyncio.ensure_future(tuqueue.work(loop=loop))
 
     try:
-        fworker.startup()
+        loop.run_until_complete(fworker.startup())
         fworker.mainloop()
     except worker.UnableToRegisterError:
         # The worker will have logged something, we'll just shut down cleanly.

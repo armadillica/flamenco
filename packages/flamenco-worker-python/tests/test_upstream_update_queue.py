@@ -13,12 +13,13 @@ class TaskUpdateQueueTest(AbstractWorkerTest):
     def setUp(self):
         from flamenco_worker.upstream import FlamencoManager
         from flamenco_worker.upstream_update_queue import TaskUpdateQueue
+        from mock_responses import CoroMock
 
         self.asyncio_loop = asyncio.get_event_loop()
         self.shutdown_future = self.asyncio_loop.create_future()
 
         self.manager = Mock(spec=FlamencoManager)
-        self.manager.post = Mock()
+        self.manager.post = CoroMock()
 
         self.tmpdir = tempfile.TemporaryDirectory()
         self.tuqueue = TaskUpdateQueue(
@@ -47,11 +48,13 @@ class TaskUpdateQueueTest(AbstractWorkerTest):
         tries = 0
         received_payload = None
         received_url = None
+        received_loop = None
 
-        def push_callback(url, *, json):
+        async def push_callback(url, *, json, loop):
             nonlocal tries
             nonlocal received_url
             nonlocal received_payload
+            nonlocal received_loop
 
             tries += 1
             if tries < 3:
@@ -66,6 +69,8 @@ class TaskUpdateQueueTest(AbstractWorkerTest):
             # since the work loop is designed to keep running, even when exceptions are thrown.
             received_url = url
             received_payload = copy.deepcopy(json)
+            received_loop = loop
+
             return EmptyResponse()
 
         self.manager.post.side_effect = push_callback
@@ -84,6 +89,7 @@ class TaskUpdateQueueTest(AbstractWorkerTest):
         # Check the payload.
         self.assertEqual(received_url, '/push/here')
         self.assertEqual(received_payload, payload)
+        self.assertEqual(received_loop, self.asyncio_loop)
 
     def test_queue_persistence(self):
         """Check that updates are pushed, even when the process is stopped & restarted."""
@@ -110,16 +116,19 @@ class TaskUpdateQueueTest(AbstractWorkerTest):
 
         received_payload = None
         received_url = None
+        received_loop = None
 
-        def push_callback(url, *, json):
+        async def push_callback(url, *, json, loop):
             nonlocal received_url
             nonlocal received_payload
+            nonlocal received_loop
 
             # Shut down after handling this push.
             self.shutdown_future.cancel()
 
             received_url = url
             received_payload = copy.deepcopy(json)
+            received_loop = loop
             return EmptyResponse()
 
         self.manager.post.side_effect = push_callback
@@ -135,3 +144,4 @@ class TaskUpdateQueueTest(AbstractWorkerTest):
         # Check the payload
         self.assertEqual(received_url, '/push/there')
         self.assertEqual(received_payload, payload)
+        self.assertEqual(received_loop, self.asyncio_loop)

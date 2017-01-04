@@ -85,7 +85,7 @@ class TaskUpdateQueue:
                     queue_is_empty = False
 
                     self._log.info('Pushing task update to Manager')
-                    resp = self.manager.post(url, json=payload)
+                    resp = await self.manager.post(url, json=payload, loop=loop)
                     resp.raise_for_status()
                     self._log.debug('Master accepted pushed update.')
                     self._unqueue(rowid)

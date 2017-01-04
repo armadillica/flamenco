@@ -35,3 +35,24 @@ class EmptyResponse:
 
     def raise_for_status(self):
         pass
+
+
+def CoroMock(return_value=...):
+    """Corountine mocking object.
+
+    For an example, see test_coro_mock.py.
+
+    Source: http://stackoverflow.com/a/32505333/875379
+    """
+
+    import asyncio
+    from unittest.mock import Mock
+
+    coro = Mock(name="CoroutineResult")
+    corofunc = Mock(name="CoroutineFunction", side_effect=asyncio.coroutine(coro))
+    corofunc.coro = coro
+
+    if return_value is not ...:
+        corofunc.coro.return_value = return_value
+
+    return corofunc

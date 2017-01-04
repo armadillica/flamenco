@@ -65,18 +65,18 @@ class FlamencoWorker:
 
     _log = attrs_extra.log('%s.FlamencoWorker' % __name__)
 
-    def startup(self):
+    async def startup(self):
         self._log.info('Starting up')
 
         if not self.worker_id or not self.worker_secret:
-            self.register_at_manager()
+            await self.register_at_manager()
 
         # Once we know our ID and secret, update the manager object so that we
         # don't have to pass our authentication info each and every call.
         self.manager.auth = (self.worker_id, self.worker_secret)
         self.schedule_fetch_task()
 
-    def register_at_manager(self):
+    async def register_at_manager(self):
         import requests
 
         self._log.info('Registering at manager')
@@ -85,7 +85,7 @@ class FlamencoWorker:
         platform = detect_platform()
 
         try:
-            resp = self.manager.post(
+            resp = await self.manager.post(
                 '/register-worker',
                 json={
                     'secret': self.worker_secret,
@@ -93,6 +93,7 @@ class FlamencoWorker:
                     'supported_job_types': self.job_types,
                 },
                 auth=None,  # explicitly do not use authentication
+                loop=self.loop,
             )
         except requests.ConnectionError:
             self._log.error('Unable to register at manager, aborting.')
@@ -173,7 +174,7 @@ class FlamencoWorker:
         # TODO: use exponential backoff instead of retrying every fixed N seconds.
         self._log.info('Fetching task')
         try:
-            resp = self.manager.post('/task')
+            resp = await self.manager.post('/task', loop=self.loop)
         except requests.exceptions.RequestException as ex:
             self._log.warning('Error fetching new task, will retry in %i seconds: %s',
                               FETCH_TASK_FAILED_RETRY_DELAY, ex)

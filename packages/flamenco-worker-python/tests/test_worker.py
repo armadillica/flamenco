@@ -44,24 +44,30 @@ class AbstractWorkerTest(unittest.TestCase):
 
 
 class WorkerStartupTest(AbstractWorkerTest):
-    def test_startup_already_registered(self):
-        self.worker.startup()
+    # Mock merge_with_home_config() so that it doesn't overwrite actual config.
+    @unittest.mock.patch('flamenco_worker.config.merge_with_home_config')
+    def test_startup_already_registered(self, mock_merge_with_home_config):
+        self.asyncio_loop.run_until_complete(self.worker.startup())
+        mock_merge_with_home_config.assert_not_called()  # Starting with known ID/secret
         self.manager.post.assert_not_called()
         self.tuqueue.queue.assert_not_called()
 
-    def test_startup_registration(self):
+    @unittest.mock.patch('flamenco_worker.config.merge_with_home_config')
+    def test_startup_registration(self, mock_merge_with_home_config):
         from flamenco_worker.worker import detect_platform
-        from mock_responses import JsonResponse
+        from mock_responses import JsonResponse, CoroMock
 
         self.worker.worker_id = None
 
-        self.manager.post = Mock(return_value=JsonResponse({
+        self.manager.post = CoroMock(return_value=JsonResponse({
             '_id': '5555',
         }))
 
-        # Mock merge_with_home_config() so that it doesn't overwrite actual config.
-        with unittest.mock.patch('flamenco_worker.config.merge_with_home_config'):
-            self.worker.startup()
+        self.asyncio_loop.run_until_complete(self.worker.startup())
+        mock_merge_with_home_config.assert_called_once_with(
+            {'worker_id': '5555',
+             'worker_secret': self.worker.worker_secret}
+        )
 
         assert isinstance(self.manager.post, unittest.mock.Mock)
         self.manager.post.assert_called_once_with(
@@ -72,23 +78,27 @@ class WorkerStartupTest(AbstractWorkerTest):
                 'secret': self.worker.worker_secret,
             },
             auth=None,
+            loop=self.asyncio_loop,
         )
 
-    def test_startup_registration_unhappy(self):
+    @unittest.mock.patch('flamenco_worker.config.merge_with_home_config')
+    def test_startup_registration_unhappy(self, mock_merge_with_home_config):
         """Test that startup is aborted when the worker can't register."""
 
         from flamenco_worker.worker import detect_platform
-        from mock_responses import JsonResponse
+        from mock_responses import JsonResponse, CoroMock
 
         self.worker.worker_id = None
 
-        self.manager.post = unittest.mock.Mock(return_value=JsonResponse({
+        self.manager.post = CoroMock(return_value=JsonResponse({
             '_id': '5555',
         }, status_code=500))
 
         # Mock merge_with_home_config() so that it doesn't overwrite actual config.
-        with unittest.mock.patch('flamenco_worker.config.merge_with_home_config'):
-            self.assertRaises(requests.HTTPError, self.worker.startup)
+        self.assertRaises(requests.HTTPError,
+                          self.asyncio_loop.run_until_complete,
+                          self.worker.startup())
+        mock_merge_with_home_config.assert_not_called()
 
         assert isinstance(self.manager.post, unittest.mock.Mock)
         self.manager.post.assert_called_once_with(
@@ -99,6 +109,7 @@ class WorkerStartupTest(AbstractWorkerTest):
                 'secret': self.worker.worker_secret,
             },
             auth=None,
+            loop=self.asyncio_loop,
         )
 
 
@@ -119,11 +130,11 @@ class TestWorkerTaskFetch(AbstractWorkerTest):
 
     def test_fetch_task_happy(self):
         from unittest.mock import call
-        from mock_responses import JsonResponse, EmptyResponse
+        from mock_responses import JsonResponse, CoroMock
 
-        self.manager.post = Mock()
+        self.manager.post = CoroMock()
         # response when fetching a task
-        self.manager.post.return_value = JsonResponse({
+        self.manager.post.coro.return_value = JsonResponse({
             '_id': '58514d1e9837734f2e71b479',
             'job': '58514d1e9837734f2e71b477',
             'manager': '585a795698377345814d2f68',
@@ -156,12 +167,13 @@ class TestWorkerTaskFetch(AbstractWorkerTest):
         # Another fetch-task task should have been scheduled.
         self.assertNotEqual(self.worker.fetch_task_task, interesting_task)
 
-        self.manager.post.assert_called_once_with('/task')
+        self.manager.post.assert_called_once_with('/task', loop=self.asyncio_loop)
         self.tuqueue.queue.assert_has_calls([
             call('/tasks/58514d1e9837734f2e71b479/update',
                  {'task_progress_percentage': 0, 'activity': '',
                   'command_progress_percentage': 0, 'task_status': 'active',
-                  'current_command_idx': 0}),
+                  'current_command_idx': 0}
+                 ),
             call('/tasks/58514d1e9837734f2e71b479/update',
                  {'task_progress_percentage': 0, 'activity': '',
                   'command_progress_percentage': 0, 'task_status': 'completed',
