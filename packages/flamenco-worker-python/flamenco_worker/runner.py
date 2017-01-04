@@ -7,10 +7,17 @@ import logging
 import attr
 
 from . import attrs_extra
-from . import documents
 from . import worker
 
+# Timeout of subprocess.stdout.readline() call.
+SUBPROC_READLINE_TIMEOUT = 3600  # seconds
+
 command_handlers = {}
+
+
+class CommandExecutionError(Exception):
+    """Raised when there was an error executing a command."""
+    pass
 
 
 @attr.s
@@ -22,10 +29,18 @@ class AbstractCommand(metaclass=abc.ABCMeta):
     # Set by @command_executor
     command_name = ''
 
-    # Set by __call__()
+    # Set by __attr_post_init__()
     identifier = attr.ib(default=None, init=False,
                          validator=attr.validators.optional(attr.validators.instance_of(str)))
-    _log = None
+    _log = attr.ib(default=None, init=False,
+                   validator=attr.validators.optional(attr.validators.instance_of(logging.Logger)))
+
+    def __attrs_post_init__(self):
+        self.identifier = '%s(task_id=%s, command_idx=%s)' % (
+            self.command_name,
+            self.task_id,
+            self.command_idx)
+        self._log = logging.getLogger('%s.%s' % (__name__, self.identifier))
 
     async def run(self, settings: dict) -> bool:
         """Runs the command, parsing output and sending it back to the worker.
@@ -33,16 +48,10 @@ class AbstractCommand(metaclass=abc.ABCMeta):
         Returns True when the command was succesful, and False otherwise.
         """
 
-        self.identifier = '%s(task_id=%s, command_idx=%s)' % (
-            self.command_name,
-            self.task_id,
-            self.command_idx)
-        self._log = logging.getLogger('%s.%s' % (__name__, self.identifier))
-
         verr = self.validate(settings)
         if verr is not None:
             self._log.warning('%s: Error in settings: %s', self.identifier, verr)
-            await self.register_log('%s: Error in settings: %s', self.identifier, verr)
+            await self.worker.register_log('%s: Error in settings: %s', self.identifier, verr)
             await self.worker.register_task_update(
                 task_status='failed',
                 activity='%s: Invalid settings: %s' % (self.identifier, verr),
@@ -58,13 +67,15 @@ class AbstractCommand(metaclass=abc.ABCMeta):
 
         try:
             await self.execute(settings)
+        except CommandExecutionError as ex:
+            # This is something we threw ourselves, and there is no need to log the traceback.
+            self._log.warning('Error executing: %s', ex)
+            await self._register_exception(ex)
+            return False
         except Exception as ex:
+            # This is something unexpected, so do log the traceback.
             self._log.exception('Error executing.')
-            await self.worker.register_log('%s: Error executing: %s' % (self.identifier, ex))
-            await self.worker.register_task_update(
-                task_status='failed',
-                activity='%s: Error executing: %s' % (self.identifier, ex),
-            )
+            await self._register_exception(ex)
             return False
 
         await self.worker.register_log('%s: Finished' % self.command_name)
@@ -76,15 +87,23 @@ class AbstractCommand(metaclass=abc.ABCMeta):
 
         return True
 
+    async def _register_exception(self, ex: Exception):
+        """Registers an exception with the worker, and set the task status to 'failed'."""
+
+        await self.worker.register_log('%s: Error executing: %s' % (self.identifier, ex))
+        await self.worker.register_task_update(
+            task_status='failed',
+            activity='%s: Error executing: %s' % (self.identifier, ex),
+        )
+
     @abc.abstractmethod
-    async def execute(self, settings: dict) -> bool:
+    async def execute(self, settings: dict):
         """Executes the command.
 
-        Returns an 'ok' boolean flag, which must be False when the command failed.
-        A None return value should be interpreted as 'ok'.
+        An error should be indicated by an exception.
         """
 
-    def validate(self, settings: dict) -> str:
+    def validate(self, settings: dict):
         """Validates the settings for this command.
 
         If there is an error, a description of the error is returned.
@@ -193,49 +212,64 @@ class SleepCommand(AbstractCommand):
         await self.worker.register_log('Done sleeping for %s seconds' % time_in_seconds)
 
 
+@attr.s
 class AbstractSubprocessCommand(AbstractCommand):
-    async def subprocess(self, args, cwd=None):
+    readline_timeout = attr.ib(default=SUBPROC_READLINE_TIMEOUT)
 
+    async def subprocess(self, args):
         import subprocess
+        import shlex
 
-        await self.worker.register_log('Executing %r', args)
+        cmd_to_log = ' '.join(shlex.quote(s) for s in args)
+        await self.worker.register_log('Executing %s', cmd_to_log)
 
-        # TODO: convert to asyncio subprocess support for more control over timeouts etc.
-        proc = subprocess.Popen(
-            args,
-            bufsize=1, universal_newlines=True,  # line buffered
+        proc = await asyncio.create_subprocess_exec(
+            *args,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            close_fds=True,
+            limit=800,  # limit on the StreamReader buffer.
         )
 
-        while True:
-            data = proc.stdout.read()
+        while not proc.stdout.at_eof():
+            try:
+                line = await asyncio.wait_for(proc.stdout.readline(),
+                                              self.readline_timeout)
+            except asyncio.TimeoutError:
+                await self.worker.register_log('Command timed out')
+                raise
 
-            if data is not None:
-                for line in data.split('\n'):
-                    line = self.process_line(line)
-                    if line is not None:
-                        self._log.info('Read line: %s', line)
-                        await self.worker.register_log(line)
+            if len(line) == 0:
+                # EOF received, so let's bail.
+                break
 
-            retcode = proc.poll()
-            if retcode is None:
-                continue
+            try:
+                line = line.decode('utf8')
+            except UnicodeDecodeError as ex:
+                try:
+                    proc.kill()
+                except ProcessLookupError:
+                    # The process is already stopped, so killing is impossible. That's ok.
+                    pass
+                await proc.wait()
+                raise CommandExecutionError('Command produced non-UTF8 output, aborting: %s' % ex)
 
-            self._log.info('Command %r stopped with status code %s', args, retcode)
+            line = line.rstrip()
+            line = await self.process_line(line)
+            if line is not None:
+                self._log.info('Read line: %s', line)
+                await self.worker.register_log(line)
 
-            if retcode < 0:
-                raise RuntimeError('Command failed with status %s' % retcode)
+        retcode = await proc.wait()
+        self._log.info('Command %r stopped with status code %s', args, retcode)
 
-            await self.worker.register_log('Command completed')
-            return
+        if retcode:
+            raise CommandExecutionError('Command failed with status %s' % retcode)
 
-    def process_line(self, line: str) -> str:
+    async def process_line(self, line: str) -> str:
         """Processes the line, returning None to ignore it."""
 
-        return line
+        return '> %s' % line
 
 
 @command_executor('exec')
