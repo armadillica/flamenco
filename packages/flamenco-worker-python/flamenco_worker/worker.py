@@ -137,7 +137,7 @@ class FlamencoWorker:
         # schedule a future run. This may result in the task not being awaited when we are
         # shutting down.
         if self.shutdown_future.done():
-            self.log.warning('Shutting down, not scheduling another fetch-task task.')
+            self._log.warning('Shutting down, not scheduling another fetch-task task.')
             return
 
         self.fetch_task_task = asyncio.ensure_future(self.fetch_task(delay), loop=self.loop)
@@ -254,6 +254,8 @@ class FlamencoWorker:
         the info is sent to Manager. This way we can update command progress percentage
         hundreds of times per second, without worrying about network overhead.
         """
+
+        self._log.debug('Task update: task_status=%s, %s', task_status, kwargs)
 
         # Update the current activity
         for key, value in kwargs.items():
