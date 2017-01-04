@@ -216,7 +216,7 @@ class SleepCommand(AbstractCommand):
 class AbstractSubprocessCommand(AbstractCommand):
     readline_timeout = attr.ib(default=SUBPROC_READLINE_TIMEOUT)
 
-    async def subprocess(self, args):
+    async def subprocess(self, args: list):
         import subprocess
         import shlex
 
@@ -236,8 +236,8 @@ class AbstractSubprocessCommand(AbstractCommand):
                 line = await asyncio.wait_for(proc.stdout.readline(),
                                               self.readline_timeout)
             except asyncio.TimeoutError:
-                await self.worker.register_log('Command timed out')
-                raise
+                raise CommandExecutionError('Command timed out after %i seconds' %
+                                            self.readline_timeout)
 
             if len(line) == 0:
                 # EOF received, so let's bail.
