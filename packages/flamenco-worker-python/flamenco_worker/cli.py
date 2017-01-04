@@ -109,6 +109,7 @@ def main():
     except:
         log.exception('Uncaught exception!')
     log.warning('Shutting down')
+    loop.close()
 
 
 def construct_asyncio_loop() -> asyncio.AbstractEventLoop:
@@ -119,10 +120,12 @@ def construct_asyncio_loop() -> asyncio.AbstractEventLoop:
 
     if sys.platform == 'win32':
         loop = asyncio.ProactorEventLoop()
-        asyncio.set_event_loop(loop)
     else:
         loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
 
+    asyncio.set_event_loop(loop)
     return loop
 
 
