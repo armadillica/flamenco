@@ -54,7 +54,7 @@ def main():
     confparser = config.load_config(args.config, args.verbose)
 
     # Construct the AsyncIO loop
-    loop = asyncio.get_event_loop()
+    loop = construct_asyncio_loop()
     if args.verbose:
         log.debug('Enabling AsyncIO debugging')
         loop.set_debug(True)
@@ -109,6 +109,21 @@ def main():
     except:
         log.exception('Uncaught exception!')
     log.warning('Shutting down')
+
+
+def construct_asyncio_loop() -> asyncio.AbstractEventLoop:
+    # On Windows, the default event loop is SelectorEventLoop which does
+    # not support subprocesses. ProactorEventLoop should be used instead.
+    # Source: https://docs.python.org/3.5/library/asyncio-subprocess.html
+    import sys
+
+    if sys.platform == 'win32':
+        loop = asyncio.ProactorEventLoop()
+        asyncio.set_event_loop(loop)
+    else:
+        loop = asyncio.get_event_loop()
+
+    return loop
 
 
 if __name__ == '__main__':

@@ -13,9 +13,10 @@ class TaskUpdateQueueTest(AbstractWorkerTest):
     def setUp(self):
         from flamenco_worker.upstream import FlamencoManager
         from flamenco_worker.upstream_update_queue import TaskUpdateQueue
+        from flamenco_worker.cli import construct_asyncio_loop
         from mock_responses import CoroMock
 
-        self.asyncio_loop = asyncio.get_event_loop()
+        self.asyncio_loop = construct_asyncio_loop()
         self.shutdown_future = self.asyncio_loop.create_future()
 
         self.manager = Mock(spec=FlamencoManager)

@@ -8,12 +8,13 @@ import requests
 
 class AbstractWorkerTest(unittest.TestCase):
     def setUp(self):
+        from flamenco_worker.cli import construct_asyncio_loop
         from flamenco_worker.upstream import FlamencoManager
         from flamenco_worker.worker import FlamencoWorker
         from flamenco_worker.runner import TaskRunner
         from flamenco_worker.upstream_update_queue import TaskUpdateQueue
 
-        self.asyncio_loop = asyncio.get_event_loop()
+        self.asyncio_loop = construct_asyncio_loop()
         self.shutdown_future = self.asyncio_loop.create_future()
 
         self.manager = Mock(spec=FlamencoManager)
@@ -116,7 +117,9 @@ class WorkerStartupTest(AbstractWorkerTest):
 class TestWorkerTaskFetch(AbstractWorkerTest):
     def setUp(self):
         super().setUp()
-        self.loop = asyncio.get_event_loop()
+        from flamenco_worker.cli import construct_asyncio_loop
+
+        self.loop = construct_asyncio_loop()
         self.worker.loop = self.loop
 
     def run_loop_for(self, seconds: float):
