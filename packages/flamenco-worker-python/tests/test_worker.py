@@ -173,7 +173,7 @@ class TestWorkerTaskFetch(AbstractFWorkerTest):
                  loop=self.loop,
                  ),
             call('/tasks/58514d1e9837734f2e71b479/update',
-                 {'task_progress_percentage': 0, 'activity': '',
+                 {'task_progress_percentage': 0, 'activity': 'Task completed',
                   'command_progress_percentage': 0, 'task_status': 'completed',
                   'current_command_idx': 0},
                  loop=self.loop,
