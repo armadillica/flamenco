@@ -192,6 +192,10 @@ class FlamencoExtension(PillarExtension):
         Flamenco managers.
         """
 
+        return self.update_status_q(collection_name, {'_id': document_id}, new_status)
+
+    def update_status_q(self, collection_name, query, new_status):
+
         from flamenco import eve_settings, current_flamenco
         import datetime
         import uuid
@@ -211,21 +215,17 @@ class FlamencoExtension(PillarExtension):
         etag = uuid.uuid4().hex
 
         collection = current_flamenco.db(collection_name)
-        result = collection.update_one(
-            {'_id': document_id},
+        result = collection.update_many(
+            query,
             {'$set': {'status': new_status,
                       '_updated': datetime.datetime.now(tz=tz_util.utc),
                       '_etag': etag}}
         )
         if result.matched_count < 1:
-            raise wz_exceptions.NotFound('%s %s does not exist' % (singular_name, document_id))
+            raise wz_exceptions.NotFound('%s %s does not exist' % (singular_name, query))
 
-        if result.matched_count > 1:
-            self._log.warning('Eek, %i %s with same ID %s, should be impossible',
-                              result.matched_count, collection_name, document_id)
-
-        self._log.debug('Updated status of %i %s %s',
-                        result.modified_count, singular_name, document_id)
+        self._log.debug('Updated status of %i %s %s to %s',
+                        result.modified_count, singular_name, query, new_status)
 
     def link_for_activity(self, act):
         """Returns the URL for the activity.

@@ -75,6 +75,39 @@ def check_job_permissions_modify(job_doc, original_doc=None):
 
     # FIXME: check user access to the project.
 
+    handle_job_status_update(job_doc, original_doc)
+
+
+def handle_job_status_update(job_doc, original_doc):
+    """Calls upon the JobManager to handle a job status update, if there is any."""
+
+    if original_doc is None:
+        return
+
+    job_id = job_doc.get('_id')
+    if not job_id:
+        log.warning('handle_job_status_update: No _id in new job document, rejecting')
+        raise wz_exceptions.UnprocessableEntity('missing _id')
+
+    try:
+        old_status = original_doc['status']
+    except KeyError:
+        log.info('handle_job_status_update: No status in old job document %s, ignoring', job_id)
+        return
+
+    try:
+        new_status = job_doc['status']
+    except KeyError:
+        log.warning('handle_job_status_update: No status in new job document %s, rejecting', job_id)
+        raise wz_exceptions.UnprocessableEntity('missing status field')
+
+    if old_status == new_status:
+        # No change, so nothing to handle.
+        return
+
+    from flamenco import current_flamenco
+    current_flamenco.job_manager.handle_job_status_change(job_id, old_status, new_status)
+
 
 def setup_app(app):
     app.on_inserted_flamenco_jobs = after_inserting_jobs

@@ -231,7 +231,52 @@ class JobManager(object):
 
         from flamenco import current_flamenco
 
+        jobs_coll = current_flamenco.db('jobs')
+        curr_job = jobs_coll.find_one({'_id': job_id}, projection={'status': 1})
+        old_status = curr_job['status']
+
         current_flamenco.update_status('jobs', job_id, new_status)
+        self.handle_job_status_change(job_id, old_status, new_status)
+
+    def handle_job_status_change(self, job_id, old_status, new_status):
+        """Updates task statuses based on this job status transition."""
+
+        query = None
+        to_status = None
+        if new_status == 'completed':
+            # Nothing to do; this will happen as a response to all tasks being completed.
+            pass
+        elif new_status == 'active':
+            # Nothing to do; this happens when a task gets started, which has nothing to
+            # do with other tasks in the job.
+            pass
+        elif new_status in {'canceled', 'failed'}:
+            # Cancel any task that might run in the future.
+            query = {'status': {'$in': ['active', 'queued', 'claimed-by-manager']}}
+            to_status = 'canceled'
+        elif new_status == 'queued':
+            if old_status == 'completed':
+                # Re-queue all tasks.
+                query = {}
+            else:
+                # Re-queue any non-completed task.
+                query = {'status': {'$ne': 'completed'}}
+            to_status = 'queued'
+
+        if query is None:
+            self._log.debug('Job %s status change from %s to %s has no effect on tasks.',
+                            job_id, old_status, new_status)
+            return
+        if to_status is None:
+            self._log.error('Job %s status change from %s to %s has to_status=None, aborting.',
+                            job_id, old_status, new_status)
+            return
+
+        # Update the tasks.
+        query['job'] = job_id
+
+        from flamenco import current_flamenco
+        current_flamenco.update_status_q('tasks', query, to_status)
 
 
 def setup_app(app):
