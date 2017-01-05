@@ -48,7 +48,7 @@ class TaskPatchingTest(AbstractFlamencoTest):
             expected_status=422,
         )
 
-        # Check that the status in the database changed too.
+        # Check that the status in the database didn't change.
         with self.app.test_request_context():
             tasks_coll = self.flamenco.db('tasks')
             task = tasks_coll.find_one({'_id': ObjectId(task['_id'])})
