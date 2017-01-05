@@ -23,7 +23,7 @@ class BlenderRender(AbstractJobCompiler):
             task_cmds = [
                 commands.BlenderRender(
                     filepath=job_settings['filepath'],
-                    format=job_settings['format'],
+                    format=job_settings.get('format'),
                     render_output=job_settings.get('render_output'),
                     frames=frame_range_bstyle)
             ]

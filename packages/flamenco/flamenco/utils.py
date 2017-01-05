@@ -40,9 +40,9 @@ def frame_range_merge(frames_list=None, blender_style=False):
     :Example:
     >>> frames = [1, 3, 4, 5, 8]
     >>> frame_range_merge(frames)
-    '1,3-5,8'
+    u'1,3-5,8'
     >>> frame_range_merge(frames, blender_style=True)
-    '1,3..5,8'
+    u'1,3..5,8'
     """
     if not frames_list:
         return ""
@@ -63,7 +63,7 @@ def frame_range_merge(frames_list=None, blender_style=False):
                 ranges.append(str(start_frame))
                 ranges.append(str(prev_frame))
             else:
-                ranges.append("{}{}{}".format(start_frame, range_sep, prev_frame))
+                ranges.append(u'{}{}{}'.format(start_frame, range_sep, prev_frame))
             start_frame = current_frame
         prev_frame = current_frame
     if start_frame == current_frame:
@@ -72,8 +72,8 @@ def frame_range_merge(frames_list=None, blender_style=False):
         ranges.append(str(start_frame))
         ranges.append(str(current_frame))
     else:
-        ranges.append("{}{}{}".format(start_frame, range_sep, current_frame))
-    return ",".join(ranges)
+        ranges.append(u'{}{}{}'.format(start_frame, range_sep, current_frame))
+    return u','.join(ranges)
 
 
 def iter_frame_range(merged_frame_range, chunk_size):

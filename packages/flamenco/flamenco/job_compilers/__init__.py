@@ -17,7 +17,7 @@ def register_compiler(job_type):
 
 
 # Import subpackages to register the compilers
-from . import sleep
+from . import sleep, blender_render
 
 
 def compile_job(job):

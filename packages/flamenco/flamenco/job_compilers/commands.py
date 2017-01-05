@@ -37,7 +37,7 @@ class BlenderRender(AbstractCommand):
     # blend file path.
     filepath = attr.ib(validator=attr.validators.instance_of(unicode))
     # output format.
-    format = attr.ib(validator=attr.validators.instance_of(unicode))
+    format = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(unicode)))
     # output file path, defaults to the path in the blend file itself.
     render_output = attr.ib(
         validator=attr.validators.optional(attr.validators.instance_of(unicode)))
