@@ -120,14 +120,14 @@ func TestVariableReplacement(t *testing.T) {
 		Platform:          "linux",
 		SupportedJobTypes: []string{"sleeping"},
 	}
-	if err := StoreWorker(&worker_lnx, db); err != nil {
+	if err := StoreNewWorker(&worker_lnx, db); err != nil {
 		t.Fatal("Unable to insert test worker_lnx", err)
 	}
 	worker_win := Worker{
 		Platform:          "windows",
 		SupportedJobTypes: []string{"testing"},
 	}
-	if err := StoreWorker(&worker_win, db); err != nil {
+	if err := StoreNewWorker(&worker_win, db); err != nil {
 		t.Fatal("Unable to insert test worker_win", err)
 	}
 
