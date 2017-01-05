@@ -49,6 +49,7 @@ def schedule_tasks(manager_id):
         query['job_type'] = job_type
 
     tasks = []
+    affected_jobs = set()
     for task in tasks_coll.find(query):
         # The _updated and _etag fields will be wrong due to the update below, so
         # let's remove them from the response.
@@ -56,9 +57,14 @@ def schedule_tasks(manager_id):
         task.pop('_etag', None)
         task.pop('_updated', None)
         tasks.append(task)
+        affected_jobs.add(task['job'])
 
         if len(tasks) >= chunk_size:
             break
+
+    if not tasks:
+        # Nothing to hand out.
+        return jsonify([])
 
     # Do an update directly via MongoDB and not via Eve. Doing it via Eve
     # requires permissions to do a GET on the task, which we don't want
@@ -68,8 +74,12 @@ def schedule_tasks(manager_id):
         {'$set': {'status': CLAIMED_STATUS}}
     )
 
-    if tasks:
-        log.info('Handing over %i tasks to manager %s', len(tasks), manager_id)
+    log.info('Handing over %i tasks to manager %s', len(tasks), manager_id)
+
+    # Update the affected jobs.
+    for job_id in affected_jobs:
+        current_flamenco.job_manager.update_job_after_task_status_change(job_id, 'unknown',
+                                                                         CLAIMED_STATUS)
 
     resp = jsonify(tasks)
     return resp

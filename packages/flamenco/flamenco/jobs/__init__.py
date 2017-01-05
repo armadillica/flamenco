@@ -189,6 +189,50 @@ class JobManager(object):
 
         return summary
 
+    def update_job_after_task_status_change(self, job_id, task_id, new_task_status):
+        """Updates the job status based on the status of this task and other tasks in the job.
+        """
+
+        from flamenco import current_flamenco
+
+        if new_task_status == 'queued':
+            # Ignore; for now re-queueing a task doesn't change the job status.
+            return
+
+        if new_task_status in {'failed', 'canceled'}:
+            self._log.warning('Aborting job %s because one of its tasks %s changed status to %s',
+                              job_id, task_id, new_task_status)
+            self.set_job_status(job_id, 'canceled')
+            return
+
+        if new_task_status in {'claimed-by-manager', 'active', 'processing'}:
+            self._log.info('Job %s became active because one of its tasks %s changed status to %s',
+                           job_id, task_id, new_task_status)
+            self.set_job_status(job_id, 'active')
+            return
+
+        if new_task_status == 'completed':
+            # Maybe all tasks are completed, which should complete the job.
+            tasks_coll = current_flamenco.db('tasks')
+            statuses = tasks_coll.distinct('status', {'job': job_id})
+            if statuses == ['completed']:
+                self._log.info('All tasks (last one was %s) of job %s are completed, '
+                               'setting job to completed.',
+                               task_id, job_id)
+                self.set_job_status(job_id, 'completed')
+            return
+
+        self._log.warning('Task %s of job %s obtained status %s, '
+                          'which we do not know how to handle.',
+                          task_id, job_id, new_task_status)
+
+    def set_job_status(self, job_id, new_status):
+        """Updates the job status."""
+
+        from flamenco import current_flamenco
+
+        current_flamenco.update_status('jobs', job_id, new_status)
+
 
 def setup_app(app):
     from . import eve_hooks

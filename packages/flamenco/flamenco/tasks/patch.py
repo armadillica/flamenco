@@ -66,8 +66,13 @@ def patch_set_task_status(task_id, patch):
     except ValueError:
         raise wz_exceptions.UnprocessableEntity('Invalid status')
 
+    # also inspect other tasks of the same job, and possibly update the job status as well.
     tasks_coll = current_flamenco.db('tasks')
+    task_job = tasks_coll.find_one({'_id': task_id}, projection={'job': 1})
 
+    current_flamenco.job_manager.update_job_after_task_status_change(task_job['job'],
+                                                                     task_id,
+                                                                     new_status)
 
     return '', 204
 

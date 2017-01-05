@@ -19,7 +19,7 @@ class TaskPatchingTest(AbstractFlamencoTest):
 
         with self.app.test_request_context():
             force_cli_user()
-            self.jmngr.api_create_job(
+            job = self.jmngr.api_create_job(
                 'test job',
                 u'Wörk wørk w°rk.',
                 'sleep',
@@ -32,6 +32,7 @@ class TaskPatchingTest(AbstractFlamencoTest):
                 ctd.EXAMPLE_PROJECT_OWNER_ID,
                 self.mngr_id,
             )
+            self.job_id = job['_id']
 
     def test_set_task_invalid_status(self):
         chunk = self.get('/flamenco/scheduler/tasks/%s' % self.mngr_id,
@@ -74,3 +75,40 @@ class TaskPatchingTest(AbstractFlamencoTest):
             tasks_coll = self.flamenco.db('tasks')
             task = tasks_coll.find_one({'_id': ObjectId(task['_id'])})
             self.assertEqual('completed', task['status'])
+
+    def assert_job_status(self, expected_status):
+        with self.app.test_request_context():
+            jobs_coll = self.flamenco.db('jobs')
+            job = jobs_coll.find_one({'_id': self.job_id},
+                                     projection={'status': 1})
+        self.assertEqual(job['status'], unicode(expected_status))
+
+    def test_job_status_change_due_to_task_patch(self):
+        """A job should be marked as completed after all tasks are completed."""
+
+        self.assert_job_status('queued')
+
+        # The test job consists of 4 tasks; get their IDs through the scheduler.
+        # This should set the job status to active.
+        tasks = self.get('/flamenco/scheduler/tasks/%s?chunk_size=1000' % self.mngr_id,
+                         auth_token=self.mngr_token).json()
+        self.assert_job_status('active')
+        self.assertEqual(4, len(tasks))
+
+        # After setting tasks 1-3 to 'completed' the job should still not be completed.
+        for task in tasks[:-1]:
+            self.patch(
+                '/api/flamenco/tasks/%s' % task['_id'],
+                json={'op': 'set-task-status', 'status': 'completed'},
+                auth_token=self.mngr_token,
+                expected_status=204,
+            )
+        self.assert_job_status('active')
+
+        self.patch(
+            '/api/flamenco/tasks/%s' % tasks[-1]['_id'],
+            json={'op': 'set-task-status', 'status': 'completed'},
+            auth_token=self.mngr_token,
+            expected_status=204,
+        )
+        self.assert_job_status('completed')
