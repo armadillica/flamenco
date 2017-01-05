@@ -213,7 +213,6 @@ tasks_schema = {
             'completed',
             'active',
             'canceled',
-            'processing',
             'failed'],
         'default': 'queued'
     },
