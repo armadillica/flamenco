@@ -55,42 +55,20 @@ def patch_task(task_id):
 def patch_set_task_status(task_id, patch):
     """Updates a task's status in the database."""
 
-    from flamenco import eve_settings
-    import datetime
-    import uuid
-    from bson import tz_util
+    from flamenco import current_flamenco
+    from pillar.api.utils import str2id
 
-    # TODO: also inspect other tasks of the same job, and possibly update the job status as well.
-
-    # Doesn't use Eve patch_internal to avoid Eve's authorisation. It doesn't know PATCH is allowed
-    # by Flamenco managers.
-
-    valid_statuses = eve_settings.tasks_schema['status']['allowed']
     new_status = patch['status']
-    if new_status not in valid_statuses:
-        raise wz_exceptions.UnprocessableEntity('Invalid status %s' % new_status)
+    task_id = str2id(task_id)
 
-    # Generate random ETag since we can't compute it from the entire document.
-    # This means that a subsequent PUT will change the etag even when the document doesn't
-    # change; this is unavoidable without fetching the entire document.
-    etag = uuid.uuid4().hex
+    try:
+        current_flamenco.update_status('tasks', task_id, new_status)
+    except ValueError:
+        raise wz_exceptions.UnprocessableEntity('Invalid status')
 
     tasks_coll = current_flamenco.db('tasks')
-    result = tasks_coll.update_one(
-        {'_id': task_id},
-        {'$set': {'status': new_status,
-                  '_updated': datetime.datetime.now(tz=tz_util.utc),
-                  '_etag': etag}}
-    )
 
-    if result.matched_count < 1:
-        raise wz_exceptions.NotFound('Task %s does not exist' % task_id)
 
-    if result.matched_count > 1:
-        log.warning('Eek, %i tasks with same ID %s, should be impossible',
-                    result.matched_count, task_id)
-
-    log.debug('Updated status of %i task(s) %s', result.modified_count, task_id)
     return '', 204
 
 

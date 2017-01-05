@@ -184,6 +184,49 @@ class FlamencoExtension(PillarExtension):
         """Returns a Flamenco-specific MongoDB collection."""
         return flask.current_app.db()['flamenco_%s' % collection_name]
 
+    def update_status(self, collection_name, document_id, new_status):
+        """Updates a document's status, avoiding Eve.
+
+        Doesn't use Eve patch_internal to avoid Eve's authorisation. For
+        example, Eve doesn't know certain PATCH operations are allowed by
+        Flamenco managers.
+        """
+
+        from flamenco import eve_settings, current_flamenco
+        import datetime
+        import uuid
+        from bson import tz_util
+        import werkzeug.exceptions as wz_exceptions
+
+        singular_name = collection_name.rstrip('s')  # jobs -> job
+        schema = eve_settings.DOMAIN['flamenco_%s' % collection_name]['schema']
+        valid_statuses = schema['status']['allowed']
+
+        if new_status not in valid_statuses:
+            raise ValueError('Invalid %s status %s' % (singular_name, new_status))
+
+        # Generate random ETag since we can't compute it from the entire document.
+        # This means that a subsequent PUT will change the etag even when the document doesn't
+        # change; this is unavoidable without fetching the entire document.
+        etag = uuid.uuid4().hex
+
+        collection = current_flamenco.db(collection_name)
+        result = collection.update_one(
+            {'_id': document_id},
+            {'$set': {'status': new_status,
+                      '_updated': datetime.datetime.now(tz=tz_util.utc),
+                      '_etag': etag}}
+        )
+        if result.matched_count < 1:
+            raise wz_exceptions.NotFound('%s %s does not exist' % (singular_name, document_id))
+
+        if result.matched_count > 1:
+            self._log.warning('Eek, %i %s with same ID %s, should be impossible',
+                              result.matched_count, collection_name, document_id)
+
+        self._log.debug('Updated status of %i %s %s',
+                        result.modified_count, singular_name, document_id)
+
     def link_for_activity(self, act):
         """Returns the URL for the activity.
 
