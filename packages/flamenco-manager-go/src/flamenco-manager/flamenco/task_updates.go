@@ -108,7 +108,7 @@ func (self *TaskUpdatePusher) Go() {
 
 	// Investigate the queue periodically.
 	timer_chan := Timer("TaskUpdatePusherTimer",
-		TASK_QUEUE_INSPECT_PERIOD, self.done, self.done_wg)
+		TASK_QUEUE_INSPECT_PERIOD, false, self.done, self.done_wg)
 
 	for _ = range timer_chan {
 		// log.Println("TaskUpdatePusher: checking task update queue")

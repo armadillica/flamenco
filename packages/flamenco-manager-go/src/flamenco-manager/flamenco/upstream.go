@@ -137,6 +137,7 @@ func upload_task_status(config *Conf, task *Task) {
 func (self *UpstreamConnection) download_task_loop() {
 	timer_chan := Timer("download_task_loop",
 		self.config.DownloadTaskSleep,
+		true,
 		self.done,
 		self.done_wg,
 	)
@@ -310,7 +311,7 @@ func (self *UpstreamConnection) SendStartupNotification() {
 
 		time.Sleep(STARTUP_NOTIFICATION_INITIAL_DELAY)
 		timer_chan := Timer("SendStartupNotification", STARTUP_NOTIFICATION_RETRY,
-			self.done, self.done_wg)
+			false, self.done, self.done_wg)
 
 		for _ = range timer_chan {
 			log.Println("SendStartupNotification: trying to send notification.")
