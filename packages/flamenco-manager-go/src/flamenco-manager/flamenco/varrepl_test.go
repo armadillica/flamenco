@@ -2,6 +2,7 @@ package flamenco
 
 import (
 	"flag"
+	"log"
 	"os"
 	"testing"
 
@@ -12,6 +13,8 @@ import (
 
 func TestMain(m *testing.M) {
 	flag.Parse()
+
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 
 	config := GetTestConfig()
 	session := MongoSession(&config)

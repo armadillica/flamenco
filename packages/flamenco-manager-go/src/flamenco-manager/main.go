@@ -66,6 +66,8 @@ func worker_secret(user, realm string) string {
 }
 
 func main() {
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+
 	config = flamenco.GetConf()
 	log.Println("MongoDB database server :", config.DatabaseUrl)
 	log.Println("Upstream Flamenco server:", config.Flamenco)

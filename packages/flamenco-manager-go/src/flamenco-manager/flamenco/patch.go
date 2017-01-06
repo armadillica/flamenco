@@ -28,7 +28,7 @@ func SendPatch(config *Conf, relative_url *url.URL, patch interface{}) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("ERROR: Unable to PATCH to %s: %s\n", patch_url, err)
+		// log.Printf("ERROR: Unable to PATCH to %s: %s\n", patch_url, err)
 		return err
 	}
 
