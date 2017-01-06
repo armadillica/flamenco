@@ -231,6 +231,7 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	}
 
 	// Insert them into the MongoDB
+	// TODO Sybren: before inserting, compare to the database and deal with any changed statuses.
 	log.Printf("Received %d tasks from upstream Flamenco Server.\n", len(scheduled_tasks))
 	tasks_coll := db.C("flamenco_tasks")
 	for _, task := range scheduled_tasks {
@@ -343,4 +344,87 @@ func (self *UpstreamConnection) SendTaskUpdates(updates *[]TaskUpdate) (*TaskUpd
 	err = self.SendJson("SendTaskUpdates", "POST", url, updates, parse_response)
 
 	return &response, err
+}
+
+/**
+ * Re-fetches a task from the Server, but only if its etag changed.
+ * - If the etag changed, the differences between the old and new status are handled.
+ * - If the Server cannot be reached, this error is ignored and the task is untouched.
+ * - If the Server returns an error code other than 500 Internal Server Error,
+ *   (Forbidden, Not Found, etc.) the task is removed from the local task queue.
+ *
+ * If the task was untouched, this function returns false.
+ * If it was changed or removed, this function return true.
+ */
+func (self *UpstreamConnection) RefetchTask(task *Task) bool {
+	get_url, err := self.ResolveUrl("/api/flamenco/tasks/%s", task.Id.Hex())
+	log.Printf("Verifying task with Flamenco Server %s\n", get_url)
+
+	req, err := http.NewRequest("GET", get_url.String(), nil)
+	if err != nil {
+		log.Printf("WARNING: Unable to create GET request: %s\n", err)
+		return false
+	}
+	req.SetBasicAuth(self.config.ManagerSecret, "")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("WARNING: Unable to re-fetch task: %s\n", err)
+		return false
+	}
+
+	if resp.StatusCode == http.StatusNotModified {
+		// Nothing changed, we're good to go.
+		log.Printf("Cached task %s is still the same on the Server\n", task.Id.Hex())
+		return false
+	}
+
+	if resp.StatusCode >= 500 {
+		// Internal errors, we'll ignore that.
+		log.Printf("WARNING: Error %d trying to re-fetch task %s\n",
+			resp.StatusCode, task.Id.Hex())
+		return false
+	}
+	if 300 <= resp.StatusCode && resp.StatusCode < 400 {
+		// Redirects, we'll ignore those too for now.
+		log.Printf("WARNING: Redirect %d trying to re-fetch task %s\n",
+			resp.StatusCode, task.Id.Hex())
+		return false
+	}
+
+	// Either the task is gone (or gone-ish, i.e. 4xx code) or it has changed.
+	// If it is gone, we handle it as canceled.
+	new_task := Task{}
+
+	if resp.StatusCode >= 400 || resp.StatusCode == 204 {
+		// Not found, access denied, that kind of stuff. Locally cancel the task.
+		log.Printf("WARNING: Code %d when re-fetching task %s; canceling local copy\n",
+			resp.StatusCode, task.Id.Hex())
+
+		new_task = *task
+		new_task.Status = "canceled"
+	} else {
+		// Parse the new task we received.
+		decoder := json.NewDecoder(resp.Body)
+		defer resp.Body.Close()
+
+		if err = decoder.Decode(&new_task); err != nil {
+			// We can't decode what's being sent. Remove it from the queue, as we no longer know
+			// whether this task is valid at all.
+			log.Printf("ERROR: Unable to decode updated tasks JSON from %s: %s", get_url, err)
+
+			new_task = *task
+			new_task.Status = "canceled"
+		}
+	}
+
+	// save the task to the queue.
+	log.Printf("Cached task %s was changed on the Server, status=%s, priority=%d.",
+		task.Id.Hex(), new_task.Status, new_task.Priority)
+	tasks_coll := self.session.DB("").C("flamenco_tasks")
+	tasks_coll.UpdateId(task.Id,
+		bson.M{"$set": new_task})
+
+	return true
 }
