@@ -164,28 +164,30 @@ class FlamencoWorker:
     def shutdown(self):
         """Gracefully shuts down any asynchronous tasks."""
 
+        if self.fetch_task_task is not None and not self.fetch_task_task.done():
+            self._log.info('shutdown(): Cancelling task fetching task %s', self.fetch_task_task)
+            self.fetch_task_task.cancel()
+
+            # This prevents a 'Task was destroyed but it is pending!' warning on the console.
+            # Sybren: I've only seen this in unit tests, so maybe this code should be moved
+            # there, instead.
+            try:
+                self.loop.run_until_complete(self.fetch_task_task)
+            except asyncio.CancelledError:
+                pass
+
+        # Queue anything that should still be pushed to the Manager
         push_act_sched = self._push_act_to_manager is not None \
                          and not self._push_act_to_manager.done()
         push_log_sched = self._push_log_to_manager is not None \
                          and not self._push_log_to_manager.done()
         if push_act_sched or push_log_sched:
-            # Try to push queued task updates to master before shutting down
+            # Try to push queued task updates to manager before shutting down
             self._log.info('shutdown(): pushing queued updates to manager')
             self.loop.run_until_complete(self.push_to_manager())
 
-        if self.fetch_task_task is None or self.fetch_task_task.done():
-            return
-
-        self._log.info('shutdown(): Cancelling task fetching task %s', self.fetch_task_task)
-        self.fetch_task_task.cancel()
-
-        # This prevents a 'Task was destroyed but it is pending!' warning on the console.
-        # Sybren: I've only seen this in unit tests, so maybe this code should be moved
-        # there, instead.
-        try:
-            self.loop.run_until_complete(self.fetch_task_task)
-        except asyncio.CancelledError:
-            pass
+        # Try to do a final push of queued updates to the Manager.
+        self.loop.run_until_complete(self.tuqueue.flush_for_shutdown(loop=self.loop))
 
     async def fetch_task(self, delay: float):
         """Fetches a single task to perform from Flamenco Manager.

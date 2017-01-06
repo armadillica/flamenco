@@ -240,6 +240,8 @@ class AbstractSubprocessCommand(AbstractCommand):
             except asyncio.TimeoutError:
                 raise CommandExecutionError('Command timed out after %i seconds' %
                                             self.readline_timeout)
+            except asyncio.CancelledError:
+                raise CommandExecutionError('Command execution was cancelled')
 
             if len(line) == 0:
                 # EOF received, so let's bail.
