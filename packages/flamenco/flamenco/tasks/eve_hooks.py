@@ -15,31 +15,20 @@ def check_task_permission_fetch(task_doc):
     if user_has_role(u'admin'):
         return
 
-    if not current_flamenco.manager_manager.user_is_manager():
-        # FIXME: Regular user, undefined behaviour as of yet.
+    if not current_flamenco.manager_manager.user_manages(mngr_doc_id=task_doc.get('manager')):
+        # FIXME: Regular user or not task-owning manager, undefined behaviour as of yet.
         # # Run validation process, since GET on nodes entry point is public
         # check_permissions('flamenco_tasks', task_doc, 'GET',
         #                   append_allowed_methods=True)
         raise wz_exceptions.Forbidden()
 
-    # Managers should not have direct access to tasks; use scheduler instead.
-    raise wz_exceptions.Forbidden()
+    # Managers can re-fetch their own tasks to validate their local task cache.
 
 
 def check_task_permission_fetch_resource(response):
-    from flamenco import current_flamenco
-
     if user_has_role(u'admin'):
         return
 
-    if not current_flamenco.manager_manager.user_is_manager():
-        # FIXME: Regular user, undefined behaviour as of yet.
-        # # Run validation process, since GET on nodes entry point is public
-        # check_permissions('flamenco_tasks', task_doc, 'GET',
-        #                   append_allowed_methods=True)
-        raise wz_exceptions.Forbidden()
-
-    # Managers should not have direct access to tasks; use scheduler instead.
     raise wz_exceptions.Forbidden()
 
 

@@ -51,11 +51,7 @@ def schedule_tasks(manager_id):
     tasks = []
     affected_jobs = set()
     for task in tasks_coll.find(query):
-        # The _updated and _etag fields will be wrong due to the update below, so
-        # let's remove them from the response.
         task['status'] = CLAIMED_STATUS
-        task.pop('_etag', None)
-        task.pop('_updated', None)
         tasks.append(task)
         affected_jobs.add(task['job'])
 

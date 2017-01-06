@@ -67,7 +67,7 @@ class TaskManager(object):
         api = pillar_api()
         payload = {
             'where': {
-                'job': job_id,
+                'job': unicode(job_id),
             }}
         if status:
             payload['where']['status'] = status

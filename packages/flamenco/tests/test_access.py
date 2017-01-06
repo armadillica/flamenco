@@ -30,6 +30,8 @@ class AccessTest(AbstractFlamencoTest):
     def setUp(self, **kwargs):
         AbstractFlamencoTest.setUp(self, **kwargs)
 
+        from flamenco import current_flamenco
+
         # Main project will have a manager, job, and tasks.
         mngr_doc, _, token = self.create_manager_service_account()
 
@@ -52,6 +54,9 @@ class AccessTest(AbstractFlamencoTest):
                 self.mngr_id,
             )
             self.job_id = job['_id']
+
+            tasks_coll = current_flamenco.db('tasks')
+            self.tasks_for_job = list(tasks_coll.find({'job': self.job_id}))
 
         # Another project, also with manager, job, and tasks.
         proj2_owner_id = 24 * 'a'
@@ -89,7 +94,7 @@ class AccessTest(AbstractFlamencoTest):
         """Should have access to own job and tasks, but not project or other managers."""
 
         from pillar.api.utils import remove_private_keys
-        #
+
         # # Public project, so access should be fine.
         # self.get('/api/projects/%s' % self.proj_id,
         #          expected_status=200,
@@ -166,4 +171,8 @@ class AccessTest(AbstractFlamencoTest):
         # Manager should not have direct access to tasks; only via scheduler.
         self.get('/api/flamenco/tasks',
                  expected_status=403,
+                 auth_token=self.mngr_token)
+        # Manager should be able to fetch their own tasks, once the IDs are known.
+        self.get('/api/flamenco/tasks/%s' % self.tasks_for_job[0]['_id'],
+                 expected_status=200,
                  auth_token=self.mngr_token)

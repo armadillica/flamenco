@@ -85,6 +85,8 @@ class ManagerManager(object):
             if not mngr_doc:
                 self._log.debug('user_manages(%s): no such document', mngr_doc_id)
                 return False
+        else:
+            mngr_doc_id = mngr_doc['_id']
 
         service_account = mngr_doc.get('service_account')
         user_id = current_user_id()
