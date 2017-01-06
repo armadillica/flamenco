@@ -15,6 +15,7 @@ class AbstractFWorkerTest(AbstractWorkerTest):
         from flamenco_worker.worker import FlamencoWorker
         from flamenco_worker.runner import TaskRunner
         from flamenco_worker.upstream_update_queue import TaskUpdateQueue
+        from mock_responses import CoroMock
 
         self.asyncio_loop = construct_asyncio_loop()
         self.asyncio_loop.set_debug(True)
@@ -23,8 +24,10 @@ class AbstractFWorkerTest(AbstractWorkerTest):
         self.manager = Mock(spec=FlamencoManager)
         self.trunner = Mock(spec=TaskRunner)
         self.tuqueue = Mock(spec=TaskUpdateQueue)
+        self.tuqueue.flush_for_shutdown = CoroMock()
 
         self.trunner.execute = self.mock_task_execute
+        self.trunner.abort_current_task = CoroMock()
 
         self.worker = FlamencoWorker(
             manager=self.manager,

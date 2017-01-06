@@ -164,6 +164,8 @@ class FlamencoWorker:
     def shutdown(self):
         """Gracefully shuts down any asynchronous tasks."""
 
+        self._log.warning('Shutting down')
+
         if self.fetch_task_task is not None and not self.fetch_task_task.done():
             self._log.info('shutdown(): Cancelling task fetching task %s', self.fetch_task_task)
             self.fetch_task_task.cancel()
@@ -175,6 +177,9 @@ class FlamencoWorker:
                 self.loop.run_until_complete(self.fetch_task_task)
             except asyncio.CancelledError:
                 pass
+
+        # Stop the task runner
+        self.loop.run_until_complete(self.trunner.abort_current_task())
 
         # Queue anything that should still be pushed to the Manager
         push_act_sched = self._push_act_to_manager is not None \

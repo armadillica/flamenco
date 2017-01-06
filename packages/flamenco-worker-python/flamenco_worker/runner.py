@@ -2,6 +2,7 @@
 
 import abc
 import asyncio
+import asyncio.subprocess
 import logging
 import re
 import typing
@@ -24,7 +25,8 @@ class CommandExecutionError(Exception):
 
 @attr.s
 class AbstractCommand(metaclass=abc.ABCMeta):
-    worker = attr.ib(validator=attr.validators.instance_of(worker.FlamencoWorker))
+    worker = attr.ib(validator=attr.validators.instance_of(worker.FlamencoWorker),
+                     repr=False)
     task_id = attr.ib(validator=attr.validators.instance_of(str))
     command_idx = attr.ib(validator=attr.validators.instance_of(int))
 
@@ -74,6 +76,10 @@ class AbstractCommand(metaclass=abc.ABCMeta):
             self._log.warning('Error executing: %s', ex)
             await self._register_exception(ex)
             return False
+        except asyncio.CancelledError as ex:
+            self._log.warning('Command execution was canceled')
+            await self._register_exception(ex)
+            return False
         except Exception as ex:
             # This is something unexpected, so do log the traceback.
             self._log.exception('Error executing.')
@@ -88,6 +94,14 @@ class AbstractCommand(metaclass=abc.ABCMeta):
         )
 
         return True
+
+    async def abort(self):
+        """Aborts the command. This may or may not be actually possible.
+
+        A subprocess that's started by this command will be killed.
+        However, any asyncio coroutines that are not managed by this command
+        (such as the 'run' function) should be cancelled by the caller.
+        """
 
     async def _register_exception(self, ex: Exception):
         """Registers an exception with the worker, and set the task status to 'failed'."""
@@ -139,6 +153,9 @@ class TaskRunner:
 
     _log = attrs_extra.log('%s.TaskRunner' % __name__)
 
+    def __attrs_post_init__(self):
+        self.current_command = None
+
     async def execute(self, task: dict, fworker: worker.FlamencoWorker) -> bool:
         """Executes a task, returns True iff the entire task was run succesfully."""
 
@@ -170,6 +187,7 @@ class TaskRunner:
                 task_id=task_id,
                 command_idx=cmd_idx,
             )
+            self.current_command = cmd
             success = await cmd.run(cmd_settings)
 
             if not success:
@@ -179,6 +197,19 @@ class TaskRunner:
 
         self._log.info('Task %s completed succesfully.', task_id)
         return True
+
+    async def abort_current_task(self):
+        """Aborts the current task by aborting the currently running command.
+
+        Asynchronous, because a subprocess has to be wait()ed upon before returning.
+        """
+
+        if self.current_command is None:
+            self._log.info('abort_current_task: no command running, nothing to abort.')
+            return
+
+        self._log.warning('abort_current_task: Aborting command %s', self.current_command)
+        await self.current_command.abort()
 
 
 @command_executor('echo')
@@ -217,6 +248,8 @@ class SleepCommand(AbstractCommand):
 @attr.s
 class AbstractSubprocessCommand(AbstractCommand):
     readline_timeout = attr.ib(default=SUBPROC_READLINE_TIMEOUT)
+    proc = attr.ib(validator=attr.validators.instance_of(asyncio.subprocess.Process),
+                   init=False)
 
     async def subprocess(self, args: list):
         import subprocess
@@ -225,7 +258,7 @@ class AbstractSubprocessCommand(AbstractCommand):
         cmd_to_log = ' '.join(shlex.quote(s) for s in args)
         await self.worker.register_log('Executing %s', cmd_to_log)
 
-        proc = await asyncio.create_subprocess_exec(
+        self.proc = await asyncio.create_subprocess_exec(
             *args,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
@@ -233,47 +266,63 @@ class AbstractSubprocessCommand(AbstractCommand):
             limit=800,  # limit on the StreamReader buffer.
         )
 
-        while not proc.stdout.at_eof():
-            try:
-                line = await asyncio.wait_for(proc.stdout.readline(),
-                                              self.readline_timeout)
-            except asyncio.TimeoutError:
-                raise CommandExecutionError('Command timed out after %i seconds' %
-                                            self.readline_timeout)
-            except asyncio.CancelledError:
-                raise CommandExecutionError('Command execution was cancelled')
-
-            if len(line) == 0:
-                # EOF received, so let's bail.
-                break
-
-            try:
-                line = line.decode('utf8')
-            except UnicodeDecodeError as ex:
+        try:
+            while not self.proc.stdout.at_eof():
                 try:
-                    proc.kill()
-                except ProcessLookupError:
-                    # The process is already stopped, so killing is impossible. That's ok.
-                    pass
-                await proc.wait()
-                raise CommandExecutionError('Command produced non-UTF8 output, aborting: %s' % ex)
+                    line = await asyncio.wait_for(self.proc.stdout.readline(),
+                                                  self.readline_timeout)
+                except asyncio.TimeoutError:
+                    raise CommandExecutionError('Command timed out after %i seconds' %
+                                                self.readline_timeout)
 
-            line = line.rstrip()
-            self._log.info('Read line: %s', line)
-            line = await self.process_line(line)
-            if line is not None:
-                await self.worker.register_log(line)
+                if len(line) == 0:
+                    # EOF received, so let's bail.
+                    break
 
-        retcode = await proc.wait()
-        self._log.info('Command %r stopped with status code %s', args, retcode)
+                try:
+                    line = line.decode('utf8')
+                except UnicodeDecodeError as ex:
+                    await self.abort()
+                    raise CommandExecutionError('Command produced non-UTF8 output, '
+                                                'aborting: %s' % ex)
 
-        if retcode:
-            raise CommandExecutionError('Command failed with status %s' % retcode)
+                line = line.rstrip()
+                self._log.info('Read line: %s', line)
+                line = await self.process_line(line)
+                if line is not None:
+                    await self.worker.register_log(line)
+
+            retcode = await self.proc.wait()
+            self._log.info('Command %r stopped with status code %s', args, retcode)
+
+            if retcode:
+                raise CommandExecutionError('Command failed with status %s' % retcode)
+        except asyncio.CancelledError as ex:
+            self._log.info('asyncio task got canceled, killing subprocess.')
+            self.abort()
 
     async def process_line(self, line: str) -> typing.Optional[str]:
         """Processes the line, returning None to ignore it."""
 
         return '> %s' % line
+
+    async def abort(self):
+        """Aborts the command by killing the subprocess."""
+
+        if self.proc is None or self.proc == attr.NOTHING:
+            self._log.debug("No process to kill. That's ok.")
+            return
+
+        self._log.info('Aborting subprocess')
+        try:
+            self.proc.kill()
+        except ProcessLookupError:
+            # The process is already stopped, so killing is impossible. That's ok.
+            self._log.debug("The process was already stopped, aborting is impossible. That's ok.")
+            return
+
+        retval = await self.proc.wait()
+        self._log.info('The process aborted with status code %s', retval)
 
 
 @command_executor('exec')
