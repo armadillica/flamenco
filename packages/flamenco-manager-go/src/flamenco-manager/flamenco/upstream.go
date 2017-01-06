@@ -177,7 +177,7 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	worker_count := WorkerCount(db)
 
 	url_str := fmt.Sprintf("/flamenco/scheduler/tasks/%s?chunk_size=%d",
-		config.ManagerId, worker_count)
+		config.ManagerId, MaxInt(worker_count, 1))
 	rel_url, err := url.Parse(url_str)
 	if err != nil {
 		log.Printf("Error parsing '%s' as URL; unable to fetch tasks.\n", url_str)
