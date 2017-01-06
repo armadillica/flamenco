@@ -111,7 +111,7 @@ class TaskUpdateQueue:
         """Removes a queued payload from the database."""
 
         # TODO Sybren: every once in a while, run 'vacuum' on the database.
-        self._db.execute('DELETE FROM fworker_queue WHERE rowid=?', (rowid, ))
+        self._db.execute('DELETE FROM fworker_queue WHERE rowid=?', (rowid,))
         self._db.commit()
 
     async def flush(self, *, loop: asyncio.AbstractEventLoop) -> bool:
