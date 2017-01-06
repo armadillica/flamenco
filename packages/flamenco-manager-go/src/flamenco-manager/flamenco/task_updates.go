@@ -32,8 +32,8 @@ type TaskUpdatePusher struct {
 /**
  * Receives a task update from a worker, and queues it for sending to Flamenco Server.
  */
-func QueueTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.Database,
-	task_id bson.ObjectId) {
+func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedRequest,
+	db *mgo.Database, task_id bson.ObjectId) {
 	log.Printf("%s Received task update for task %s\n", r.RemoteAddr, task_id.Hex())
 
 	// Get the worker
@@ -52,21 +52,28 @@ func QueueTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mg
 	if err := DecodeJson(w, r.Body, &tupdate, fmt.Sprintf("%s QueueTaskUpdate:", r.RemoteAddr)); err != nil {
 		return
 	}
+	tupdate.TaskId = task_id
+	tupdate.Worker = worker.Address
 
+	if err := QueueTaskUpdate(&tupdate, db); err != nil {
+		log.Printf("%s: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Unable to store update: %s\n", err)
+		return
+	}
+
+	w.WriteHeader(204)
+}
+
+func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 	// For ensuring the ordering of updates. time.Time has nanosecond precision.
 	tupdate.ReceivedOnManager = time.Now().UTC()
-	tupdate.TaskId = task_id
 	tupdate.Id = bson.NewObjectId()
-	tupdate.Worker = worker.Address
 
 	// Store the update in the queue for sending to the Flamenco Server later.
 	task_update_queue := db.C(QUEUE_MGO_COLLECTION)
 	if err := task_update_queue.Insert(&tupdate); err != nil {
-		log.Printf("%s QueueTaskUpdate: error inserting task update in queue: %s",
-			r.RemoteAddr, err)
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Unable to store update: %s\n", err)
-		return
+		return fmt.Errorf("QueueTaskUpdate: error inserting task update in queue: %s", err)
 	}
 
 	// Locally apply the change to our cached version of the task too.
@@ -79,13 +86,12 @@ func QueueTaskUpdate(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mg
 		updates["activity"] = tupdate.Activity
 	}
 	if len(updates) > 0 {
-		if err := task_coll.UpdateId(task_id, bson.M{"$set": updates}); err != nil {
-			log.Printf("%s QueueTaskUpdate: error updating local task cache: %s",
-				r.RemoteAddr, err)
+		if err := task_coll.UpdateId(tupdate.TaskId, bson.M{"$set": updates}); err != nil {
+			return fmt.Errorf("QueueTaskUpdate: error updating local task cache: %s", err)
 		}
 	}
 
-	w.WriteHeader(204)
+	return nil
 }
 
 func CreateTaskUpdatePusher(config *Conf, upstream *UpstreamConnection, session *mgo.Session) *TaskUpdatePusher {

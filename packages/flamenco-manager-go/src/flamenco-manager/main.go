@@ -55,7 +55,7 @@ func http_task_update(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
 		return
 	}
 
-	flamenco.QueueTaskUpdate(w, r, mongo_sess.DB(""), bson.ObjectIdHex(task_id))
+	flamenco.QueueTaskUpdateFromWorker(w, r, mongo_sess.DB(""), bson.ObjectIdHex(task_id))
 }
 
 func worker_secret(user, realm string) string {

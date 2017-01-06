@@ -32,9 +32,6 @@ type SetTaskStatusPatch struct {
 }
 
 type UpstreamConnection struct {
-	// Send a *Task here to upload its status to upstream Flamenco Server.
-	UploadChannel chan *Task
-
 	config  *Conf
 	session *mgo.Session
 
@@ -46,17 +43,7 @@ type UpstreamConnection struct {
 }
 
 func ConnectUpstream(config *Conf, session *mgo.Session) *UpstreamConnection {
-	upload_chan := make(chan *Task, MAX_OUTSTANDING_TASKS)
-
-	// For uploading task statuses.
-	go func() {
-		for task := range upload_chan {
-			upload_task_status(config, task)
-		}
-	}()
-
 	upconn := UpstreamConnection{
-		upload_chan,
 		config,
 		session,
 		make(chan chan bool),
@@ -78,7 +65,6 @@ func (self *UpstreamConnection) Close() {
 	// channel can be handled by other goroutines, before handling the
 	// closing of the other channels.
 	time.Sleep(1)
-	close(self.UploadChannel)
 	close(self.download_kick)
 
 	log.Println("UpstreamConnection: shutting down, waiting for shutdown to complete.")
@@ -110,28 +96,6 @@ func (self *UpstreamConnection) KickDownloader(synchronous bool) {
 		log.Println("KickDownloader: asynchronous kick, just kicking.")
 		self.download_kick <- nil
 	}
-}
-
-func upload_task_status(config *Conf, task *Task) {
-	// TODO: when uploading a task status change fails, remember this somewhere and
-	// keep retrying until it succeeds.
-	rel_url, err := url.Parse(fmt.Sprintf("api/flamenco/tasks/%s", task.Id.Hex()))
-	if err != nil {
-		log.Printf("ERROR: Unable to construct Flamenco URL for task %s: %s\n",
-			task.Id.Hex(), err)
-		return
-	}
-
-	err = SendPatch(config, rel_url, SetTaskStatusPatch{
-		Op:     "set-task-status",
-		Status: task.Status,
-	})
-	if err != nil {
-		log.Printf("ERROR: Error PATCHting task %s: %s\n", task.Id.Hex(), err)
-		return
-	}
-
-	log.Printf("Done sending task %s to upstream Flamenco\n", task.Id)
 }
 
 func (self *UpstreamConnection) download_task_loop() {
@@ -338,8 +302,9 @@ func (self *UpstreamConnection) SendTaskUpdates(updates *[]TaskUpdate) (*TaskUpd
 		err := json.Unmarshal(body, &response)
 		if err != nil {
 			log.Printf("SendTaskUpdates: error parsing server response: %s", err)
+			return err
 		}
-		return err
+		return nil
 	}
 	err = self.SendJson("SendTaskUpdates", "POST", url, updates, parse_response)
 
@@ -366,6 +331,7 @@ func (self *UpstreamConnection) RefetchTask(task *Task) bool {
 		return false
 	}
 	req.SetBasicAuth(self.config.ManagerSecret, "")
+	req.Header["If-None-Match"] = []string{task.Etag}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

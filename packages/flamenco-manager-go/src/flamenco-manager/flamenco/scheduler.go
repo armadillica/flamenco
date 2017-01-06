@@ -50,7 +50,8 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	}
 
 	var task *Task
-	for {
+	var was_changed bool
+	for attempt := 0; attempt < 1000; attempt++ {
 		// Fetch the first available task of a supported job type.
 		task = ts.fetchTaskFromQueueOrManager(w, r, db, &worker)
 		if task == nil {
@@ -58,19 +59,21 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 			return
 		}
 
-		was_changed := ts.upstream.RefetchTask(task)
+		was_changed = ts.upstream.RefetchTask(task)
 		if !was_changed {
 			break
 		}
 
 		log.Printf("Task %s was changed, reexamining queue.", task.Id.Hex())
 	}
+	if was_changed {
+		log.Printf("Infinite loop detected, tried 1000 tasks and they all changed...")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	// Perform variable replacement on the task.
 	ReplaceVariables(ts.config, task, &worker)
-
-	// Send the changed task to upstream flamenco
-	ts.upstream.UploadChannel <- task
 
 	// Set it to this worker.
 	w.Header().Set("Content-Type", "application/json")

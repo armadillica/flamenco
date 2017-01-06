@@ -13,7 +13,7 @@ type Command struct {
 
 type Task struct {
 	Id       bson.ObjectId   `bson:"_id,omitempty" json:"_id,omitempty"`
-	Etag     string          `bson:"-" json:"_etag,omitempty"`
+	Etag     string          `bson:"_etag,omitempty" json:"_etag,omitempty"`
 	Job      bson.ObjectId   `bson:"job,omitempty" json:"job"`
 	Manager  bson.ObjectId   `bson:"manager,omitempty" json:"manager"`
 	Project  bson.ObjectId   `bson:"project,omitempty" json:"project"`

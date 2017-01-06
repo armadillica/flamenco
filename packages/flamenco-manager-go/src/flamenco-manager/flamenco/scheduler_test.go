@@ -115,28 +115,6 @@ func (s *SchedulerTestSuite) TearDownTest(c *check.C) {
 	httpmock.DeactivateAndReset()
 }
 
-func (s *SchedulerTestSuite) TestSchedulerPatchUpstream(t *check.C) {
-	task := construct_task("aaaaaaaaaaaaaaaaaaaaaaaa", "testing")
-	timeout := timeout_after(1 * time.Second)
-
-	httpmock.RegisterResponder(
-		"PATCH",
-		"http://localhost:51234/api/flamenco/tasks/aaaaaaaaaaaaaaaaaaaaaaaa",
-		func(req *http.Request) (*http.Response, error) {
-			// TODO: test contents of patch
-			defer func() { timeout <- false }()
-			log.Println("PATCH from manager received on server.")
-
-			return httpmock.NewStringResponse(204, ""), nil
-		},
-	)
-
-	s.upstream.UploadChannel <- &task
-
-	timedout := <-timeout
-	assert.False(t, timedout, "HTTP PATCH to Flamenco not performed")
-}
-
 /**
  * In this test we don't mock the upstream HTTP connection, so it's normal to see
  * errors about failed PATCH requests. These are harmless. As a matter of fact, testing
