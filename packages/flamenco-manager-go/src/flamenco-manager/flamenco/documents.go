@@ -27,6 +27,7 @@ type Task struct {
 	Activity string          `bson:"activity,omitempty" json:"activity,omitempty"`
 	Parents  []bson.ObjectId `bson:"parents,omitempty" json:"parents,omitempty"`
 	Worker   string          `bson:"worker,omitempty" json:"worker,omitempty"`
+	WorkerId bson.ObjectId   `bson:"worker_id,omitempty" json:"-"`
 }
 
 type TaskUpdate struct {
@@ -77,4 +78,9 @@ type StartupNotification struct {
 
 	// From our local database
 	NumberOfWorkers int `json:"nr_of_workers"`
+}
+
+type MayKeepRunningResponse struct {
+	MayKeepRunning bool   `json:"may_keep_running"`
+	Reason         string `json:"reason,omitempty"`
 }

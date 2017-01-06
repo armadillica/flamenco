@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	auth "github.com/abbot/go-http-auth"
+
 	"golang.org/x/crypto/bcrypt"
 
 	mgo "gopkg.in/mgo.v2"
@@ -104,4 +106,55 @@ func WorkerCount(db *mgo.Database) int {
 		return -1
 	}
 	return count
+}
+
+func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
+	db *mgo.Database, task_id bson.ObjectId) {
+	log.Printf("%s Received task update for task %s\n", r.RemoteAddr, task_id.Hex())
+
+	// Get the worker
+	worker, err := FindWorker(r.Username, bson.M{"_id": 1}, db)
+	if err != nil {
+		log.Printf("%s WorkerMayRunTask: Unable to find worker: %s\n",
+			r.RemoteAddr, err)
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(w, "Unable to find worker: %s", err)
+		return
+	}
+
+	response := MayKeepRunningResponse{}
+
+	// Get the task and check its status.
+	task := Task{}
+	if err := db.C("flamenco_tasks").FindId(task_id).One(&task); err != nil {
+		log.Printf("%s WorkerMayRunTask: unable to find task %s for worker %s",
+			r.RemoteAddr, task_id.Hex(), worker.Id.Hex())
+		response.Reason = fmt.Sprintf("unable to find task %s", task_id.Hex())
+	} else if task.WorkerId != worker.Id {
+		log.Printf("%s WorkerMayRunTask: task %s was assigned from worker %s to %s",
+			r.RemoteAddr, task_id.Hex(), worker.Id.Hex(), task.WorkerId.Hex())
+		response.Reason = fmt.Sprintf("task %s reassigned to another worker", task_id.Hex())
+	} else if !IsRunnableTaskStatus(task.Status) {
+		log.Printf("%s WorkerMayRunTask: task %s is in not-runnable status %s, worker %s will stop",
+			r.RemoteAddr, task_id.Hex(), task.Status, worker.Id.Hex())
+		response.Reason = fmt.Sprintf("task %s in non-runnable status %s", task_id.Hex(), task.Status)
+	} else {
+		response.MayKeepRunning = true
+	}
+
+	// Send the response
+	w.Header().Set("Content-Type", "application/json")
+	encoder := json.NewEncoder(w)
+	encoder.Encode(response)
+}
+
+func IsRunnableTaskStatus(status string) bool {
+	runnable_statuses := map[string]bool{
+		"active":             true,
+		"claimed-by-manager": true,
+		"queued":             true,
+	}
+
+	runnable, found := runnable_statuses[status]
+	return runnable && found
 }

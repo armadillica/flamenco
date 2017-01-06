@@ -75,6 +75,14 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	// Perform variable replacement on the task.
 	ReplaceVariables(ts.config, task, &worker)
 
+	// update the worker_id field of the task.
+	tasks_coll := db.C("flamenco_tasks")
+	if err := tasks_coll.UpdateId(task.Id, bson.M{"$set": bson.M{"worker_id": worker.Id}}); err != nil {
+		log.Printf("Unable to set worker_id=%s on task %s: %s", worker.Id, task.Id, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// Set it to this worker.
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
