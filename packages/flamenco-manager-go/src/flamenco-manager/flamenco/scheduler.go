@@ -58,7 +58,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 		"job_type": bson.M{"$in": worker.SupportedJobTypes},
 	}
 	change := mgo.Change{
-		Update:    bson.M{"$set": bson.M{"status": "processing"}},
+		Update:    bson.M{"$set": bson.M{"status": "active"}},
 		ReturnNew: true,
 	}
 
