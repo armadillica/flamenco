@@ -102,13 +102,45 @@ def main():
 
         async def stop_loop():
             log.info('Waiting to give tasks the time to stop gracefully')
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
             loop.stop()
 
         loop.run_until_complete(stop_loop())
     except:
         log.exception('Uncaught exception!')
-    log.warning('Shutting down')
+
+    log.warning('Closing asyncio loop')
+
+    # Report on the asyncio task status
+    all_tasks = asyncio.Task.all_tasks()
+    if not len(all_tasks):
+        log.debug('no more scheduled tasks, this is a clean shutdown.')
+    elif all(task.done() for task in all_tasks):
+        log.debug('all %i tasks are done, this is a clean shutdown.', len(all_tasks))
+
+        import gc
+        import traceback
+
+        # Clean up circular references between tasks.
+        gc.collect()
+
+        for task_idx, task in enumerate(all_tasks):
+            if not task.done():
+                continue
+
+            # noinspection PyBroadException
+            try:
+                res = task.result()
+                log.debug('   task #%i: %s result=%r', task_idx, task, res)
+            except asyncio.CancelledError:
+                # No problem, we want to stop anyway.
+                log.debug('   task #%i: %s cancelled', task_idx, task)
+            except Exception:
+                print('{}: resulted in exception'.format(task))
+                traceback.print_exc()
+            # for ref in gc.get_referrers(task):
+            #     log.debug('      - referred by %s', ref)
+
     loop.close()
 
 
