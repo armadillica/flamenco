@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import datetime
 import logging
 import logging.config
 
@@ -61,7 +62,7 @@ def main():
     shutdown_future = loop.create_future()
 
     # Piece all the components together.
-    from . import runner, worker, upstream, upstream_update_queue
+    from . import runner, worker, upstream, upstream_update_queue, may_i_run
 
     fmanager = upstream.FlamencoManager(
         manager_url=confparser.get(config.CONFIG_SECTION, 'manager_url'),
@@ -86,8 +87,17 @@ def main():
         shutdown_future=shutdown_future,
     )
 
-    # Start the task update queue worker loop.
+    mir_interval = float(confparser.get(config.CONFIG_SECTION, 'may_i_run_interval_seconds'))
+    mir = may_i_run.MayIRun(
+        manager=fmanager,
+        worker=fworker,
+        poll_interval=datetime.timedelta(seconds=mir_interval),
+        loop=loop,
+    )
+
+    # Start asynchronous tasks.
     asyncio.ensure_future(tuqueue.work(loop=loop))
+    mir_work_task = asyncio.ensure_future(mir.work())
 
     try:
         loop.run_until_complete(fworker.startup())
@@ -98,6 +108,10 @@ def main():
     except KeyboardInterrupt:
         log.warning('Shutting down due to keyboard interrupt')
         shutdown_future.cancel()
+
+        mir_work_task.cancel()
+        loop.run_until_complete(mir_work_task)
+
         fworker.shutdown()
 
         async def stop_loop():

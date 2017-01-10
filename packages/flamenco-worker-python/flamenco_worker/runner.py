@@ -78,8 +78,7 @@ class AbstractCommand(metaclass=abc.ABCMeta):
             return False
         except asyncio.CancelledError as ex:
             self._log.warning('Command execution was canceled')
-            await self._register_exception(ex)
-            return False
+            raise
         except Exception as ex:
             # This is something unexpected, so do log the traceback.
             self._log.exception('Error executing.')
@@ -297,9 +296,10 @@ class AbstractSubprocessCommand(AbstractCommand):
 
             if retcode:
                 raise CommandExecutionError('Command failed with status %s' % retcode)
-        except asyncio.CancelledError as ex:
+        except asyncio.CancelledError:
             self._log.info('asyncio task got canceled, killing subprocess.')
-            self.abort()
+            await self.abort()
+            raise
 
     async def process_line(self, line: str) -> typing.Optional[str]:
         """Processes the line, returning None to ignore it."""

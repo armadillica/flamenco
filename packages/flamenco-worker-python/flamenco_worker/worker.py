@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import typing
 
 import attr
 
@@ -39,6 +40,9 @@ class FlamencoWorker:
         validator=attr.validators.optional(attr.validators.instance_of(asyncio.Future)))
 
     fetch_task_task = attr.ib(
+        default=None, init=False,
+        validator=attr.validators.optional(attr.validators.instance_of(asyncio.Task)))
+    asyncio_execution_task = attr.ib(
         default=None, init=False,
         validator=attr.validators.optional(attr.validators.instance_of(asyncio.Task)))
 
@@ -83,6 +87,14 @@ class FlamencoWorker:
         validator=attr.validators.optional(attr.validators.instance_of(asyncio.Future)))
 
     _log = attrs_extra.log('%s.FlamencoWorker' % __name__)
+
+    @property
+    def active_task_id(self) -> typing.Optional[str]:
+        """Returns the task ID, but only if it is currently executing; returns None otherwise."""
+
+        if self.asyncio_execution_task is None or self.asyncio_execution_task.done():
+            return None
+        return self.task_id
 
     async def startup(self):
         self._log.info('Starting up')
@@ -161,6 +173,25 @@ class FlamencoWorker:
 
         self.fetch_task_task = asyncio.ensure_future(self.fetch_task(delay), loop=self.loop)
 
+    async def stop_current_task(self):
+        """Stops the current task by canceling the AsyncIO task.
+
+        This causes a CancelledError in the self.fetch_task() function, which then takes care
+        of the task status change and subsequent activity push.
+        """
+
+        if not self.asyncio_execution_task or self.asyncio_execution_task.done():
+            self._log.warning('stop_current_task() called but no task is running.')
+            return
+
+        self._log.warning('Stopping task %s', self.task_id)
+
+        try:
+            await self.trunner.abort_current_task()
+        except asyncio.CancelledError:
+            self._log.info('asyncio task was canceled for task runner task %s', self.task_id)
+        self.asyncio_execution_task.cancel()
+
     def shutdown(self):
         """Gracefully shuts down any asynchronous tasks."""
 
@@ -195,7 +226,7 @@ class FlamencoWorker:
         self.loop.run_until_complete(self.tuqueue.flush_for_shutdown(loop=self.loop))
 
     async def fetch_task(self, delay: float):
-        """Fetches a single task to perform from Flamenco Manager.
+        """Fetches a single task to perform from Flamenco Manager, and executes it.
 
         :param delay: waits this many seconds before fetching a task.
         """
@@ -235,7 +266,10 @@ class FlamencoWorker:
 
         try:
             await self.register_task_update(task_status='active')
-            ok = await self.trunner.execute(task_info, self)
+            self.asyncio_execution_task = asyncio.ensure_future(
+                self.trunner.execute(task_info, self),
+                loop=self.loop)
+            ok = await self.asyncio_execution_task
             if ok:
                 await self.register_task_update(
                     task_status='completed',
@@ -244,6 +278,10 @@ class FlamencoWorker:
             else:
                 self._log.error('Task %s failed', self.task_id)
                 await self.register_task_update(task_status='failed')
+        except asyncio.CancelledError:
+            self._log.warning('Task %s was canceled', self.task_id)
+            await self.register_task_update(task_status='canceled',
+                                            activity='Task was canceled')
         except Exception as ex:
             self._log.exception('Uncaught exception executing task %s' % self.task_id)
             try:
