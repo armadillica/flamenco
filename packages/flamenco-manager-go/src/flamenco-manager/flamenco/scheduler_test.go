@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"time"
 
 	auth "github.com/abbot/go-http-auth"
@@ -16,9 +15,6 @@ import (
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
-
-// Hook up gocheck into the "go test" runner.
-func TestScheduler(t *testing.T) { check.TestingT(t) }
 
 type SchedulerTestSuite struct {
 	worker_lnx Worker

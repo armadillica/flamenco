@@ -2,9 +2,10 @@
 
 ## Testing
 
-Run `go test ./flamenco -v --run TestScheduler -check.f SchedulerTestSuite.TestVariableReplacement`
+To run all unit tests, run `go test ./flamenco -v`. To run a specific GoCheck test, run
+`go test ./flamenco -v --run TestWithGocheck -check.f SchedulerTestSuite.TestVariableReplacement`
 where the argument to `--run` determines which suite to run, and `-check.f` determines the
-exact test function of that suite. Once all tests have been moved over to use "check", the
+exact test function of that suite. Once all tests have been moved over to use GoCheck, the
 `--run` parameter will probably not be needed any more.
 
 ## MISSING FEATURES
