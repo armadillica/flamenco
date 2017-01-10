@@ -4,7 +4,7 @@ import logging
 
 import werkzeug.exceptions as wz_exceptions
 
-from pillar.api.utils.authorization import check_permissions, user_has_role
+from flamenco import current_flamenco
 
 log = logging.getLogger(__name__)
 
@@ -20,9 +20,8 @@ def after_inserting_jobs(jobs):
 
 
 def check_job_permission_fetch(job_doc):
-    from flamenco import current_flamenco
 
-    if user_has_role(u'admin'):
+    if current_flamenco.current_user_is_flamenco_admin():
         return
 
     if not current_flamenco.manager_manager.user_is_manager():
@@ -38,10 +37,9 @@ def check_job_permission_fetch(job_doc):
 
 
 def check_job_permission_fetch_resource(response):
-    from flamenco import current_flamenco
     from pylru import lrudecorator
 
-    if user_has_role(u'admin'):
+    if current_flamenco.current_user_is_flamenco_admin():
         return
 
     if not current_flamenco.manager_manager.user_is_manager():
@@ -70,7 +68,7 @@ def check_job_permission_fetch_resource(response):
 def check_job_permissions_modify(job_doc, original_doc=None):
     """For now, only admins are allowed to create, edit, and delete jobs."""
 
-    if not user_has_role(u'admin'):
+    if not current_flamenco.current_user_is_flamenco_admin():
         raise wz_exceptions.Forbidden()
 
     # FIXME: check user access to the project.

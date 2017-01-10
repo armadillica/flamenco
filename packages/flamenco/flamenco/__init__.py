@@ -8,7 +8,7 @@ from pillar.extension import PillarExtension
 EXTENSION_NAME = 'flamenco'
 
 # Roles required to view job, manager or task details.
-ROLES_REQUIRED_TO_VIEW_ITEMS = {u'demo', u'subscriber', u'admin'}
+ROLES_REQUIRED_TO_VIEW_ITEMS = {u'demo', u'subscriber', u'admin', u'flamenco-admin'}
 
 
 class FlamencoExtension(PillarExtension):
@@ -169,6 +169,13 @@ class FlamencoExtension(PillarExtension):
                               " Flamenco extension properties.", project['url'])
             return False
         return True
+
+    def current_user_is_flamenco_admin(self):
+        """Returns True iff the user is a Flamenco admin or regular admin."""
+
+        from pillar.api.utils.authorization import user_matches_roles
+
+        return user_matches_roles({u'admin', u'flamenco-admin'})
 
     def sidebar_links(self, project):
 

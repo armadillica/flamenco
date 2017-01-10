@@ -1,11 +1,9 @@
 import logging
 
 from flask import Blueprint, render_template, request
-import flask
 import flask_login
 import werkzeug.exceptions as wz_exceptions
 
-import pillarsdk
 from pillar.web.system_util import pillar_api
 import pillar.api.utils
 import pillar.web.subquery

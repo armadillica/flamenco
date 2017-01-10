@@ -80,4 +80,34 @@ def create_test_job(manager_id, user_email, project_url):
 
     log.info('Job created:\n%s', dumps(job, indent=4))
 
+
+@manager_flamenco.command
+def make_admin(user_email):
+    """Grants the user flamenco-admin role."""
+
+    from pillar.api.service import do_badger
+
+    _, status = do_badger('grant', user_email, u'flamenco-admin')
+    if status != 204:
+        log.error('Unable to find user %s', user_email)
+        return 1
+
+    log.info('Done.')
+    return 0
+
+
+@manager_flamenco.command
+def revoke_admin(user_email):
+    """Revokes the user's flamenco-admin role."""
+
+    from pillar.api.service import do_badger
+
+    _, status = do_badger('revoke', user_email, u'flamenco-admin')
+    if status != 204:
+        log.error('Unable to find user %s', user_email)
+        return 1
+
+    log.info('Done.')
+    return 0
+
 manager.add_command("flamenco", manager_flamenco)
