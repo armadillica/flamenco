@@ -212,6 +212,7 @@ tasks_schema = {
             'claimed-by-manager',
             'completed',
             'active',
+            'cancel-requested',
             'canceled',
             'failed'],
         'default': 'queued'

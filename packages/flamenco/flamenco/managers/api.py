@@ -59,13 +59,33 @@ def startup(manager_id, notification):
 @api_blueprint.route('/<manager_id>/task-update-batch', methods=['POST'])
 @manager_api_call
 def task_update_batch(manager_id, task_updates):
+    from pillar.api.utils import jsonify
+
+    total_modif_count, handled_update_ids = handle_task_update_batch(manager_id, task_updates)
+    response = {'modified_count': total_modif_count,
+                'handled_update_ids': handled_update_ids}
+
+    # Check which tasks are in state 'cancel-requested', as those need to be sent back.
+    tasks_to_cancel = tasks_cancel_requested(manager_id)
+    if tasks_to_cancel:
+        response['cancel_task_ids'] = tasks_to_cancel
+
+    return jsonify(response)
+
+
+def handle_task_update_batch(manager_id, task_updates):
+    """Performs task updates.
+
+    :returns: tuple (total nr of modified tasks, handled update IDs)
+    """
+
+    if not task_updates:
+        return 0, []
+
     import dateutil.parser
-    from pillar.api.utils import jsonify, str2id
+    from pillar.api.utils import str2id
 
     from flamenco import current_flamenco, eve_settings
-
-    if not isinstance(task_updates, list):
-        raise wz_exceptions.BadRequest('Expected list of task updates.')
 
     log.info('Received %i task updates from manager %s', len(task_updates), manager_id)
 
@@ -133,8 +153,24 @@ def task_update_batch(manager_id, task_updates):
 
         handled_update_ids.append(update_id)
 
-    return jsonify({'modified_count': total_modif_count,
-                    'handled_update_ids': handled_update_ids})
+    return total_modif_count, handled_update_ids
+
+
+def tasks_cancel_requested(manager_id):
+    """Returns a list of tasks of status cancel-requested."""
+
+    from flamenco import current_flamenco, eve_settings
+
+    tasks_coll = current_flamenco.db('tasks')
+
+    task_ids = [
+        task['_id']
+        for task in tasks_coll.find({'manager': manager_id, 'status': 'cancel-requested'},
+                                    projection={'_id': 1})
+    ]
+
+    log.debug('Returning %i tasks to be canceled by manager %s', len(task_ids), manager_id)
+    return task_ids
 
 
 def setup_app(app):
