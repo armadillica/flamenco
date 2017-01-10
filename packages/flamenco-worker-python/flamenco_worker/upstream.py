@@ -57,6 +57,7 @@ class FlamencoManager:
         if 'auth=...' (the async default), self.auth is used. If 'auth=None', no authentication is used.
         """
 
+        import logging
         import urllib.parse
         from functools import partial
 
@@ -68,7 +69,11 @@ class FlamencoManager:
             self.session.mount(self.manager_url, HTTPAdapter(max_retries=HTTP_RETRY_COUNT))
 
         abs_url = urllib.parse.urljoin(self.manager_url, url)
-        self._log.debug('%s %s JSON: %s', method, abs_url, json)
+        if self._log.isEnabledFor(logging.DEBUG):
+            if json is None:
+                self._log.debug('%s %s', method, abs_url)
+            else:
+                self._log.debug('%s %s with JSON: %s', method, abs_url, json)
 
         http_req = partial(self.session.request,
                            method, abs_url,
