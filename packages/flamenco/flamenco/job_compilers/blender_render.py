@@ -1,5 +1,3 @@
-import os.path
-
 from .abstract_compiler import AbstractJobCompiler
 from . import commands, register_compiler
 
@@ -22,6 +20,7 @@ class BlenderRender(AbstractJobCompiler):
 
             task_cmds = [
                 commands.BlenderRender(
+                    blender_cmd=job_settings['blender_cmd'],
                     filepath=job_settings['filepath'],
                     format=job_settings.get('format'),
                     render_output=job_settings.get('render_output'),

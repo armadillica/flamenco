@@ -34,6 +34,12 @@ class Echo(AbstractCommand):
 
 @attr.s
 class BlenderRender(AbstractCommand):
+    @classmethod
+    def cmdname(cls):
+        return 'blender_render'
+
+    # Blender executable to run.
+    blender_cmd = attr.ib(validator=attr.validators.instance_of(unicode))
     # blend file path.
     filepath = attr.ib(validator=attr.validators.instance_of(unicode))
     # output format.
