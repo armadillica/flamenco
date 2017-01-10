@@ -13,7 +13,7 @@ import (
 
 func (s *SchedulerTestSuite) TestWorkerMayRun(t *check.C) {
 	// Store task in DB.
-	task := construct_task("aaaaaaaaaaaaaaaaaaaaaaaa", "sleeping")
+	task := ConstructTestTask("aaaaaaaaaaaaaaaaaaaaaaaa", "sleeping")
 	if err := s.db.C("flamenco_tasks").Insert(task); err != nil {
 		t.Fatal("Unable to insert test task", err)
 	}

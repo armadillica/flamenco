@@ -13,7 +13,6 @@ import (
 	check "gopkg.in/check.v1"
 	"gopkg.in/jarcoal/httpmock.v1"
 	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type SchedulerTestSuite struct {
@@ -26,44 +25,6 @@ type SchedulerTestSuite struct {
 }
 
 var _ = check.Suite(&SchedulerTestSuite{})
-
-func construct_task(task_id, job_type string) Task {
-	return construct_task_with_prio(task_id, job_type, 50)
-}
-
-func construct_task_with_prio(task_id, job_type string, priority int) Task {
-	return Task{
-		Id:       bson.ObjectIdHex(task_id),
-		Etag:     "1234567",
-		Job:      bson.ObjectIdHex("bbbbbbbbbbbbbbbbbbbbbbbb"),
-		Manager:  bson.ObjectIdHex("cccccccccccccccccccccccc"),
-		Project:  bson.ObjectIdHex("dddddddddddddddddddddddd"),
-		User:     bson.ObjectIdHex("eeeeeeeeeeeeeeeeeeeeeeee"),
-		Name:     "Test task",
-		Status:   "queued",
-		Priority: priority,
-		JobType:  job_type,
-		Commands: []Command{
-			Command{"echo", bson.M{"message": "Running Blender from {blender}"}},
-			Command{"sleep", bson.M{"time_in_seconds": 3}},
-		},
-		Parents: []bson.ObjectId{
-			bson.ObjectIdHex("ffffffffffffffffffffffff"),
-		},
-		Worker: "worker1",
-	}
-}
-
-func timeout_after(duration time.Duration) chan bool {
-	timeout := make(chan bool, 1)
-
-	go func() {
-		time.Sleep(duration)
-		timeout <- true
-	}()
-
-	return timeout
-}
 
 func parseJson(c *check.C, resp_rec *httptest.ResponseRecorder, expected_status int, parsed interface{}) {
 	assert.Equal(c, 200, resp_rec.Code)
@@ -118,11 +79,11 @@ func (s *SchedulerTestSuite) TearDownTest(c *check.C) {
  */
 func (s *SchedulerTestSuite) TestVariableReplacement(t *check.C) {
 	// Store task in DB.
-	task1 := construct_task("aaaaaaaaaaaaaaaaaaaaaaaa", "testing")
+	task1 := ConstructTestTask("aaaaaaaaaaaaaaaaaaaaaaaa", "testing")
 	if err := s.db.C("flamenco_tasks").Insert(task1); err != nil {
 		t.Fatal("Unable to insert test task", err)
 	}
-	task2 := construct_task("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping")
+	task2 := ConstructTestTask("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping")
 	if err := s.db.C("flamenco_tasks").Insert(task2); err != nil {
 		t.Fatal("Unable to insert test task 2", err)
 	}
@@ -156,11 +117,11 @@ func (s *SchedulerTestSuite) TestVariableReplacement(t *check.C) {
 
 func (s *SchedulerTestSuite) TestSchedulerOrderByPriority(t *check.C) {
 	// Store task in DB.
-	task1 := construct_task_with_prio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
+	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
 	if err := s.db.C("flamenco_tasks").Insert(task1); err != nil {
 		t.Fatal("Unable to insert test task1", err)
 	}
-	task2 := construct_task_with_prio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
+	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
 	if err := s.db.C("flamenco_tasks").Insert(task2); err != nil {
 		t.Fatal("Unable to insert test task 2", err)
 	}
@@ -185,16 +146,16 @@ func (s *SchedulerTestSuite) TestSchedulerOrderByPriority(t *check.C) {
  */
 func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamCanceled(t *check.C) {
 	// Store task in DB.
-	task1 := construct_task_with_prio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
+	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
 	if err := s.db.C("flamenco_tasks").Insert(task1); err != nil {
 		t.Fatal("Unable to insert test task1", err)
 	}
-	task2 := construct_task_with_prio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
+	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
 	if err := s.db.C("flamenco_tasks").Insert(task2); err != nil {
 		t.Fatal("Unable to insert test task 2", err)
 	}
 
-	timeout := timeout_after(1 * time.Second)
+	timeout := TimeoutAfter(1 * time.Second)
 
 	// Mock that the task with highest priority was actually canceled on the Server.
 	httpmock.RegisterResponder(
@@ -236,16 +197,16 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamCanceled(t *check.C) {
 
 func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamPrioChange(t *check.C) {
 	// Store task in DB.
-	task1 := construct_task_with_prio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
+	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
 	if err := s.db.C("flamenco_tasks").Insert(task1); err != nil {
 		t.Fatal("Unable to insert test task1", err)
 	}
-	task2 := construct_task_with_prio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
+	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
 	if err := s.db.C("flamenco_tasks").Insert(task2); err != nil {
 		t.Fatal("Unable to insert test task 2", err)
 	}
 
-	timeout := timeout_after(1 * time.Second)
+	timeout := TimeoutAfter(1 * time.Second)
 
 	// Mock that the task with highest priority was actually canceled on the Server.
 	httpmock.RegisterResponder(
@@ -293,16 +254,16 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamPrioChange(t *check.C) {
 
 func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamDeleted(t *check.C) {
 	// Store task in DB.
-	task1 := construct_task_with_prio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
+	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
 	if err := s.db.C("flamenco_tasks").Insert(task1); err != nil {
 		t.Fatal("Unable to insert test task1", err)
 	}
-	task2 := construct_task_with_prio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
+	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
 	if err := s.db.C("flamenco_tasks").Insert(task2); err != nil {
 		t.Fatal("Unable to insert test task 2", err)
 	}
 
-	timeout := timeout_after(1 * time.Second)
+	timeout := TimeoutAfter(1 * time.Second)
 
 	// Mock that the task with highest priority was actually canceled on the Server.
 	httpmock.RegisterResponder(
