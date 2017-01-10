@@ -48,7 +48,7 @@ func (s *SchedulerTestSuite) TestWorkerMayRun(t *check.C) {
 
 	// Changing status back to "active", but assigning to another worker
 	assert.Nil(t, s.db.C("flamenco_tasks").UpdateId(task.Id, bson.M{"$set": bson.M{
-		"status":    "canceled",
+		"status":    "active",
 		"worker_id": s.worker_win.Id,
 	}}))
 	resp_rec = httptest.NewRecorder()
