@@ -45,7 +45,8 @@ type TaskUpdate struct {
 
 type TaskUpdateResponse struct {
 	ModifiedCount    int             `json:"modified_count"`
-	HandledUpdateIds []bson.ObjectId `json:"handled_update_ids"`
+	HandledUpdateIds []bson.ObjectId `json:"handled_update_ids,omitempty"`
+	CancelTasksIds   []bson.ObjectId `json:"cancel_task_ids,omitempty"`
 }
 
 type WorkerRegistration struct {

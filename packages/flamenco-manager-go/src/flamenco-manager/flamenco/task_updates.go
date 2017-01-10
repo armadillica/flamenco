@@ -104,13 +104,33 @@ func CreateTaskUpdatePusher(config *Conf, upstream *UpstreamConnection, session 
 	}
 }
 
+/**
+ * Closes the task update pusher by stopping all timers & goroutines.
+ */
+func (self *TaskUpdatePusher) Close() {
+	close(self.done)
+
+	// Dirty hack: sleep for a bit to ensure the closing of the 'done'
+	// channel can be handled by other goroutines, before handling the
+	// closing of the other channels.
+	time.Sleep(1)
+
+	log.Println("TaskUpdatePusher: shutting down, waiting for shutdown to complete.")
+	self.done_wg.Wait()
+	log.Println("TaskUpdatePusher: shutdown complete.")
+}
+
 func (self *TaskUpdatePusher) Go() {
 	log.Println("TaskUpdatePusher: Starting")
 	mongo_sess := self.session.Copy()
 	defer mongo_sess.Close()
 
 	var last_push time.Time
-	queue := mongo_sess.DB("").C(QUEUE_MGO_COLLECTION)
+	db := mongo_sess.DB("")
+	queue := db.C(QUEUE_MGO_COLLECTION)
+
+	self.done_wg.Add(1)
+	defer self.done_wg.Done()
 
 	// Investigate the queue periodically.
 	timer_chan := Timer("TaskUpdatePusherTimer",
@@ -124,17 +144,20 @@ func (self *TaskUpdatePusher) Go() {
 			continue
 		}
 
-		if update_count == 0 {
-			continue
-		}
-
-		if update_count < self.config.TaskUpdatePushMaxCount && time.Now().Sub(last_push) < self.config.TaskUpdatePushMaxInterval {
+		time_since_last_push := time.Now().Sub(last_push)
+		may_regular_push := update_count > 0 &&
+			(update_count >= self.config.TaskUpdatePushMaxCount ||
+				time_since_last_push >= self.config.TaskUpdatePushMaxInterval)
+		may_empty_push := time_since_last_push >= self.config.CancelTaskFetchInterval
+		if !may_regular_push && !may_empty_push {
 			continue
 		}
 
 		// Time to push!
-		log.Printf("TaskUpdatePusher: %d updates are queued", update_count)
-		if err := self.push(queue); err != nil {
+		if update_count > 0 {
+			log.Printf("TaskUpdatePusher: %d updates are queued", update_count)
+		}
+		if err := self.push(db); err != nil {
 			log.Println("TaskUpdatePusher: unable to push to upstream Flamenco Server:", err)
 			continue
 		}
@@ -144,10 +167,17 @@ func (self *TaskUpdatePusher) Go() {
 	}
 }
 
-/* NOTE: this function assumes there is only one thread/process doing the pushing,
+/**
+ * Push task updates to the queue, and handle the response.
+ * This response can include a list of task IDs to cancel.
+ *
+ * NOTE: this function assumes there is only one thread/process doing the pushing,
  * and that we can safely leave documents in the queue until they have been pushed. */
-func (self *TaskUpdatePusher) push(queue *mgo.Collection) error {
+func (self *TaskUpdatePusher) push(db *mgo.Database) error {
 	var result []TaskUpdate
+
+	queue := db.C(QUEUE_MGO_COLLECTION)
+	tasks_coll := db.C("flamenco_tasks")
 
 	// Figure out what to send.
 	query := queue.Find(bson.M{}).Limit(self.config.TaskUpdatePushMaxCount)
@@ -163,16 +193,38 @@ func (self *TaskUpdatePusher) push(queue *mgo.Collection) error {
 		return err
 	}
 
-	// If succesful, remove the accepted updates from the queue.
-	_, err = queue.RemoveAll(bson.M{"_id": bson.M{"$in": response.HandledUpdateIds}})
-	if err != nil {
-		log.Printf("TaskUpdatePusher: This is awkward; we have already sent the task updates")
-		log.Println("upstream, but now we cannot un-queue them. Expect duplicates.")
-		return err
+	if len(response.HandledUpdateIds) != len(result) {
+		log.Printf("TaskUpdatePusher: server accepted %d of %d items.",
+			len(response.HandledUpdateIds), len(result))
 	}
 
-	log.Printf("TaskUpdatePusher: server accepted %d of %d items.",
-		len(response.HandledUpdateIds), len(result))
+	// If succesful, remove the accepted updates from the queue.
+	/* If there is an error, don't return just yet - we also want to cancel any task
+	   that needs cancelling. */
+	var err_unqueue error = nil
+	var err_cancel error = nil
+	if len(response.HandledUpdateIds) > 0 {
+		_, err_unqueue = queue.RemoveAll(bson.M{"_id": bson.M{"$in": response.HandledUpdateIds}})
+	}
 
-	return nil
+	// Mark all canceled tasks as such.
+	if len(response.CancelTasksIds) > 0 {
+		log.Printf("TaskUpdatePusher: canceling %d tasks", len(response.CancelTasksIds))
+		_, err_cancel = tasks_coll.UpdateAll(
+			bson.M{"_id": bson.M{"$in": response.CancelTasksIds}},
+			bson.M{"$set": bson.M{"status": "cancel-requested"}},
+		)
+
+		if err_cancel != nil {
+			log.Printf("TaskUpdatePusher: unable to cancel tasks: %s", err_cancel)
+		}
+	}
+
+	if err_unqueue != nil {
+		log.Printf("TaskUpdatePusher: This is awkward; we have already sent the task updates")
+		log.Println("upstream, but now we cannot un-queue them. Expect duplicates.")
+		return err_unqueue
+	}
+
+	return err_cancel
 }

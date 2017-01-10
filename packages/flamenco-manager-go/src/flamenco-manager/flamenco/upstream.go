@@ -290,6 +290,10 @@ func (self *UpstreamConnection) SendStartupNotification() {
 	}()
 }
 
+/**
+ * Performs a POST to /api/flamenco/managers/{manager-id}/task-update-batch to
+ * send a batch of task updates to the Server.
+ */
 func (self *UpstreamConnection) SendTaskUpdates(updates *[]TaskUpdate) (*TaskUpdateResponse, error) {
 	url, err := self.ResolveUrl("/api/flamenco/managers/%s/task-update-batch",
 		self.config.ManagerId)

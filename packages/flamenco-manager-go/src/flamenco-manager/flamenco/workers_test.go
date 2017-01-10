@@ -35,8 +35,9 @@ func (s *SchedulerTestSuite) TestWorkerMayRun(t *check.C) {
 	assert.Equal(t, "", resp.Reason)
 	assert.Equal(t, true, resp.MayKeepRunning)
 
-	// If we now change the task status to "canceled", the worker should be denied.
-	assert.Nil(t, s.db.C("flamenco_tasks").UpdateId(task.Id, bson.M{"$set": bson.M{"status": "canceled"}}))
+	// If we now change the task status to "cancel-requested", the worker should be denied.
+	assert.Nil(t, s.db.C("flamenco_tasks").UpdateId(task.Id,
+		bson.M{"$set": bson.M{"status": "cancel-requested"}}))
 	resp_rec = httptest.NewRecorder()
 	request, _ = http.NewRequest("GET", fmt.Sprintf("/may-i-run/%s", task.Id.Hex()), nil)
 	ar = &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}

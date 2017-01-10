@@ -7,6 +7,7 @@ manager_id: 5852bc5198377351f95d103e
 manager_secret: SRVwA7wAxPRfudvqTDOLXwPn1cDRIlADz5Ef9kHk7d52Us
 download_task_sleep_seconds: 300
 download_task_recheck_throttle_seconds: -1
+cancel_task_fetch_max_interval_seconds: 10
 
 variables:
     blender:
