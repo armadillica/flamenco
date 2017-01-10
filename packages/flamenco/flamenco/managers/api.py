@@ -8,6 +8,10 @@ from pillar.api.utils import authorization, authentication
 api_blueprint = Blueprint('flamenco.managers', __name__)
 log = logging.getLogger(__name__)
 
+# Task statuses that are acceptable after a task has been set to 'cancel-requested'
+# TODO: maybe move allowed task transition handling to a different bit of code.
+ACCEPTED_AFTER_CANCEL_REQUESTED = {'canceled', 'failed', 'completed'}
+
 
 def manager_api_call(wrapped):
     """Decorator, performs some standard stuff for Manager API endpoints."""
@@ -62,19 +66,26 @@ def task_update_batch(manager_id, task_updates):
     from pillar.api.utils import jsonify
 
     total_modif_count, handled_update_ids = handle_task_update_batch(manager_id, task_updates)
-    response = {'modified_count': total_modif_count,
-                'handled_update_ids': handled_update_ids}
 
     # Check which tasks are in state 'cancel-requested', as those need to be sent back.
+    # This MUST be done after we run the task update batch, as just-changed task statuses
+    # should be taken into account.
     tasks_to_cancel = tasks_cancel_requested(manager_id)
+
+    response = {'modified_count': total_modif_count,
+                'handled_update_ids': handled_update_ids}
     if tasks_to_cancel:
-        response['cancel_task_ids'] = tasks_to_cancel
+        response['cancel_task_ids'] = list(tasks_to_cancel)
 
     return jsonify(response)
 
 
 def handle_task_update_batch(manager_id, task_updates):
     """Performs task updates.
+
+    Task status changes are generally always accepted. The only exception is when the
+    task ID is contained in 'tasks_to_cancel'; in that case only a transition to either
+    'canceled', 'completed' or 'failed' is accepted.
 
     :returns: tuple (total nr of modified tasks, handled update IDs)
     """
@@ -100,18 +111,19 @@ def handle_task_update_batch(manager_id, task_updates):
         # Check that this task actually belongs to this manager, before we accept any updates.
         update_id = str2id(task_update['_id'])
         task_id = str2id(task_update['task_id'])
-        tmaninfo = tasks_coll.find_one({'_id': task_id}, projection={'manager': 1})
+        task_info = tasks_coll.find_one({'_id': task_id},
+                                        projection={'manager': 1, 'status': 1})
 
         # For now, we just ignore updates to non-existing tasks. Someone might have just deleted
         # one, for example. This is not a reason to reject the entire batch.
-        if tmaninfo is None:
+        if task_info is None:
             log.warning('Manager %s sent update for non-existing task %s; ignoring',
                         manager_id, task_id)
             continue
 
-        if tmaninfo['manager'] != manager_id:
+        if task_info['manager'] != manager_id:
             log.warning('Manager %s sent update for task %s which belongs to other manager %s',
-                        manager_id, task_id, tmaninfo['manager'])
+                        manager_id, task_id, task_info['manager'])
             continue
 
         # Store the log for this task, allowing for duplicate log reports.
@@ -132,15 +144,12 @@ def handle_task_update_batch(manager_id, task_updates):
             'current_command_index': task_update.get('current_command_index', 0),
             'command_progress_percentage': task_update.get('command_progress_percentage', 0),
         }
-        new_status = task_update.get('task_status')
+
+        new_status = determine_new_task_status(manager_id, task_id, task_info,
+                                               task_update.get('task_status'), valid_statuses)
         if new_status:
             updates['status'] = new_status
-            if new_status not in valid_statuses:
-                # We have to accept the invalid status, because we're too late in the update
-                # pipeline to do anything about it. The alternative is to drop the update or
-                # reject the entire batch of updates, which is more damaging to the workflow.
-                log.warning('Manager %s sent update for task %s with invalid status %r '
-                            '(storing anyway)', manager_id, task_id, new_status)
+
         new_activity = task_update.get('activity')
         if new_activity:
             updates['activity'] = new_activity
@@ -156,18 +165,44 @@ def handle_task_update_batch(manager_id, task_updates):
     return total_modif_count, handled_update_ids
 
 
+def determine_new_task_status(manager_id, task_id, current_task_info, new_status, valid_statuses):
+    """Returns the new task status, or None if the task should not get a new status."""
+
+    if not new_status:
+        return None
+
+    current_status = current_task_info['status']
+    if new_status == current_status:
+        return None
+
+    if current_status == 'cancel-requested':
+        if new_status not in ACCEPTED_AFTER_CANCEL_REQUESTED:
+            log.warning('Manager %s wants to set task %s to status %r, but that is not allowed '
+                        'because the task is in status %s',
+                        manager_id, task_id, new_status, current_status)
+            return None
+
+    if new_status not in valid_statuses:
+        # We have to accept the invalid status, because we're too late in the update
+        # pipeline to do anything about it. The alternative is to drop the update or
+        # reject the entire batch of updates, which is more damaging to the workflow.
+        log.warning('Manager %s sent update for task %s with invalid status %r '
+                    '(storing anyway)', manager_id, task_id, new_status)
+    return new_status
+
+
 def tasks_cancel_requested(manager_id):
-    """Returns a list of tasks of status cancel-requested."""
+    """Returns a set of tasks of status cancel-requested."""
 
     from flamenco import current_flamenco, eve_settings
 
     tasks_coll = current_flamenco.db('tasks')
 
-    task_ids = [
+    task_ids = {
         task['_id']
         for task in tasks_coll.find({'manager': manager_id, 'status': 'cancel-requested'},
                                     projection={'_id': 1})
-    ]
+        }
 
     log.debug('Returning %i tasks to be canceled by manager %s', len(task_ids), manager_id)
     return task_ids
