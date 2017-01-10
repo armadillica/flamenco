@@ -61,7 +61,7 @@ class JobManager(object):
     _log = attrs_extra.log('%s.JobManager' % __name__)
 
     def api_create_job(self, job_name, job_desc, job_type, job_settings,
-                       project_id, user_id, manager_id):
+                       project_id, user_id, manager_id, priority=50):
         """Creates a job, returning a dict with its generated fields."""
 
         from eve.methods.post import post_internal
@@ -74,7 +74,7 @@ class JobManager(object):
             'user': user_id,
             'manager': manager_id,
             'status': 'queued',
-            'priority': 50,
+            'priority': int(priority),
             'settings': copy.deepcopy(job_settings),
         }
 

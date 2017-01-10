@@ -50,7 +50,7 @@ def schedule_tasks(manager_id):
 
     tasks = []
     affected_jobs = set()
-    for task in tasks_coll.find(query):
+    for task in tasks_coll.find(query).sort("priority", -1):
         task['status'] = CLAIMED_STATUS
         tasks.append(task)
         affected_jobs.add(task['job'])
