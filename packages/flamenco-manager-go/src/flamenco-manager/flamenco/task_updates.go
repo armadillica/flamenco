@@ -76,11 +76,14 @@ func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 		return fmt.Errorf("QueueTaskUpdate: error inserting task update in queue: %s", err)
 	}
 
-	// Locally apply the change to our cached version of the task too.
+	// Locally apply the change to our cached version of the task too, if it is a valid transition.
 	task_coll := db.C("flamenco_tasks")
 	updates := bson.M{}
 	if tupdate.TaskStatus != "" {
-		updates["status"] = tupdate.TaskStatus
+		// Before blindly applying the task status, first check if the transition is valid.
+		if TaskStatusTransitionValid(task_coll, tupdate.TaskId, tupdate.TaskStatus) {
+			updates["status"] = tupdate.TaskStatus
+		}
 	}
 	if tupdate.Activity != "" {
 		updates["activity"] = tupdate.Activity
@@ -92,6 +95,40 @@ func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 	}
 
 	return nil
+}
+
+/**
+ * Performs a query on the database to determine the current status, then checks whether
+ * the new status is acceptable.
+ */
+func TaskStatusTransitionValid(task_coll *mgo.Collection, task_id bson.ObjectId, new_status string) bool {
+	/* The only actual test we do is when the transition is from cancel-requested
+	   to something else. If the new status is valid for cancel-requeted, we don't
+	   even need to go to the database to fetch the current status. */
+	if ValidForCancelRequested(new_status) {
+		return true
+	}
+
+	task_curr := Task{}
+	if err := task_coll.FindId(task_id).Select(bson.M{"status": 1}).One(&task_curr); err != nil {
+		log.Printf("Unable to find task %s - not accepting status update to %s", err, new_status)
+		return false
+	}
+
+	// We already know the new status is not valid for cancel-requested.
+	// All other statuses are fine, though.
+	return task_curr.Status != "cancel-requested"
+}
+
+func ValidForCancelRequested(status string) bool {
+	valid_statuses := map[string]bool{
+		"canceled":  true,
+		"failed":    true,
+		"completed": true,
+	}
+
+	valid, found := valid_statuses[status]
+	return valid && found
 }
 
 func CreateTaskUpdatePusher(config *Conf, upstream *UpstreamConnection, session *mgo.Session) *TaskUpdatePusher {
