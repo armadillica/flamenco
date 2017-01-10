@@ -40,7 +40,7 @@ class AbstractCommand(metaclass=abc.ABCMeta):
                    validator=attr.validators.optional(attr.validators.instance_of(logging.Logger)))
 
     def __attrs_post_init__(self):
-        self.identifier = '%s(task_id=%s, command_idx=%s)' % (
+        self.identifier = '%s.(task_id=%s, command_idx=%s)' % (
             self.command_name,
             self.task_id,
             self.command_idx)
@@ -286,7 +286,7 @@ class AbstractSubprocessCommand(AbstractCommand):
                                                 'aborting: %s' % ex)
 
                 line = line.rstrip()
-                self._log.info('Read line: %s', line)
+                self._log.debug('Read line: %s', line)
                 line = await self.process_line(line)
                 if line is not None:
                     await self.worker.register_log(line)

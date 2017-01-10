@@ -64,7 +64,7 @@ class ExecCommandTest(AbstractCommandTest):
         self.assertFalse(ok)
         self.fworker.register_task_update.assert_called_once_with(
             task_status='failed',
-            activity='exec(task_id=12345, command_idx=0): Invalid settings: "cmd" must be a string'
+            activity='exec.(task_id=12345, command_idx=0): Invalid settings: "cmd" must be a string'
         )
 
     def test_exec_python(self):
@@ -119,7 +119,7 @@ class ExecCommandTest(AbstractCommandTest):
         self.assertFalse(ok)
 
         # Check that the error has been reported.
-        decode_err = "exec(task_id=12345, command_idx=0): Error executing: Command produced " \
+        decode_err = "exec.(task_id=12345, command_idx=0): Error executing: Command produced " \
                      "non-UTF8 output, aborting: 'utf-8' codec can't decode byte 0x80 in " \
                      "position 0: invalid start byte"
         self.fworker.register_log.assert_has_calls([
