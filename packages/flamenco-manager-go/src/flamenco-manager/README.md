@@ -13,6 +13,8 @@ exact test function of that suite. Once all tests have been moved over to use Go
 - Task queue cleanup. At the moment tasks are stored in the queue forever, since that makes
   it possible to notice a task was canceled while a worker was running it. Eventually such
   tasks should be cleaned up, though.
+- GZip compression on the pushes to Server. This is especially important for task updates, since
+  they contain potentially very large log entries.
 
 ## Communication between Server and Manager
 
