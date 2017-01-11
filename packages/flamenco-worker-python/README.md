@@ -31,8 +31,9 @@ config files.
 
 ### TODO
 
-Certain settings are currently only settable by editing constants in the Python source code.
-It might be nice to read them from the config file too, at some point.
+- Certain settings are currently only settable by editing constants in the Python source code.
+  It might be nice to read them from the config file too, at some point.
+- Update worker address in MongoDB when communicating with it.
 
 ## Invocation
 
