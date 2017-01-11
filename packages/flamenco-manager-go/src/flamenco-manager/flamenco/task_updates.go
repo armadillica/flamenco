@@ -76,22 +76,36 @@ func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 		return fmt.Errorf("QueueTaskUpdate: error inserting task update in queue: %s", err)
 	}
 
+	log.Printf("QueueTaskUpdate: queued update %s", tupdate)
+
 	// Locally apply the change to our cached version of the task too, if it is a valid transition.
+	// This prevents a task being reported active on the worker from overwriting the
+	// cancel-requested state we received from the Server.
 	task_coll := db.C("flamenco_tasks")
 	updates := bson.M{}
 	if tupdate.TaskStatus != "" {
 		// Before blindly applying the task status, first check if the transition is valid.
 		if TaskStatusTransitionValid(task_coll, tupdate.TaskId, tupdate.TaskStatus) {
 			updates["status"] = tupdate.TaskStatus
+		} else {
+			log.Printf("QueueTaskUpdate: not locally applying status=%s for %s",
+				tupdate.TaskStatus, tupdate.TaskId)
 		}
 	}
 	if tupdate.Activity != "" {
 		updates["activity"] = tupdate.Activity
 	}
 	if len(updates) > 0 {
+		log.Printf("QueueTaskUpdate: applying update %s to task %s", updates, tupdate.TaskId)
 		if err := task_coll.UpdateId(tupdate.TaskId, bson.M{"$set": updates}); err != nil {
-			return fmt.Errorf("QueueTaskUpdate: error updating local task cache: %s", err)
+			if err != mgo.ErrNotFound {
+				return fmt.Errorf("QueueTaskUpdate: error updating local task cache: %s", err)
+			} else {
+				log.Printf("QueueTaskUpdate: cannot find task %s to update locally", tupdate.TaskId)
+			}
 		}
+	} else {
+		log.Printf("QueueTaskUpdate: nothing to do locally for task %s", tupdate.TaskId)
 	}
 
 	return nil
@@ -120,14 +134,15 @@ func TaskStatusTransitionValid(task_coll *mgo.Collection, task_id bson.ObjectId,
 	return task_curr.Status != "cancel-requested"
 }
 
-func ValidForCancelRequested(status string) bool {
+func ValidForCancelRequested(new_status string) bool {
+	// Valid statuses to which a task can go after being cancel-requested
 	valid_statuses := map[string]bool{
-		"canceled":  true,
-		"failed":    true,
-		"completed": true,
+		"canceled":  true, // the expected case
+		"failed":    true, // it may have failed on the worker before it could be canceled
+		"completed": true, // it may have completed on the worker before it could be canceled
 	}
 
-	valid, found := valid_statuses[status]
+	valid, found := valid_statuses[new_status]
 	return valid && found
 }
 
@@ -214,7 +229,6 @@ func (self *TaskUpdatePusher) push(db *mgo.Database) error {
 	var result []TaskUpdate
 
 	queue := db.C(QUEUE_MGO_COLLECTION)
-	tasks_coll := db.C("flamenco_tasks")
 
 	// Figure out what to send.
 	query := queue.Find(bson.M{}).Limit(self.config.TaskUpdatePushMaxCount)
@@ -239,23 +253,10 @@ func (self *TaskUpdatePusher) push(db *mgo.Database) error {
 	/* If there is an error, don't return just yet - we also want to cancel any task
 	   that needs cancelling. */
 	var err_unqueue error = nil
-	var err_cancel error = nil
 	if len(response.HandledUpdateIds) > 0 {
 		_, err_unqueue = queue.RemoveAll(bson.M{"_id": bson.M{"$in": response.HandledUpdateIds}})
 	}
-
-	// Mark all canceled tasks as such.
-	if len(response.CancelTasksIds) > 0 {
-		log.Printf("TaskUpdatePusher: canceling %d tasks", len(response.CancelTasksIds))
-		_, err_cancel = tasks_coll.UpdateAll(
-			bson.M{"_id": bson.M{"$in": response.CancelTasksIds}},
-			bson.M{"$set": bson.M{"status": "cancel-requested"}},
-		)
-
-		if err_cancel != nil {
-			log.Printf("TaskUpdatePusher: unable to cancel tasks: %s", err_cancel)
-		}
-	}
+	err_cancel := self.handle_incoming_cancel_requests(response.CancelTasksIds, db)
 
 	if err_unqueue != nil {
 		log.Printf("TaskUpdatePusher: This is awkward; we have already sent the task updates")
@@ -264,4 +265,89 @@ func (self *TaskUpdatePusher) push(db *mgo.Database) error {
 	}
 
 	return err_cancel
+}
+
+/**
+ * Handles the canceling of tasks, as mentioned in the task batch update response.
+ */
+func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []bson.ObjectId, db *mgo.Database) error {
+	if len(cancel_task_ids) == 0 {
+		return nil
+	}
+
+	log.Printf("TaskUpdatePusher: canceling %d tasks", len(cancel_task_ids))
+	tasks_coll := db.C("flamenco_tasks")
+
+	// Fetch all to-be-canceled tasks
+	var tasks_to_cancel []Task
+	err := tasks_coll.Find(bson.M{
+		"_id": bson.M{"$in": cancel_task_ids},
+	}).Select(bson.M{
+		"_id":    1,
+		"status": 1,
+	}).All(&tasks_to_cancel)
+	if err != nil {
+		log.Printf("TaskUpdatePusher: ERROR unable to fetch tasks: %s", err)
+		return err
+	}
+
+	// Remember which tasks we actually have seen, so we know which ones we don't have cached.
+	canceled_count := 0
+	seen_tasks := map[bson.ObjectId]bool{}
+	go_to_cancel_requested := make([]bson.ObjectId, 0, len(cancel_task_ids))
+
+	queue_task_cancel := func(task_id bson.ObjectId) {
+		tupdate := TaskUpdate{
+			TaskId:     task_id,
+			TaskStatus: "canceled",
+		}
+		if err := QueueTaskUpdate(&tupdate, db); err != nil {
+			log.Printf("TaskUpdatePusher: Unable to queue task update for canceled task %s, "+
+				"expect the task to hang in cancel-requested state.", task_id)
+		} else {
+			canceled_count++
+		}
+	}
+
+	for _, task_to_cancel := range tasks_to_cancel {
+		seen_tasks[task_to_cancel.Id] = true
+
+		if task_to_cancel.Status == "active" {
+			// This needs to be canceled through the worker, and thus go to cancel-requested.
+			go_to_cancel_requested = append(go_to_cancel_requested, task_to_cancel.Id)
+		} else {
+			queue_task_cancel(task_to_cancel.Id)
+		}
+	}
+
+	// Mark tasks as cancel-requested.
+	update_info, err := tasks_coll.UpdateAll(
+		bson.M{"_id": bson.M{"$in": go_to_cancel_requested}},
+		bson.M{"$set": bson.M{"status": "cancel-requested"}},
+	)
+	if err != nil {
+		log.Printf("TaskUpdatePusher: unable to mark tasks as cancel-requested: %s", err)
+	} else {
+		log.Printf("TaskUpdatePusher: marked %d tasks as cancel-requested: %s",
+			update_info.Matched, go_to_cancel_requested)
+	}
+
+	// Just push a "canceled" update to the Server about tasks we know nothing about.
+	for _, task_id := range cancel_task_ids {
+		seen, _ := seen_tasks[task_id]
+		if seen {
+			continue
+		}
+		log.Printf("    - unknown task: %s", task_id.Hex())
+		queue_task_cancel(task_id)
+	}
+
+	log.Printf("TaskUpdatePusher: marked %d tasks as canceled", canceled_count)
+
+	if update_info.Matched+canceled_count < len(cancel_task_ids) {
+		log.Printf("TaskUpdatePusher: WARNING, was unable to cancel %d tasks for some reason.",
+			len(cancel_task_ids)-(update_info.Matched+canceled_count))
+	}
+
+	return err
 }

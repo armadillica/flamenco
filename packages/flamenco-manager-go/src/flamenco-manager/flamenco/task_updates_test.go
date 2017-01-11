@@ -79,11 +79,17 @@ func (s *TaskUpdatesTestSuite) TestCancelRunningTasks(t *check.C) {
 
 	timedout := <-timeout
 	assert.False(t, timedout, "HTTP POST to Flamenco Server not performed")
+	close(timeout)
+
+	// Give the tup.Go() coroutine (and subsequent calls) time to run.
+	// the "timeout <- false" call in the responder is triggered before
+	// that function is done working.
+	time.Sleep(100 * time.Millisecond)
 
 	// Check that one task was canceled and the other was not.
 	task_db := Task{}
 	assert.Nil(t, tasks_coll.FindId(task1.Id).One(&task_db))
 	assert.Equal(t, "queued", task_db.Status)
 	assert.Nil(t, tasks_coll.FindId(task2.Id).One(&task_db))
-	assert.Equal(t, "cancel-requested", task_db.Status)
+	assert.Equal(t, "canceled", task_db.Status)
 }
