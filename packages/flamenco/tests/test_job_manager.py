@@ -105,38 +105,6 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.set_task_status(4, 'canceled')
         self.set_task_status(5, 'failed')
 
-    def set_job_status(self, new_status):
-        """Nice, official, ripple-to-task-status approach"""
-
-        with self.app.test_request_context():
-            self.jmngr.set_job_status(self.job_id, new_status)
-
-    def force_job_status(self, new_status):
-        """Directly to MongoDB approach"""
-
-        with self.app.test_request_context():
-            jobs_coll = self.flamenco.db('jobs')
-            result = jobs_coll.update_one({'_id': self.job_id},
-                                          {'$set': {'status': new_status}})
-        self.assertEqual(1, result.matched_count)
-
-    def set_task_status(self, task_idx, new_status):
-        """Sets the task status directly in MongoDB.
-
-        This should only be used to set up a certain scenario.
-        """
-        from flamenco import current_flamenco
-
-        with self.app.test_request_context():
-            current_flamenco.update_status('tasks', self.task_ids[task_idx], new_status)
-
-    def assert_job_status(self, expected_status):
-        with self.app.test_request_context():
-            jobs_coll = self.flamenco.db('jobs')
-            job = jobs_coll.find_one({'_id': self.job_id},
-                                     projection={'status': 1})
-        self.assertEqual(job['status'], unicode(expected_status))
-
     def assert_task_status(self, task_idx, expected_status):
         with self.app.test_request_context():
             tasks_coll = self.flamenco.db('tasks')

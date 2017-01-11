@@ -67,3 +67,50 @@ class AbstractFlamencoTest(AbstractPillarTest):
             mngr_doc, account, token = create_manager(email, name, u'descr', url)
 
         return mngr_doc, account, token
+
+    def assert_job_status(self, expected_status):
+        with self.app.test_request_context():
+            jobs_coll = self.flamenco.db('jobs')
+            job = jobs_coll.find_one({'_id': self.job_id},
+                                     projection={'status': 1})
+        self.assertEqual(job['status'], unicode(expected_status))
+
+    def set_job_status(self, new_status):
+        """Nice, official, ripple-to-task-status approach"""
+
+        with self.app.test_request_context():
+            self.jmngr.set_job_status(self.job_id, new_status)
+
+    def force_job_status(self, new_status):
+        """Directly to MongoDB approach"""
+
+        with self.app.test_request_context():
+            jobs_coll = self.flamenco.db('jobs')
+            result = jobs_coll.update_one({'_id': self.job_id},
+                                          {'$set': {'status': new_status}})
+        self.assertEqual(1, result.matched_count)
+
+    def assert_task_status(self, task_id, expected_status):
+        if isinstance(task_id, basestring):
+            from pillar.api.utils import str2id
+            task_id = str2id(task_id)
+
+        with self.app.test_request_context():
+            tasks_coll = self.flamenco.db('tasks')
+            task = tasks_coll.find_one({'_id': task_id},
+                                       projection={'status': 1})
+
+        self.assertIsNotNone(task, 'Task %s does not exist in the database' % task_id)
+        self.assertEqual(task['status'], unicode(expected_status),
+                         "Task %s:\n   has status: '%s'\n but expected: '%s'" % (
+                             task_id, task['status'], expected_status))
+
+    def force_task_status(self, task_idx, new_status):
+        """Sets the task status directly in MongoDB.
+
+        This should only be used to set up a certain scenario.
+        """
+        from flamenco import current_flamenco
+
+        with self.app.test_request_context():
+            current_flamenco.update_status('tasks', self.task_ids[task_idx], new_status)

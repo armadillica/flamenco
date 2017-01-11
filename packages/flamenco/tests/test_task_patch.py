@@ -76,13 +76,6 @@ class TaskPatchingTest(AbstractFlamencoTest):
             task = tasks_coll.find_one({'_id': ObjectId(task['_id'])})
             self.assertEqual('completed', task['status'])
 
-    def assert_job_status(self, expected_status):
-        with self.app.test_request_context():
-            jobs_coll = self.flamenco.db('jobs')
-            job = jobs_coll.find_one({'_id': self.job_id},
-                                     projection={'status': 1})
-        self.assertEqual(job['status'], unicode(expected_status))
-
     def test_job_status_change_due_to_task_patch(self):
         """A job should be marked as completed after all tasks are completed."""
 
