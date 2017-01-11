@@ -207,7 +207,6 @@ class FlamencoExtension(PillarExtension):
         import datetime
         import uuid
         from bson import tz_util
-        import werkzeug.exceptions as wz_exceptions
 
         singular_name = collection_name.rstrip('s')  # jobs -> job
         schema = eve_settings.DOMAIN['flamenco_%s' % collection_name]['schema']
@@ -228,8 +227,6 @@ class FlamencoExtension(PillarExtension):
                       '_updated': datetime.datetime.now(tz=tz_util.utc),
                       '_etag': etag}}
         )
-        if result.matched_count < 1:
-            raise wz_exceptions.NotFound('%s %s does not exist' % (singular_name, query))
 
         self._log.debug('Updated status of %i %s %s to %s',
                         result.modified_count, singular_name, query, new_status)

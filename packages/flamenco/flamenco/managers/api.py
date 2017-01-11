@@ -112,7 +112,7 @@ def handle_task_update_batch(manager_id, task_updates):
         update_id = str2id(task_update['_id'])
         task_id = str2id(task_update['task_id'])
         task_info = tasks_coll.find_one({'_id': task_id},
-                                        projection={'manager': 1, 'status': 1})
+                                        projection={'manager': 1, 'status': 1, 'job': 1})
 
         # For now, we just ignore updates to non-existing tasks. Someone might have just deleted
         # one, for example. This is not a reason to reject the entire batch.
@@ -162,6 +162,11 @@ def handle_task_update_batch(manager_id, task_updates):
 
         handled_update_ids.append(update_id)
 
+        # Update the task's job after updating the task itself.
+        if new_status:
+            current_flamenco.job_manager.update_job_after_task_status_change(
+                task_info['job'], task_id, new_status)
+
     return total_modif_count, handled_update_ids
 
 
@@ -186,8 +191,10 @@ def determine_new_task_status(manager_id, task_id, current_task_info, new_status
         # We have to accept the invalid status, because we're too late in the update
         # pipeline to do anything about it. The alternative is to drop the update or
         # reject the entire batch of updates, which is more damaging to the workflow.
-        log.warning('Manager %s sent update for task %s with invalid status %r '
-                    '(storing anyway)', manager_id, task_id, new_status)
+        log.warning('Manager %s sent update for task %s with invalid status %r',
+                    manager_id, task_id, new_status)
+        return None
+
     return new_status
 
 

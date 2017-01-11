@@ -139,6 +139,7 @@ jobs_schema = {
             'completed',
             'active',
             'canceled',
+            'cancel-requested',
             'queued',
             'failed'],
         'default': 'queued'

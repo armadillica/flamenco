@@ -49,6 +49,25 @@ def check_task_permissions_edit(task_doc, original_doc=None):
     # FIXME: check user access to the project.
 
 
+def update_job_status(task_doc, original_doc):
+    """Update the job status given the new task status."""
+
+    current_status = task_doc.get('status')
+    old_status = original_doc.get('status')
+
+    if current_status == old_status:
+        return
+
+    task_id = task_doc['_id']
+    job_id = task_doc.get('job')
+    if not job_id:
+        log.warning('update_job_status(): Task %s has no job, this should not happen.', task_id)
+        return
+
+    current_flamenco.job_manager.update_job_after_task_status_change(
+        job_id, task_id, current_status)
+
+
 def setup_app(app):
     app.on_fetched_item_flamenco_tasks += check_task_permission_fetch
     app.on_fetched_resource_flamenco_tasks += check_task_permission_fetch_resource
@@ -57,3 +76,4 @@ def setup_app(app):
     app.on_delete_flamenco_tasks += check_task_permissions_create_delete
     app.on_update_flamenco_tasks += check_task_permissions_edit
     app.on_replace_flamenco_tasks += check_task_permissions_edit
+    app.on_replaced_flamenco_tasks += update_job_status

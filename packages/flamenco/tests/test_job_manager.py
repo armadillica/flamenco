@@ -68,8 +68,9 @@ class JobStatusChangeTest(AbstractFlamencoTest):
     def setUp(self, **kwargs):
         super(JobStatusChangeTest, self).setUp(**kwargs)
 
-        # Create a job with 4 tasks
+        # Create a job with the same number of tasks as there are task statuses.
         from pillar.api.utils.authentication import force_cli_user
+        from flamenco.eve_settings import tasks_schema
 
         manager, _, token = self.create_manager_service_account()
         self.mngr_token = token['token']
@@ -83,7 +84,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
                 {
                     'blender_cmd': u'{blender}',
                     'filepath': u'/my/blend.file',
-                    'frames': u'12-18, 20-23',
+                    'frames': u'12-18, 20-25',
                     'chunk_size': 2,
                     'time_in_seconds': 3,
                 },
@@ -98,13 +99,14 @@ class JobStatusChangeTest(AbstractFlamencoTest):
             tasks = tasks_coll.find({'job': self.job_id}, projection={'_id': 1})
             self.task_ids = [task['_id'] for task in tasks]
 
-        self.assertEqual(6, len(self.task_ids))
-        self.set_task_status(0, 'queued')
-        self.set_task_status(1, 'claimed-by-manager')
-        self.set_task_status(2, 'completed')
-        self.set_task_status(3, 'active')
-        self.set_task_status(4, 'canceled')
-        self.set_task_status(5, 'failed')
+        self.assertEqual(len(tasks_schema['status']['allowed']), len(self.task_ids))
+        self.force_task_status(0, 'queued')
+        self.force_task_status(1, 'claimed-by-manager')
+        self.force_task_status(2, 'completed')
+        self.force_task_status(3, 'active')
+        self.force_task_status(4, 'canceled')
+        self.force_task_status(5, 'failed')
+        self.force_task_status(6, 'cancel-requested')
 
     def assert_task_status(self, task_idx, expected_status):
         with self.app.test_request_context():
@@ -128,18 +130,20 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(3, 'active')  # was: active
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
+        self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
 
-    def test_status_from_active_to_canceled(self):
+    def test_status_from_active_to_cancel_requested(self):
         # This should cancel all tasks that could possibly still run.
         self.force_job_status('active')
-        self.set_job_status('canceled')
+        self.set_job_status('cancel-requested')
 
         self.assert_task_status(0, 'canceled')  # was: queued
-        self.assert_task_status(1, 'canceled')  # was: claimed-by-manager
+        self.assert_task_status(1, 'cancel-requested')  # was: claimed-by-manager
         self.assert_task_status(2, 'completed')  # was: completed
-        self.assert_task_status(3, 'canceled')  # was: active
+        self.assert_task_status(3, 'cancel-requested')  # was: active
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
+        self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
 
     def test_status_from_canceled_to_queued(self):
         # This should re-queue all non-completed tasks.
@@ -153,6 +157,9 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(4, 'queued')  # was: canceled
         self.assert_task_status(5, 'queued')  # was: failed
 
+        # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
+        self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+
     def test_status_from_completed_to_queued(self):
         # This should re-queue all tasks.
         self.force_job_status('completed')
@@ -165,22 +172,27 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(4, 'queued')  # was: canceled
         self.assert_task_status(5, 'queued')  # was: failed
 
+        # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
+        self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+
     def test_status_from_active_to_failed(self):
-        # This should be the same as going to 'canceled', except that the underlying reason
-        # to go to this state is different (active action by user vs. result of massive task
-        # failure).
+        # If one task fails, the job fails and cancels all remaining tasks.
+        # TODO: only do this after a certain number/percentage of tasks failed.
         self.force_job_status('active')
         self.set_job_status('failed')
 
         self.assert_task_status(0, 'canceled')  # was: queued
-        self.assert_task_status(1, 'canceled')  # was: claimed-by-manager
+        self.assert_task_status(1, 'cancel-requested')  # was: claimed-by-manager
         self.assert_task_status(2, 'completed')  # was: completed
-        self.assert_task_status(3, 'canceled')  # was: active
+        self.assert_task_status(3, 'cancel-requested')  # was: active
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
+        self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
 
     def test_status_from_active_to_completed(self):
         # Shouldn't do anything, as going to completed is a result of all tasks being completed.
+        self.force_job_status('active')
+        self.set_job_status('completed')
 
         self.assert_task_status(0, 'queued')  # was: queued
         self.assert_task_status(1, 'claimed-by-manager')  # was: claimed-by-manager
@@ -188,6 +200,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(3, 'active')  # was: active
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
+        self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
 
     @mock.patch('flamenco.jobs.JobManager.handle_job_status_change')
     def test_put_job(self, handle_job_status_change):

@@ -97,13 +97,13 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
         with self.app.test_request_context():
             tasks_coll = self.flamenco.db('tasks')
-            task = tasks_coll.find_one({'_id': task_id},
-                                       projection={'status': 1})
+            task = tasks_coll.find_one({'_id': task_id})
 
         self.assertIsNotNone(task, 'Task %s does not exist in the database' % task_id)
         self.assertEqual(task['status'], unicode(expected_status),
                          "Task %s:\n   has status: '%s'\n but expected: '%s'" % (
                              task_id, task['status'], expected_status))
+        return task
 
     def force_task_status(self, task_idx, new_status):
         """Sets the task status directly in MongoDB.

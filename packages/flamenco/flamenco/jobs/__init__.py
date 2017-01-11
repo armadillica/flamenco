@@ -16,6 +16,8 @@ from pillarsdk.resource import Update
 from pillarsdk.resource import Delete
 from pillarsdk.resource import Replace
 
+from flamenco import current_flamenco
+
 
 class ProjectSummary(object):
     """Summary of the jobs in a project."""
@@ -193,16 +195,25 @@ class JobManager(object):
         """Updates the job status based on the status of this task and other tasks in the job.
         """
 
-        from flamenco import current_flamenco
-
-        if new_task_status == 'queued':
+        if new_task_status == {'queued', 'cancel-requested'}:
             # Ignore; for now re-queueing a task doesn't change the job status.
+            # Also, canceling a single task has no influence on the job itself.
             return
 
-        if new_task_status in {'failed', 'canceled'}:
-            self._log.warning('Aborting job %s because one of its tasks %s changed status to %s',
-                              job_id, task_id, new_task_status)
-            self.set_job_status(job_id, 'canceled')
+        if new_task_status == 'canceled':
+            # This could be the last cancel-requested task to go to 'canceled.
+            tasks_coll = current_flamenco.db('tasks')
+            statuses = tasks_coll.distinct('status', {'job': job_id})
+            if 'cancel-requested' not in statuses:
+                self._log.info('Last task %s of job %s went from cancel-requested to canceld.',
+                               task_id, job_id)
+                self.set_job_status(job_id, 'canceled')
+            return
+
+        if new_task_status == 'failed':
+            self._log.warning('Failing job %s because one of its tasks %s failed',
+                              job_id, task_id)
+            self.set_job_status(job_id, 'failed')
             return
 
         if new_task_status in {'claimed-by-manager', 'active', 'processing'}:
@@ -229,8 +240,6 @@ class JobManager(object):
     def set_job_status(self, job_id, new_status):
         """Updates the job status."""
 
-        from flamenco import current_flamenco
-
         jobs_coll = current_flamenco.db('jobs')
         curr_job = jobs_coll.find_one({'_id': job_id}, projection={'status': 1})
         old_status = curr_job['status']
@@ -243,24 +252,37 @@ class JobManager(object):
 
         query = None
         to_status = None
-        if new_status == 'completed':
-            # Nothing to do; this will happen as a response to all tasks being completed.
+        if new_status in {'completed', 'canceled'}:
+            # Nothing to do; this will happen as a response to all tasks receiving this status.
             pass
         elif new_status == 'active':
             # Nothing to do; this happens when a task gets started, which has nothing to
             # do with other tasks in the job.
             pass
-        elif new_status in {'canceled', 'failed'}:
-            # Cancel any task that might run in the future.
-            query = {'status': {'$in': ['active', 'queued', 'claimed-by-manager']}}
-            to_status = 'canceled'
+        elif new_status in {'cancel-requested', 'failed'}:
+            # Request cancel of any task that might run on the manager.
+            current_flamenco.update_status_q(
+                'tasks',
+                {'job': job_id, 'status': {'$in': ['active', 'claimed-by-manager']}},
+                'cancel-requested')
+            # Directly cancel any task that might run in the future, but is not touched by
+            # a manager yet.
+            current_flamenco.update_status_q(
+                'tasks',
+                {'job': job_id, 'status': 'queued'},
+                'canceled')
+            return
         elif new_status == 'queued':
             if old_status == 'completed':
-                # Re-queue all tasks.
-                query = {}
+                # Re-queue all tasks except cancel-requested; those should remain
+                # untouched; changing their status is only allowed by managers, to avoid
+                # race conditions.
+                query = {'status': {'$ne': 'cancel-requested'}}
             else:
-                # Re-queue any non-completed task.
-                query = {'status': {'$ne': 'completed'}}
+                # Re-queue any non-completed task. Cancel-requested tasks should also be
+                # untouched; changing their status is only allowed by managers, to avoid
+                # race conditions.
+                query = {'status': {'$nin': ['completed', 'cancel-requested']}}
             to_status = 'queued'
 
         if query is None:
@@ -275,7 +297,6 @@ class JobManager(object):
         # Update the tasks.
         query['job'] = job_id
 
-        from flamenco import current_flamenco
         current_flamenco.update_status_q('tasks', query, to_status)
 
 
