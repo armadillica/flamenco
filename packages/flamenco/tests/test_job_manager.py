@@ -81,6 +81,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
                 u'Wörk wørk w°rk.',
                 'blender-render',
                 {
+                    'blender_cmd': u'{blender}',
                     'filepath': u'/my/blend.file',
                     'frames': u'12-18, 20-23',
                     'chunk_size': 2,
