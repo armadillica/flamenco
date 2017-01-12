@@ -1,6 +1,8 @@
 package flamenco
 
 import (
+	"log"
+
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -19,6 +21,7 @@ func MongoSession(config *Conf) *mgo.Session {
 	var err error
 	var session *mgo.Session
 
+	log.Printf("Connecting to MongoDB at %s", config.DatabaseUrl)
 	if session, err = mgo.Dial(config.DatabaseUrl); err != nil {
 		panic(err)
 	}
