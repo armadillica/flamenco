@@ -197,12 +197,18 @@ class FlamencoExtension(PillarExtension):
         Doesn't use Eve patch_internal to avoid Eve's authorisation. For
         example, Eve doesn't know certain PATCH operations are allowed by
         Flamenco managers.
+
+        :rtype: pymongo.results.UpdateResult
         """
 
         return self.update_status_q(collection_name, {'_id': document_id}, new_status)
 
     def update_status_q(self, collection_name, query, new_status):
+        """Updates the status for the queried objects.
 
+        :returns: the result of the collection.update_many() call
+        :rtype: pymongo.results.UpdateResult
+        """
         from flamenco import eve_settings, current_flamenco
         import datetime
         import uuid
@@ -230,6 +236,8 @@ class FlamencoExtension(PillarExtension):
 
         self._log.debug('Updated status of %i %s %s to %s',
                         result.modified_count, singular_name, query, new_status)
+
+        return result
 
     def link_for_activity(self, act):
         """Returns the URL for the activity.

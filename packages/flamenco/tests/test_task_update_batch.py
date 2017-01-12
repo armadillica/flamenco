@@ -163,6 +163,31 @@ class TaskBatchUpdateTest(AbstractFlamencoTest):
         self.do_batch_update(tasks, [1, 2, 3], 3 * ['canceled'])
         self.assert_job_status('canceled')
 
+    def test_job_status_canceled_after_request_with_all_tasks_canceled(self):
+        """Same as test_job_status_canceled_due_to_task_update(), except that in this test
+        all tasks are in a state that can be immediately cancelled without waiting for the
+        manager. As a result, there won't be any incoming task updates that trigger the
+        cancel-requested to canceled state transition.
+        """
+
+        self.force_job_status('queued')
+        tasks = self.do_schedule_tasks()
+
+        # All tasks are queued when we request cancellation of the job.
+        self.do_batch_update(tasks, [0, 1, 2, 3], 4 * ['queued'])
+        self.assert_job_status('active')
+
+        self.set_job_status('cancel-requested')
+
+        # This should have cancel-requested the remaining tasks.
+        self.assert_task_status(tasks[0]['_id'], 'canceled')
+        self.assert_task_status(tasks[1]['_id'], 'canceled')
+        self.assert_task_status(tasks[2]['_id'], 'canceled')
+        self.assert_task_status(tasks[3]['_id'], 'canceled')
+
+        # Without confirmation from the Manager, the job should go to canceled.
+        self.assert_job_status('canceled')
+
     def do_schedule_tasks(self):
         # The test job consists of 4 tasks; get their IDs through the scheduler.
         # This should set the job status to active, and the task status to claimed-by-manager.
