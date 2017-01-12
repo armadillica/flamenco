@@ -245,6 +245,7 @@ class JobManager(object):
 
 
 def setup_app(app):
-    from . import eve_hooks
+    from . import eve_hooks, patch
 
     eve_hooks.setup_app(app)
+    patch.setup_app(app)

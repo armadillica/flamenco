@@ -308,7 +308,7 @@ _managers = {
 
 _jobs = {
     'schema': jobs_schema,
-    'item_methods': ['GET', 'PUT', 'DELETE', 'PATCH'],
+    'item_methods': ['GET', 'PUT', 'DELETE'],
     'public_methods': [],
     'public_item_methods': [],
 }
