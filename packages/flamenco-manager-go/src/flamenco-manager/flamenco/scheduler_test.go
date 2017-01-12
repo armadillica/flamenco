@@ -74,7 +74,7 @@ func (s *SchedulerTestSuite) TearDownTest(c *check.C) {
 
 /**
  * In this test we don't mock the upstream HTTP connection, so it's normal to see
- * errors about failed PATCH requests. These are harmless. As a matter of fact, testing
+ * errors about failed requests. These are harmless. As a matter of fact, testing
  * in such error conditions is good; task scheduling should keep working.
  */
 func (s *SchedulerTestSuite) TestVariableReplacement(t *check.C) {

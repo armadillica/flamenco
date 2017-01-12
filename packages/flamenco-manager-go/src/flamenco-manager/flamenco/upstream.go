@@ -26,11 +26,6 @@ const STARTUP_NOTIFICATION_INITIAL_DELAY = 500 * time.Millisecond
 // Duration between consecutive retries of sending the startup notification.
 const STARTUP_NOTIFICATION_RETRY = 30 * time.Second
 
-type SetTaskStatusPatch struct {
-	Op     string `json:"op"`
-	Status string `json:"status"`
-}
-
 type UpstreamConnection struct {
 	config  *Conf
 	session *mgo.Session
