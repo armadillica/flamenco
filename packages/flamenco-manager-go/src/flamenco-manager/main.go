@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -24,6 +25,7 @@ var config flamenco.Conf
 var upstream *flamenco.UpstreamConnection
 var task_scheduler *flamenco.TaskScheduler
 var task_update_pusher *flamenco.TaskUpdatePusher
+var task_timeout_checker *flamenco.TaskTimeoutChecker
 
 func http_status(w http.ResponseWriter, r *http.Request) {
 	flamenco.SendStatusReport(w, r, session)
@@ -86,6 +88,26 @@ func worker_secret(user, realm string) string {
 	return flamenco.WorkerSecret(user, mongo_sess.DB(""))
 }
 
+func shutdown() {
+	// Always shut down after 2 seconds.
+	timeout := flamenco.TimeoutAfter(2 * time.Second)
+
+	go func() {
+		log.Println("Interrupt signal received, shutting down.")
+		task_timeout_checker.Close()
+		task_update_pusher.Close()
+		upstream.Close()
+		session.Close()
+		log.Println("Shutdown complete, stopping process.")
+		timeout <- false
+	}()
+
+	if <-timeout {
+		log.Println("Shutdown forced, stopping process.")
+	}
+	os.Exit(-2)
+}
+
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 
@@ -97,7 +119,7 @@ func main() {
 	upstream = flamenco.ConnectUpstream(&config, session)
 	task_scheduler = flamenco.CreateTaskScheduler(&config, upstream, session)
 	task_update_pusher = flamenco.CreateTaskUpdatePusher(&config, upstream, session)
-	task_timeout_checker := flamenco.CreateTaskTimeoutChecker(&config, session)
+	task_timeout_checker = flamenco.CreateTaskTimeoutChecker(&config, session)
 
 	// Set up our own HTTP server
 	worker_authenticator := auth.NewBasicAuthenticator("Flamenco Manager", worker_secret)
@@ -120,15 +142,7 @@ func main() {
 	go func() {
 		for _ = range c {
 			// Run the shutdown sequence in a goroutine, so that multiple Ctrl+C presses can be handled in parallel.
-			go func() {
-				log.Println("Interrupt signal received, shutting down.")
-				task_timeout_checker.Close()
-				task_update_pusher.Close()
-				upstream.Close()
-				session.Close()
-				log.Println("Shutdown complete, stopping process.")
-				os.Exit(-2)
-			}()
+			go shutdown()
 		}
 	}()
 

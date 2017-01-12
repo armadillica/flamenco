@@ -86,3 +86,14 @@ func UtcNow() *time.Time {
 	now := time.Now().UTC()
 	return &now
 }
+
+func TimeoutAfter(duration time.Duration) chan bool {
+	timeout := make(chan bool, 1)
+
+	go func() {
+		time.Sleep(duration)
+		timeout <- true
+	}()
+
+	return timeout
+}

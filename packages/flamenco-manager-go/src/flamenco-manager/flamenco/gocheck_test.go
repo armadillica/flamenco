@@ -5,7 +5,6 @@ package flamenco
 
 import (
 	"testing"
-	"time"
 
 	check "gopkg.in/check.v1"
 	"gopkg.in/mgo.v2/bson"
@@ -14,17 +13,6 @@ import (
 // Hook up gocheck into the "go test" runner.
 // You only need one of these per package, or tests will run multiple times.
 func TestWithGocheck(t *testing.T) { check.TestingT(t) }
-
-func TimeoutAfter(duration time.Duration) chan bool {
-	timeout := make(chan bool, 1)
-
-	go func() {
-		time.Sleep(duration)
-		timeout <- true
-	}()
-
-	return timeout
-}
 
 func ConstructTestTask(task_id, job_type string) Task {
 	return ConstructTestTaskWithPrio(task_id, job_type, 50)
