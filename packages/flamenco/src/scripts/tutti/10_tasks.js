@@ -155,3 +155,38 @@ $(document).on('keyup', function(e){
         }
     }
 });
+
+/**
+ * Request cancellation or re-queueing of the given job ID.
+ */
+function setJobStatus(job_id, new_status) {
+    if (typeof job_id === 'undefined' || typeof new_status === 'undefined') {
+        if (console) console.log("cancelJob(" + job_id + ", " + new_status + ") called");
+        return;
+    }
+
+    return $.post('/flamenco/jobs/' + job_id + '/set-status', {status: new_status})
+    .done(function(data) {
+        if(console) console.log('Job set-status request OK');
+        // Reload the entire page, since both the view-embed and the job list need refreshing.
+        location.reload(true);
+    })
+    .fail(function(xhr) {
+        if (console) {
+            console.log('Error setting job status');
+            console.log('XHR:', xhr);
+        }
+
+        statusBarSet('error', 'Error requesting job status change', 'pi-error');
+
+        var show_html;
+        if (xhr.status) {
+            show_html = xhr.responseText;
+        } else {
+            show_html = $('<p>').addClass('text-danger').text(
+              'Setting job status failed. There possibly was an error connecting to the server. ' +
+              'Please check your network connection and try again.');
+        }
+        $('#job-action-panel .action-result-panel').html(show_html);
+    });
+}

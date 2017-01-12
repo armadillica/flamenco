@@ -15,8 +15,12 @@ from pillarsdk.resource import Post
 from pillarsdk.resource import Update
 from pillarsdk.resource import Delete
 from pillarsdk.resource import Replace
+from pillarsdk.resource import Patch
 
 from flamenco import current_flamenco
+
+CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
+REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed'}
 
 
 class ProjectSummary(object):
@@ -51,7 +55,7 @@ class ProjectSummary(object):
             yield (status, whole_perc)
 
 
-class Job(List, Find, Create, Post, Update, Delete, Replace):
+class Job(List, Find, Create, Post, Update, Delete, Replace, Patch):
     """Job class wrapping the REST nodes endpoint
     """
     path = 'flamenco/jobs'
@@ -180,6 +184,14 @@ class JobManager(object):
         self._log.warning('Task %s of job %s obtained status %s, '
                           'which we do not know how to handle.',
                           task_id, job_id, new_task_status)
+
+    def web_set_job_status(self, job_id, new_status):
+        """Web-level call to updates the job status."""
+
+        api = pillar_api()
+        job = Job({'_id': job_id})
+        job.patch({'op': 'set-job-status',
+                   'status': new_status}, api=api)
 
     def api_set_job_status(self, job_id, new_status):
         """API-level call to updates the job status."""

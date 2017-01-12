@@ -32,6 +32,8 @@ def patch_job(job_id):
     # Parse the request
     job_id = str2id(job_id)
     patch = request.get_json()
+    if not patch:
+        raise wz_exceptions.BadRequest('Patch must contain JSON')
 
     try:
         patch_op = patch['op']

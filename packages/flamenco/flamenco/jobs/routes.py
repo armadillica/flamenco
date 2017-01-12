@@ -7,17 +7,19 @@ import flask_login
 import werkzeug.exceptions as wz_exceptions
 
 from pillar.web.system_util import pillar_api
-import pillar.api.utils
-import pillar.web.subquery
 
 from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
 
 from . import Job
 
+blueprint = Blueprint('flamenco.jobs', __name__, url_prefix='/jobs')
 perproject_blueprint = Blueprint('flamenco.jobs.perproject', __name__,
                                  url_prefix='/<project_url>/jobs')
 log = logging.getLogger(__name__)
+
+# The job statuses that can be set from the web-interface.
+ALLOWED_JOB_STATUSES_FROM_WEB = {'cancel-requested', 'queued'}
 
 
 @perproject_blueprint.route('/', endpoint='index')
@@ -55,8 +57,28 @@ def view_job(project, flamenco_props, job_id):
     api = pillar_api()
     job = Job.find(job_id, api=api)
 
+    from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES
+
     return render_template('flamenco/jobs/view_job_embed.html',
                            job=job,
                            project=project,
                            flamenco_props=flamenco_props.to_dict(),
-                           flamenco_context=request.args.get('context'))
+                           flamenco_context=request.args.get('context'),
+                           can_cancel_job=job['status'] in CANCELABLE_JOB_STATES,
+                           can_requeue_job=job['status'] in REQUEABLE_JOB_STATES)
+
+
+@blueprint.route('/<job_id>/set-status', methods=['POST'])
+def set_job_status(job_id):
+    from flask_login import current_user
+
+    new_status = request.form['status']
+    if new_status not in ALLOWED_JOB_STATUSES_FROM_WEB:
+        log.warning('User %s tried to set status of job %s to disallowed status "%s"; denied.',
+                    current_user.objectid, job_id, new_status)
+        raise wz_exceptions.UnprocessableEntity('Status "%s" not allowed' % new_status)
+
+    log.info('User %s set status of job %s to "%s"', current_user.objectid, job_id, new_status)
+    current_flamenco.job_manager.web_set_job_status(job_id, new_status)
+
+    return '', 204
