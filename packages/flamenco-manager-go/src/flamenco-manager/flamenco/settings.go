@@ -44,6 +44,9 @@ type Conf struct {
 	TaskUpdatePushMaxCount     int           `yaml:"task_update_push_max_count"`
 	CancelTaskFetchInterval_   int           `yaml:"cancel_task_fetch_max_interval_seconds"`
 	CancelTaskFetchInterval    time.Duration `yaml:"-"`
+
+	ActiveTaskTimeoutInterval_ int           `yaml:"active_task_timeout_interval_seconds"`
+	ActiveTaskTimeoutInterval  time.Duration `yaml:"-"`
 }
 
 func GetConf() Conf {
@@ -59,6 +62,7 @@ func GetConf() Conf {
 		TaskUpdatePushMaxInterval_:   30,
 		TaskUpdatePushMaxCount:       10,
 		CancelTaskFetchInterval_:     10,
+		ActiveTaskTimeoutInterval_:   60,
 	}
 	err = yaml.Unmarshal(yamlFile, &c)
 	if err != nil {
@@ -87,6 +91,7 @@ func GetConf() Conf {
 	c.DownloadTaskRecheckThrottle = time.Duration(c.DownloadTaskRecheckThrottle_) * time.Second
 	c.TaskUpdatePushMaxInterval = time.Duration(c.TaskUpdatePushMaxInterval_) * time.Second
 	c.CancelTaskFetchInterval = time.Duration(c.CancelTaskFetchInterval_) * time.Second
+	c.ActiveTaskTimeoutInterval = time.Duration(c.ActiveTaskTimeoutInterval_) * time.Second
 
 	return c
 }

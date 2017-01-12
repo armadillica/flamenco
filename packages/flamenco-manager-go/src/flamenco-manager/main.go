@@ -97,6 +97,7 @@ func main() {
 	upstream = flamenco.ConnectUpstream(&config, session)
 	task_scheduler = flamenco.CreateTaskScheduler(&config, upstream, session)
 	task_update_pusher = flamenco.CreateTaskUpdatePusher(&config, upstream, session)
+	task_timeout_checker := flamenco.CreateTaskTimeoutChecker(&config, session)
 
 	// Set up our own HTTP server
 	worker_authenticator := auth.NewBasicAuthenticator("Flamenco Manager", worker_secret)
@@ -111,6 +112,7 @@ func main() {
 
 	upstream.SendStartupNotification()
 	go task_update_pusher.Go()
+	go task_timeout_checker.Go()
 
 	// Handle Ctrl+C
 	c := make(chan os.Signal, 1)
@@ -120,6 +122,7 @@ func main() {
 			// Run the shutdown sequence in a goroutine, so that multiple Ctrl+C presses can be handled in parallel.
 			go func() {
 				log.Println("Interrupt signal received, shutting down.")
+				task_timeout_checker.Close()
 				task_update_pusher.Close()
 				upstream.Close()
 				session.Close()

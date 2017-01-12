@@ -43,3 +43,15 @@ In the text below, `some_fields` refer to configuration file settings.
 3. The response to a push contains the database IDs of the accepted task updates, as well as
    a list of task database IDs of tasks that should be canceled. If this list is non-empty, the
    tasks' statuses are updated accordingly.
+
+## Timeouts of active tasks
+
+When a worker starts working on a task, that task moves to status "active". The worker then
+regularly calls `/may-i-run/{task-id}` to verify that it is still allowed to run that task. If this
+end-point is not called within `active_task_timeout_interval_seconds` seconds, it will go to status
+"failed". The default for this setting is 60 seconds, which is likely to be too short, so please
+configure it for your environment.
+
+This timeout check will start running 5 minutes after the Manager has started up. This allows
+workers to let it know they are still alive, in case the manager was unreachable for longer than
+the timeout period. For now this startup delay is hard-coded.

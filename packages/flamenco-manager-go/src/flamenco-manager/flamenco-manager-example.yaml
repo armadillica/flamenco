@@ -13,6 +13,11 @@ download_task_recheck_throttle_seconds: 10
 
 cancel_task_fetch_max_interval_seconds: 10
 
+# When a task has status "active", but it hasn't been touched by a worker in
+# this many seconds, it will go to state "failed". Being "touched" means that
+# a worker called /may-i-run/{task-id} for this task.
+active_task_timeout_interval_seconds: 60
+
 variables:
     blender:
         windows: c:/temp/blender.exe

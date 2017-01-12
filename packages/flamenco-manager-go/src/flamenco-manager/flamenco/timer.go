@@ -49,6 +49,39 @@ func Timer(name string, sleep_duration time.Duration, sleep_first bool,
 	return timer_chan
 }
 
+/**
+ * Sleep that can be killed by closing the "done_chan" channel.
+ *
+ * :returns: "ok", so true when the sleep stopped normally, and false if it was killed.
+ */
+func KillableSleep(name string, sleep_duration time.Duration,
+	done_chan <-chan bool, done_wg *sync.WaitGroup) bool {
+
+	done_wg.Add(1)
+	defer done_wg.Done()
+	defer log.Printf("Sleep '%s' goroutine is shut down.\n", name)
+
+	sleep_start := time.Now()
+	for {
+		select {
+		case <-done_chan:
+			log.Printf("Sleep '%s' goroutine shutting down.\n", name)
+			return false
+		default:
+			// Only sleep a little bit, so that we can check 'done' quite often.
+			time.Sleep(50 * time.Millisecond)
+		}
+
+		now := time.Now()
+		if now.Sub(sleep_start) > sleep_duration {
+			// Timeout occurred
+			break
+		}
+	}
+
+	return true
+}
+
 func UtcNow() *time.Time {
 	now := time.Now().UTC()
 	return &now

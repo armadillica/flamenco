@@ -269,7 +269,12 @@ func (self *UpstreamConnection) SendStartupNotification() {
 		mongo_sess := self.session.Copy()
 		defer mongo_sess.Close()
 
-		time.Sleep(STARTUP_NOTIFICATION_INITIAL_DELAY)
+		ok := KillableSleep("SendStartupNotification-initial", STARTUP_NOTIFICATION_INITIAL_DELAY,
+			self.done, self.done_wg)
+		if !ok {
+			log.Println("SendStartupNotification: shutting down without sending startup notification.")
+			return
+		}
 		timer_chan := Timer("SendStartupNotification", STARTUP_NOTIFICATION_RETRY,
 			false, self.done, self.done_wg)
 
