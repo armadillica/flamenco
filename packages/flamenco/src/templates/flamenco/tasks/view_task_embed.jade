@@ -15,7 +15,7 @@
 					li.copy-to-clipboard-id(data-clipboard-text="{{ task._id }}")
 						a(href="javascript:void(0)")
 							i.pi-clipboard-copy
-							| Copy ID to Clipboard
+							| Copy task ID to Clipboard
 		| {% if task.description %}
 		p.item-description {{ task.description | hide_none }}
 		| {% endif %}
@@ -45,6 +45,9 @@
 				.table-row
 					.table-cell Task progress
 					.table-cell {{ task.task_progress_percentage }}%
+				.table-row
+					.table-cell Activity
+					.table-cell {{ task.activity }}%
 
 #item-view-feed
 	#activities
