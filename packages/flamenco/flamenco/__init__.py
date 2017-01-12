@@ -155,7 +155,7 @@ class FlamencoExtension(PillarExtension):
             return False
 
         try:
-            pprops = project.extension_props[EXTENSION_NAME]
+            pprops = project.extension_props.get(EXTENSION_NAME)
         except AttributeError:
             self._log.warning("is_flamenco_project: Project url=%r doesn't have"
                               " any extension properties.", project['url'])
