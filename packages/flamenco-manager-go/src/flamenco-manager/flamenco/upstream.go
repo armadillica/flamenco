@@ -107,16 +107,22 @@ func (self *UpstreamConnection) download_task_loop() {
 
 		self.done_wg.Add(1)
 		defer self.done_wg.Done()
+		defer log.Println("download_task_loop: Task download goroutine shutting down.")
 
 		for {
 			select {
 			case <-self.done:
-				log.Println("download_task_loop: Task download goroutine shutting down.")
 				return
-			case <-timer_chan:
+			case _, ok := <-timer_chan:
+				if !ok {
+					return
+				}
 				log.Println("download_task_loop: Going to fetch tasks due to periodic timeout.")
 				download_tasks_from_upstream(self.config, mongo_sess)
-			case pingback_chan := <-self.download_kick:
+			case pingback_chan, ok := <-self.download_kick:
+				if !ok {
+					return
+				}
 				log.Println("download_task_loop: Going to fetch tasks due to kick.")
 				download_tasks_from_upstream(self.config, mongo_sess)
 				if pingback_chan != nil {
