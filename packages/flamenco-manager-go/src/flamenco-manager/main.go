@@ -117,12 +117,15 @@ func main() {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		for _ = range c {
-			log.Println("Interrupt signal received, shutting down.")
-			task_update_pusher.Close()
-			upstream.Close()
-			session.Close()
-			log.Println("Shutdown complete, stopping process.")
-			os.Exit(-2)
+			// Run the shutdown sequence in a goroutine, so that multiple Ctrl+C presses can be handled in parallel.
+			go func() {
+				log.Println("Interrupt signal received, shutting down.")
+				task_update_pusher.Close()
+				upstream.Close()
+				session.Close()
+				log.Println("Shutdown complete, stopping process.")
+				os.Exit(-2)
+			}()
 		}
 	}()
 
