@@ -107,6 +107,7 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 	task := &Task{}
 	tasks_coll := db.C("flamenco_tasks")
 
+	// TODO Sybren: also include active tasks that are assigned to this worker.
 	query := bson.M{
 		"status":   bson.M{"$in": []string{"queued", "claimed-by-manager"}},
 		"job_type": bson.M{"$in": worker.SupportedJobTypes},
