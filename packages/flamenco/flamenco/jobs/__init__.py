@@ -151,19 +151,19 @@ class JobManager(object):
             if 'cancel-requested' not in statuses:
                 self._log.info('Last task %s of job %s went from cancel-requested to canceld.',
                                task_id, job_id)
-                self.set_job_status(job_id, 'canceled')
+                self.api_set_job_status(job_id, 'canceled')
             return
 
         if new_task_status == 'failed':
             self._log.warning('Failing job %s because one of its tasks %s failed',
                               job_id, task_id)
-            self.set_job_status(job_id, 'failed')
+            self.api_set_job_status(job_id, 'failed')
             return
 
         if new_task_status in {'claimed-by-manager', 'active', 'processing'}:
             self._log.info('Job %s became active because one of its tasks %s changed status to %s',
                            job_id, task_id, new_task_status)
-            self.set_job_status(job_id, 'active')
+            self.api_set_job_status(job_id, 'active')
             return
 
         if new_task_status == 'completed':
@@ -174,15 +174,17 @@ class JobManager(object):
                 self._log.info('All tasks (last one was %s) of job %s are completed, '
                                'setting job to completed.',
                                task_id, job_id)
-                self.set_job_status(job_id, 'completed')
+                self.api_set_job_status(job_id, 'completed')
             return
 
         self._log.warning('Task %s of job %s obtained status %s, '
                           'which we do not know how to handle.',
                           task_id, job_id, new_task_status)
 
-    def set_job_status(self, job_id, new_status):
-        """Updates the job status."""
+    def api_set_job_status(self, job_id, new_status):
+        """API-level call to updates the job status."""
+
+        self._log.info('Setting job %s status to "%s"', job_id, new_status)
 
         jobs_coll = current_flamenco.db('jobs')
         curr_job = jobs_coll.find_one({'_id': job_id}, projection={'status': 1})

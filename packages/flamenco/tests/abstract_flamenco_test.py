@@ -79,7 +79,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
         """Nice, official, ripple-to-task-status approach"""
 
         with self.app.test_request_context():
-            self.jmngr.set_job_status(self.job_id, new_status)
+            self.jmngr.api_set_job_status(self.job_id, new_status)
 
     def force_job_status(self, new_status):
         """Directly to MongoDB approach"""

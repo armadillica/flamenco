@@ -67,7 +67,7 @@ def patch_set_job_status(job_id, patch):
     log.info('User %s uses PATCH to set job %s status to "%s"',
              current_user_id(), job_id, new_status)
     try:
-        current_flamenco.job_manager.set_job_status(job_id, new_status)
+        current_flamenco.job_manager.api_set_job_status(job_id, new_status)
     except ValueError:
         raise wz_exceptions.UnprocessableEntity('Status %s is invalid' % new_status)
 
