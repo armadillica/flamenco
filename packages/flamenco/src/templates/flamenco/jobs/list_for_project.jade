@@ -13,14 +13,11 @@
 			.table-head
 				.table-row
 					.table-cell.item-status
-					.table-cell.item-thumbnail
-						span.collapser.thumbnails(title="Collapse thumbnails") Thumbnail
+						span.collapser(title="Collapse status column") Status
 					.table-cell.item-id
 						span.collapser(title="Collapse ID column") ID
 					.table-cell.item-name
 						span.collapser(title="Collapse name column") Name
-					.table-cell.item-progress
-						span.collapser(title="Collapse progress column") Progress
 					.table-cell.item-priority
 						span.collapser(title="Collapse priority column") Priority
 
@@ -31,33 +28,20 @@
 					id="job-{{ job._id }}",
 					class="status-{{ job.status }}{% if job._id == open_job_id %} active{% endif %}")
 					.table-cell.item-status
-					.table-cell.item-thumbnail
 						a(data-job-id="{{ job._id }}",
 							href="{{ link_url }}",
-							class="status-{{ job.status }} job-link")
-							| {% if job._thumbnail %}
-							img(src="{{ job._thumbnail }}",
-								alt="Thumbnail",
-								style='width: 110px; height: {{ job._thumbnail_height }}')
-							| {% else %}
-							img(src="{{ url_for('static_flamenco', filename='assets/img/placeholder.jpg') }}",
-								alt="Thumbnail",
-								style='width: 110px; height: 26px')
-							| {% endif %}
+							class="job-link")
+							| {{ job.status | undertitle }}
 					.table-cell.item-id
 						a(data-job-id="{{ job._id }}",
 							href="{{ link_url }}",
 							class="job-link")
-							{{ job._id }}
+							| {{ job._id }}
 					.table-cell.item-name
 						a(data-job-id="{{ job._id }}",
 							href="{{ link_url }}",
 							class="job-link")
 							span(class="job-name-{{ job._id }}") {{ job.name }}
-					.table-cell.item-progress
-						a(data-job-id="{{ job._id }}",
-							href="{{ link_url }}")
-							span(class="job-progress-{{ job._id }}") 99%
 					.table-cell.item-priority
 						a(data-job-id="{{ job._id }}",
 							href="{{ link_url }}")
