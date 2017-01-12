@@ -113,7 +113,7 @@ func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 	log.Printf("%s Received task update for task %s\n", r.RemoteAddr, task_id.Hex())
 
 	// Get the worker
-	worker, err := FindWorker(r.Username, bson.M{"_id": 1}, db)
+	worker, err := FindWorker(r.Username, bson.M{"_id": 1, "address": 1}, db)
 	if err != nil {
 		log.Printf("%s WorkerMayRunTask: Unable to find worker: %s\n",
 			r.RemoteAddr, err)
@@ -121,6 +121,7 @@ func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 		fmt.Fprintf(w, "Unable to find worker: %s", err)
 		return
 	}
+	WorkerSeen(worker, r.RemoteAddr, db)
 
 	response := MayKeepRunningResponse{}
 
@@ -140,6 +141,7 @@ func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 		response.Reason = fmt.Sprintf("task %s in non-runnable status %s", task_id.Hex(), task.Status)
 	} else {
 		response.MayKeepRunning = true
+		WorkerPingedTask(task_id, db)
 	}
 
 	// Send the response
@@ -157,4 +159,33 @@ func IsRunnableTaskStatus(status string) bool {
 
 	runnable, found := runnable_statuses[status]
 	return runnable && found
+}
+
+func WorkerPingedTask(task_id bson.ObjectId, db *mgo.Database) {
+	tasks_coll := db.C("flamenco_tasks")
+
+	if err := tasks_coll.UpdateId(task_id, bson.M{"$set": bson.M{"last_worker_ping": UtcNow()}}); err != nil {
+		log.Printf("WorkerPingedTask: ERROR unable to update last_worker_ping on task %s: %s",
+			task_id.Hex(), err)
+	}
+}
+
+/**
+ * Registers that we have seen this worker at a certain address.
+ */
+func WorkerSeen(worker *Worker, remote_addr string, db *mgo.Database) {
+	worker.LastActivity = UtcNow()
+
+	updates := bson.M{
+		"last_activity": worker.LastActivity,
+	}
+
+	if worker.Address != remote_addr {
+		worker.Address = remote_addr
+		updates["address"] = remote_addr
+	}
+
+	if err := db.C("flamenco_workers").UpdateId(worker.Id, bson.M{"$set": updates}); err != nil {
+		log.Printf("WorkerSeen: ERROR: unable to update worker %s in MongoDB: %s", worker.Id, err)
+	}
 }

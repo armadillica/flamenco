@@ -48,3 +48,8 @@ func Timer(name string, sleep_duration time.Duration, sleep_first bool,
 
 	return timer_chan
 }
+
+func UtcNow() *time.Time {
+	now := time.Now().UTC()
+	return &now
+}

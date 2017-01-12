@@ -45,6 +45,7 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 		fmt.Fprintf(w, "Unable to find worker address: %s", err)
 		return
 	}
+	WorkerSeen(worker, r.RemoteAddr, db)
 
 	// Parse the task JSON
 	tupdate := TaskUpdate{}
@@ -54,6 +55,8 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 	}
 	tupdate.TaskId = task_id
 	tupdate.Worker = worker.Address
+
+	WorkerPingedTask(tupdate.TaskId, db)
 
 	if err := QueueTaskUpdate(&tupdate, db); err != nil {
 		log.Printf("%s: %s", err)
@@ -75,8 +78,6 @@ func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 	if err := task_update_queue.Insert(&tupdate); err != nil {
 		return fmt.Errorf("QueueTaskUpdate: error inserting task update in queue: %s", err)
 	}
-
-	log.Printf("QueueTaskUpdate: queued update %s", tupdate)
 
 	// Locally apply the change to our cached version of the task too, if it is a valid transition.
 	// This prevents a task being reported active on the worker from overwriting the

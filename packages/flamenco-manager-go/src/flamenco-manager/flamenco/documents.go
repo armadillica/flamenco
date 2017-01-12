@@ -27,7 +27,10 @@ type Task struct {
 	Activity string          `bson:"activity,omitempty" json:"activity,omitempty"`
 	Parents  []bson.ObjectId `bson:"parents,omitempty" json:"parents,omitempty"`
 	Worker   string          `bson:"worker,omitempty" json:"worker,omitempty"`
-	WorkerId bson.ObjectId   `bson:"worker_id,omitempty" json:"-"`
+
+	// Internal bookkeeping
+	WorkerId       bson.ObjectId `bson:"worker_id,omitempty" json:"-"`
+	LastWorkerPing *time.Time    `bson:"last_worker_ping,omitempty" json:"-"`
 }
 
 type TaskUpdate struct {
@@ -64,7 +67,7 @@ type Worker struct {
 	Platform          string        `bson:"platform" json:"platform"`
 	CurrentTask       bson.ObjectId `bson:"current_task,omitempty" json:"current_task,omitempty"`
 	TimeCost          int           `bson:"time_cost" json:"time_cost"`
-	LastActivity      time.Time     `bson:"last_activity" json:"last_activity"`
+	LastActivity      *time.Time    `bson:"last_activity,omitempty" json:"last_activity,omitempty"`
 	SupportedJobTypes []string      `bson:"supported_job_types" json:"supported_job_types"`
 }
 

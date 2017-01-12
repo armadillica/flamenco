@@ -2,6 +2,7 @@ package flamenco
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -38,22 +39,21 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	db := mongo_sess.DB("")
 
 	// Fetch the worker's info
-	workers_coll := db.C("flamenco_workers")
-	query := bson.M{"_id": bson.ObjectIdHex(r.Username)}
-	projection := bson.M{"platform": 1, "supported_job_types": 1}
-	worker := Worker{}
-
-	if err := workers_coll.Find(query).Select(projection).One(&worker); err != nil {
-		log.Println("Error fetching worker:", err)
-		w.WriteHeader(500)
+	projection := bson.M{"platform": 1, "supported_job_types": 1, "address": 1}
+	worker, err := FindWorker(r.Username, projection, db)
+	if err != nil {
+		log.Printf("%s ScheduleTask: Unable to find worker: %s\n", r.RemoteAddr, err)
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Fprintf(w, "Unable to find worker: %s", err)
 		return
 	}
+	WorkerSeen(worker, r.RemoteAddr, db)
 
 	var task *Task
 	var was_changed bool
 	for attempt := 0; attempt < 1000; attempt++ {
 		// Fetch the first available task of a supported job type.
-		task = ts.fetchTaskFromQueueOrManager(w, r, db, &worker)
+		task = ts.fetchTaskFromQueueOrManager(w, r, db, worker)
 		if task == nil {
 			// A response has already been written to 'w'.
 			return
@@ -73,7 +73,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	}
 
 	// Perform variable replacement on the task.
-	ReplaceVariables(ts.config, task, &worker)
+	ReplaceVariables(ts.config, task, worker)
 
 	// update the worker_id field of the task.
 	tasks_coll := db.C("flamenco_tasks")
