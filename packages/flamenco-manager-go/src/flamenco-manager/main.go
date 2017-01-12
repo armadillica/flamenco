@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
 
 	"gopkg.in/mgo.v2"
@@ -109,6 +111,20 @@ func main() {
 
 	upstream.SendStartupNotification()
 	go task_update_pusher.Go()
+
+	// Handle Ctrl+C
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for _ = range c {
+			log.Println("Interrupt signal received, shutting down.")
+			task_update_pusher.Close()
+			upstream.Close()
+			session.Close()
+			log.Println("Shutdown complete, stopping process.")
+			os.Exit(-2)
+		}
+	}()
 
 	// Fall back to insecure server if TLS certificate/key is not defined.
 	if config.TLSCert == "" || config.TLSKey == "" {
