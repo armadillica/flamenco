@@ -17,6 +17,9 @@ class TaskPatchingTest(AbstractFlamencoTest):
         self.mngr_id = mngr_doc['_id']
         self.mngr_token = token['token']
 
+        self.create_user(user_id=24 * 'f', roles={u'flamenco-admin'})
+        self.create_valid_auth_token(24 * 'f', u'fladmin-token')
+
         with self.app.test_request_context():
             force_cli_user()
             job = self.jmngr.api_create_job(
@@ -45,7 +48,7 @@ class TaskPatchingTest(AbstractFlamencoTest):
             json={'op': 'set-task-status',
                   'status': 'finished',
                   },
-            auth_token=self.mngr_token,
+            auth_token='fladmin-token',
             expected_status=422,
         )
 
@@ -66,7 +69,7 @@ class TaskPatchingTest(AbstractFlamencoTest):
             json={'op': 'set-task-status',
                   'status': 'completed',
                   },
-            auth_token=self.mngr_token,
+            auth_token='fladmin-token',
             expected_status=204,
         )
 
@@ -93,7 +96,7 @@ class TaskPatchingTest(AbstractFlamencoTest):
             self.patch(
                 '/api/flamenco/tasks/%s' % task['_id'],
                 json={'op': 'set-task-status', 'status': 'completed'},
-                auth_token=self.mngr_token,
+                auth_token='fladmin-token',
                 expected_status=204,
             )
         self.assert_job_status('active')
@@ -101,7 +104,7 @@ class TaskPatchingTest(AbstractFlamencoTest):
         self.patch(
             '/api/flamenco/tasks/%s' % tasks[-1]['_id'],
             json={'op': 'set-task-status', 'status': 'completed'},
-            auth_token=self.mngr_token,
+            auth_token='fladmin-token',
             expected_status=204,
         )
         self.assert_job_status('completed')
