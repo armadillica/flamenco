@@ -81,10 +81,14 @@ class TaskManager(object):
         """
 
         api = pillar_api()
-        tasks = Task.all({
-            'where': {
-                'project': project_id,
-            }}, api=api)
+        try:
+            tasks = Task.all({
+                'where': {
+                    'project': project_id,
+                }}, api=api)
+        except ResourceNotFound:
+            return {'_items': [], '_meta': {'total': 0}}
+
         return tasks
 
 

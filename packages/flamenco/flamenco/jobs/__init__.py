@@ -102,12 +102,13 @@ class JobManager(object):
         """
 
         api = pillar_api()
-        jobs = pillarsdk.resource.List()
-        jobs.list_class.path = 'flamenco/jobs'
-        j = jobs.all({
-            'where': {
-                'project': project_id,
-            }}, api=api)
+        try:
+            j = Job.all({
+                'where': {
+                    'project': project_id,
+                }}, api=api)
+        except pillarsdk.ResourceNotFound:
+            return {'_items': [], '_meta': {'total': 0}}
         return j
 
     def job_status_summary(self, project_id):
@@ -120,17 +121,20 @@ class JobManager(object):
 
         # TODO: turn this into an aggregation call to do the counting on
         # MongoDB.
-        jobs = Job.all({
-            'where': {
-                'project': project_id,
-            },
-            'projection': {
-                'status': 1,
-            },
-            'order': [
-                ('status', 1),
-            ],
-        }, api=api)
+        try:
+            jobs = Job.all({
+                'where': {
+                    'project': project_id,
+                },
+                'projection': {
+                    'status': 1,
+                },
+                'order': [
+                    ('status', 1),
+                ],
+            }, api=api)
+        except pillarsdk.ResourceNotFound:
+            return ProjectSummary()
 
         # FIXME: this breaks when we hit the pagination limit.
         summary = ProjectSummary()
