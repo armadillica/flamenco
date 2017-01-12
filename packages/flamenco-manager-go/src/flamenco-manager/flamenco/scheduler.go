@@ -98,6 +98,12 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 	w http.ResponseWriter, r *auth.AuthenticatedRequest,
 	db *mgo.Database, worker *Worker) *Task {
 
+	if len(worker.SupportedJobTypes) == 0 {
+		log.Printf("%s Warning: worker %s has no supported job types.",
+			r.RemoteAddr, worker.Id.Hex())
+		return nil
+	}
+
 	task := &Task{}
 	tasks_coll := db.C("flamenco_tasks")
 
@@ -128,8 +134,7 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 			log.Printf("%s Really no more tasks available for %s\n", r.RemoteAddr, r.Username)
 			w.WriteHeader(204)
 			return nil
-		}
-		if err != nil {
+		} else if err != nil {
 			log.Printf("%s Error fetching task for %s: %s // %s\n", r.RemoteAddr, r.Username, err, info)
 			w.WriteHeader(500)
 			return nil
