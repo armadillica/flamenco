@@ -1,5 +1,6 @@
 #!/bin/bash -e
 
+GID=$(id --group)
 if [ ! -e flamenco-manager.yaml ]; then
     echo "Create a flamenco-manager.yaml for Docker in $(pwd), then run this command again." >&2
     exit 1
@@ -19,7 +20,7 @@ go version
 cd \${GOPATH}/src/flamenco-manager
 CGO_ENABLED=0 go get -a -ldflags '-s'
 cp \${GOPATH}/bin/flamenco-manager /docker
-chown $UID /docker/flamenco-manager
+chown $UID:$GID /docker/flamenco-manager
 EOT
 
 # Use the statically linked executable to build our final Docker image.
