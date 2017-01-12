@@ -20,12 +20,6 @@ function item_open(item_id, item_type, pushState, project_url)
     $('[id^="' + item_type + '-"]').removeClass('active');
     $('#' + item_type + '-' + item_id).addClass('active');
 
-    // Special case to highlight the job row when opening task in job context
-    if (ProjectUtils.context() == 'job' && item_type == 'task'){
-        $('[id^="job-"]').removeClass('active');
-        $('#task-' + item_id).closest('.table-row').addClass('active');
-    }
-
     var item_url = '/flamenco/' + project_url + '/' + item_type + 's/' + item_id;
     var push_url = item_url;
     if (ProjectUtils.context() == 'job' && item_type == 'task'){
@@ -74,6 +68,10 @@ function job_open(job_id, project_url)
 {
     item_open(job_id, 'job', true, project_url);
 }
+function task_open(task_id, project_url)
+{
+    item_open(task_id, 'task', true, project_url);
+}
 
 
 window.onpopstate = function(event)
@@ -81,108 +79,6 @@ window.onpopstate = function(event)
     var state = event.state;
 
     item_open(state.itemId, state.itemType, false);
-}
-
-/**
- * Create a job and show it in the #item-details div.
- * NOTE: Not used at the moment, we're creating jobs via Blender
- */
-function job_create(project_url)
-{
-    if (project_url === undefined) {
-        throw new ReferenceError("job_create(" + project_url+ ") called.");
-    }
-    var url = '/flamenco/' + project_url + '/jobs/create';
-
-    data = {
-        project_url: project_url
-    };
-
-    $.post(url, data, function(job_data) {
-        job_open(job_data.job_id);
-    })
-    .fail(function(xhr) {
-        if (console) {
-            console.log('Error creating task');
-            console.log('XHR:', xhr);
-        }
-        $('#item-details').html(xhr.responseText);
-    });
-}
-
-function flamenco_form_save(form_id, item_id, item_save_url, options)
-{
-    // Mandatory option.
-    if (typeof options === 'undefined' || typeof options.type === 'undefined') {
-        throw new ReferenceError('flamenco_form_save(): options.type is mandatory.');
-    }
-
-    var $form = $('#' + form_id);
-    var $button = $form.find("button[type='submit']");
-
-    var payload = $form.serialize();
-    var $item = $('#' + item_id);
-
-    $button.attr('disabled', true);
-    $item.addClass('processing');
-
-    statusBarSet('', 'Saving ' + options.type + '…');
-
-    if (console) console.log('Sending:', payload);
-
-    $.post(item_save_url, payload)
-        .done(function(saved_item) {
-            if (console) console.log('Done saving', saved_item);
-
-            statusBarSet('success', 'Saved ' + options.type + '. ' + saved_item._updated, 'pi-check');
-
-            $form.find("input[name='_etag']").val(saved_item._etag);
-
-            if (options.done) options.done($item, saved_item);
-        })
-        .fail(function(xhr_or_response_data) {
-            // jQuery sends the response data (if JSON), or an XHR object (if not JSON).
-            if (console) console.log('Failed saving', options.type, xhr_or_response_data);
-
-            $button.removeClass('btn-default').addClass('btn-danger');
-
-            statusBarSet('error', 'Failed saving. ' + xhr_or_response_data.status, 'pi-warning');
-
-            if (options.fail) options.fail($item, xhr_or_response_data);
-        })
-        .always(function() {
-            $button.attr('disabled', false);
-            $item.removeClass('processing');
-
-            if (options.always) options.always($item);
-        })
-    ;
-
-    return false; // prevent synchronous POST to current page.
-}
-
-function job_save(job_id, job_url) {
-    return flamenco_form_save('job_form', 'job-' + job_id, job_url, {
-        done: function($job, saved_job) {
-            // Update the job list.
-            $('.job-name-' + saved_job._id).text(saved_job.name);
-            $job
-                .removeClassPrefix('status-')
-                .addClass('status-' + saved_job.status)
-                .flashOnce()
-            ;
-            job_open(job_id);
-        },
-        fail: function($item, xhr_or_response_data) {
-            if (xhr_or_response_data.status == 412) {
-                // TODO: implement something nice here. Just make sure we don't throw
-                // away the user's edits. It's up to the user to handle this.
-            } else {
-                $('#item-details').html(xhr_or_response_data.responseText);
-            }
-        },
-        type: 'job'
-    });
 }
 
 
@@ -213,27 +109,39 @@ function loadActivities(url)
 
 function loadTasks(url) {
     return $.get(url)
-  .done(function(data) {
-      if(console) console.log('Tasks loaded OK');
-      $('#tasks').html(data);
-  })
+    .done(function(data) {
+        if(console) console.log('Tasks loaded OK');
+        $('#tasks').html(data);
+        setupJsTaskLinkClickHandlers();
+    })
 }
 
-$(function() {
-    $("a.job-link[data-job-id]").click(function(e) {
+function setupJsTaskLinkClickHandlers() {
+    $("a.task-link[data-task-id]")
+    .off('click')  // clean up previous click handlers, before adding another one.
+    .click(function(e) {
+        e.preventDefault();
+        var task_id = e.delegateTarget.dataset.taskId;
+        var project_url = e.delegateTarget.dataset.projectUrl;  // fine if undefined
+        task_open(task_id, project_url);
+    });
+}
+
+function setupJsJobLinkClickHandlers() {
+    $("a.job-link[data-job-id]")
+    .off('click')  // clean up previous click handlers, before adding another one.
+    .click(function(e) {
         e.preventDefault();
         // delegateTarget is the thing the event hander was attached to,
         // rather than the thing we clicked on.
         var job_id = e.delegateTarget.dataset.jobId;
         job_open(job_id);
     });
+}
 
-    $("a.task-link[data-task-id]").click(function(e) {
-        e.preventDefault();
-        var task_id = e.delegateTarget.dataset.taskId;
-        var project_url = e.delegateTarget.dataset.projectUrl;  // fine if undefined
-        task_open(task_id, project_url);
-    });
+$(function() {
+    setupJsJobLinkClickHandlers()
+    setupJsTaskLinkClickHandlers()
 });
 
 $(document).on('keyup', function(e){

@@ -4,7 +4,8 @@
 | {% block body %}
 #col_main
 	.col_header.item-list-header
-		span(title='In the edit') {{ stats.nr_of_jobs }} jobs | {{ stats.total_frame_count }} frames
+		// TODO: implement the stats
+		span(title='In the current project') {{ stats.nr_of_jobs }} jobs | {{ stats.nr_of_tasks }} tasks
 		a.item-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
 
 	.item-list.col-scrollable
@@ -14,6 +15,8 @@
 					.table-cell.item-status
 					.table-cell.item-thumbnail
 						span.collapser.thumbnails(title="Collapse thumbnails") Thumbnail
+					.table-cell.item-id
+						span.collapser(title="Collapse ID column") ID
 					.table-cell.item-name
 						span.collapser(title="Collapse name column") Name
 					.table-cell.item-progress
@@ -23,13 +26,14 @@
 
 			.table-body.has-thumbnails
 				| {% for job in jobs %}
+				| {% set link_url = url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) %}
 				.table-row(
 					id="job-{{ job._id }}",
-					class="status-{{ job.status }}")
+					class="status-{{ job.status }}{% if job._id == open_job_id %} active{% endif %}")
 					.table-cell.item-status
 					.table-cell.item-thumbnail
 						a(data-job-id="{{ job._id }}",
-							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}",
+							href="{{ link_url }}",
 							class="status-{{ job.status }} job-link")
 							| {% if job._thumbnail %}
 							img(src="{{ job._thumbnail }}",
@@ -40,18 +44,23 @@
 								alt="Thumbnail",
 								style='width: 110px; height: 26px')
 							| {% endif %}
+					.table-cell.item-id
+						a(data-job-id="{{ job._id }}",
+							href="{{ link_url }}",
+							class="job-link")
+							{{ job._id }}
 					.table-cell.item-name
 						a(data-job-id="{{ job._id }}",
-							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}",
+							href="{{ link_url }}",
 							class="job-link")
 							span(class="job-name-{{ job._id }}") {{ job.name }}
 					.table-cell.item-progress
 						a(data-job-id="{{ job._id }}",
-							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}")
+							href="{{ link_url }}")
 							span(class="job-progress-{{ job._id }}") 99%
 					.table-cell.item-priority
 						a(data-job-id="{{ job._id }}",
-							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) }}")
+							href="{{ link_url }}")
 							span(class="job-priority-{{ job._id }}") {{ job.priority }}
 				| {% endfor %}
 
@@ -64,15 +73,14 @@
 	#item-details
 		.item-details-empty
 			| Select a Job
-			| {{ open_job_id }}
+			| {{ open_job_id | hide_none }}
 
 | {% endblock %}
 | {% block footer_scripts %}
 script.
 	{% if open_task_id %}
 		$(function() { item_open('{{ open_task_id }}', 'task', false); });
-	{% endif %}
-	{% if open_job_id %}
+	{% elif open_job_id %}
 		$(function() { item_open('{{ open_job_id }}', 'job', false); });
 	{% endif %}
 

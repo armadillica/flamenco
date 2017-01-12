@@ -1,7 +1,8 @@
 import functools
 import logging
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect, url_for
+
 import flask_login
 
 from pillar.web.utils import attach_project_pictures
@@ -19,13 +20,6 @@ log = logging.getLogger(__name__)
 @blueprint.route('/')
 def index():
     api = pillar_api()
-
-    user = flask_login.current_user
-    if user.is_authenticated:
-        tasks = current_flamenco.task_manager.tasks_for_user(user.objectid)
-
-    else:
-        tasks = None
 
     # TODO: add projections.
     projects = current_flamenco.flamenco_projects()
@@ -58,7 +52,6 @@ def index():
             act.link = None
 
     return render_template('flamenco/index.html',
-                           tasks=tasks,
                            projs_with_summaries=projs_with_summaries,
                            activities=activities)
 
@@ -134,11 +127,9 @@ def flamenco_project_view(extra_project_projections=None, extension_props=False)
 
 
 @blueprint.route('/<project_url>')
-@flamenco_project_view(extension_props=True)
-def project_index(project, flamenco_props):
-    return render_template('flamenco/project.html',
-                           project=project,
-                           flamenco_props=flamenco_props)
+@flamenco_project_view(extension_props=False)
+def project_index(project):
+    return redirect(url_for('flamenco.jobs.perproject.index', project_url=project.url))
 
 
 @blueprint.route('/<project_url>/help')

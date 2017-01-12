@@ -6,13 +6,8 @@
 	.col_header.task-list-header
 		| Tasks ({{ tasks | count }})
 		a.item-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
-		//- Dirty hack, assume a user can create a task if they can edit the project.
-		| {% if 'PUT' in project.allowed_methods %}
-		a#item-add(href="javascript:task_create(undefined, 'generic');") + Create Task
-		| {% endif %}
 	.item-list.task.col-list.col-scrollable
 		| {% for task in tasks %}
-		//- NOTE: this is tightly linked to the JS in tasks.js, function task_add()
 		a.col-list-item.task-list-item(
 			id="task-{{task._id}}",
 			data-task-id="{{task._id}}",

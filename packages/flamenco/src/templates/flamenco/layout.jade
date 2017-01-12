@@ -41,12 +41,6 @@ html(lang="en")
 						li
 							a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.perproject.index', project_url=project.url) }}",
 								title='Tasks for project {{ project.name }}') Tasks
-						| {% else %}
-						| {% if current_user.is_authenticated %}
-						li
-							a.navbar-item.tasks(href="{{ url_for('flamenco.jobs.index') }}",
-								title='All jobs') J
-						| {% endif %}
 						| {% endif %}
 
 					ul.bottom

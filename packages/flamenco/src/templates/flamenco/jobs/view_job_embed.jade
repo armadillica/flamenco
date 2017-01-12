@@ -1,31 +1,7 @@
 .flamenco-box.job.with-status(class="status-{{ job.status }}")
-	form#item_form(onsubmit="return job_save('{{job._id}}', '{{ url_for('flamenco.jobs.perproject.save', project_url=project['url'], job_id=job._id) }}')")
+	form#item_form(onsubmit="return false")
 		input(type='hidden',name='_etag',value='{{ job._etag }}')
-		| {% if 'PUT' in job.allowed_methods %}
-		.input-group
-			textarea#item-description.input-transparent(
-				name="description",
-				type="text",
-				rows=1,
-				placeholder='Description') {{ job.description | hide_none }}
-
-		.input-group
-			label(for="item-status") Status:
-			select#item-status.input-transparent(
-				name="status")
-				| {% for status in ['failed', 'active'] %}
-				| <option value="{{ status }}" {% if status == job.status %}selected{% endif %}>{{ status | undertitle }}</option>
-				| {% endfor %}
-
-		.input-group-separator
-
-		.input-group
-
-			button#item-save.btn.btn-default.btn-block(type='submit')
-				i.pi-check
-				| Save Job
-		| {% else %}
-		//- NOTE: read-only versions of the fields above.
+		p.item-name {{ job.name | hide_none }}
 		| {% if job.description %}
 		p.item-description {{ job.description | hide_none }}
 		| {% endif %}
@@ -37,8 +13,6 @@
 					.table-cell Status
 					.table-cell(class="status-{{ job.status }}")
 						| {{ job.status | undertitle }}
-
-		| {% endif %}
 
 .flamenco-box
 	.table.item-properties
@@ -56,13 +30,14 @@
 						| Created on {{ job._created | pretty_date_time }}
 			.table-row
 				.table-cell Job Type
-				.table-cell(title="Job Type")
+				.table-cell
 					| {{ job.job_type }}
+			.table-row
+				.table-cell Priority
+				.table-cell(title="Higher number means higher priority")
+					| {{ job.priority }}
 
 #item-view-feed
-	#tasks
-	#comments-embed
-
 	| {% if config.DEBUG %}
 	.debug-info
 		a.debug-info-toggle(role='button',
@@ -75,25 +50,12 @@
 		#debug-content.collapse
 			pre.
 				{{ job.to_dict() | pprint }}
-		| {% endif %}
+	| {% endif %}
 
+	#tasks
+	#comments-embed
 script.
 
 	$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
 
-	{% if 'PUT' in job.allowed_methods %}
-		/* Resize textareas */
-		var textAreaFields = $('#item-description, #item-notes');
-
-		textAreaFields.each(function(){
-			$(this)
-				.autoResize()
-				.blur();
-		});
-
-		$('#item-status').change(function(){
-			$("#item-save").trigger( "click" );
-		});
-	{% endif %}
-
-	loadTasks("{{url_for('flamenco.tasks.index', embed=1, job_id=job._id) | safe}}");
+	loadTasks("{{url_for('flamenco.tasks.perjob.list_for_job', job_id=job._id, project_url=project.url)}}");

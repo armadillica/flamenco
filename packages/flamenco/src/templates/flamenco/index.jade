@@ -9,17 +9,6 @@
 			h3
 				i.pi-flamenco
 				|  Flamenco
-	| {% if current_user.is_authenticated %}
-	| {% from "flamenco/tasks/task_list_for_user.html" import task_list_for_user %}
-	| {{ task_list_for_user(tasks['_meta']['total'], tasks['_items']) }}
-	| {% else %}
-	| {% include "flamenco/index_anon_left_column.html" %}
-	| {% endif %}
-
-#col_right
-	.dashboard
-		.d-stats
-			h3 Statistics
 
 			| {% for proj, summary in projs_with_summaries %}
 			.d-stats-card
@@ -41,8 +30,8 @@
 					| {% endfor %}
 				| {% endfor %}
 
-		hr
-
+#col_right
+	.dashboard
 		.d-activity
 			h3 Activity Stream
 
