@@ -216,11 +216,11 @@ class JobManager(object):
         to_status = None
         if new_status in {'completed', 'canceled'}:
             # Nothing to do; this will happen as a response to all tasks receiving this status.
-            pass
+            return
         elif new_status == 'active':
             # Nothing to do; this happens when a task gets started, which has nothing to
             # do with other tasks in the job.
-            pass
+            return
         elif new_status in {'cancel-requested', 'failed'}:
             # Request cancel of any task that might run on the manager.
             cancelreq_result = current_flamenco.update_status_q(
