@@ -95,78 +95,68 @@ class AccessTest(AbstractFlamencoTest):
 
         from pillar.api.utils import remove_private_keys
 
-        # # Public project, so access should be fine.
-        # self.get('/api/projects/%s' % self.proj_id,
-        #          expected_status=200,
-        #          auth_token=self.mngr_token)
-        #
-        # # Private project should be private.
-        # self.get('/api/projects/%s' % self.proj2_id,
-        #          expected_status=403,
-        #          auth_token=self.mngr_token)
-        #
-        # # Own manager doc should be gettable, but other one should not.
-        # own_url = '/api/flamenco/managers/%s' % self.mngr_id
-        # own_doc = self.get(own_url,
-        #                    expected_status=200,
-        #                    auth_token=self.mngr_token).json()
-        # other_url = '/api/flamenco/managers/%s' % self.mngr2_id
-        # self.get(other_url,
-        #          expected_status=403,
-        #          auth_token=self.mngr_token)
-        #
-        # # Managers may not create new managers.
-        # new_doc = remove_private_keys(own_doc)
-        # self.post('/api/flamenco/managers', json=new_doc,
-        #           expected_status=403,
-        #           auth_token=self.mngr_token)
-        #
-        # # Manager docs should not be modified.
-        # self.put(own_url, json=remove_private_keys(own_doc),
-        #          headers={'If-Match': own_doc['_etag']},
-        #          expected_status=403,
-        #          auth_token=self.mngr_token)
-        # self.delete(own_url,
-        #             expected_status=405,
-        #             auth_token=self.mngr_token)
-        # self.put(other_url, json=remove_private_keys(own_doc),
-        #          expected_status=403,
-        #          auth_token=self.mngr_token)
-        # self.delete(other_url,
-        #             expected_status=405,
-        #             auth_token=self.mngr_token)
-        #
-        # # Own job should be GETtable.
-        # own_job_url = '/api/flamenco/jobs/%s' % self.job_id
-        # own_job = self.get(own_job_url,
-        #                    expected_status=200,
-        #                    auth_token=self.mngr_token).json()
-        # resp = self.get('/api/flamenco/jobs',
-        #                 expected_status=200,
-        #                 auth_token=self.mngr_token).json()
-        # jobs = resp['_items']
-        # self.assertEqual(1, len(jobs))
-        # self.assertEqual(1, resp['_meta']['total'])
-        # self.assertEqual(str(self.job_id), jobs[0]['_id'])
-        #
-        # # Own job should not be modifyable.
-        # self.put(own_job_url, json=own_job,
-        #          expected_status=403,
-        #          auth_token=self.mngr_token)
-        # self.delete(own_job_url,
-        #             expected_status=403,
-        #             auth_token=self.mngr_token)
-        #
-        # # Managers may not create new jobs
-        # new_job = remove_private_keys(own_job)
-        # self.post('/api/flamenco/jobs', json=new_job,
-        #           expected_status=403,
-        #           auth_token=self.mngr_token)
-        #
-        # # Job of other manager should not be GETtable.
-        # self.get('/api/flamenco/jobs/%s' % self.job2_id,
-        #          expected_status=403,
-        #          auth_token=self.mngr_token)
+        # Own manager doc should be gettable, but other one should not.
+        own_url = '/api/flamenco/managers/%s' % self.mngr_id
+        own_doc = self.get(own_url,
+                           expected_status=200,
+                           auth_token=self.mngr_token).json()
+        other_url = '/api/flamenco/managers/%s' % self.mngr2_id
+        self.get(other_url,
+                 expected_status=403,
+                 auth_token=self.mngr_token)
+
+        # Managers may not create new managers.
+        new_doc = remove_private_keys(own_doc)
+        self.post('/api/flamenco/managers', json=new_doc,
+                  expected_status=403,
+                  auth_token=self.mngr_token)
+
+        # Manager docs should not be modified.
+        self.put(own_url, json=remove_private_keys(own_doc),
+                 headers={'If-Match': own_doc['_etag']},
+                 expected_status=403,
+                 auth_token=self.mngr_token)
+        self.delete(own_url,
+                    expected_status=405,
+                    auth_token=self.mngr_token)
+        self.put(other_url, json=remove_private_keys(own_doc),
+                 expected_status=403,
+                 auth_token=self.mngr_token)
+        self.delete(other_url,
+                    expected_status=405,
+                    auth_token=self.mngr_token)
+
+        # Own job should be GETtable.
+        own_job_url = '/api/flamenco/jobs/%s' % self.job_id
+        own_job = self.get(own_job_url,
+                           expected_status=200,
+                           auth_token=self.mngr_token).json()
+        resp = self.get('/api/flamenco/jobs',
+                        expected_status=200,
+                        auth_token=self.mngr_token).json()
+        jobs = resp['_items']
+        self.assertEqual(1, len(jobs))
+        self.assertEqual(1, resp['_meta']['total'])
+        self.assertEqual(str(self.job_id), jobs[0]['_id'])
+
+        # Own job should not be modifyable.
+        self.put(own_job_url, json=own_job,
+                 expected_status=403,
+                 auth_token=self.mngr_token)
+        self.delete(own_job_url,
+                    expected_status=403,
+                    auth_token=self.mngr_token)
+
+        # Managers may not create new jobs
+        new_job = remove_private_keys(own_job)
+        self.post('/api/flamenco/jobs', json=new_job,
+                  expected_status=403,
+                  auth_token=self.mngr_token)
+
+        # Job of other manager should not be GETtable.
+        self.get('/api/flamenco/jobs/%s' % self.job2_id,
+                 expected_status=403,
+                 auth_token=self.mngr_token)
 
         # Manager should not have direct access to tasks; only via scheduler.
         self.get('/api/flamenco/tasks',
