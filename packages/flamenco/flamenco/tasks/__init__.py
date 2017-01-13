@@ -63,7 +63,6 @@ class TaskManager(object):
         return r['_id']
 
     def tasks_for_job(self, job_id, status=None, page=1):
-        self._log.info('Fetching task for job %s', job_id)
         api = pillar_api()
         payload = {
             'where': {
