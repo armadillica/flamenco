@@ -255,6 +255,7 @@ class AbstractSubprocessCommand(AbstractCommand):
         import shlex
 
         cmd_to_log = ' '.join(shlex.quote(s) for s in args)
+        self._log.info('Executing %s', cmd_to_log)
         await self.worker.register_log('Executing %s', cmd_to_log)
 
         self.proc = await asyncio.create_subprocess_exec(
@@ -375,8 +376,11 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
                 return None, 'Missing "%s"' % key
             return None, None
 
+        if value is None and not is_required:
+            return None, None
+
         if not isinstance(value, str):
-            return None, '"%s" must be a string' % key
+            return None, '"%s" must be a string, not a %s' % (key, type(value))
 
         return value, None
 
@@ -420,11 +424,11 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
             '--background',
             settings['filepath'],
         ]
-        if 'render_output' in settings:
+        if settings.get('render_output'):
             cmd.extend(['--render-output', settings['render_output']])
-        if 'format' in settings:
+        if settings.get('format'):
             cmd.extend(['--render-format', settings['format']])
-        if 'frames' in settings:
+        if settings.get('frames'):
             cmd.extend(['--render-frame', settings['frames']])
 
         await self.worker.register_task_update(activity='Starting Blender')
