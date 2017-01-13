@@ -3,8 +3,9 @@
 import logging
 
 import werkzeug.exceptions as wz_exceptions
+from pillar.api.utils.authorization import user_matches_roles
 
-from flamenco import current_flamenco
+from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
 
 log = logging.getLogger(__name__)
 
@@ -25,10 +26,9 @@ def check_job_permission_fetch(job_doc):
         return
 
     if not current_flamenco.manager_manager.user_is_manager():
-        # FIXME: Regular user, undefined behaviour as of yet.
-        # # Run validation process, since GET on nodes entry point is public
-        # check_permissions('flamenco_jobs', job_doc, 'GET',
-        #                   append_allowed_methods=True)
+        # Subscribers can read Flamenco jobs.
+        if user_matches_roles(ROLES_REQUIRED_TO_VIEW_ITEMS):
+            return
         raise wz_exceptions.Forbidden()
 
     mngr_doc_id = job_doc.get('manager')
@@ -43,10 +43,9 @@ def check_job_permission_fetch_resource(response):
         return
 
     if not current_flamenco.manager_manager.user_is_manager():
-        # FIXME: Regular user, undefined behaviour as of yet.
-        # # Run validation process, since GET on nodes entry point is public
-        # check_permissions('flamenco_jobs', job_doc, 'GET',
-        #                   append_allowed_methods=True)
+        # Subscribers can read Flamenco jobs.
+        if user_matches_roles(ROLES_REQUIRED_TO_VIEW_ITEMS):
+            return
         raise wz_exceptions.Forbidden()
 
     @lrudecorator(32)

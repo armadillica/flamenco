@@ -59,13 +59,15 @@ def view_job(project, flamenco_props, job_id):
 
     from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES
 
+    write_access = current_flamenco.current_user_is_flamenco_admin()
+
     return render_template('flamenco/jobs/view_job_embed.html',
                            job=job,
                            project=project,
                            flamenco_props=flamenco_props.to_dict(),
                            flamenco_context=request.args.get('context'),
-                           can_cancel_job=job['status'] in CANCELABLE_JOB_STATES,
-                           can_requeue_job=job['status'] in REQUEABLE_JOB_STATES)
+                           can_cancel_job=write_access and job['status'] in CANCELABLE_JOB_STATES,
+                           can_requeue_job=write_access and job['status'] in REQUEABLE_JOB_STATES)
 
 
 @blueprint.route('/<job_id>/set-status', methods=['POST'])

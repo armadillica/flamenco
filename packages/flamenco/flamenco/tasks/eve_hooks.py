@@ -3,8 +3,9 @@
 import logging
 
 import werkzeug.exceptions as wz_exceptions
+from pillar.api.utils.authorization import user_matches_roles
 
-from flamenco import current_flamenco
+from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
 
 log = logging.getLogger(__name__)
 
@@ -13,6 +14,12 @@ def check_task_permission_fetch(task_doc):
 
     if current_flamenco.current_user_is_flamenco_admin():
         return
+
+    if not current_flamenco.manager_manager.user_is_manager():
+        # Subscribers can read Flamenco tasks.
+        if user_matches_roles(ROLES_REQUIRED_TO_VIEW_ITEMS):
+            return
+        raise wz_exceptions.Forbidden()
 
     if not current_flamenco.manager_manager.user_manages(mngr_doc_id=task_doc.get('manager')):
         # FIXME: Regular user or not task-owning manager, undefined behaviour as of yet.
@@ -27,6 +34,11 @@ def check_task_permission_fetch(task_doc):
 def check_task_permission_fetch_resource(response):
     if current_flamenco.current_user_is_flamenco_admin():
         return
+
+    if not current_flamenco.manager_manager.user_is_manager():
+        # Subscribers can read Flamenco tasks.
+        if user_matches_roles(ROLES_REQUIRED_TO_VIEW_ITEMS):
+            return
 
     raise wz_exceptions.Forbidden()
 
