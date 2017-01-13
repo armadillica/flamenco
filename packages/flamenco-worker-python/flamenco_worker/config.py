@@ -48,7 +48,12 @@ def load_config(config_file: str = None,
                 show_effective_config: bool = False) -> configparser.ConfigParser:
     """Loads one or more configuration files."""
 
-    confparser = configparser.ConfigParser()
+    # Logging and the default interpolation of configparser both use the
+    # same syntax for variables. To make it easier to work with, we use
+    # another interpolation for config files, so they now use ${loglevel}
+    # whereas logging still uses %(levelname)s.
+    confparser = configparser.ConfigParser(
+        interpolation=configparser.ExtendedInterpolation())
     confparser.read_dict(DEFAULT_CONFIG)
 
     if config_file:
@@ -64,10 +69,19 @@ def load_config(config_file: str = None,
     if show_effective_config:
         import sys
         log.info('Effective configuration:')
-        to_show = configparser.ConfigParser()
+        to_show = configparser.ConfigParser(
+            interpolation=configparser.ExtendedInterpolation()
+        )
         to_show.read_dict(confparser)
         if to_show.get(CONFIG_SECTION, 'worker_secret'):
             to_show.set(CONFIG_SECTION, 'worker_secret', '-hidden-')
         to_show.write(sys.stderr)
 
     return confparser
+
+
+def configure_logging(confparser: configparser.ConfigParser):
+    import logging.config
+
+    logging.config.fileConfig(confparser, disable_existing_loggers=True)
+    logging.captureWarnings(capture=True)

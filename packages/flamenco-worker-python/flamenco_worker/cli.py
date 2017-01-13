@@ -11,48 +11,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config',
                         help='Load this configuration file instead of the default files.')
-    parser.add_argument('-q', '--quiet', action='store_true',
-                        help='Log less (only WARNING and more severe).')
     parser.add_argument('-v', '--verbose', action='store_true',
-                        help='Log more (DEBUG and more severe).')
+                        help='Show configuration before starting, '
+                             'and asyncio task status at shutdown.')
     args = parser.parse_args()
-
-    # Set up logging
-    if args.quiet:
-        level = 'WARNING'
-    elif args.verbose:
-        level = 'DEBUG'
-    else:
-        level = 'INFO'
-    logging.config.dictConfig({
-        'version': 1,
-        'formatters': {
-            'default': {'format': '%(asctime)-15s %(levelname)8s %(name)s %(message)s'}
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'default',
-                'stream': 'ext://sys.stderr',
-            }
-        },
-        'loggers': {
-            'flamenco_worker': {'level': level},
-        },
-        'root': {
-            'level': 'WARNING',
-            'handlers': [
-                'console',
-            ],
-        }
-    })
-
-    log = logging.getLogger(__name__)
-    log.debug('Starting')
 
     # Load configuration
     from . import config
     confparser = config.load_config(args.config, args.verbose)
+    config.configure_logging(confparser)
+
+    log = logging.getLogger(__name__)
+    log.debug('Starting')
 
     # Construct the AsyncIO loop
     loop = construct_asyncio_loop()
@@ -126,11 +96,12 @@ def main():
     log.warning('Closing asyncio loop')
 
     # Report on the asyncio task status
-    all_tasks = asyncio.Task.all_tasks()
-    if not len(all_tasks):
-        log.debug('no more scheduled tasks, this is a clean shutdown.')
-    elif all(task.done() for task in all_tasks):
-        log.debug('all %i tasks are done, this is a clean shutdown.', len(all_tasks))
+    if args.verbose:
+        all_tasks = asyncio.Task.all_tasks()
+        if not len(all_tasks):
+            log.info('no more scheduled tasks, this is a clean shutdown.')
+        elif all(task.done() for task in all_tasks):
+            log.info('all %i tasks are done, this is a clean shutdown.', len(all_tasks))
 
         import gc
         import traceback
@@ -145,15 +116,15 @@ def main():
             # noinspection PyBroadException
             try:
                 res = task.result()
-                log.debug('   task #%i: %s result=%r', task_idx, task, res)
+                log.info('   task #%i: %s result=%r', task_idx, task, res)
             except asyncio.CancelledError:
                 # No problem, we want to stop anyway.
-                log.debug('   task #%i: %s cancelled', task_idx, task)
+                log.info('   task #%i: %s cancelled', task_idx, task)
             except Exception:
                 print('{}: resulted in exception'.format(task))
                 traceback.print_exc()
             # for ref in gc.get_referrers(task):
-            #     log.debug('      - referred by %s', ref)
+            #     log.info('      - referred by %s', ref)
 
     loop.close()
 
