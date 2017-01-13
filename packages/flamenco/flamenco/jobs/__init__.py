@@ -104,9 +104,9 @@ class JobManager(object):
         api = pillar_api()
         try:
             j = Job.all({
-                'where': {
-                    'project': project_id,
-                }}, api=api)
+                'where': {'project': project_id},
+                'sort': [('_updated', -1), ('_created', -1)],
+            }, api=api)
         except pillarsdk.ResourceNotFound:
             return {'_items': [], '_meta': {'total': 0}}
         return j
