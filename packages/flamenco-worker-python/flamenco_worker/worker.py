@@ -238,7 +238,7 @@ class FlamencoWorker:
         await asyncio.sleep(delay)
 
         # TODO: use exponential backoff instead of retrying every fixed N seconds.
-        self._log.info('Fetching task')
+        self._log.debug('Fetching task')
         try:
             resp = await self.manager.post('/task', loop=self.loop)
         except requests.exceptions.RequestException as ex:
@@ -248,8 +248,8 @@ class FlamencoWorker:
             return
 
         if resp.status_code == 204:
-            self._log.info('No tasks available, will retry in %i seconds.',
-                           FETCH_TASK_EMPTY_RETRY_DELAY)
+            self._log.debug('No tasks available, will retry in %i seconds.',
+                            FETCH_TASK_EMPTY_RETRY_DELAY)
             self.schedule_fetch_task(FETCH_TASK_EMPTY_RETRY_DELAY)
             return
 

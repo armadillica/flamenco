@@ -112,8 +112,17 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 
 	config = flamenco.GetConf()
+	has_tls := config.TLSCert != "" && config.TLSKey != ""
 	log.Println("MongoDB database server :", config.DatabaseUrl)
 	log.Println("Upstream Flamenco server:", config.Flamenco)
+	log.Println("My URL is               :", config.OwnUrl)
+	log.Println("Listening at            :", config.Listen)
+	if has_tls {
+		config.OwnUrl = strings.Replace(config.OwnUrl, "http://", "https://", 1)
+	} else {
+		config.OwnUrl = strings.Replace(config.OwnUrl, "https://", "http://", 1)
+		log.Println("WARNING: TLS not enabled!")
+	}
 
 	session = flamenco.MongoSession(&config)
 	upstream = flamenco.ConnectUpstream(&config, session)
@@ -130,7 +139,6 @@ func main() {
 	router.HandleFunc("/tasks/{task-id}/update", worker_authenticator.Wrap(http_task_update)).Methods("POST")
 	router.HandleFunc("/may-i-run/{task-id}", worker_authenticator.Wrap(http_worker_may_run_task)).Methods("GET")
 	router.HandleFunc("/kick", http_kick)
-	log.Println("Listening at            :", config.Listen)
 
 	upstream.SendStartupNotification()
 	go task_update_pusher.Go()
@@ -147,16 +155,9 @@ func main() {
 	}()
 
 	// Fall back to insecure server if TLS certificate/key is not defined.
-	if config.TLSCert == "" || config.TLSKey == "" {
-		config.OwnUrl = strings.Replace(config.OwnUrl, "https://", "http://", 1)
-		log.Println("My URL is               :", config.OwnUrl)
-		log.Println("WARNING: TLS not enabled!")
-
+	if !has_tls {
 		log.Fatal(http.ListenAndServe(config.Listen, router))
 	} else {
-		config.OwnUrl = strings.Replace(config.OwnUrl, "http://", "https://", 1)
-		log.Println("My URL is               :", config.OwnUrl)
-
 		log.Fatal(http.ListenAndServeTLS(
 			config.Listen,
 			config.TLSCert,
