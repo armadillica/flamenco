@@ -78,7 +78,7 @@ func (self *UpstreamConnection) KickDownloader(synchronous bool) {
 		defer self.done_wg.Done()
 
 		for {
-			switch {
+			select {
 			case <-pingback:
 				log.Println("KickDownloader: done.")
 				return
