@@ -3,50 +3,58 @@
 | {% block page_title %}Jobs - {{ project.name }}{% endblock %}
 | {% block body %}
 #col_main
-	.col_header.item-list-header
-		// TODO: implement the stats
-		span(title='In the current project') {{ stats.nr_of_jobs }} jobs | {{ stats.nr_of_tasks }} tasks
-		a.item-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
+	#col_main-overlay
+		#col_main-overlay-close
+			i.pi-cancel
+		.col_header
+			span.header_text Task Details
+		#col_main-overlay-content
 
-	.item-list.col-scrollable
-		.table
-			.table-head
-				.table-row
-					.table-cell.item-status
-						span.collapser(title="Collapse status column") Status
-					.table-cell.item-name
-						span.collapser(title="Collapse name column") Name
-					.table-cell.item-id
-						span.collapser(title="Collapse ID column") ID
-					.table-cell.item-priority
-						span.collapser(title="Collapse priority column") Priority
+	#col_main-content
+		.col_header.item-list-header
+			// TODO: implement the stats
+			span.header_text(title='In the current project') {{ stats.nr_of_jobs }} jobs | {{ stats.nr_of_tasks }} tasks
+			a.item-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
 
-			.table-body
-				| {% for job in jobs %}
-				| {% set link_url = url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) %}
-				.table-row(
-					id="job-{{ job._id }}",
-					class="status-{{ job.status }}{% if job._id == open_job_id %} active{% endif %}")
-					.table-cell.item-status
-						a(data-job-id="{{ job._id }}",
-							href="{{ link_url }}",
-							class="job-link")
-							| {{ job.status | undertitle }}
-					.table-cell.item-name
-						a(data-job-id="{{ job._id }}",
-							href="{{ link_url }}",
-							class="job-link")
-							span(class="job-name-{{ job._id }}") {{ job.name }}
-					.table-cell.item-id
-						a(data-job-id="{{ job._id }}",
-							href="{{ link_url }}",
-							class="job-link")
-							| {{ job._id }}
-					.table-cell.item-priority
-						a(data-job-id="{{ job._id }}",
-							href="{{ link_url }}")
-							span(class="job-priority-{{ job._id }}") {{ job.priority }}
-				| {% endfor %}
+		.item-list.col-scrollable
+			.table
+				.table-head
+					.table-row
+						.table-cell.item-status
+							span.collapser(title="Collapse status column") Status
+						.table-cell.item-name
+							span.collapser(title="Collapse name column") Name
+						.table-cell.item-id
+							span.collapser(title="Collapse ID column") ID
+						.table-cell.item-priority
+							span.collapser(title="Collapse priority column") Priority
+
+				.table-body
+					| {% for job in jobs %}
+					| {% set link_url = url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) %}
+					.table-row(
+						id="job-{{ job._id }}",
+						class="status-{{ job.status }}{% if job._id == open_job_id %} active{% endif %}")
+						.table-cell.item-status
+							a(data-job-id="{{ job._id }}",
+								href="{{ link_url }}",
+								class="job-link")
+								| {{ job.status | undertitle }}
+						.table-cell.item-name
+							a(data-job-id="{{ job._id }}",
+								href="{{ link_url }}",
+								class="job-link")
+								span(class="job-name-{{ job._id }}") {{ job.name }}
+						.table-cell.item-id
+							a(data-job-id="{{ job._id }}",
+								href="{{ link_url }}",
+								class="job-link")
+								| {{ job._id }}
+						.table-cell.item-priority
+							a(data-job-id="{{ job._id }}",
+								href="{{ link_url }}")
+								span(class="job-priority-{{ job._id }}") {{ job.priority }}
+					| {% endfor %}
 
 .col-splitter
 
@@ -82,13 +90,13 @@ script.
 	});
 
 	$('body').on('click', '.table-cell-spacer', function(){
-
 		/* We need to find every cell matching the same classes */
 		same_cells = '.' + $(this).prev().attr('class').split(' ').join('.');
 		$(same_cells).show();
 		$(same_cells).next().remove();
 	});
 
+	/* Highlight the corresponding cell type in the header */
 	$('.table-body .table-cell').mouseenter(function(){
 		same_cells = '.' + $(this).attr('class').split(' ').join('.');
 		$('.table-head ' + same_cells).addClass('highlight');
@@ -97,6 +105,7 @@ script.
 		$('.table-head ' + same_cells).removeClass('highlight');
 	});
 
+	/* Highlight the corresponding cell type in the body */
 	$('.table-head .table-cell').mouseenter(function(){
 		same_cells = '.' + $(this).attr('class').split(' ').join('.');
 		$('.table-body ' + same_cells).addClass('highlight');

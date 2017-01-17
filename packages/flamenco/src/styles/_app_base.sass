@@ -47,7 +47,31 @@ nav.sidebar
 		&#item-save
 			+button($color-success, 3px)
 
-/* Attract specific table tweaks */
+/* Flamenco specific table tweaks */
+#col_main-overlay
+	position: absolute
+	z-index: 2
+	right: 0
+	left: 0
+	background-color: $color-background
+	opacity: 0
+	visibility: hidden
+
+	&.active
+		opacity: 1
+		visibility: visible
+
+	#col_main-overlay-close
+		position: absolute
+		z-index: 2
+		top: 0
+		right: 0
+		padding: 10px
+
+		&:hover
+			color: $color-primary
+			cursor: pointer
+
 .item-list
 	overflow-x: auto
 	.table
