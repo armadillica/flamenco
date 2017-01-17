@@ -1,1 +1,31 @@
-site_name: Flamenco
+# Project information
+site_name: 'Flamenco'
+site_description: 'Free and Open Source render management'
+site_author: 'The Flamenco Team'
+site_url: 'https://flamenco.io/'
+
+# Repository
+repo_name: 'GitHub'
+repo_url: 'https://github.com/armadillica/flamenco'
+
+# Copyright
+copyright: 'Copyright &copy; 2016 Blender Institute - CC-BY-SA v4.0.'
+
+theme: 'material'
+
+# Options
+extra:
+  logo: 'img/logo_flamenco_white.svg'
+  palette:
+    primary: 'red'
+    accent: 'red'
+  social:
+    - type: 'github'
+      link: 'https://github.com/armadillica'
+    - type: 'twitter'
+      link: 'https://twitter.com/flamenco_io'
+
+# Google Analytics
+google_analytics:
+  - 'UA-1418081-11'
+  - 'auto'
