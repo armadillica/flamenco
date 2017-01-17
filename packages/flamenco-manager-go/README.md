@@ -7,13 +7,14 @@ This is the Flamenco Manager implementation in Go.
 `$FM` denotes the directory containing a checkout of Flamenco Manager, that is, the
 absolute path of this `flamenco-manager-go` directory.
 
-0. Install Go 1.7 or newer
-1. `export GOPATH=$FM`
-2. `cd $FM/src/flamenco-manager`
-3. Download all dependencies with `go get`
-4. Download Flamenco test dependencies with `go get -t ./flamenco`
-5. Run the unittests with `go test ./flamenco`
-6. Build your first Flamenco Manager with `go build`; this will create an executable
+0. Make sure you have MongoDB up and running (on localhost)
+1. Install Go 1.7 or newer
+2. `export GOPATH=$FM`
+3. `cd $FM/src/flamenco-manager`
+4. Download all dependencies with `go get`
+5. Download Flamenco test dependencies with `go get -t ./flamenco`
+6. Run the unittests with `go test ./flamenco`
+7. Build your first Flamenco Manager with `go build`; this will create an executable
    `flamenco-manager` in `$FM/src/flamenco-manager`
 
 ### Testing
