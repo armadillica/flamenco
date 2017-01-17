@@ -21,7 +21,7 @@
 					.table-cell.item-priority
 						span.collapser(title="Collapse priority column") Priority
 
-			.table-body.has-thumbnails
+			.table-body
 				| {% for job in jobs %}
 				| {% set link_url = url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) %}
 				.table-row(
