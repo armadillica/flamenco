@@ -11,9 +11,9 @@
 		a.col-list-item.task-list-item(
 			id="task-{{task._id}}",
 			data-task-id="{{task._id}}",
-			class="status-{{ task.properties.status }} task-link",
+			class="status-{{ task.status }} task-link",
 			href="{{ url_for('flamenco.tasks.perproject.view_task', project_url=project.url, task_id=task._id) }}")
-			span.status-indicator(title="Status: {{ task.properties.status | undertitle }}")
+			span.status-indicator(title="Status: {{ task.status | undertitle }}")
 			| {% if task._parent_info %}
 			span.shotname(title="Shot {{ task._parent_info.name }}") {{ task._parent_info.name }}
 			| {% endif %}
