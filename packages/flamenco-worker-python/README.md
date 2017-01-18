@@ -48,9 +48,6 @@ the worker will attempt to register itself at the Master.
 Once registered via a POST to the manager's `/register-worker` endpoint, the `worker_id` and
 `worker_secret` will be written to `$HOME/.flamenco-worker.cfg`
 
-**NOTE:** If this fails, the process aborts. We might want to implement a retry loop for
-registration too, at some point.
-
 ## Task fetch & execution
 
 1. A task is obtained by the FlamencoWorker from the manager via a POST to its `/task` endpoint.
@@ -72,3 +69,12 @@ registration too, at some point.
 Pressing [CTRL]+[C] will cause a clean shutdown of the worker.
 If there is a task currently running, it will be aborted and marked as 'failed'. Any pending
 task updates are sent to the Manager before stopping the process.
+
+
+## Systemd integration
+
+To run Flamenco Worker as a systemd-managed service, copy `flamenco-worker.service` to
+`/etc/systemd/system/flamenco-worker.service`, then run `systemctl daemon-reload`.
+
+After installation of this service, `systemctl {start,stop,status,restart} flamenco-worker`
+commands can be used to manage it.
