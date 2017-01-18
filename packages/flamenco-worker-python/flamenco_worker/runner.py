@@ -385,27 +385,29 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
         return value, None
 
     def validate(self, settings: dict):
-        import os.path
+        from pathlib import Path
 
         blender_cmd, err = self._setting(settings, 'blender_cmd', True)
         if err:
             return err
-        if not os.path.exists(blender_cmd):
+        if not Path(blender_cmd).exists():
             return 'blender_cmd %r does not exist' % blender_cmd
 
         filepath, err = self._setting(settings, 'filepath', True)
         if err:
             return err
-        if not os.path.exists(filepath):
+        if not Path(filepath).exists():
             return 'filepath %r does not exist' % filepath
 
         render_output, err = self._setting(settings, 'render_output', False)
         if err:
             return err
         if render_output:
-            dirname = os.path.dirname(render_output)
-            if not os.path.exists(dirname):
-                return '"render_output": dir %s does not exist' % dirname
+            outpath = Path(render_output).parent
+            try:
+                outpath.mkdir(parents=True, exist_ok=True)
+            except Exception as ex:
+                return '"render_output": dir %s cannot be created: %s' % (outpath, ex)
 
         _, err = self._setting(settings, 'frames', False)
         if err:
