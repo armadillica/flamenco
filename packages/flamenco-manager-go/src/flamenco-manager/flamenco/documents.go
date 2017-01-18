@@ -62,6 +62,7 @@ type Worker struct {
 	Id                bson.ObjectId `bson:"_id,omitempty" json:"_id,omitempty"`
 	Secret            string        `bson:"-" json:"-"`
 	HashedSecret      []byte        `bson:"hashed_secret" json:"-"`
+	Nickname          string        `bson:"nickname" json:"nickname"`
 	Address           string        `bson:"address" json:"address"`
 	Status            string        `bson:"status" json:"status"`
 	Platform          string        `bson:"platform" json:"platform"`
