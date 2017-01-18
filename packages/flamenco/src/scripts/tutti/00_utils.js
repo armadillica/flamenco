@@ -127,7 +127,13 @@
 
 }(jQuery));
 
-/* Clear the modal inner html when hidding */
-$('#modal').on('hidden.bs.modal', function () {
-    $("#modal .modal-body").html('');
+$(document).ready(function() {
+    $('#col_main-overlay-close').on('click', function(){
+        $('#col_main-overlay').removeClass('active');
+        $('#col_main-overlay-content').html('');
+    });
+    /* Clear the modal inner html when hidding */
+    $('#modal').on('hidden.bs.modal', function () {
+        $("#modal .modal-body").html('');
+    });
 });

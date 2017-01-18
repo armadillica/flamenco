@@ -19,6 +19,8 @@ html(lang="en")
 		script(src="{{ url_for('static_pillar', filename='assets/js/tutti.min.js') }}")
 		script(src="{{ url_for('static_flamenco', filename='assets/js/generated/tutti.min.js') }}")
 
+		link(href="{{ url_for('static_flamenco', filename='assets/img/favicon.png') }}", rel="shortcut icon")
+
 		| {% block style %}{% endblock %}
 
 	body("{% block bodyattrs %}{% if project %}data-project-url='{{ project.url }}'{% endif %}{% endblock %}")

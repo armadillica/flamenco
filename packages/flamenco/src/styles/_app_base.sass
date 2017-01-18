@@ -47,7 +47,31 @@ nav.sidebar
 		&#item-save
 			+button($color-success, 3px)
 
-/* Attract specific table tweaks */
+/* Flamenco specific table tweaks */
+#col_main-overlay
+	position: absolute
+	z-index: 2
+	right: 0
+	left: 0
+	background-color: $color-background
+	opacity: 0
+	visibility: hidden
+
+	&.active
+		opacity: 1
+		visibility: visible
+
+	#col_main-overlay-close
+		position: absolute
+		z-index: 2
+		top: 0
+		right: 0
+		padding: 10px
+
+		&:hover
+			color: $color-primary
+			cursor: pointer
+
 .item-list
 	overflow-x: auto
 	.table
@@ -67,8 +91,12 @@ nav.sidebar
 			&.highlight .collapser
 				color: $color-primary-dark
 
-			&.item-thumbnail
-				width: 120px
+			&.item-status
+				min-width: 80px
+
+			&.item-name
+				text-align: left
+				padding-left: 5px
 
 			span.collapser
 				cursor: pointer
@@ -109,12 +137,6 @@ nav.sidebar
 						margin: auto 0
 						line-height: 1.1em
 
-			&.item-thumbnail
-				border-left: none
-				border-bottom: none
-				img
-					transition: opacity 150ms ease-in-out
-
 			&.item-progress a
 				color: $color-text-dark-secondary
 
@@ -127,7 +149,7 @@ nav.sidebar
 		+text-overflow-ellipsis
 	a.item-project
 		color: $color-text-dark-secondary
-		margin-right: 10px
+		margin: 0 10px
 
 /* General style for activities in all places */
 .d-activity

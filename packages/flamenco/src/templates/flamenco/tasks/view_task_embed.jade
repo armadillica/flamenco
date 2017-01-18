@@ -1,5 +1,5 @@
 .flamenco-box.task.with-status(
-	class="status-{{ task.properties.status }}")
+	class="status-{{ task.status }}")
 	form#task_form(onsubmit="return false")
 		input(type='hidden',name='_etag',value='{{ task._etag }}')
 		.input-group

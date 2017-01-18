@@ -4,8 +4,8 @@ This is the Flamenco Manager implementation in Go.
 
 ## Starting development
 
-`$FM` denotes the directory containing a checkout of Flamenco Manager, that is, the
-absolute path of this `flamenco-manager-go` directory.
+`$FM` denotes the directory containing a checkout of Flamenco Manager, that is, the absolute path 
+of this `flamenco-manager-go` directory.
 
 0. Make sure you have MongoDB up and running (on localhost)
 1. Install Go 1.7 or newer
@@ -15,7 +15,9 @@ absolute path of this `flamenco-manager-go` directory.
 5. Download Flamenco test dependencies with `go get -t ./flamenco`
 6. Run the unittests with `go test ./flamenco`
 7. Build your first Flamenco Manager with `go build`; this will create an executable
-   `flamenco-manager` in `$FM/src/flamenco-manager`
+   `flamenco-manager` in `$FM/src/flamenco-manager` as well as an executable in the current folder
+8. Copy `flamenco-manager-example.yaml` and name it `flamenco-manager.yaml` and then prepre to edit 
+   it with the info generated after creating a manager document on the Server
 
 ### Testing
 

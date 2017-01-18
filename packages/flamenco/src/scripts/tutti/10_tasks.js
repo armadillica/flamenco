@@ -1,5 +1,6 @@
 /**
- * Open an item such as tasks/jobs in the #item-details div
+ * Open an item such as tasks/jobs in the corresponding div
+ * Jobs load on #item-details, Tasks load on #col_main-overlay-content
  */
 function item_open(item_id, item_type, pushState, project_url)
 {
@@ -13,8 +14,6 @@ function item_open(item_id, item_type, pushState, project_url)
             throw new ReferenceError("ProjectUtils.projectUrl() undefined");
         }
     }
-
-    $('#col_right .col_header span.header_text').text(item_type + ' details');
 
     // Style elements starting with item_type and dash, e.g. "#job-uuid"
     $('[id^="' + item_type + '-"]').removeClass('active');
@@ -31,7 +30,17 @@ function item_open(item_id, item_type, pushState, project_url)
 
     $.get(item_url, function(item_data) {
         statusBarClear();
-        $('#item-details').html(item_data);
+
+        if (ProjectUtils.context() == 'job' && item_type == 'task'){
+            $('#col_main-overlay-content').html(item_data);
+            $('#col_main-overlay .col_header span.header_text').text(item_type + ' details');
+            $('#col_main-overlay').addClass('active');
+        } else {
+            $('#item-details').html(item_data);
+            $('#col_right .col_header span.header_text').text(item_type + ' details');
+            $('#col_main-overlay').removeAttr('class');
+        }
+
     }).fail(function(xhr) {
         if (console) {
             console.log('Error fetching task', item_id, 'from', item_url);

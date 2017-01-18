@@ -5,10 +5,11 @@
 #task-list.col-list
 	| {% for task in tasks %}
 	a.col-list-item.task-list-item(
-	data-task-id="{{ task._id }}"
+	data-task-id="{{ task._id }}",
+	id="task-{{ task._id }}",
 	class="status-{{ task.status }} task-link",
 	href="{{ url_for('flamenco.tasks.perproject.view_task', project_url=project.url, task_id=task._id) }}")
-		span.status-indicator(title="Status: {{ task.properties.status | undertitle }}")
+		span.status-indicator(title="Status: {{ task.status | undertitle }}")
 		span.name {{ task.name }}
 		span.type {{ task.status }} - {{ task.job_type | undertitle }}
 	| {% endfor %}
