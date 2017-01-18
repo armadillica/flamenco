@@ -19,6 +19,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const FLAMENCO_VERSION = "2.0-beta2"
+
 // MongoDB session
 var session *mgo.Session
 var config flamenco.Conf
@@ -110,6 +112,7 @@ func shutdown() {
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+	log.Printf("Starting Flamenco Manager version %s", FLAMENCO_VERSION)
 
 	config = flamenco.GetConf()
 	has_tls := config.TLSCert != "" && config.TLSKey != ""
