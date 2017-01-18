@@ -10,6 +10,7 @@ from . import upstream
 from . import upstream_update_queue
 
 # All durations/delays/etc are in seconds.
+REGISTER_AT_MANAGER_FAILED_RETRY_DELAY = 30
 FETCH_TASK_FAILED_RETRY_DELAY = 10  # when we failed obtaining a task
 FETCH_TASK_EMPTY_RETRY_DELAY = 5  # when there are no tasks to perform
 FETCH_TASK_DONE_SCHEDULE_NEW_DELAY = 3  # after a task is completed
@@ -96,18 +97,18 @@ class FlamencoWorker:
             return None
         return self.task_id
 
-    async def startup(self):
+    async def startup(self, *, may_retry_register=True):
         self._log.info('Starting up')
 
         if not self.worker_id or not self.worker_secret:
-            await self.register_at_manager()
+            await self.register_at_manager(may_retry_loop=may_retry_register)
 
         # Once we know our ID and secret, update the manager object so that we
         # don't have to pass our authentication info each and every call.
         self.manager.auth = (self.worker_id, self.worker_secret)
         self.schedule_fetch_task()
 
-    async def register_at_manager(self):
+    async def register_at_manager(self, *, may_retry_loop: bool):
         import requests
 
         self._log.info('Registering at manager')
@@ -115,21 +116,29 @@ class FlamencoWorker:
         self.worker_secret = generate_secret()
         platform = detect_platform()
 
-        try:
-            resp = await self.manager.post(
-                '/register-worker',
-                json={
-                    'secret': self.worker_secret,
-                    'platform': platform,
-                    'supported_job_types': self.job_types,
-                },
-                auth=None,  # explicitly do not use authentication
-                loop=self.loop,
-            )
-        except requests.ConnectionError:
-            self._log.error('Unable to register at manager, aborting.')
-            # TODO Sybren: implement a retry loop instead of aborting immediately.
-            raise UnableToRegisterError()
+        while True:
+            try:
+                resp = await self.manager.post(
+                    '/register-worker',
+                    json={
+                        'secret': self.worker_secret,
+                        'platform': platform,
+                        'supported_job_types': self.job_types,
+                    },
+                    auth=None,  # explicitly do not use authentication
+                    loop=self.loop,
+                )
+                resp.raise_for_status()
+            except requests.RequestException as ex:
+                if not may_retry_loop:
+                    self._log.error('Unable to register at manager: %s', ex)
+                    raise UnableToRegisterError()
+
+                self._log.warning('Unable to register at manager, retrying in %i seconds: %s',
+                                  REGISTER_AT_MANAGER_FAILED_RETRY_DELAY, ex)
+                await asyncio.sleep(REGISTER_AT_MANAGER_FAILED_RETRY_DELAY)
+            else:
+                break
 
         resp.raise_for_status()
 

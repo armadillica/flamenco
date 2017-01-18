@@ -56,7 +56,7 @@ class WorkerStartupTest(AbstractFWorkerTest):
     # Mock merge_with_home_config() so that it doesn't overwrite actual config.
     @unittest.mock.patch('flamenco_worker.config.merge_with_home_config')
     def test_startup_already_registered(self, mock_merge_with_home_config):
-        self.asyncio_loop.run_until_complete(self.worker.startup())
+        self.asyncio_loop.run_until_complete(self.worker.startup(may_retry_register=False))
         mock_merge_with_home_config.assert_not_called()  # Starting with known ID/secret
         self.manager.post.assert_not_called()
         self.tuqueue.queue.assert_not_called()
@@ -72,7 +72,7 @@ class WorkerStartupTest(AbstractFWorkerTest):
             '_id': '5555',
         }))
 
-        self.asyncio_loop.run_until_complete(self.worker.startup())
+        self.asyncio_loop.run_until_complete(self.worker.startup(may_retry_register=False))
         mock_merge_with_home_config.assert_called_once_with(
             {'worker_id': '5555',
              'worker_secret': self.worker.worker_secret}
@@ -94,7 +94,7 @@ class WorkerStartupTest(AbstractFWorkerTest):
     def test_startup_registration_unhappy(self, mock_merge_with_home_config):
         """Test that startup is aborted when the worker can't register."""
 
-        from flamenco_worker.worker import detect_platform
+        from flamenco_worker.worker import detect_platform, UnableToRegisterError
         from mock_responses import JsonResponse, CoroMock
 
         self.worker.worker_id = None
@@ -104,9 +104,9 @@ class WorkerStartupTest(AbstractFWorkerTest):
         }, status_code=500))
 
         # Mock merge_with_home_config() so that it doesn't overwrite actual config.
-        self.assertRaises(requests.HTTPError,
+        self.assertRaises(UnableToRegisterError,
                           self.asyncio_loop.run_until_complete,
-                          self.worker.startup())
+                          self.worker.startup(may_retry_register=False))
         mock_merge_with_home_config.assert_not_called()
 
         assert isinstance(self.manager.post, unittest.mock.Mock)
