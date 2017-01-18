@@ -469,10 +469,9 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
     async def process_line(self, line: str) -> typing.Optional[str]:
         """Processes the line, returning None to ignore it."""
 
-        # See if there are any warnings about missing files. If so, we simply abort the render.
+        # See if there are any warnings about missing files. If so, we update the activity for it.
         if 'Warning: Unable to open' in line or self.re_path_not_found.search(line):
             await self.worker.register_task_update(activity=line)
-            raise CommandExecutionError(line)
 
         render_info = self.parse_render_line(line)
         if render_info:
