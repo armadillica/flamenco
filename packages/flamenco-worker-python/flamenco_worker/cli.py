@@ -65,6 +65,20 @@ def main():
         loop=loop,
     )
 
+    def shutdown(signum, stackframe):
+        """Perform a clean shutdown."""
+
+        # Raise an exception, so that the exception is bubbled upwards, until
+        # the asyncio loop stops executing the current task. Only then can we
+        # run things like loop.run_until_complete(mir_work_task).
+        log.warning('Shutting down due to signal %i', signum)
+        raise KeyboardInterrupt()
+
+    # Shut down cleanly upon TERM signal
+    import signal
+    signal.signal(signal.SIGTERM, shutdown)
+    signal.signal(signal.SIGINT, shutdown)
+
     # Start asynchronous tasks.
     asyncio.ensure_future(tuqueue.work(loop=loop))
     mir_work_task = asyncio.ensure_future(mir.work())
@@ -76,9 +90,7 @@ def main():
         # The worker will have logged something, we'll just shut down cleanly.
         pass
     except KeyboardInterrupt:
-        log.warning('Shutting down due to keyboard interrupt')
         shutdown_future.cancel()
-
         mir_work_task.cancel()
         loop.run_until_complete(mir_work_task)
 
