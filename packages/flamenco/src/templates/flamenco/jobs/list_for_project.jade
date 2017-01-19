@@ -72,7 +72,8 @@
 script.
 	{% if open_task_id %}
 		$(function() { item_open('{{ open_task_id }}', 'task', false); });
-	{% elif open_job_id %}
+	{% endif %}
+	{% if open_job_id %}
 		$(function() { item_open('{{ open_job_id }}', 'job', false); });
 	{% endif %}
 
