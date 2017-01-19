@@ -65,12 +65,12 @@
 	.debug-info
 		a.debug-info-toggle(role='button',
 			data-toggle='collapse',
-			href='#debug-content',
+			href='#debug-content-task',
 			aria-expanded='false',
-			aria-controls='debug-content')
+			aria-controls='debug-content-task')
 			i.pi-info
 			| Debug Info
-		#debug-content.collapse
+		#debug-content-task.collapse
 			pre.
 				{{ task.to_dict() | pprint }}
 		| {% endif %}
