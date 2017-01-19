@@ -1,3 +1,4 @@
+# coding=utf-8
 import logging
 
 from flask import Blueprint, render_template, request
@@ -7,7 +8,9 @@ import werkzeug.exceptions as wz_exceptions
 from pillar.web.system_util import pillar_api
 
 from flamenco.routes import flamenco_project_view
-from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
+from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS
+
+TASK_LOG_PAGE_SIZE = 10
 
 perjob_blueprint = Blueprint('flamenco.tasks.perjob', __name__,
                              url_prefix='/<project_url>/jobs/<job_id>')
@@ -38,6 +41,7 @@ def list_for_job(project, job_id, task_id=None):
 
 
 @perproject_blueprint.route('/<task_id>')
+@flask_login.login_required
 @flamenco_project_view(extension_props=True)
 def view_task(project, flamenco_props, task_id):
     from flamenco.tasks.sdk import Task
@@ -61,3 +65,48 @@ def view_task(project, flamenco_props, task_id):
                            project=project,
                            flamenco_props=flamenco_props.to_dict(),
                            flamenco_context=request.args.get('context'))
+
+
+@perproject_blueprint.route('/<task_id>/log')
+@flask_login.login_required
+@flamenco_project_view()
+def view_task_log(project, task_id):
+    """Shows a limited number of task log entries.
+
+    Pass page=N (N≥1) to request further entries.
+    """
+
+    from pillarsdk import ResourceNotFound
+    from pillar.web.utils import is_valid_id, last_page_index
+    from flamenco.tasks.sdk import TaskLog
+
+    if not is_valid_id(task_id):
+        raise wz_exceptions.UnprocessableEntity()
+
+    # Task list is public, task details are not.
+    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_LOGS):
+        raise wz_exceptions.Forbidden()
+
+    page_idx = int(request.args.get('page', 1))
+    api = pillar_api()
+    try:
+        logs = TaskLog.all({'where': {'task': task_id},
+                            'page': page_idx,
+                            'max_results': TASK_LOG_PAGE_SIZE},
+                           api=api)
+    except ResourceNotFound:
+        logs = {'_items': [],
+                '_meta': {'total': 0,
+                          'page': page_idx,
+                          'max_results': TASK_LOG_PAGE_SIZE}}
+
+    has_prev_page = page_idx > 1
+    has_next_page = page_idx < last_page_index(logs['_meta'])
+
+    return render_template('flamenco/tasks/view_task_log_embed.html',
+                           page_idx=page_idx,
+                           logs=logs,
+                           has_prev_page=has_prev_page,
+                           has_next_page=has_next_page,
+                           project=project,
+                           task_id=task_id)

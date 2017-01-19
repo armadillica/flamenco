@@ -5,7 +5,7 @@ import logging
 import werkzeug.exceptions as wz_exceptions
 from pillar.api.utils.authorization import user_matches_roles
 
-from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
+from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +29,25 @@ def check_task_permission_fetch(task_doc):
         raise wz_exceptions.Forbidden()
 
     # Managers can re-fetch their own tasks to validate their local task cache.
+
+
+def check_task_log_permission_fetch(task_log_docs):
+    if user_matches_roles(ROLES_REQUIRED_TO_VIEW_LOGS):
+        return
+    raise wz_exceptions.Forbidden()
+
+
+def task_logs_remove_fields(task_log_docs):
+    """Some fields are added by Eve, but we don't need those for task logs."""
+
+    for task_log in task_log_docs.get('_items', []):
+        task_log_remove_fields(task_log)
+
+
+def task_log_remove_fields(task_log):
+    task_log.pop('_etag', None)
+    task_log.pop('_updated', None)
+    task_log.pop('_created', None)
 
 
 def check_task_permission_fetch_resource(response):
@@ -81,6 +100,10 @@ def update_job_status(task_doc, original_doc):
 
 
 def setup_app(app):
+    app.on_fetched_resource_flamenco_task_logs += check_task_log_permission_fetch
+    app.on_fetched_resource_flamenco_task_logs += task_logs_remove_fields
+    app.on_fetched_item_flamenco_task_logs += task_log_remove_fields
+
     app.on_fetched_item_flamenco_tasks += check_task_permission_fetch
     app.on_fetched_resource_flamenco_tasks += check_task_permission_fetch_resource
 

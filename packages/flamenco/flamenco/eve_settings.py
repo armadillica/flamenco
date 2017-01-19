@@ -1,3 +1,5 @@
+from eve import ID_FIELD
+
 
 managers_schema = {
     'name': {
@@ -325,6 +327,9 @@ _task_logs = {
     'item_methods': ['GET', 'DELETE'],
     'public_methods': [],
     'public_item_methods': [],
+    'embedding': False,
+    'pagination': True,
+    'extra_response_fields': (ID_FIELD, ),  # don't include _etag etc.
 }
 
 DOMAIN = {

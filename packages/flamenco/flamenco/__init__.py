@@ -9,6 +9,7 @@ EXTENSION_NAME = 'flamenco'
 
 # Roles required to view job, manager or task details.
 ROLES_REQUIRED_TO_VIEW_ITEMS = {u'demo', u'subscriber', u'admin', u'flamenco-admin'}
+ROLES_REQUIRED_TO_VIEW_LOGS = {u'admin', u'flamenco-admin'}
 
 
 class FlamencoExtension(PillarExtension):

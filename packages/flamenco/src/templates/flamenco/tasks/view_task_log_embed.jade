@@ -1,0 +1,15 @@
+| {% if has_prev_page %}
+a(href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=page_idx-1) }}")
+    | ... earlier logs ...
+| {% endif %}
+
+| {% for task_log in logs['_items'] %}
+|     {% for line in task_log.log.split('\n') %}
+p.task-log-line {{ line }}
+|     {% endfor %}
+| {% endfor %}
+
+| {% if has_next_page %}
+a(href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=page_idx+1) }}")
+    | ... later logs ...
+| {% endif %}
