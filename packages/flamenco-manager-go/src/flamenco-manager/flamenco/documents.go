@@ -56,6 +56,7 @@ type WorkerRegistration struct {
 	Secret            string   `json:"secret"`
 	Platform          string   `json:"platform"`
 	SupportedJobTypes []string `json:"supported_job_types"`
+	Nickname          string   `json:"nickname"`
 }
 
 type Worker struct {

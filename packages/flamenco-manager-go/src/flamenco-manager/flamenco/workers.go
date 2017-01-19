@@ -15,6 +15,16 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+/**
+ * Returns the worker's address, with the nickname in parentheses (if set).
+ */
+func (worker *Worker) Identifier() string {
+	if len(worker.Nickname) > 0 {
+		return fmt.Sprintf("%s (%s)", worker.Address, worker.Nickname)
+	}
+	return worker.Address
+}
+
 func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 	var err error
 
@@ -31,7 +41,9 @@ func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 	worker.Secret = winfo.Secret
 	worker.Platform = winfo.Platform
 	worker.SupportedJobTypes = winfo.SupportedJobTypes
+	worker.Nickname = winfo.Nickname
 	worker.Address = r.RemoteAddr
+
 	if err = StoreNewWorker(&worker, db); err != nil {
 		log.Println(r.RemoteAddr, "Unable to store worker:", err)
 

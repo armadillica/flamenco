@@ -54,7 +54,7 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 		return
 	}
 	tupdate.TaskId = task_id
-	tupdate.Worker = worker.Address
+	tupdate.Worker = worker.Identifier()
 
 	WorkerPingedTask(tupdate.TaskId, db)
 
