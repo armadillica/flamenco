@@ -16,6 +16,10 @@
 						a(href="javascript:void(0)")
 							i.pi-clipboard-copy
 							| Copy task ID to Clipboard
+					li
+						a(href="{{ url_for('flamenco.tasks.perproject.download_task_log', project_url=project.url, task_id=task._id) }}",
+						  target="_blank")
+							| Download task log
 		| {% if task.description %}
 		p.item-description {{ task.description | hide_none }}
 		| {% endif %}
