@@ -17,6 +17,9 @@ import (
 
 /**
  * Returns the worker's address, with the nickname in parentheses (if set).
+ *
+ * Make sure that you include the nickname in the projection when you fetch
+ * the worker from MongoDB.
  */
 func (worker *Worker) Identifier() string {
 	if len(worker.Nickname) > 0 {

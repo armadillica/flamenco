@@ -37,7 +37,7 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 	log.Printf("%s Received task update for task %s\n", r.RemoteAddr, task_id.Hex())
 
 	// Get the worker
-	worker, err := FindWorker(r.Username, bson.M{"address": 1}, db)
+	worker, err := FindWorker(r.Username, bson.M{"address": 1, "nickname": 1}, db)
 	if err != nil {
 		log.Printf("%s QueueTaskUpdate: Unable to find worker address: %s\n",
 			r.RemoteAddr, err)
@@ -50,7 +50,7 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 	// Parse the task JSON
 	tupdate := TaskUpdate{}
 	defer r.Body.Close()
-	if err := DecodeJson(w, r.Body, &tupdate, fmt.Sprintf("%s QueueTaskUpdate:", r.RemoteAddr)); err != nil {
+	if err := DecodeJson(w, r.Body, &tupdate, fmt.Sprintf("%s QueueTaskUpdate:", worker.Identifier())); err != nil {
 		return
 	}
 	tupdate.TaskId = task_id
@@ -59,7 +59,7 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 	WorkerPingedTask(tupdate.TaskId, db)
 
 	if err := QueueTaskUpdate(&tupdate, db); err != nil {
-		log.Printf("%s: %s", err)
+		log.Printf("%s: %s", worker.Identifier(), err)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Unable to store update: %s\n", err)
 		return
