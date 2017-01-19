@@ -61,12 +61,14 @@ class WorkerStartupTest(AbstractFWorkerTest):
         self.manager.post.assert_not_called()
         self.tuqueue.queue.assert_not_called()
 
+    @unittest.mock.patch('socket.gethostname')
     @unittest.mock.patch('flamenco_worker.config.merge_with_home_config')
-    def test_startup_registration(self, mock_merge_with_home_config):
+    def test_startup_registration(self, mock_merge_with_home_config, mock_gethostname):
         from flamenco_worker.worker import detect_platform
         from mock_responses import JsonResponse, CoroMock
 
         self.worker.worker_id = None
+        mock_gethostname.return_value = 'ws-unittest'
 
         self.manager.post = CoroMock(return_value=JsonResponse({
             '_id': '5555',
@@ -85,19 +87,22 @@ class WorkerStartupTest(AbstractFWorkerTest):
                 'platform': detect_platform(),
                 'supported_job_types': ['sleep', 'unittest'],
                 'secret': self.worker.worker_secret,
+                'nickname': 'ws-unittest',
             },
             auth=None,
             loop=self.asyncio_loop,
         )
 
+    @unittest.mock.patch('socket.gethostname')
     @unittest.mock.patch('flamenco_worker.config.merge_with_home_config')
-    def test_startup_registration_unhappy(self, mock_merge_with_home_config):
+    def test_startup_registration_unhappy(self, mock_merge_with_home_config, mock_gethostname):
         """Test that startup is aborted when the worker can't register."""
 
         from flamenco_worker.worker import detect_platform, UnableToRegisterError
         from mock_responses import JsonResponse, CoroMock
 
         self.worker.worker_id = None
+        mock_gethostname.return_value = 'ws-unittest'
 
         self.manager.post = CoroMock(return_value=JsonResponse({
             '_id': '5555',
@@ -116,6 +121,7 @@ class WorkerStartupTest(AbstractFWorkerTest):
                 'platform': detect_platform(),
                 'supported_job_types': ['sleep', 'unittest'],
                 'secret': self.worker.worker_secret,
+                'nickname': 'ws-unittest',
             },
             auth=None,
             loop=self.asyncio_loop,

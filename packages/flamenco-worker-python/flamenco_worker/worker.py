@@ -110,11 +110,13 @@ class FlamencoWorker:
 
     async def register_at_manager(self, *, may_retry_loop: bool):
         import requests
+        import socket
 
         self._log.info('Registering at manager')
 
         self.worker_secret = generate_secret()
         platform = detect_platform()
+        hostname = socket.gethostname()
 
         while True:
             try:
@@ -124,6 +126,7 @@ class FlamencoWorker:
                         'secret': self.worker_secret,
                         'platform': platform,
                         'supported_job_types': self.job_types,
+                        'nickname': hostname,
                     },
                     auth=None,  # explicitly do not use authentication
                     loop=self.loop,
