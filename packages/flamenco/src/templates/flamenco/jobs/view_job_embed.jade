@@ -26,6 +26,20 @@
 				.table-cell Job Type
 				.table-cell
 					| {{ job.job_type }}
+			| {% if job.job_type == 'blender-render' %}
+			.table-row
+				.table-cell Frames
+				.table-cell
+					| {{ job.settings.frames }}
+			.table-row
+				.table-cell Chunk Size
+				.table-cell
+					| {{ job.settings.chunk_size }}
+			.table-row
+				.table-cell Filepath
+				.table-cell
+					| {{ job.settings.filepath }}
+			| {% endif %}
 			.table-row
 				.table-cell Priority
 				.table-cell(title="Higher number means higher priority")
@@ -34,10 +48,12 @@
 	#job-action-panel
 		| {% if can_cancel_job %}
 		button.btn.btn-danger(onclick="setJobStatus('{{ job._id }}', 'cancel-requested')")
+			i.pi-cancel
 			| Cancel Job
 		| {% endif %}
 		| {% if can_requeue_job %}
-		button.btn.btn-default.requeue-job(onclick="setJobStatus('{{ job._id }}', 'queued')")
+		button.btn.btn-success.requeue-job(onclick="setJobStatus('{{ job._id }}', 'queued')")
+			i.pi-refresh
 			| Re-queue Job
 		| {% endif %}
 		.action-result-panel
@@ -47,12 +63,12 @@
 	.debug-info
 		a.debug-info-toggle(role='button',
 			data-toggle='collapse',
-			href='#debug-content',
+			href='#debug-content-job',
 			aria-expanded='false',
-			aria-controls='debug-content')
+			aria-controls='debug-content-job')
 			i.pi-info
 			| Debug Info
-		#debug-content.collapse
+		#debug-content-job.collapse
 			pre.
 				{{ job.to_dict() | pprint }}
 	| {% endif %}
