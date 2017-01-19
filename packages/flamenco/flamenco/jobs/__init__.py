@@ -8,15 +8,6 @@ import pillarsdk
 from pillar import attrs_extra
 from pillar.web.system_util import pillar_api
 
-from pillarsdk.resource import List
-from pillarsdk.resource import Find
-from pillarsdk.resource import Create
-from pillarsdk.resource import Post
-from pillarsdk.resource import Update
-from pillarsdk.resource import Delete
-from pillarsdk.resource import Replace
-from pillarsdk.resource import Patch
-
 from flamenco import current_flamenco
 
 CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
@@ -53,13 +44,6 @@ class ProjectSummary(object):
             remaining -= whole_perc
 
             yield (status, whole_perc)
-
-
-class Job(List, Find, Create, Post, Update, Delete, Replace, Patch):
-    """Job class wrapping the REST nodes endpoint
-    """
-    path = 'flamenco/jobs'
-    ensure_query_projections = {'project': 1}
 
 
 @attr.s
@@ -100,6 +84,7 @@ class JobManager(object):
 
         :returns: {'_items': [job, job, ...], '_meta': {Eve metadata}}
         """
+        from .sdk import Job
 
         api = pillar_api()
         try:
@@ -116,6 +101,7 @@ class JobManager(object):
 
         :rtype: ProjectSummary
         """
+        from .sdk import Job
 
         api = pillar_api()
 
@@ -191,6 +177,7 @@ class JobManager(object):
 
     def web_set_job_status(self, job_id, new_status):
         """Web-level call to updates the job status."""
+        from .sdk import Job
 
         api = pillar_api()
         job = Job({'_id': job_id})

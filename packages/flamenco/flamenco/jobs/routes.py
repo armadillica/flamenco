@@ -11,8 +11,6 @@ from pillar.web.system_util import pillar_api
 from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
 
-from . import Job
-
 blueprint = Blueprint('flamenco.jobs', __name__, url_prefix='/jobs')
 perproject_blueprint = Blueprint('flamenco.jobs.perproject', __name__,
                                  url_prefix='/<project_url>/jobs')
@@ -37,7 +35,7 @@ def for_project(project, job_id=None, task_id=None):
 @perproject_blueprint.route('/with-task/<task_id>')
 @flamenco_project_view()
 def for_project_with_task(project, task_id):
-    from flamenco.tasks import Task
+    from flamenco.tasks.sdk import Task
 
     api = pillar_api()
     task = Task.find(task_id, {'projection': {'job': 1}}, api=api)
@@ -53,6 +51,8 @@ def view_job(project, flamenco_props, job_id):
     # Job list is public, job details are not.
     if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
         raise wz_exceptions.Forbidden()
+
+    from .sdk import Job
 
     api = pillar_api()
     job = Job.find(job_id, api=api)

@@ -7,21 +7,7 @@ import werkzeug.exceptions as wz_exceptions
 from pillar import attrs_extra
 from pillar.web.system_util import pillar_api
 
-from pillarsdk.resource import List
-from pillarsdk.resource import Find
-from pillarsdk.resource import Create
-from pillarsdk.resource import Post
-from pillarsdk.resource import Update
-from pillarsdk.resource import Delete
-from pillarsdk.resource import Replace
 from pillarsdk.exceptions import ResourceNotFound
-
-
-class Task(List, Find, Create, Post, Update, Delete, Replace):
-    """Job class wrapping the REST nodes endpoint
-    """
-    path = 'flamenco/tasks'
-    ensure_query_projections = {'project': 1, 'job': 1}
 
 
 @attr.s
@@ -63,6 +49,8 @@ class TaskManager(object):
         return r['_id']
 
     def tasks_for_job(self, job_id, status=None, page=1):
+        from .sdk import Task
+
         api = pillar_api()
         payload = {
             'where': {
@@ -78,6 +66,7 @@ class TaskManager(object):
 
         :returns: {'_items': [task, task, ...], '_meta': {Eve metadata}}
         """
+        from .sdk import Task
 
         api = pillar_api()
         try:

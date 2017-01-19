@@ -40,7 +40,7 @@ def list_for_job(project, job_id, task_id=None):
 @perproject_blueprint.route('/<task_id>')
 @flamenco_project_view(extension_props=True)
 def view_task(project, flamenco_props, task_id):
-    from flamenco.tasks import Task
+    from flamenco.tasks.sdk import Task
 
     api = pillar_api()
 
