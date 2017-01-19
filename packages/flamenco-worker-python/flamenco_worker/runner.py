@@ -263,7 +263,6 @@ class AbstractSubprocessCommand(AbstractCommand):
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            limit=800,  # limit on the StreamReader buffer.
         )
 
         try:
