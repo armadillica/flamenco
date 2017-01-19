@@ -35,11 +35,11 @@ def main():
     from . import runner, worker, upstream, upstream_update_queue, may_i_run
 
     fmanager = upstream.FlamencoManager(
-        manager_url=confparser.get(config.CONFIG_SECTION, 'manager_url'),
+        manager_url=confparser.value('manager_url'),
     )
 
     tuqueue = upstream_update_queue.TaskUpdateQueue(
-        db_fname=confparser.get(config.CONFIG_SECTION, 'task_update_queue_db'),
+        db_fname=confparser.value('task_update_queue_db'),
         manager=fmanager,
         shutdown_future=shutdown_future,
     )
@@ -50,18 +50,20 @@ def main():
         manager=fmanager,
         trunner=trunner,
         tuqueue=tuqueue,
-        job_types=confparser.get(config.CONFIG_SECTION, 'job_types').split(),
-        worker_id=confparser.get(config.CONFIG_SECTION, 'worker_id'),
-        worker_secret=confparser.get(config.CONFIG_SECTION, 'worker_secret'),
+        job_types=confparser.value('job_types').split(),
+        worker_id=confparser.value('worker_id'),
+        worker_secret=confparser.value('worker_secret'),
         loop=loop,
         shutdown_future=shutdown_future,
+        push_log_max_interval=confparser.interval_secs('push_log_max_interval_seconds'),
+        push_log_max_entries=confparser.value('push_log_max_entries', int),
+        push_act_max_interval=confparser.interval_secs('push_act_max_interval_seconds'),
     )
 
-    mir_interval = float(confparser.get(config.CONFIG_SECTION, 'may_i_run_interval_seconds'))
     mir = may_i_run.MayIRun(
         manager=fmanager,
         worker=fworker,
-        poll_interval=datetime.timedelta(seconds=mir_interval),
+        poll_interval=confparser.interval_secs('may_i_run_interval_seconds'),
         loop=loop,
     )
 

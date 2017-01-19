@@ -2,8 +2,11 @@
 
 import collections
 import configparser
+import datetime
 import os.path
 import logging
+
+from . import worker
 
 HOME_CONFIG_FILE = os.path.expanduser('~/.flamenco-worker.cfg')
 GLOBAL_CONFIG_FILE = 'flamenco-worker.cfg'
@@ -17,16 +20,36 @@ DEFAULT_CONFIG = {
         ('may_i_run_interval_seconds', '5'),
         ('worker_id', ''),
         ('worker_secret', ''),
+
+        # All intervals in seconds
+        ('push_log_max_interval_seconds', str(worker.PUSH_LOG_MAX_INTERVAL.total_seconds())),
+        ('push_log_max_entries', str(worker.PUSH_LOG_MAX_ENTRIES)),
+        ('push_act_max_interval_seconds', str(worker.PUSH_ACT_MAX_INTERVAL.total_seconds())),
     ])
 }
 
 log = logging.getLogger(__name__)
 
 
+class ConfigParser(configparser.ConfigParser):
+    """ConfigParser that can easily get values from our default config section."""
+
+    _DEFAULT_INTERPOLATION = configparser.ExtendedInterpolation()
+
+    def value(self, key, valtype: type=str):
+        return valtype(self.get(CONFIG_SECTION, key))
+
+    def interval_secs(self, key) -> datetime.timedelta:
+        """Returns the configuration value as timedelta."""
+
+        secs = self.value(key, float)
+        return datetime.timedelta(seconds=secs)
+
+
 def merge_with_home_config(new_conf: dict):
     """Updates the home configuration file with the given config dict."""
 
-    confparser = configparser.ConfigParser()
+    confparser = ConfigParser()
     confparser.read_dict({CONFIG_SECTION: {}})
     confparser.read(HOME_CONFIG_FILE, encoding='utf8')
 
@@ -45,15 +68,14 @@ def merge_with_home_config(new_conf: dict):
 
 
 def load_config(config_file: str = None,
-                show_effective_config: bool = False) -> configparser.ConfigParser:
+                show_effective_config: bool = False) -> ConfigParser:
     """Loads one or more configuration files."""
 
     # Logging and the default interpolation of configparser both use the
     # same syntax for variables. To make it easier to work with, we use
     # another interpolation for config files, so they now use ${loglevel}
     # whereas logging still uses %(levelname)s.
-    confparser = configparser.ConfigParser(
-        interpolation=configparser.ExtendedInterpolation())
+    confparser = ConfigParser()
     confparser.read_dict(DEFAULT_CONFIG)
 
     if config_file:
