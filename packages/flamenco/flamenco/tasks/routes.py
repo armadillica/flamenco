@@ -110,3 +110,45 @@ def view_task_log(project, task_id):
                            has_next_page=has_next_page,
                            project=project,
                            task_id=task_id)
+
+
+@perproject_blueprint.route('/<task_id>/download-log')
+@flask_login.login_required
+@flamenco_project_view()
+def download_task_log(project, task_id):
+    """Shows the entire task log as text/plain"""
+
+    from flask import Response, current_app
+
+    from pillar.web.utils import is_valid_id, last_page_index
+    from flamenco.tasks.sdk import TaskLog
+
+    if not is_valid_id(task_id):
+        raise wz_exceptions.UnprocessableEntity()
+
+    # Task list is public, task details are not.
+    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_LOGS):
+        raise wz_exceptions.Forbidden()
+
+    # Required because the stream_log() generator will run outside the app context.
+    app = current_app._get_current_object()
+    api = pillar_api()
+
+    def stream_log():
+        page_idx = 1
+        while True:
+            with app.app_context():
+                logs = TaskLog.all({'where': {'task': task_id},
+                                    'page': page_idx,
+                                    'max_results': TASK_LOG_PAGE_SIZE},
+                                   api=api)
+
+            for tasklog in logs['_items']:
+                yield tasklog.log
+
+            if page_idx >= last_page_index(logs['_meta']):
+                break
+
+            page_idx += 1
+
+    return Response(stream_log(), mimetype='text/plain')
