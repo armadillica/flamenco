@@ -144,7 +144,7 @@ def download_task_log(project, task_id):
                                    api=api)
 
             for tasklog in logs['_items']:
-                yield tasklog.log
+                yield tasklog.log + '\n'
 
             if page_idx >= last_page_index(logs['_meta']):
                 break
