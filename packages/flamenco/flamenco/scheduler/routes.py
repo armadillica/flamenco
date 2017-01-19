@@ -11,6 +11,7 @@ blueprint = flask.Blueprint('flamenco.scheduler', __name__, url_prefix='/schedul
 # - update the task list according to external changes
 
 CLAIMED_STATUS = 'claimed-by-manager'
+CLAIMED_ACTIVITY = 'Claimed by manager'
 
 
 @blueprint.route('/tasks/<manager_id>')
@@ -67,7 +68,8 @@ def schedule_tasks(manager_id):
     # to allow to managers (to force them to use the scheduler).
     tasks_coll.update_many(
         {'_id': {'$in': [task['_id'] for task in tasks]}},
-        {'$set': {'status': CLAIMED_STATUS}}
+        {'$set': {'status': CLAIMED_STATUS,
+                  'activity': CLAIMED_ACTIVITY}}
     )
 
     log.info('Handing over %i tasks to manager %s', len(tasks), manager_id)
