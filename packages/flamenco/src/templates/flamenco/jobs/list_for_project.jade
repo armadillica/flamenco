@@ -8,7 +8,7 @@
 			i.pi-cancel
 		.col_header
 			span.header_text Task Details
-		#col_main-overlay-content
+		#col_main-overlay-content.col-scrollable
 
 	#col_main-content
 		.col_header.item-list-header
@@ -62,7 +62,7 @@
 	.col_header
 		span.header_text
 		#status-bar
-	#item-details
+	#item-details.col-scrollable
 		.item-details-empty
 			| Select a Job
 			| {{ open_job_id | hide_none }}
@@ -125,8 +125,7 @@ script.
 
 	$(window).on('load resize', function(){
 		var window_height = $(window).height() - 50; // header is 50px
-		$('#job-list').css({'height': window_height});
-		$('#item-details').css({'height': window_height});
+		$('.col-scrollable').css({'height': window_height});
 	});
 
 | {% endblock footer_scripts %}
