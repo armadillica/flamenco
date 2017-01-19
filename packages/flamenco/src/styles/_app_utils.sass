@@ -574,6 +574,13 @@
 				#{$property}: $color-status-failed-dark
 			@else
 				#{$property}: $color-status-failed
+		&-claimed-by-manager#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-claimedbymanager-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-claimedbymanager-dark
+			@else
+				#{$property}: $color-status-claimedbymanager
 		&-processing#{$where}
 			@if ($variation == 'light')
 				#{$property}: $color-status-processing-light
