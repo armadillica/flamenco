@@ -83,3 +83,20 @@ script.
 	$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
 
 	setupJsJobLinkClickHandlers();
+
+	function closeTaskDetails(){
+		clearMainOverlay();
+
+		// Push the correct URL onto the history.
+		push_url = '/flamenco/{{ project.url }}/jobs/{{ task.job }}';
+		var push_state = {itemId: '{{ task._id }}', itemType: 'task'};
+		window.history.pushState(
+						push_state,
+						'task: ' + '{{ task._id }}',
+						push_url
+		);
+	}
+
+	$('#col_main-overlay-close').on('click', function(){
+		closeTaskDetails();
+	});

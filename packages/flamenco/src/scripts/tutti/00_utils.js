@@ -133,9 +133,6 @@ function clearMainOverlay(){
 }
 
 $(document).ready(function() {
-    $('#col_main-overlay-close').on('click', function(){
-        clearMainOverlay();
-    });
     /* Clear the modal inner html when hidding */
     $('#modal').on('hidden.bs.modal', function () {
         $("#modal .modal-body").html('');
@@ -146,7 +143,10 @@ document.onkeydown = function(evt) {
     evt = evt || window.event;
     if (evt.keyCode == 27 || evt.key == 'Escape') {
         if ($('#col_main-overlay').hasClass('active')){
-            clearMainOverlay();
+            /* If we're in the context of a job, it means we're closing Task details*/
+            if (ProjectUtils.context() == 'job') {
+                closeTaskDetails(); // From view_task_embed template
+            }
         }
     }
 };
