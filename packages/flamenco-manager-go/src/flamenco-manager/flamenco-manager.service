@@ -1,0 +1,17 @@
+[Unit]
+Description=Flamenco Manager
+Documentation=https://flamenco.io/
+After=mongod.service
+
+[Service]
+Type=simple
+
+ExecStart=/path/to/flamenco-manager/flamenco-manager
+WorkingDirectory=/path/to/flamenco-manager
+User=guest
+Group=guest
+
+Restart=on-failure
+RestartSec=1s
+
+EnvironmentFile=-/etc/default/locale

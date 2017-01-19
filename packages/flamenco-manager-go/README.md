@@ -2,6 +2,15 @@
 
 This is the Flamenco Manager implementation in Go.
 
+## Running as service via systemd
+
+1. Build and configure Flamenco Manager (see below).
+2. Edit `flamenco-manager.service` to update it for the installation location, then place the file
+   in `/etc/systemd/system`.
+3. Run `systemctl daemon-reload` to pick up on the new/edited file.
+4. Run `systemctl start flamenco-manager` to start Flamenco Manager.
+
+
 ## Starting development
 
 `$FM` denotes the directory containing a checkout of Flamenco Manager, that is, the absolute path
