@@ -19,3 +19,6 @@ Restart=on-failure
 RestartSec=1s
 
 EnvironmentFile=-/etc/default/locale
+
+[Install]
+WantedBy=multi-user.target
