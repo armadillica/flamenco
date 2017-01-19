@@ -128,8 +128,8 @@
 }(jQuery));
 
 function clearMainOverlay(){
-    $('#col_main-overlay').removeClass('active');
     $('#col_main-overlay-content').html('');
+    $('#col_main-overlay').removeAttr('class');
 }
 
 $(document).ready(function() {

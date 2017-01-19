@@ -38,7 +38,6 @@ function item_open(item_id, item_type, pushState, project_url)
         } else {
             $('#item-details').html(item_data);
             $('#col_right .col_header span.header_text').text(item_type + ' details');
-            $('#col_main-overlay').removeAttr('class');
         }
 
     }).fail(function(xhr) {
