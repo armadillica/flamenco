@@ -54,7 +54,7 @@ type TaskUpdateResponse struct {
 
 type WorkerRegistration struct {
 	Secret            string   `json:"secret"`
-	Platform          string   `bson:"platform" json:"platform"`
+	Platform          string   `json:"platform"`
 	SupportedJobTypes []string `json:"supported_job_types"`
 }
 
