@@ -77,4 +77,5 @@ To run Flamenco Worker as a systemd-managed service, copy `flamenco-worker.servi
 `/etc/systemd/system/flamenco-worker.service`, then run `systemctl daemon-reload`.
 
 After installation of this service, `systemctl {start,stop,status,restart} flamenco-worker`
-commands can be used to manage it.
+commands can be used to manage it. To ensure that the Flamenco Worker starts at system boot,
+use `systemctl enable flamenco-worker`.

@@ -9,6 +9,7 @@ This is the Flamenco Manager implementation in Go.
    in `/etc/systemd/system`.
 3. Run `systemctl daemon-reload` to pick up on the new/edited file.
 4. Run `systemctl start flamenco-manager` to start Flamenco Manager.
+5. Run `systemctl enable flamenco-manager` to ensure it starts at boot too.
 
 
 ## Starting development
