@@ -153,18 +153,6 @@ $(function() {
     setupJsTaskLinkClickHandlers()
 });
 
-$(document).on('keyup', function(e){
-    if (ProjectUtils.context() == 'job' || ProjectUtils.context() == 'task'){
-
-        // Save on Ctrl + Enter anytime except when comments is on focus
-        if ($('#comment_field') && $('#comment_field').not(':focus')){
-            if ((e.keyCode == 10 || e.keyCode == 13) && e.ctrlKey){
-                $("#item-save").trigger( "click" );
-            }
-        }
-    }
-});
-
 /**
  * Request cancellation or re-queueing of the given job ID.
  */
