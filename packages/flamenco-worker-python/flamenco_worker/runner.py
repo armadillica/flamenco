@@ -487,7 +487,6 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
                 self._log.debug('Unable to find remaining time in line: %s', line)
                 activity = line
             await self.worker.register_task_update(activity=activity)
-            return None
 
         # Not a render progress line; just log it for now.
         return '> %s' % line
