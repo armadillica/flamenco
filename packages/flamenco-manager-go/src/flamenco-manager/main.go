@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"gopkg.in/mgo.v2"
@@ -90,12 +91,12 @@ func worker_secret(user, realm string) string {
 	return flamenco.WorkerSecret(user, mongo_sess.DB(""))
 }
 
-func shutdown() {
+func shutdown(signum os.Signal) {
 	// Always shut down after 2 seconds.
 	timeout := flamenco.TimeoutAfter(2 * time.Second)
 
 	go func() {
-		log.Println("Interrupt signal received, shutting down.")
+		log.Printf("Signal '%s' received, shutting down.", signum)
 		task_timeout_checker.Close()
 		task_update_pusher.Close()
 		upstream.Close()
@@ -150,10 +151,11 @@ func main() {
 	// Handle Ctrl+C
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM)
 	go func() {
-		for _ = range c {
+		for signum := range c {
 			// Run the shutdown sequence in a goroutine, so that multiple Ctrl+C presses can be handled in parallel.
-			go shutdown()
+			go shutdown(signum)
 		}
 	}()
 
