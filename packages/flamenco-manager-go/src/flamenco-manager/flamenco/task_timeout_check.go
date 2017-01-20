@@ -69,6 +69,10 @@ func (self *TaskTimeoutChecker) check(db *mgo.Database) {
 	timeout_threshold := UtcNow().Add(-self.config.ActiveTaskTimeoutInterval)
 	// log.Infof("Failing all active tasks that have not been touched since %s", timeout_threshold)
 
+	// TODO Sybren: Also check that the worker is actually working on the task;
+	// it could just as well be working on another task now (so worker is alive, but
+	// task.status = "active" is inaccurate).
+
 	var timedout_tasks []Task
 	query := bson.M{
 		"status":           "active",
