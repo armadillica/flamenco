@@ -107,8 +107,6 @@ def main():
     except:
         log.exception('Uncaught exception!')
 
-    log.warning('Closing asyncio loop')
-
     # Report on the asyncio task status
     if args.verbose:
         all_tasks = asyncio.Task.all_tasks()
@@ -140,7 +138,9 @@ def main():
             # for ref in gc.get_referrers(task):
             #     log.info('      - referred by %s', ref)
 
+    log.warning('Closing asyncio loop')
     loop.close()
+    log.warning('Flamenco Worker is shut down')
 
 
 def construct_asyncio_loop() -> asyncio.AbstractEventLoop:
