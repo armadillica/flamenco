@@ -93,6 +93,11 @@ class CommandExecutionError(Exception):
 
 @attr.s
 class AbstractCommand(metaclass=abc.ABCMeta):
+    """Command executor.
+
+    This class (or any of its subclasses) should not directly set the task status.
+    This should be left to the Worker.
+    """
     worker = attr.ib(validator=attr.validators.instance_of(worker.FlamencoWorker),
                      repr=False)
     task_id = attr.ib(validator=attr.validators.instance_of(str))
@@ -175,7 +180,6 @@ class AbstractCommand(metaclass=abc.ABCMeta):
 
         await self.worker.register_log('%s: Error executing: %s' % (self.identifier, ex))
         await self.worker.register_task_update(
-            task_status='failed',
             activity='%s: Error executing: %s' % (self.identifier, ex),
         )
 
