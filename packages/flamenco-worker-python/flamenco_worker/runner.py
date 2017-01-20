@@ -389,12 +389,15 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
 
     def validate(self, settings: dict):
         from pathlib import Path
+        import shlex
 
         blender_cmd, err = self._setting(settings, 'blender_cmd', True)
         if err:
             return err
-        if not Path(blender_cmd).exists():
-            return 'blender_cmd %r does not exist' % blender_cmd
+        cmd = shlex.split(blender_cmd)
+        if not Path(cmd[0]).exists():
+            return 'blender_cmd %r does not exist' % cmd[0]
+        settings['blender_cmd'] = cmd
 
         filepath, err = self._setting(settings, 'filepath', True)
         if err:
@@ -422,9 +425,7 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
         return None
 
     async def execute(self, settings: dict):
-        import shlex
-
-        cmd = shlex.split(settings['blender_cmd'])
+        cmd = settings['blender_cmd'][:]
         cmd += [
             '--enable-autoexec',
             '-noaudio',
