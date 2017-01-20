@@ -422,8 +422,10 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
         return None
 
     async def execute(self, settings: dict):
-        cmd = [
-            settings['blender_cmd'],
+        import shlex
+
+        cmd = shlex.split(settings['blender_cmd'])
+        cmd += [
             '--enable-autoexec',
             '-noaudio',
             '--background',
