@@ -59,34 +59,39 @@
 					left: -4px
 					font-size: .9em
 
-	.table.item-properties
-		.table-body
-			text-shadow: 1px 1px 0 white
+	.table
+		&.item-properties
+			.table-body
+				text-shadow: 1px 1px 0 white
 
-			.table-row
-				.table-cell
-					padding: 3px 10px
-					vertical-align: top
-					line-height: 1.6em
-					border: none
-					color: $color-text-dark-primary
-					word-break: break-word
-					@include status-color-property(color, '', 'dark')
+				.table-row
+					.table-cell
+						padding: 0 10px
+						vertical-align: top
+						line-height: 1.6em
+						border: none
+						color: $color-text-dark-primary
+						word-break: break-word
+						@include status-color-property(color, '', 'dark')
 
-					&:first-child
-						width: 120px
-						max-width: 200px
-						text-align: right
-						font-weight: bold
-						padding-right: 10px
-						border-right: thin solid $color-background-dark
-						+text-overflow-ellipsis
+						&:first-child
+							width: 120px
+							max-width: 200px
+							text-align: right
+							font-weight: bold
+							padding-right: 10px
+							border-right: thin solid $color-background-dark
+							+text-overflow-ellipsis
 
-				&.properties-assignees
-					.table-cell span
-						display: block
-				&.properties-status
-					cursor: help
+					&.properties-assignees
+						.table-cell span
+							display: block
+					&.properties-status
+						cursor: help
+
+		&.item-job-settings
+			margin-top: 15px
+
 
 .flamenco-box+.flamenco-box
 	margin-top: 0

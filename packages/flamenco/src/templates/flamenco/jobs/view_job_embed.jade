@@ -26,24 +26,22 @@
 				.table-cell Job Type
 				.table-cell
 					| {{ job.job_type }}
-			| {% if job.job_type == 'blender-render' %}
-			.table-row
-				.table-cell Frames
-				.table-cell
-					| {{ job.settings.frames }}
-			.table-row
-				.table-cell Chunk Size
-				.table-cell
-					| {{ job.settings.chunk_size }}
-			.table-row
-				.table-cell Filepath
-				.table-cell
-					| {{ job.settings.filepath }}
-			| {% endif %}
 			.table-row
 				.table-cell Priority
 				.table-cell(title="Higher number means higher priority")
 					| {{ job.priority }}
+
+	| {% if job.job_type == 'blender-render' %}
+	.table.item-properties.item-job-settings
+		.table-body
+			| {% for set_key, set_val in job.settings.to_dict().iteritems()  %}
+			.table-row
+				.table-cell
+					| {{ set_key | undertitle }}
+				.table-cell
+					| {{ set_val }}
+			| {% endfor %}
+	| {% endif %}
 
 	#job-action-panel
 		| {% if can_cancel_job %}
