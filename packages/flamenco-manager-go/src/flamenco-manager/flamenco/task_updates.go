@@ -90,23 +90,23 @@ func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 			updates["status"] = tupdate.TaskStatus
 		} else {
 			log.Printf("QueueTaskUpdate: not locally applying status=%s for %s",
-				tupdate.TaskStatus, tupdate.TaskId)
+				tupdate.TaskStatus, tupdate.TaskId.Hex())
 		}
 	}
 	if tupdate.Activity != "" {
 		updates["activity"] = tupdate.Activity
 	}
 	if len(updates) > 0 {
-		log.Printf("QueueTaskUpdate: applying update %s to task %s", updates, tupdate.TaskId)
+		log.Printf("QueueTaskUpdate: applying update %s to task %s", updates, tupdate.TaskId.Hex())
 		if err := task_coll.UpdateId(tupdate.TaskId, bson.M{"$set": updates}); err != nil {
 			if err != mgo.ErrNotFound {
 				return fmt.Errorf("QueueTaskUpdate: error updating local task cache: %s", err)
 			} else {
-				log.Printf("QueueTaskUpdate: cannot find task %s to update locally", tupdate.TaskId)
+				log.Printf("QueueTaskUpdate: cannot find task %s to update locally", tupdate.TaskId.Hex())
 			}
 		}
 	} else {
-		log.Printf("QueueTaskUpdate: nothing to do locally for task %s", tupdate.TaskId)
+		log.Printf("QueueTaskUpdate: nothing to do locally for task %s", tupdate.TaskId.Hex())
 	}
 
 	return nil
