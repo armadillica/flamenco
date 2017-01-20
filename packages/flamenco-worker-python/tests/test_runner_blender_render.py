@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from test_runner import AbstractCommandTest
 
 
@@ -62,3 +64,39 @@ class BlenderRenderTest(AbstractCommandTest):
         line = "Warning: Path 'je moeder' not found"
         self.loop.run_until_complete(self.cmd.process_line(line))
         self.fworker.register_task_update.assert_called_once_with(activity=line)
+
+    @patch('pathlib.Path.exists')
+    def test_cli_args(self, mock_path_exists):
+        """Test that CLI arguments in the blender_cmd setting are handled properly."""
+        import subprocess
+        from mock_responses import CoroMock
+
+        settings = {
+            'blender_cmd': '/path/to/blender --with --cli="args for CLI"',
+            'chunk_size': 100,
+            'frames': '1..2',
+            'format': 'JPEG',
+            'filepath': '/path/to/output',
+        }
+
+        mock_path_exists.return_value = True
+
+        cse = CoroMock()
+        cse.coro.return_value.wait = CoroMock(return_value=0)
+        with patch('asyncio.create_subprocess_exec', new=cse) as mock_cse:
+            self.loop.run_until_complete(self.cmd.run(settings))
+
+            mock_cse.assert_called_once_with(
+                '/path/to/blender',
+                '--with',
+                '--cli=args for CLI',
+                '--enable-autoexec',
+                '-noaudio',
+                '--background',
+                '/path/to/output',
+                '--render-format', 'JPEG',
+                '--render-frame', '1..2',
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
