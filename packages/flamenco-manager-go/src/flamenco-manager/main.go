@@ -84,6 +84,13 @@ func http_worker_may_run_task(w http.ResponseWriter, r *auth.AuthenticatedReques
 	flamenco.WorkerMayRunTask(w, r, mongo_sess.DB(""), bson.ObjectIdHex(task_id))
 }
 
+func http_worker_sign_off(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
+	mongo_sess := session.Copy()
+	defer mongo_sess.Close()
+
+	flamenco.WorkerSignOff(w, r, mongo_sess.DB(""))
+}
+
 func worker_secret(user, realm string) string {
 	mongo_sess := session.Copy()
 	defer mongo_sess.Close()
@@ -142,6 +149,7 @@ func main() {
 	router.HandleFunc("/task", worker_authenticator.Wrap(http_schedule_task)).Methods("POST")
 	router.HandleFunc("/tasks/{task-id}/update", worker_authenticator.Wrap(http_task_update)).Methods("POST")
 	router.HandleFunc("/may-i-run/{task-id}", worker_authenticator.Wrap(http_worker_may_run_task)).Methods("GET")
+	router.HandleFunc("/sign-off", worker_authenticator.Wrap(http_worker_sign_off)).Methods("POST")
 	router.HandleFunc("/kick", http_kick)
 
 	upstream.SendStartupNotification()

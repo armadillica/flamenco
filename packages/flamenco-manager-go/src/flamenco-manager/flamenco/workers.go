@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	auth "github.com/abbot/go-http-auth"
 
@@ -202,5 +203,68 @@ func WorkerSeen(worker *Worker, remote_addr string, db *mgo.Database) {
 
 	if err := db.C("flamenco_workers").UpdateId(worker.Id, bson.M{"$set": updates}); err != nil {
 		log.Printf("WorkerSeen: ERROR: unable to update worker %s in MongoDB: %s", worker.Id, err)
+	}
+}
+
+/**
+ * Re-queues all active tasks (should be only one) that are assigned to this worker.
+ */
+func WorkerSignOff(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.Database) {
+	// Get the worker
+	worker, err := FindWorker(r.Username, bson.M{"_id": 1, "address": 1, "nickname": 1}, db)
+	if err != nil {
+		log.Printf("%s WorkerSignOff: Unable to find worker: %s\n", r.RemoteAddr, err)
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+	w_ident := worker.Identifier()
+
+	log.Printf("%s Worker %s signing off\n", r.RemoteAddr, w_ident)
+
+	// Update the tasks assigned to the worker.
+	var tasks []Task
+	query := bson.M{
+		"worker_id": worker.Id,
+		"status":    "active",
+	}
+	sent_header := false
+	if err := db.C("flamenco_tasks").Find(query).All(&tasks); err != nil {
+		log.Printf("WorkerSignOff: ERROR: unable to find active tasks of worker %s in MongoDB: %s",
+			w_ident, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		sent_header = true
+	} else {
+		tupdate := TaskUpdate{
+			TaskStatus: "claimed-by-manager",
+			Worker:     "-", // no longer assigned to any worker
+			Activity:   fmt.Sprintf("Re-queued task after worker %s signed off", w_ident),
+			Log: fmt.Sprintf("%s: Manager re-queued task after worker %s signed off",
+				time.Now(), w_ident),
+		}
+
+		for _, task := range tasks {
+			tupdate.TaskId = task.Id
+			if err := QueueTaskUpdate(&tupdate, db); err != nil {
+				if !sent_header {
+					w.WriteHeader(http.StatusInternalServerError)
+					sent_header = true
+				}
+				fmt.Fprintf(w, "Error updating task %s: %s\n", task.Id.Hex(), err)
+				log.Printf("WorkerSignOff: ERROR: unable to update task %s for worker %s in MongoDB: %s",
+					task.Id.Hex(), w_ident, err)
+			}
+		}
+	}
+
+	// Update the worker itself, to show it's down in the DB too.
+	worker.Status = "down"
+	updates := bson.M{
+		"status": worker.Status,
+	}
+	if err := db.C("flamenco_workers").UpdateId(worker.Id, bson.M{"$set": updates}); err != nil {
+		if !sent_header {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		log.Printf("WorkerSignOff: ERROR: unable to update worker %s in MongoDB: %s", w_ident, err)
 	}
 }
