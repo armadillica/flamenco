@@ -427,7 +427,9 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
     async def execute(self, settings: dict):
         cmd = settings['blender_cmd'][:]
         cmd += [
+            '--factory-startup',
             '--enable-autoexec',
+            '--debug-cycles',
             '-noaudio',
             '--background',
             settings['filepath'],
