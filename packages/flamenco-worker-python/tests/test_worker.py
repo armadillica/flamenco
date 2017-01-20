@@ -22,6 +22,8 @@ class AbstractFWorkerTest(AbstractWorkerTest):
         self.shutdown_future = self.asyncio_loop.create_future()
 
         self.manager = Mock(spec=FlamencoManager)
+        self.manager.post = CoroMock()
+
         self.trunner = Mock(spec=TaskRunner)
         self.tuqueue = Mock(spec=TaskUpdateQueue)
         self.tuqueue.flush_for_shutdown = CoroMock()
@@ -215,9 +217,6 @@ class TestWorkerTaskExecution(AbstractFWorkerTest):
             ]
         })
 
-        def assert_becoming_active(url, payload, loop):
-            self.assertEqual(['je', 'moeder'], payload)
-
         self.worker.schedule_fetch_task()
 
         stop_called = False
@@ -359,3 +358,46 @@ class WorkerPushToMasterTest(AbstractFWorkerTest):
 
         # The scheduled task should be cancelled.
         self.assertTrue(self.worker._push_log_to_manager.cancelled())
+
+
+
+class WorkerShutdownTest(AbstractWorkerTest):
+    def setUp(self):
+        from flamenco_worker.cli import construct_asyncio_loop
+        from flamenco_worker.upstream import FlamencoManager
+        from flamenco_worker.worker import FlamencoWorker
+        from flamenco_worker.runner import TaskRunner
+        from flamenco_worker.upstream_update_queue import TaskUpdateQueue
+        from mock_responses import CoroMock
+
+        self.asyncio_loop = construct_asyncio_loop()
+        self.asyncio_loop.set_debug(True)
+        self.shutdown_future = self.asyncio_loop.create_future()
+
+        self.manager = Mock(spec=FlamencoManager)
+        self.manager.post = CoroMock()
+
+        self.trunner = Mock(spec=TaskRunner)
+        self.tuqueue = Mock(spec=TaskUpdateQueue)
+        self.tuqueue.flush_for_shutdown = CoroMock()
+        self.trunner.abort_current_task = CoroMock()
+
+        self.worker = FlamencoWorker(
+            manager=self.manager,
+            trunner=self.trunner,
+            tuqueue=self.tuqueue,
+            job_types=['sleep', 'unittest'],
+            worker_id='1234',
+            worker_secret='jemoeder',
+            loop=self.asyncio_loop,
+            shutdown_future=self.shutdown_future,
+        )
+
+    def test_shutdown(self):
+        self.shutdown_future.cancel()
+        self.worker.shutdown()
+
+        self.manager.post.assert_called_once_with('/sign-off', loop=self.asyncio_loop)
+
+    def tearDown(self):
+        self.asyncio_loop.close()

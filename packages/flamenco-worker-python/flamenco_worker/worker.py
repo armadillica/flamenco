@@ -87,6 +87,12 @@ class FlamencoWorker:
         default=None, init=False,
         validator=attr.validators.optional(attr.validators.instance_of(asyncio.Future)))
 
+    # When the worker is shutting down, the currently running task will be
+    # handed back to the manager for re-scheduling. In such a situation,
+    # an abort is expected and acceptable.
+    failures_are_acceptable = attr.ib(default=False, init=False,
+                                      validator=attr.validators.instance_of(bool))
+
     _log = attrs_extra.log('%s.FlamencoWorker' % __name__)
 
     @property
@@ -208,6 +214,7 @@ class FlamencoWorker:
         """Gracefully shuts down any asynchronous tasks."""
 
         self._log.warning('Shutting down')
+        self.failures_are_acceptable = True
 
         if self.fetch_task_task is not None and not self.fetch_task_task.done():
             self._log.info('shutdown(): Cancelling task fetching task %s', self.fetch_task_task)
@@ -236,6 +243,11 @@ class FlamencoWorker:
 
         # Try to do a final push of queued updates to the Manager.
         self.loop.run_until_complete(self.tuqueue.flush_for_shutdown(loop=self.loop))
+
+        # Let the Manager know we're shutting down
+        self._log.info('shutdown(): signing off at Manager')
+        self.loop.run_until_complete(self.manager.post('/sign-off', loop=self.loop))
+        self.failures_are_acceptable = False
 
     async def fetch_task(self, delay: float):
         """Fetches a single task to perform from Flamenco Manager, and executes it.
@@ -287,16 +299,26 @@ class FlamencoWorker:
                     task_status='completed',
                     activity='Task completed',
                 )
+            elif self.failures_are_acceptable:
+                self._log.warning('Task %s failed, but ignoring it since we are shutting down.',
+                                self.task_id)
             else:
                 self._log.error('Task %s failed', self.task_id)
                 await self.register_task_update(task_status='failed')
         except asyncio.CancelledError:
-            self._log.warning('Task %s was canceled', self.task_id)
-            await self.register_task_update(task_status='canceled',
-                                            activity='Task was canceled')
+            if self.failures_are_acceptable:
+                self._log.warning('Task %s was cancelled, but ignoring it since '
+                                  'we are shutting down.', self.task_id)
+            else:
+                self._log.warning('Task %s was cancelled', self.task_id)
+                await self.register_task_update(task_status='canceled',
+                                                activity='Task was canceled')
         except Exception as ex:
             self._log.exception('Uncaught exception executing task %s' % self.task_id)
             try:
+                # Such a failure will always result in a failed task, even when
+                # self.failures_are_acceptable = True; only expected failures are
+                # acceptable then.
                 with (await self._queue_lock):
                     self._queued_log_entries.append(traceback.format_exc())
                 await self.register_task_update(
@@ -306,9 +328,10 @@ class FlamencoWorker:
             except Exception:
                 self._log.exception('While notifying manager of failure, another error happened.')
         finally:
-            # Always schedule a new task run; after a little delay to not hammer the world
-            # when we're in some infinite failure loop.
-            self.schedule_fetch_task(FETCH_TASK_DONE_SCHEDULE_NEW_DELAY)
+            if not self.failures_are_acceptable:
+                # Schedule a new task run unless shutting down; after a little delay to not hammer
+                # the world when we're in some infinite failure loop.
+                self.schedule_fetch_task(FETCH_TASK_DONE_SCHEDULE_NEW_DELAY)
 
     async def push_to_manager(self, *, delay: datetime.timedelta = None):
         """Updates a task's status and activity.

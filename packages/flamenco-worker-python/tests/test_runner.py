@@ -129,7 +129,38 @@ class ExecCommandTest(AbstractCommandTest):
             call(decode_err),
         ])
 
+        # The update should NOT contain a new task status -- that is left to the Worker.
+        self.fworker.register_task_update.assert_called_with(activity=decode_err)
+
+    def test_exec_python_fails(self):
+        import shlex
+        import sys
+        cmd = self.construct()
+
+        # Use shlex to quote strings like this, so we're sure it's done well.
+        args = [sys.executable, '-c', r'raise SystemExit("¡FAIL!")']
+        settings = {
+            'cmd': ' '.join(shlex.quote(s) for s in args)
+        }
+
+        ok = self.loop.run_until_complete(asyncio.wait_for(
+            cmd.run(settings),
+            0.6
+        ))
+        self.assertFalse(ok)
+
+        # Check that the execution error has been reported.
+        self.fworker.register_log.assert_has_calls([
+            call('exec: Starting'),
+            call('Executing %s',
+                 '%s -c \'raise SystemExit("¡FAIL!")\'' % sys.executable),
+            call('> ¡FAIL!'),  # note the logged line doesn't end in a newline
+            call('exec.(task_id=12345, command_idx=0): Error executing: '
+                 'Command failed with status 1')
+        ])
+
+        # The update should NOT contain a new task status -- that is left to the Worker.
         self.fworker.register_task_update.assert_called_with(
-            activity=decode_err,
-            task_status='failed'
+            activity='exec.(task_id=12345, command_idx=0): Error executing: '
+                     'Command failed with status 1',
         )
