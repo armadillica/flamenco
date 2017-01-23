@@ -39,7 +39,7 @@ func (self *TaskTimeoutChecker) Go() {
 
 	self.done_wg.Add(1)
 	defer self.done_wg.Done()
-	defer log.Printf("TaskTimeoutChecker: shutting down.")
+	defer log.Infof("TaskTimeoutChecker: shutting down.")
 
 	// Start with a delay, so that workers get a chance to push their updates
 	// after the manager has started up.
@@ -60,14 +60,14 @@ func (self *TaskTimeoutChecker) Go() {
 
 func (self *TaskTimeoutChecker) Close() {
 	close(self.done_chan)
-	log.Printf("TaskTimeoutChecker: waiting for shutdown to finish.")
+	log.Debug("TaskTimeoutChecker: waiting for shutdown to finish.")
 	self.done_wg.Wait()
-	log.Printf("TaskTimeoutChecker: shutdown complete.")
+	log.Debug("TaskTimeoutChecker: shutdown complete.")
 }
 
 func (self *TaskTimeoutChecker) check(db *mgo.Database) {
 	timeout_threshold := UtcNow().Add(-self.config.ActiveTaskTimeoutInterval)
-	// log.Printf("Failing all active tasks that have not been touched since %s", timeout_threshold)
+	// log.Infof("Failing all active tasks that have not been touched since %s", timeout_threshold)
 
 	var timedout_tasks []Task
 	query := bson.M{
@@ -81,11 +81,11 @@ func (self *TaskTimeoutChecker) check(db *mgo.Database) {
 		"worker":           1,
 	}
 	if err := db.C("flamenco_tasks").Find(query).Select(projection).All(&timedout_tasks); err != nil {
-		log.Printf("Error finding timed-out tasks: %s", err)
+		log.Warningf("Error finding timed-out tasks: %s", err)
 	}
 
 	for _, task := range timedout_tasks {
-		log.Printf("    - Task %s (%s) timed out", task.Name, task.Id.Hex())
+		log.Warningf("    - Task %s (%s) timed out", task.Name, task.Id.Hex())
 		tupdate := TaskUpdate{
 			TaskId:     task.Id,
 			TaskStatus: "failed",

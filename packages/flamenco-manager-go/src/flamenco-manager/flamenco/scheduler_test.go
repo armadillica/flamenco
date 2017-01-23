@@ -66,7 +66,7 @@ func (s *SchedulerTestSuite) SetUpTest(c *check.C) {
 }
 
 func (s *SchedulerTestSuite) TearDownTest(c *check.C) {
-	log.Println("SchedulerTestSuite tearing down test, dropping database.")
+	log.Info("SchedulerTestSuite tearing down test, dropping database.")
 	s.upstream.Close()
 	s.db.DropDatabase()
 	httpmock.DeactivateAndReset()
@@ -163,7 +163,7 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamCanceled(t *check.C) {
 		"http://localhost:51234/api/flamenco/tasks/2aaaaaaaaaaaaaaaaaaaaaaa",
 		func(req *http.Request) (*http.Response, error) {
 			defer func() { timeout <- false }()
-			log.Println("GET from manager received on server, sending back updated task.")
+			log.Info("GET from manager received on server, sending back updated task.")
 
 			// same task, but with changed status.
 			changed_task := task2
@@ -214,7 +214,7 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamPrioChange(t *check.C) {
 		"http://localhost:51234/api/flamenco/tasks/2aaaaaaaaaaaaaaaaaaaaaaa",
 		func(req *http.Request) (*http.Response, error) {
 			defer func() { timeout <- false }()
-			log.Println("GET from manager received on server, sending back updated task.")
+			log.Info("GET from manager received on server, sending back updated task.")
 
 			// same task, but with changed status.
 			changed_task := task2
@@ -271,7 +271,7 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamDeleted(t *check.C) {
 		"http://localhost:51234/api/flamenco/tasks/2aaaaaaaaaaaaaaaaaaaaaaa",
 		func(req *http.Request) (*http.Response, error) {
 			defer func() { timeout <- false }()
-			log.Println("GET from manager received on server, sending back 404.")
+			log.Info("GET from manager received on server, sending back 404.")
 			return httpmock.NewStringResponse(404, ""), nil
 		},
 	)

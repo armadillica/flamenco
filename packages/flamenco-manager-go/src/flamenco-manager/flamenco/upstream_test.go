@@ -29,7 +29,7 @@ func TestStartupNotification(t *testing.T) {
 		"http://localhost:51234/api/flamenco/managers/5852bc5198377351f95d103e/startup",
 		func(req *http.Request) (*http.Response, error) {
 			// TODO: test contents of request
-			log.Println("HTTP POST to Flamenco was performed.")
+			log.Info("HTTP POST to Flamenco was performed.")
 			defer func() { timeout <- false }()
 			return httpmock.NewStringResponse(204, ""), nil
 		},

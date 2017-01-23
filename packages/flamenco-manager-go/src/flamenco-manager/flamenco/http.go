@@ -20,7 +20,7 @@ func DecodeJson(w http.ResponseWriter, r io.Reader, document interface{},
 	dec := json.NewDecoder(r)
 
 	if err := dec.Decode(document); err != nil {
-		log.Printf("%s Unable to decode JSON: %s", logprefix, err)
+		log.Warningf("%s Unable to decode JSON: %s", logprefix, err)
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "Unable to decode JSON: %s\n", err)
 		return err
@@ -43,14 +43,14 @@ func SendJson(logprefix, method string, url *url.URL,
 ) error {
 	payload_bytes, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("%s: ERROR: Unable to marshal JSON: %s\n", logprefix, err)
+		log.Errorf("%s: Unable to marshal JSON: %s", logprefix, err)
 		return err
 	}
 
 	// TODO Sybren: enable GZip compression.
 	req, err := http.NewRequest("POST", url.String(), bytes.NewBuffer(payload_bytes))
 	if err != nil {
-		log.Printf("%s: ERROR: Unable to create request: %s\n", logprefix, err)
+		log.Errorf("%s: Unable to create request: %s", logprefix, err)
 		return err
 	}
 	req.Header.Add("Content-Type", "application/json")
@@ -61,24 +61,25 @@ func SendJson(logprefix, method string, url *url.URL,
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("%s: ERROR: Unable to POST to %s: %s\n", logprefix, url, err)
+		log.Warningf("%s: Unable to POST to %s: %s", logprefix, url, err)
 		return err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
-		log.Printf("%s: ERROR: Error %d POSTing to %s: %s\n",
+		log.Warningf("%s: Error %d POSTing to %s: %s",
 			logprefix, resp.StatusCode, url, err)
 		return err
 	}
 
 	if resp.StatusCode >= 300 {
-		log.Printf("%s: ERROR: Error %d POSTing to %s\n",
-			logprefix, resp.StatusCode, url)
+		suffix := ""
 		if resp.StatusCode != 404 {
-			log.Printf("    body:\n%s\n", body)
+			suffix = fmt.Sprintf("\n    body:\n%s", body)
 		}
+		log.Warningf("%s: Error %d POSTing to %s%s",
+			logprefix, resp.StatusCode, url, suffix)
 		return fmt.Errorf("%s: Error %d POSTing to %s", logprefix, resp.StatusCode, url)
 	}
 

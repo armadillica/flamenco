@@ -62,16 +62,16 @@ func (self *UpstreamConnection) Close() {
 	time.Sleep(1)
 	close(self.download_kick)
 
-	log.Println("UpstreamConnection: shutting down, waiting for shutdown to complete.")
+	log.Debugf("UpstreamConnection: shutting down, waiting for shutdown to complete.")
 	self.done_wg.Wait()
-	log.Println("UpstreamConnection: shutdown complete.")
+	log.Info("UpstreamConnection: shutdown complete.")
 }
 
 func (self *UpstreamConnection) KickDownloader(synchronous bool) {
 	if synchronous {
 		pingback := make(chan bool)
 		self.download_kick <- pingback
-		log.Println("KickDownloader: Waiting for task downloader to finish.")
+		log.Info("KickDownloader: Waiting for task downloader to finish.")
 
 		// wait for the download to be complete, or the connection to be shut down.
 		self.done_wg.Add(1)
@@ -80,15 +80,15 @@ func (self *UpstreamConnection) KickDownloader(synchronous bool) {
 		for {
 			select {
 			case <-pingback:
-				log.Println("KickDownloader: done.")
+				log.Debugf("KickDownloader: done.")
 				return
 			case <-self.done:
-				log.Println("KickDownloader: Aborting waiting for task downloader; shutting down.")
+				log.Debugf("KickDownloader: Aborting waiting for task downloader; shutting down.")
 				return
 			}
 		}
 	} else {
-		log.Println("KickDownloader: asynchronous kick, just kicking.")
+		log.Debugf("KickDownloader: asynchronous kick, just kicking.")
 		self.download_kick <- nil
 	}
 }
@@ -107,7 +107,7 @@ func (self *UpstreamConnection) download_task_loop() {
 
 		self.done_wg.Add(1)
 		defer self.done_wg.Done()
-		defer log.Println("download_task_loop: Task download goroutine shutting down.")
+		defer log.Info("download_task_loop: Task download goroutine shutting down.")
 
 		for {
 			select {
@@ -117,13 +117,13 @@ func (self *UpstreamConnection) download_task_loop() {
 				if !ok {
 					return
 				}
-				log.Println("download_task_loop: Going to fetch tasks due to periodic timeout.")
+				log.Info("download_task_loop: Going to fetch tasks due to periodic timeout.")
 				download_tasks_from_upstream(self.config, mongo_sess)
 			case pingback_chan, ok := <-self.download_kick:
 				if !ok {
 					return
 				}
-				log.Println("download_task_loop: Going to fetch tasks due to kick.")
+				log.Info("download_task_loop: Going to fetch tasks due to kick.")
 				download_tasks_from_upstream(self.config, mongo_sess)
 				if pingback_chan != nil {
 					pingback_chan <- true
@@ -145,16 +145,16 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 		config.ManagerId, MaxInt(worker_count, 1))
 	rel_url, err := url.Parse(url_str)
 	if err != nil {
-		log.Printf("Error parsing '%s' as URL; unable to fetch tasks.\n", url_str)
+		log.Warningf("Error parsing '%s' as URL; unable to fetch tasks.", url_str)
 		return
 	}
 
 	get_url := config.Flamenco.ResolveReference(rel_url)
-	log.Printf("Getting tasks from upstream Flamenco %s\n", get_url)
+	log.Infof("Getting tasks from upstream Flamenco %s", get_url)
 
 	req, err := http.NewRequest("GET", get_url.String(), nil)
 	if err != nil {
-		log.Printf("Unable to create GET request: %s\n", err)
+		log.Warningf("Unable to create GET request: %s", err)
 		return
 	}
 	req.SetBasicAuth(config.ManagerSecret, "")
@@ -162,28 +162,25 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("ERROR: Unable to GET %s: %s\n", get_url, err)
+		log.Warningf("Unable to GET %s: %s", get_url, err)
 		return
 	}
 
 	if resp.StatusCode >= 300 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Printf("ERROR: Error %d GETing %s: %s\n", resp.StatusCode, get_url, err)
+			log.Warningf("Error %d GETing %s: %s", resp.StatusCode, get_url, err)
 			return
 		}
 
-		log.Printf("ERROR: Error %d GETing %s: %s\n", resp.StatusCode, get_url, body)
+		log.Warningf("Error %d GETing %s: %s", resp.StatusCode, get_url, body)
 		return
 	}
 
 	if resp.StatusCode == 204 {
-		log.Println("No tasks for us; sleeping.")
+		log.Info("No tasks for us; sleeping.")
 		return
 	}
-
-	// body, err := ioutil.ReadAll(resp.Body)
-	// log.Printf("BODY:\n%s\n\n", body)
 
 	// Parse the received tasks.
 	var scheduled_tasks []Task
@@ -191,25 +188,29 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	defer resp.Body.Close()
 
 	if err = decoder.Decode(&scheduled_tasks); err != nil {
-		log.Println("Unable to decode scheduled tasks JSON:", err)
+		log.Warning("Unable to decode scheduled tasks JSON:", err)
 		return
 	}
 
 	// Insert them into the MongoDB
 	// TODO Sybren: before inserting, compare to the database and deal with any changed statuses.
-	log.Printf("Received %d tasks from upstream Flamenco Server.\n", len(scheduled_tasks))
+	if len(scheduled_tasks) > 0 {
+		log.Infof("Received %d tasks from upstream Flamenco Server.", len(scheduled_tasks))
+	} else {
+		log.Debugf("Received %d tasks from upstream Flamenco Server.", len(scheduled_tasks))
+	}
 	tasks_coll := db.C("flamenco_tasks")
 	for _, task := range scheduled_tasks {
 		change, err := tasks_coll.Upsert(bson.M{"_id": task.Id}, task)
 		if err != nil {
-			log.Printf("ERROR: unable to insert new task %s: %s\n", task.Id.Hex(), err)
+			log.Errorf("unable to insert new task %s: %s", task.Id.Hex(), err)
 			continue
 		}
 
 		if change.Updated > 0 {
-			log.Printf("WARNING: Upstream server re-queued existing task %s\n", task.Id.Hex())
+			log.Infof("Upstream server re-queued existing task %s", task.Id.Hex())
 		} else if change.Matched > 0 {
-			log.Printf("Upstream server re-queued existing task %s, but nothing changed\n",
+			log.Infof("Upstream server re-queued existing task %s, but nothing changed",
 				task.Id.Hex())
 		}
 	}
@@ -259,11 +260,11 @@ func (self *UpstreamConnection) SendStartupNotification() {
 
 		err := self.SendJson("SendStartupNotification", "POST", url, &notification, nil)
 		if err != nil {
-			log.Printf("SendStartupNotification: ERROR: Unable to send: %s\n", err)
+			log.Warningf("SendStartupNotification: Unable to send: %s", err)
 			return err
 		}
 
-		log.Printf("SendStartupNotification: Done sending notification to upstream Flamenco\n")
+		log.Infof("SendStartupNotification: Done sending notification to upstream Flamenco")
 		return nil
 	}
 
@@ -278,21 +279,21 @@ func (self *UpstreamConnection) SendStartupNotification() {
 		ok := KillableSleep("SendStartupNotification-initial", STARTUP_NOTIFICATION_INITIAL_DELAY,
 			self.done, self.done_wg)
 		if !ok {
-			log.Println("SendStartupNotification: shutting down without sending startup notification.")
+			log.Warning("SendStartupNotification: shutting down without sending startup notification.")
 			return
 		}
 		timer_chan := Timer("SendStartupNotification", STARTUP_NOTIFICATION_RETRY,
 			false, self.done, self.done_wg)
 
 		for _ = range timer_chan {
-			log.Println("SendStartupNotification: trying to send notification.")
+			log.Info("SendStartupNotification: trying to send notification.")
 			err := send_startup_notification(mongo_sess)
 			if err == nil {
 				return
 			}
 		}
 
-		log.Println("SendStartupNotification: shutting down without succesfully sending notification.")
+		log.Warning("SendStartupNotification: shutting down without succesfully sending notification.")
 	}()
 }
 
@@ -311,7 +312,7 @@ func (self *UpstreamConnection) SendTaskUpdates(updates *[]TaskUpdate) (*TaskUpd
 	parse_response := func(resp *http.Response, body []byte) error {
 		err := json.Unmarshal(body, &response)
 		if err != nil {
-			log.Printf("SendTaskUpdates: error parsing server response: %s", err)
+			log.Warningf("SendTaskUpdates: error parsing server response: %s", err)
 			return err
 		}
 		return nil
@@ -333,11 +334,11 @@ func (self *UpstreamConnection) SendTaskUpdates(updates *[]TaskUpdate) (*TaskUpd
  */
 func (self *UpstreamConnection) RefetchTask(task *Task) bool {
 	get_url, err := self.ResolveUrl("/api/flamenco/tasks/%s", task.Id.Hex())
-	log.Printf("Verifying task with Flamenco Server %s\n", get_url)
+	log.Infof("Verifying task with Flamenco Server %s", get_url)
 
 	req, err := http.NewRequest("GET", get_url.String(), nil)
 	if err != nil {
-		log.Printf("WARNING: Unable to create GET request: %s\n", err)
+		log.Errorf("WARNING: Unable to create GET request: %s", err)
 		return false
 	}
 	req.SetBasicAuth(self.config.ManagerSecret, "")
@@ -346,25 +347,25 @@ func (self *UpstreamConnection) RefetchTask(task *Task) bool {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("WARNING: Unable to re-fetch task: %s\n", err)
+		log.Warningf("Unable to re-fetch task: %s", err)
 		return false
 	}
 
 	if resp.StatusCode == http.StatusNotModified {
 		// Nothing changed, we're good to go.
-		log.Printf("Cached task %s is still the same on the Server\n", task.Id.Hex())
+		log.Infof("Cached task %s is still the same on the Server", task.Id.Hex())
 		return false
 	}
 
 	if resp.StatusCode >= 500 {
 		// Internal errors, we'll ignore that.
-		log.Printf("WARNING: Error %d trying to re-fetch task %s\n",
+		log.Warningf("Error %d trying to re-fetch task %s",
 			resp.StatusCode, task.Id.Hex())
 		return false
 	}
 	if 300 <= resp.StatusCode && resp.StatusCode < 400 {
 		// Redirects, we'll ignore those too for now.
-		log.Printf("WARNING: Redirect %d trying to re-fetch task %s\n",
+		log.Warningf("Redirect %d trying to re-fetch task %s, not following redirect.",
 			resp.StatusCode, task.Id.Hex())
 		return false
 	}
@@ -375,7 +376,8 @@ func (self *UpstreamConnection) RefetchTask(task *Task) bool {
 
 	if resp.StatusCode >= 400 || resp.StatusCode == 204 {
 		// Not found, access denied, that kind of stuff. Locally cancel the task.
-		log.Printf("WARNING: Code %d when re-fetching task %s; canceling local copy\n",
+		// TODO: probably better to go to "failed".
+		log.Warningf("Code %d when re-fetching task %s; canceling local copy",
 			resp.StatusCode, task.Id.Hex())
 
 		new_task = *task
@@ -388,7 +390,7 @@ func (self *UpstreamConnection) RefetchTask(task *Task) bool {
 		if err = decoder.Decode(&new_task); err != nil {
 			// We can't decode what's being sent. Remove it from the queue, as we no longer know
 			// whether this task is valid at all.
-			log.Printf("ERROR: Unable to decode updated tasks JSON from %s: %s", get_url, err)
+			log.Warningf("Unable to decode updated tasks JSON from %s: %s", get_url, err)
 
 			new_task = *task
 			new_task.Status = "canceled"
@@ -396,7 +398,7 @@ func (self *UpstreamConnection) RefetchTask(task *Task) bool {
 	}
 
 	// save the task to the queue.
-	log.Printf("Cached task %s was changed on the Server, status=%s, priority=%d.",
+	log.Infof("Cached task %s was changed on the Server, status=%s, priority=%d.",
 		task.Id.Hex(), new_task.Status, new_task.Priority)
 	tasks_coll := self.session.DB("").C("flamenco_tasks")
 	tasks_coll.UpdateId(task.Id,

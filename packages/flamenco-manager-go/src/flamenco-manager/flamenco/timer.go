@@ -31,7 +31,7 @@ func Timer(name string, sleep_duration time.Duration, sleep_first bool,
 		for {
 			select {
 			case <-done_chan:
-				log.Printf("Timer '%s' goroutine shutting down.\n", name)
+				log.Infof("Timer '%s' goroutine shutting down.", name)
 				return
 			default:
 				// Only sleep a little bit, so that we can check 'done' quite often.
@@ -60,13 +60,13 @@ func KillableSleep(name string, sleep_duration time.Duration,
 
 	done_wg.Add(1)
 	defer done_wg.Done()
-	defer log.Printf("Sleep '%s' goroutine is shut down.\n", name)
+	defer log.Infof("Sleep '%s' goroutine is shut down.", name)
 
 	sleep_start := time.Now()
 	for {
 		select {
 		case <-done_chan:
-			log.Printf("Sleep '%s' goroutine shutting down.\n", name)
+			log.Infof("Sleep '%s' goroutine shutting down.", name)
 			return false
 		default:
 			// Only sleep a little bit, so that we can check 'done' quite often.

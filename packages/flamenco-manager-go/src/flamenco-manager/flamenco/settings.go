@@ -53,7 +53,7 @@ type Conf struct {
 func GetConf() Conf {
 	yamlFile, err := ioutil.ReadFile("flamenco-manager.yaml")
 	if err != nil {
-		log.Printf("GetConf err   #%v ", err)
+		log.Fatalf("GetConf err   #%v ", err)
 	}
 
 	// Construct the struct with some more or less sensible defaults.
@@ -108,7 +108,7 @@ func GetTestConfig() Conf {
 	}
 
 	if path.Base(cwd) != "flamenco" {
-		log.Fatal("Expecting tests to run from flamenco package dir.")
+		log.Panic("Expecting tests to run from flamenco package dir.")
 		os.Exit(2)
 	}
 

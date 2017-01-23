@@ -34,12 +34,12 @@ type TaskUpdatePusher struct {
  */
 func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 	db *mgo.Database, task_id bson.ObjectId) {
-	log.Printf("%s Received task update for task %s\n", r.RemoteAddr, task_id.Hex())
+	log.Infof("%s Received task update for task %s", r.RemoteAddr, task_id.Hex())
 
 	// Get the worker
 	worker, err := FindWorker(r.Username, bson.M{"address": 1, "nickname": 1}, db)
 	if err != nil {
-		log.Printf("%s QueueTaskUpdate: Unable to find worker address: %s\n",
+		log.Warningf("%s QueueTaskUpdate: Unable to find worker address: %s",
 			r.RemoteAddr, err)
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintf(w, "Unable to find worker address: %s", err)
@@ -59,7 +59,7 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 	WorkerPingedTask(tupdate.TaskId, db)
 
 	if err := QueueTaskUpdate(&tupdate, db); err != nil {
-		log.Printf("%s: %s", worker.Identifier(), err)
+		log.Warningf("%s: %s", worker.Identifier(), err)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Unable to store update: %s\n", err)
 		return
@@ -89,7 +89,7 @@ func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 		if TaskStatusTransitionValid(task_coll, tupdate.TaskId, tupdate.TaskStatus) {
 			updates["status"] = tupdate.TaskStatus
 		} else {
-			log.Printf("QueueTaskUpdate: not locally applying status=%s for %s",
+			log.Warningf("QueueTaskUpdate: not locally applying status=%s for %s",
 				tupdate.TaskStatus, tupdate.TaskId.Hex())
 		}
 	}
@@ -97,16 +97,16 @@ func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 		updates["activity"] = tupdate.Activity
 	}
 	if len(updates) > 0 {
-		log.Printf("QueueTaskUpdate: applying update %s to task %s", updates, tupdate.TaskId.Hex())
+		log.Infof("QueueTaskUpdate: applying update %s to task %s", updates, tupdate.TaskId.Hex())
 		if err := task_coll.UpdateId(tupdate.TaskId, bson.M{"$set": updates}); err != nil {
 			if err != mgo.ErrNotFound {
 				return fmt.Errorf("QueueTaskUpdate: error updating local task cache: %s", err)
 			} else {
-				log.Printf("QueueTaskUpdate: cannot find task %s to update locally", tupdate.TaskId.Hex())
+				log.Warningf("QueueTaskUpdate: cannot find task %s to update locally", tupdate.TaskId.Hex())
 			}
 		}
 	} else {
-		log.Printf("QueueTaskUpdate: nothing to do locally for task %s", tupdate.TaskId.Hex())
+		log.Debugf("QueueTaskUpdate: nothing to do locally for task %s", tupdate.TaskId.Hex())
 	}
 
 	return nil
@@ -126,7 +126,7 @@ func TaskStatusTransitionValid(task_coll *mgo.Collection, task_id bson.ObjectId,
 
 	task_curr := Task{}
 	if err := task_coll.FindId(task_id).Select(bson.M{"status": 1}).One(&task_curr); err != nil {
-		log.Printf("Unable to find task %s - not accepting status update to %s", err, new_status)
+		log.Warningf("Unable to find task %s - not accepting status update to %s", err, new_status)
 		return false
 	}
 
@@ -168,13 +168,13 @@ func (self *TaskUpdatePusher) Close() {
 	// closing of the other channels.
 	time.Sleep(1)
 
-	log.Println("TaskUpdatePusher: shutting down, waiting for shutdown to complete.")
+	log.Info("TaskUpdatePusher: shutting down, waiting for shutdown to complete.")
 	self.done_wg.Wait()
-	log.Println("TaskUpdatePusher: shutdown complete.")
+	log.Info("TaskUpdatePusher: shutdown complete.")
 }
 
 func (self *TaskUpdatePusher) Go() {
-	log.Println("TaskUpdatePusher: Starting")
+	log.Info("TaskUpdatePusher: Starting")
 	mongo_sess := self.session.Copy()
 	defer mongo_sess.Close()
 
@@ -190,10 +190,10 @@ func (self *TaskUpdatePusher) Go() {
 		TASK_QUEUE_INSPECT_PERIOD, false, self.done, self.done_wg)
 
 	for _ = range timer_chan {
-		// log.Println("TaskUpdatePusher: checking task update queue")
+		// log.Info("TaskUpdatePusher: checking task update queue")
 		update_count, err := Count(queue)
 		if err != nil {
-			log.Printf("TaskUpdatePusher: ERROR checking queue: %s\n", err)
+			log.Warningf("TaskUpdatePusher: ERROR checking queue: %s", err)
 			continue
 		}
 
@@ -208,10 +208,10 @@ func (self *TaskUpdatePusher) Go() {
 
 		// Time to push!
 		if update_count > 0 {
-			log.Printf("TaskUpdatePusher: %d updates are queued", update_count)
+			log.Infof("TaskUpdatePusher: %d updates are queued", update_count)
 		}
 		if err := self.push(db); err != nil {
-			log.Println("TaskUpdatePusher: unable to push to upstream Flamenco Server:", err)
+			log.Warning("TaskUpdatePusher: unable to push to upstream Flamenco Server: ", err)
 			continue
 		}
 
@@ -238,7 +238,7 @@ func (self *TaskUpdatePusher) push(db *mgo.Database) error {
 	}
 
 	// Perform the sending.
-	log.Printf("TaskUpdatePusher: pushing %d updates to upstream Flamenco Server", len(result))
+	log.Infof("TaskUpdatePusher: pushing %d updates to upstream Flamenco Server", len(result))
 	response, err := self.upstream.SendTaskUpdates(&result)
 	if err != nil {
 		// TODO Sybren: implement some exponential backoff when things fail to get sent.
@@ -246,7 +246,7 @@ func (self *TaskUpdatePusher) push(db *mgo.Database) error {
 	}
 
 	if len(response.HandledUpdateIds) != len(result) {
-		log.Printf("TaskUpdatePusher: server accepted %d of %d items.",
+		log.Warningf("TaskUpdatePusher: server accepted %d of %d items.",
 			len(response.HandledUpdateIds), len(result))
 	}
 
@@ -260,8 +260,8 @@ func (self *TaskUpdatePusher) push(db *mgo.Database) error {
 	err_cancel := self.handle_incoming_cancel_requests(response.CancelTasksIds, db)
 
 	if err_unqueue != nil {
-		log.Printf("TaskUpdatePusher: This is awkward; we have already sent the task updates")
-		log.Println("upstream, but now we cannot un-queue them. Expect duplicates.")
+		log.Warningf("TaskUpdatePusher: This is awkward; we have already sent the task updates "+
+			"upstream, but now we cannot un-queue them. Expect duplicates: %s", err)
 		return err_unqueue
 	}
 
@@ -276,7 +276,7 @@ func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []
 		return nil
 	}
 
-	log.Printf("TaskUpdatePusher: canceling %d tasks", len(cancel_task_ids))
+	log.Infof("TaskUpdatePusher: canceling %d tasks", len(cancel_task_ids))
 	tasks_coll := db.C("flamenco_tasks")
 
 	// Fetch all to-be-canceled tasks
@@ -288,7 +288,7 @@ func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []
 		"status": 1,
 	}).All(&tasks_to_cancel)
 	if err != nil {
-		log.Printf("TaskUpdatePusher: ERROR unable to fetch tasks: %s", err)
+		log.Warningf("TaskUpdatePusher: ERROR unable to fetch tasks: %s", err)
 		return err
 	}
 
@@ -303,7 +303,7 @@ func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []
 			TaskStatus: "canceled",
 		}
 		if err := QueueTaskUpdate(&tupdate, db); err != nil {
-			log.Printf("TaskUpdatePusher: Unable to queue task update for canceled task %s, "+
+			log.Warningf("TaskUpdatePusher: Unable to queue task update for canceled task %s, "+
 				"expect the task to hang in cancel-requested state.", task_id)
 		} else {
 			canceled_count++
@@ -327,9 +327,9 @@ func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []
 		bson.M{"$set": bson.M{"status": "cancel-requested"}},
 	)
 	if err != nil {
-		log.Printf("TaskUpdatePusher: unable to mark tasks as cancel-requested: %s", err)
+		log.Warningf("TaskUpdatePusher: unable to mark tasks as cancel-requested: %s", err)
 	} else {
-		log.Printf("TaskUpdatePusher: marked %d tasks as cancel-requested: %s",
+		log.Infof("TaskUpdatePusher: marked %d tasks as cancel-requested: %s",
 			update_info.Matched, go_to_cancel_requested)
 	}
 
@@ -339,14 +339,14 @@ func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []
 		if seen {
 			continue
 		}
-		log.Printf("    - unknown task: %s", task_id.Hex())
+		log.Warningf("TaskUpdatePusher: unknown task: %s", task_id.Hex())
 		queue_task_cancel(task_id)
 	}
 
-	log.Printf("TaskUpdatePusher: marked %d tasks as canceled", canceled_count)
+	log.Infof("TaskUpdatePusher: marked %d tasks as canceled", canceled_count)
 
 	if update_info.Matched+canceled_count < len(cancel_task_ids) {
-		log.Printf("TaskUpdatePusher: WARNING, was unable to cancel %d tasks for some reason.",
+		log.Warningf("TaskUpdatePusher: I was unable to cancel %d tasks for some reason.",
 			len(cancel_task_ids)-(update_info.Matched+canceled_count))
 	}
 

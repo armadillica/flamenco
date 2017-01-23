@@ -32,7 +32,7 @@ func (s *TaskUpdatesTestSuite) SetUpTest(c *check.C) {
 }
 
 func (s *TaskUpdatesTestSuite) TearDownTest(c *check.C) {
-	log.Println("SchedulerTestSuite tearing down test, dropping database.")
+	log.Info("SchedulerTestSuite tearing down test, dropping database.")
 	s.upstream.Close()
 	s.db.DropDatabase()
 	httpmock.DeactivateAndReset()
@@ -58,7 +58,7 @@ func (s *TaskUpdatesTestSuite) TestCancelRunningTasks(t *check.C) {
 		"http://localhost:51234/api/flamenco/managers/5852bc5198377351f95d103e/task-update-batch",
 		func(req *http.Request) (*http.Response, error) {
 			defer func() { timeout <- false }()
-			log.Println("POST from manager received on server, sending back TaskUpdateResponse.")
+			log.Info("POST from manager received on server, sending back TaskUpdateResponse.")
 
 			resp := TaskUpdateResponse{
 				CancelTasksIds: []bson.ObjectId{task2.Id},

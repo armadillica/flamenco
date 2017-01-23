@@ -32,7 +32,7 @@ func CreateTaskScheduler(config *Conf, upstream *UpstreamConnection, session *mg
 }
 
 func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
-	log.Printf("%s Worker %s asking for a task", r.RemoteAddr, r.Username)
+	log.Infof("%s Worker %s asking for a task", r.RemoteAddr, r.Username)
 
 	mongo_sess := ts.session.Copy()
 	defer mongo_sess.Close()
@@ -42,7 +42,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	projection := bson.M{"platform": 1, "supported_job_types": 1, "address": 1}
 	worker, err := FindWorker(r.Username, projection, db)
 	if err != nil {
-		log.Printf("%s ScheduleTask: Unable to find worker: %s\n", r.RemoteAddr, err)
+		log.Warningf("%s ScheduleTask: Unable to find worker: %s", r.RemoteAddr, err)
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintf(w, "Unable to find worker: %s", err)
 		return
@@ -64,10 +64,10 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 			break
 		}
 
-		log.Printf("Task %s was changed, reexamining queue.", task.Id.Hex())
+		log.Debugf("Task %s was changed, reexamining queue.", task.Id.Hex())
 	}
 	if was_changed {
-		log.Printf("Infinite loop detected, tried 1000 tasks and they all changed...")
+		log.Errorf("Infinite loop detected, tried 1000 tasks and they all changed...")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -78,7 +78,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	// update the worker_id field of the task.
 	tasks_coll := db.C("flamenco_tasks")
 	if err := tasks_coll.UpdateId(task.Id, bson.M{"$set": bson.M{"worker_id": worker.Id}}); err != nil {
-		log.Printf("Unable to set worker_id=%s on task %s: %s", worker.Id, task.Id, err)
+		log.Warningf("Unable to set worker_id=%s on task %s: %s", worker.Id, task.Id, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -88,7 +88,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	encoder := json.NewEncoder(w)
 	encoder.Encode(task)
 
-	log.Printf("%s assigned task %s to worker %s", r.RemoteAddr, task.Id.Hex(), r.Username)
+	log.Infof("%s assigned task %s to worker %s", r.RemoteAddr, task.Id.Hex(), r.Username)
 }
 
 /**
@@ -99,7 +99,7 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 	db *mgo.Database, worker *Worker) *Task {
 
 	if len(worker.SupportedJobTypes) == 0 {
-		log.Printf("%s Warning: worker %s has no supported job types.",
+		log.Warningf("%s: worker %s has no supported job types.",
 			r.RemoteAddr, worker.Id.Hex())
 		return nil
 	}
@@ -125,18 +125,18 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 		if err == mgo.ErrNotFound {
 			if attempt == 0 && dtrt >= 0 && time.Now().Sub(last_upstream_check) > dtrt {
 				// On first attempt: try fetching new tasks from upstream, then re-query the DB.
-				log.Printf("%s No more tasks available for %s, checking upstream\n",
+				log.Infof("%s No more tasks available for %s, checking upstream",
 					r.RemoteAddr, r.Username)
 				last_upstream_check = time.Now()
 				ts.upstream.KickDownloader(true)
 				continue
 			}
 
-			log.Printf("%s Really no more tasks available for %s\n", r.RemoteAddr, r.Username)
+			log.Infof("%s Really no more tasks available for %s", r.RemoteAddr, r.Username)
 			w.WriteHeader(204)
 			return nil
 		} else if err != nil {
-			log.Printf("%s Error fetching task for %s: %s // %s\n", r.RemoteAddr, r.Username, err, info)
+			log.Warningf("%s Error fetching task for %s: %s // %s", r.RemoteAddr, r.Username, err, info)
 			w.WriteHeader(500)
 			return nil
 		}

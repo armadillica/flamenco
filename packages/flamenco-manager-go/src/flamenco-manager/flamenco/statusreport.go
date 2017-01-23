@@ -18,7 +18,7 @@ type StatusReport struct {
  * Reports the status of the manager in JSON.
  */
 func SendStatusReport(w http.ResponseWriter, r *http.Request, session *mgo.Session) {
-	log.Println(r.RemoteAddr, "Status request received")
+	log.Info(r.RemoteAddr, "Status request received")
 
 	mongo_sess := session.Copy()
 	defer mongo_sess.Close()

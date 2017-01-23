@@ -32,7 +32,7 @@ func (worker *Worker) Identifier() string {
 func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 	var err error
 
-	log.Println(r.RemoteAddr, "Worker registering")
+	log.Info(r.RemoteAddr, "Worker registering")
 
 	// Parse the given worker information.
 	winfo := WorkerRegistration{}
@@ -49,7 +49,7 @@ func RegisterWorker(w http.ResponseWriter, r *http.Request, db *mgo.Database) {
 	worker.Address = r.RemoteAddr
 
 	if err = StoreNewWorker(&worker, db); err != nil {
-		log.Println(r.RemoteAddr, "Unable to store worker:", err)
+		log.Errorf(r.RemoteAddr, "Unable to store worker:", err)
 
 		w.WriteHeader(500)
 		w.Header().Set("Content-Type", "text/plain")
@@ -70,13 +70,13 @@ func StoreNewWorker(winfo *Worker, db *mgo.Database) error {
 	winfo.Id = bson.NewObjectId()
 	winfo.HashedSecret, err = bcrypt.GenerateFromPassword([]byte(winfo.Secret), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("Unable to hash password:", err)
+		log.Errorf("Unable to hash password:", err)
 		return err
 	}
 
 	workers_coll := db.C("flamenco_workers")
 	if err = workers_coll.Insert(winfo); err != nil {
-		log.Println("Unable to insert worker in DB:", err)
+		log.Errorf("Unable to insert worker in DB:", err)
 		return err
 	}
 
@@ -91,7 +91,7 @@ func WorkerSecret(user string, db *mgo.Database) string {
 	worker, err := FindWorker(user, projection, db)
 
 	if err != nil {
-		log.Println("Error fetching hashed password: ", err)
+		log.Warning("Error fetching hashed password: ", err)
 		return ""
 	}
 
@@ -126,12 +126,12 @@ func WorkerCount(db *mgo.Database) int {
 
 func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 	db *mgo.Database, task_id bson.ObjectId) {
-	log.Printf("%s Received task update for task %s\n", r.RemoteAddr, task_id.Hex())
+	log.Infof("%s Received task update for task %s", r.RemoteAddr, task_id.Hex())
 
 	// Get the worker
 	worker, err := FindWorker(r.Username, bson.M{"_id": 1, "address": 1}, db)
 	if err != nil {
-		log.Printf("%s WorkerMayRunTask: Unable to find worker: %s\n",
+		log.Warningf("%s WorkerMayRunTask: Unable to find worker: %s",
 			r.RemoteAddr, err)
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintf(w, "Unable to find worker: %s", err)
@@ -144,15 +144,15 @@ func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 	// Get the task and check its status.
 	task := Task{}
 	if err := db.C("flamenco_tasks").FindId(task_id).One(&task); err != nil {
-		log.Printf("%s WorkerMayRunTask: unable to find task %s for worker %s",
+		log.Warningf("%s WorkerMayRunTask: unable to find task %s for worker %s",
 			r.RemoteAddr, task_id.Hex(), worker.Id.Hex())
 		response.Reason = fmt.Sprintf("unable to find task %s", task_id.Hex())
 	} else if task.WorkerId != worker.Id {
-		log.Printf("%s WorkerMayRunTask: task %s was assigned from worker %s to %s",
+		log.Warningf("%s WorkerMayRunTask: task %s was assigned from worker %s to %s",
 			r.RemoteAddr, task_id.Hex(), worker.Id.Hex(), task.WorkerId.Hex())
 		response.Reason = fmt.Sprintf("task %s reassigned to another worker", task_id.Hex())
 	} else if !IsRunnableTaskStatus(task.Status) {
-		log.Printf("%s WorkerMayRunTask: task %s is in not-runnable status %s, worker %s will stop",
+		log.Warningf("%s WorkerMayRunTask: task %s is in not-runnable status %s, worker %s will stop",
 			r.RemoteAddr, task_id.Hex(), task.Status, worker.Id.Hex())
 		response.Reason = fmt.Sprintf("task %s in non-runnable status %s", task_id.Hex(), task.Status)
 	} else {
@@ -181,7 +181,7 @@ func WorkerPingedTask(task_id bson.ObjectId, db *mgo.Database) {
 	tasks_coll := db.C("flamenco_tasks")
 
 	if err := tasks_coll.UpdateId(task_id, bson.M{"$set": bson.M{"last_worker_ping": UtcNow()}}); err != nil {
-		log.Printf("WorkerPingedTask: ERROR unable to update last_worker_ping on task %s: %s",
+		log.Errorf("WorkerPingedTask: ERROR unable to update last_worker_ping on task %s: %s",
 			task_id.Hex(), err)
 	}
 }
@@ -202,7 +202,7 @@ func WorkerSeen(worker *Worker, remote_addr string, db *mgo.Database) {
 	}
 
 	if err := db.C("flamenco_workers").UpdateId(worker.Id, bson.M{"$set": updates}); err != nil {
-		log.Printf("WorkerSeen: ERROR: unable to update worker %s in MongoDB: %s", worker.Id, err)
+		log.Errorf("WorkerSeen: unable to update worker %s in MongoDB: %s", worker.Id, err)
 	}
 }
 
@@ -213,13 +213,13 @@ func WorkerSignOff(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.
 	// Get the worker
 	worker, err := FindWorker(r.Username, bson.M{"_id": 1, "address": 1, "nickname": 1}, db)
 	if err != nil {
-		log.Printf("%s WorkerSignOff: Unable to find worker: %s\n", r.RemoteAddr, err)
+		log.Warningf("%s WorkerSignOff: Unable to find worker: %s", r.RemoteAddr, err)
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 	w_ident := worker.Identifier()
 
-	log.Printf("%s Worker %s signing off\n", r.RemoteAddr, w_ident)
+	log.Infof("%s Worker %s signing off", r.RemoteAddr, w_ident)
 
 	// Update the tasks assigned to the worker.
 	var tasks []Task
@@ -229,7 +229,7 @@ func WorkerSignOff(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.
 	}
 	sent_header := false
 	if err := db.C("flamenco_tasks").Find(query).All(&tasks); err != nil {
-		log.Printf("WorkerSignOff: ERROR: unable to find active tasks of worker %s in MongoDB: %s",
+		log.Warningf("WorkerSignOff: unable to find active tasks of worker %s in MongoDB: %s",
 			w_ident, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		sent_header = true
@@ -250,7 +250,7 @@ func WorkerSignOff(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.
 					sent_header = true
 				}
 				fmt.Fprintf(w, "Error updating task %s: %s\n", task.Id.Hex(), err)
-				log.Printf("WorkerSignOff: ERROR: unable to update task %s for worker %s in MongoDB: %s",
+				log.Errorf("WorkerSignOff: unable to update task %s for worker %s in MongoDB: %s",
 					task.Id.Hex(), w_ident, err)
 			}
 		}
@@ -265,6 +265,6 @@ func WorkerSignOff(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.
 		if !sent_header {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-		log.Printf("WorkerSignOff: ERROR: unable to update worker %s in MongoDB: %s", w_ident, err)
+		log.Errorf("WorkerSignOff: unable to update worker %s in MongoDB: %s", w_ident, err)
 	}
 }
