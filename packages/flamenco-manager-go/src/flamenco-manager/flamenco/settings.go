@@ -2,11 +2,12 @@ package flamenco
 
 import (
 	"io/ioutil"
-	"log"
 	"net/url"
 	"os"
 	"path"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 
 	"gopkg.in/yaml.v2"
 )

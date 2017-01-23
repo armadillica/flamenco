@@ -1,13 +1,13 @@
 package flamenco
 
 import (
-	"log"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
+	log "github.com/Sirupsen/logrus"
 	httpmock "gopkg.in/jarcoal/httpmock.v1"
 )
 

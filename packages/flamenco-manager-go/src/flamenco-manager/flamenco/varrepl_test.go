@@ -2,10 +2,10 @@ package flamenco
 
 import (
 	"flag"
-	"log"
 	"os"
 	"testing"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"gopkg.in/mgo.v2/bson"
@@ -13,8 +13,7 @@ import (
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+	log.SetLevel(log.InfoLevel)
 
 	config := GetTestConfig()
 	session := MongoSession(&config)

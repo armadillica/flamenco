@@ -5,10 +5,10 @@ package flamenco
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

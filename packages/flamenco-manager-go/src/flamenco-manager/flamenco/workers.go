@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	auth "github.com/abbot/go-http-auth"
 
 	"golang.org/x/crypto/bcrypt"

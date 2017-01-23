@@ -3,9 +3,9 @@ package flamenco
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	mgo "gopkg.in/mgo.v2"
 )
 

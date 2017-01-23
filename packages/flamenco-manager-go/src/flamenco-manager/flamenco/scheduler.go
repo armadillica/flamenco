@@ -3,10 +3,10 @@ package flamenco
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	auth "github.com/abbot/go-http-auth"
 
 	mgo "gopkg.in/mgo.v2"

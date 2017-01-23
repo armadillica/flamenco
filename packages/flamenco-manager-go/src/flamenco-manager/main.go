@@ -1,8 +1,8 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +13,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	log "github.com/Sirupsen/logrus"
 	auth "github.com/abbot/go-http-auth"
 
 	"flamenco-manager/flamenco"
@@ -103,36 +104,76 @@ func shutdown(signum os.Signal) {
 	timeout := flamenco.TimeoutAfter(2 * time.Second)
 
 	go func() {
-		log.Printf("Signal '%s' received, shutting down.", signum)
+		log.Infof("Signal '%s' received, shutting down.", signum)
 		task_timeout_checker.Close()
 		task_update_pusher.Close()
 		upstream.Close()
 		session.Close()
-		log.Println("Shutdown complete, stopping process.")
+		log.Warning("Shutdown complete, stopping process.")
 		timeout <- false
 	}()
 
 	if <-timeout {
-		log.Println("Shutdown forced, stopping process.")
+		log.Warning("Shutdown forced, stopping process.")
 	}
 	os.Exit(-2)
 }
 
+var cliArgs struct {
+	verbose bool
+	debug   bool
+	jsonLog bool
+}
+
+func parseCliArgs() {
+	flag.BoolVar(&cliArgs.verbose, "verbose", false, "Enable info-level logging")
+	flag.BoolVar(&cliArgs.debug, "debug", false, "Enable debug-level logging")
+	flag.BoolVar(&cliArgs.jsonLog, "json", false, "Log in JSON format")
+	flag.Parse()
+}
+
+func configLogging() {
+	if cliArgs.jsonLog {
+		log.SetFormatter(&log.JSONFormatter{})
+	} else {
+		log.SetFormatter(&log.TextFormatter{
+			FullTimestamp: true,
+		})
+	}
+
+	// Only log the warning severity or above.
+	level := log.WarnLevel
+	if cliArgs.debug {
+		level = log.DebugLevel
+	} else if cliArgs.verbose {
+		level = log.InfoLevel
+	}
+	log.SetLevel(level)
+}
+
 func main() {
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
-	log.Printf("Starting Flamenco Manager version %s", FLAMENCO_VERSION)
+	parseCliArgs()
+	configLogging()
+	log.Infof("Starting Flamenco Manager version %s", FLAMENCO_VERSION)
+
+	defer func() {
+		// If there was a panic, make sure we log it before quitting.
+		if r := recover(); r != nil {
+			log.Panic(r)
+		}
+	}()
 
 	config = flamenco.GetConf()
 	has_tls := config.TLSCert != "" && config.TLSKey != ""
-	log.Println("MongoDB database server :", config.DatabaseUrl)
-	log.Println("Upstream Flamenco server:", config.Flamenco)
-	log.Println("My URL is               :", config.OwnUrl)
-	log.Println("Listening at            :", config.Listen)
+	log.Info("MongoDB database server :", config.DatabaseUrl)
+	log.Info("Upstream Flamenco server:", config.Flamenco)
+	log.Info("My URL is               :", config.OwnUrl)
+	log.Info("Listening at            :", config.Listen)
 	if has_tls {
 		config.OwnUrl = strings.Replace(config.OwnUrl, "http://", "https://", 1)
 	} else {
 		config.OwnUrl = strings.Replace(config.OwnUrl, "https://", "http://", 1)
-		log.Println("WARNING: TLS not enabled!")
+		log.Warning("WARNING: TLS not enabled!")
 	}
 
 	session = flamenco.MongoSession(&config)

@@ -2,11 +2,11 @@ package flamenco
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	auth "github.com/abbot/go-http-auth"
 	"github.com/stretchr/testify/assert"
 

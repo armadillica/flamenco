@@ -1,9 +1,10 @@
 package flamenco
 
 import (
-	"log"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type TimerPing struct{}

@@ -5,11 +5,11 @@ package flamenco
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	auth "github.com/abbot/go-http-auth"
 
 	mgo "gopkg.in/mgo.v2"
