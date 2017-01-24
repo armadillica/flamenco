@@ -31,19 +31,4 @@
 				| {% endfor %}
 
 #col_right
-	.dashboard
-		.d-activity
-			h3 Activity Stream
-
-			ul
-				| {% for act in activities['_items'] %}
-				| {% if act.link %}
-				li
-					a(href="{{ act.link }}")
-						img.actor-avatar(src="{{ act['actor_user']['email'] | gravatar }}")
-						span.date(title="{{ act._created }}") {{ act._created | pretty_date_time }}
-						span.actor {{ act['actor_user']['full_name'] }}
-						span.verb {{ act.verb }}
-				| {% endif %}
-				| {% endfor %}
 | {% endblock %}

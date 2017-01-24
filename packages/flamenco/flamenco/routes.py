@@ -32,28 +32,8 @@ def index():
         for proj in projects['_items']
         ]
 
-    # Fetch all activities for all Flamenco projects.
-    id_to_proj = {p['_id']: p for p in projects['_items']}
-    activities = pillarsdk.Activity.all({
-        'where': {
-            'project': {'$in': list(id_to_proj.keys())},
-        },
-        'sort': [('_created', -1)],
-        'max_results': 20,
-    }, api=api)
-
-    # Fetch more info for each activity.
-    for act in activities['_items']:
-        act.actor_user = pillar.web.subquery.get_user_info(act.actor_user)
-        act.project = id_to_proj[act.project]
-        try:
-            act.link = current_flamenco.link_for_activity(act)
-        except ValueError:
-            act.link = None
-
     return render_template('flamenco/index.html',
-                           projs_with_summaries=projs_with_summaries,
-                           activities=activities)
+                           projs_with_summaries=projs_with_summaries)
 
 
 def error_project_not_setup_for_flamenco():

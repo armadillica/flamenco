@@ -242,17 +242,6 @@ class FlamencoExtension(PillarExtension):
 
         return result
 
-    def link_for_activity(self, act):
-        """Returns the URL for the activity.
-
-        :type act: pillarsdk.Activity
-        """
-
-        # TODO: make this smarter once we have a better idea of the activities we want to link.
-
-        from pillar.web.nodes.routes import url_for_node
-        return url_for_node(node_id=act.object)
-
 
 def _get_current_flamenco():
     """Returns the Flamenco extension of the current application."""
