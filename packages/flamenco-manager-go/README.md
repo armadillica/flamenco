@@ -22,8 +22,8 @@ of this `flamenco-manager-go` directory.
 2. `export GOPATH=$FM`
 3. `cd $FM/src/flamenco-manager`
 4. Download all dependencies with `go get`
-5. Download Flamenco test dependencies with `go get -t ./flamenco`
-6. Run the unittests with `go test ./flamenco`
+5. Download Flamenco test dependencies with `go get -t ./...`
+6. Run the unittests with `go test ./...`
 7. Build your first Flamenco Manager with `go build`; this will create an executable
    `flamenco-manager` in `$FM/src/flamenco-manager` as well as an executable in the current folder
 8. Copy `flamenco-manager-example.yaml` and name it `flamenco-manager.yaml` and then update
