@@ -84,3 +84,24 @@ def set_job_status(job_id):
     current_flamenco.job_manager.web_set_job_status(job_id, new_status)
 
     return '', 204
+
+
+@blueprint.route('/<job_id>/redir')
+def redir_job_id(job_id):
+    """Redirects to the job view.
+
+    This saves the client from performing another request to find the project URL;
+    we do it for them.
+    """
+
+    from flask import redirect, url_for
+    from .sdk import Job
+    from pillarsdk import Project
+
+    api = pillar_api()
+    j = Job.find(job_id, {'projection': {'project': 1}}, api=api)
+    p = Project.find(j.project, {'projection': {'url': 1}}, api=api)
+
+    return redirect(url_for('flamenco.jobs.perproject.view_job',
+                            project_url=p.url,
+                            job_id=job_id))
