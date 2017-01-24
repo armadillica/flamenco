@@ -17,8 +17,6 @@
 
 					span.pull-right
 						a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=proj.url) }}") Jobs&nbsp;
-						| |
-						a(href="{{ url_for('flamenco.tasks.perproject.index', project_url=proj.url) }}")  Tasks
 				.progress
 					| {% for status, percentage in summary.percentages() %}
 					.progress-bar.bg-status(
