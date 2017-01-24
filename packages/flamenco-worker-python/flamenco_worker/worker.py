@@ -149,8 +149,6 @@ class FlamencoWorker:
             else:
                 break
 
-        resp.raise_for_status()
-
         result = resp.json()
         self._log.info('Response: %s', result)
         self.worker_id = result['_id']
