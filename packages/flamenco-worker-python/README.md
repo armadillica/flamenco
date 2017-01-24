@@ -67,8 +67,10 @@ Once registered via a POST to the manager's `/register-worker` endpoint, the `wo
 ## Shutdown
 
 Pressing [CTRL]+[C] will cause a clean shutdown of the worker.
-If there is a task currently running, it will be aborted and marked as 'failed'. Any pending
-task updates are sent to the Manager before stopping the process.
+If there is a task currently running, it will be aborted without changing its status. Any pending task updates are sent to the Manager, and then the Manager's `/sign-off` URL is
+POSTed to, to indicate a clean shutdown of the worker. Any active task that is still
+assigned to the worker is given status "claimed-by-manager" so that it can be re-activated
+by another worker.
 
 
 ## Systemd integration
@@ -79,3 +81,11 @@ To run Flamenco Worker as a systemd-managed service, copy `flamenco-worker.servi
 After installation of this service, `systemctl {start,stop,status,restart} flamenco-worker`
 commands can be used to manage it. To ensure that the Flamenco Worker starts at system boot,
 use `systemctl enable flamenco-worker`.
+
+
+## Signals
+
+Flamenco Worker responds to the following POSIX signals:
+
+- `SIGINT`, `SIGTERM`: performs a clean shutdown, as described in the Shutdown section above.
+- `SIGUSR1`: logs the currently scheduled asyncio tasks.
