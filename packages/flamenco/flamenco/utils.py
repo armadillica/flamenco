@@ -1,3 +1,6 @@
+import contextlib
+
+
 def frame_range_parse(frame_range=None):
     """Given a range of frames, return a list containing each frame.
 
@@ -88,3 +91,15 @@ def iter_frame_range(merged_frame_range, chunk_size):
     for chunk_start in range(0, len(parsed_frames), chunk_size):
         chunk_frames = parsed_frames[chunk_start:chunk_start + chunk_size]
         yield chunk_frames
+
+
+@contextlib.contextmanager
+def report_duration(logger, description):
+    import time
+
+    start_time = time.time()
+    try:
+        yield
+    finally:
+        end_time = time.time()
+        logger.debug('report_duration: %s took %f seconds', description, end_time - start_time)

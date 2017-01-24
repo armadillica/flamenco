@@ -215,5 +215,58 @@ def tasks_cancel_requested(manager_id):
     return task_ids
 
 
+@api_blueprint.route('/<manager_id>/depsgraph')
+@manager_api_call
+def get_depsgraph(manager_id, request_json):
+    """Returns the dependency graph of all tasks assigned to the given Manager.
+
+    Use the HTTP header If-Modified-Since to limit the dependency graph to tasks
+    that have been modified since that timestamp.
+    """
+
+    from pillar.api.utils import jsonify, bsonify
+    from flamenco import current_flamenco
+    from flamenco.utils import report_duration
+    import dateutil.parser
+
+    modified_since = request.headers.get('If-Modified-Since')
+
+    with report_duration(log, 'depsgraph query'):
+        tasks_coll = current_flamenco.db('tasks')
+        query = {
+            'manager': manager_id,
+            'status': {'$nin': ['active']},
+        }
+        if modified_since is not None:
+            modified_since = dateutil.parser.parse(modified_since)
+            query['_updated'] = {'$gt': modified_since}
+
+        cursor = tasks_coll.find(query, {
+            '_id': 1,
+            '_updated': 1,
+            'status': 1,
+            'parents': 1,
+        })
+
+        depsgraph = list(cursor)
+
+    log.info('Returning depsgraph of %i tasks', len(depsgraph))
+    if modified_since is not None and len(depsgraph) == 0:
+        return '', 304
+
+    # Must be a dict to convert to BSON.
+    respdoc = {
+        'depsgraph': depsgraph,
+    }
+    if request.accept_mimetypes.best == 'application/bson':
+        resp = bsonify(respdoc)
+    else:
+        resp = jsonify(respdoc)
+
+    last_modification = max(task['_updated'] for task in depsgraph)
+    resp.headers['Last-Modified'] = last_modification
+    return resp
+
+
 def setup_app(app):
     app.register_api_blueprint(api_blueprint, url_prefix='/flamenco/managers')

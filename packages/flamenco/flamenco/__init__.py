@@ -106,6 +106,7 @@ class FlamencoExtension(PillarExtension):
     def _create_collections(self, db):
         import pymongo
 
+        # flamenco_task_logs
         if 'flamenco_task_logs' not in db.collection_names(include_system_collections=False):
             self._log.info('Creating flamenco_task_logs collection.')
             db.create_collection('flamenco_task_logs',
@@ -113,13 +114,37 @@ class FlamencoExtension(PillarExtension):
                                      'wiredTiger': {'configString': 'block_compressor=zlib'}
                                  })
         else:
-            self._log.info('Not creating flamenco_task_logs collection, already exists.')
+            self._log.debug('Not creating flamenco_task_logs collection, already exists.')
 
         self._log.info('Creating index on flamenco_task_logs collection')
         db.flamenco_task_logs.create_index(
             [('task_id', pymongo.ASCENDING),
              ('received_on_manager', pymongo.ASCENDING)],
             background=True,
+            unique=False,
+            sparse=False,
+        )
+
+        # flamenco_tasks
+        if 'flamenco_tasks' not in db.collection_names(include_system_collections=False):
+            self._log.info('Creating flamenco_tasks collection.')
+            db.create_collection('flamenco_tasks',
+                                 storageEngine={
+                                     'wiredTiger': {'configString': 'block_compressor=zlib'}
+                                 })
+        else:
+            self._log.debug('Not creating flamenco_tasks collection, already exists.')
+
+        self._log.info('Creating index on flamenco_tasks collection')
+        db.flamenco_tasks.create_index(
+            [('manager', pymongo.ASCENDING)],
+            background=False,
+            unique=False,
+            sparse=False,
+        )
+        db.flamenco_tasks.create_index(
+            [('_updated', pymongo.DESCENDING)],
+            background=False,
             unique=False,
             sparse=False,
         )
