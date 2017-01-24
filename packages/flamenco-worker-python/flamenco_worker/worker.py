@@ -244,7 +244,10 @@ class FlamencoWorker:
 
         # Let the Manager know we're shutting down
         self._log.info('shutdown(): signing off at Manager')
-        self.loop.run_until_complete(self.manager.post('/sign-off', loop=self.loop))
+        try:
+            self.loop.run_until_complete(self.manager.post('/sign-off', loop=self.loop))
+        except Exception as ex:
+            self._log.warning('Error signing off. Continuing with shutdown. %s', ex)
         self.failures_are_acceptable = False
 
     async def fetch_task(self, delay: float):
