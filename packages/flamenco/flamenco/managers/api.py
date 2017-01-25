@@ -12,6 +12,11 @@ log = logging.getLogger(__name__)
 # TODO: maybe move allowed task transition handling to a different bit of code.
 ACCEPTED_AFTER_CANCEL_REQUESTED = {'canceled', 'failed', 'completed'}
 
+DEPSGRAPH_RUNNABLE_JOB_STATUSES = [u'queued', u'active', u'cancel-requested']
+DEPSGRAPH_CLEAN_SLATE_TASK_STATUSES = [u'queued', u'claimed-by-manager',
+                                       u'active', u'cancel-requested']
+DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES = [u'queued', u'claimed-by-manager']
+
 
 def manager_api_call(wrapped):
     """Decorator, performs some standard stuff for Manager API endpoints."""
@@ -233,26 +238,50 @@ def get_depsgraph(manager_id, request_json):
 
     with report_duration(log, 'depsgraph query'):
         tasks_coll = current_flamenco.db('tasks')
-        query = {
+
+        task_query = {
             'manager': manager_id,
             'status': {'$nin': ['active']},
         }
-        if modified_since is not None:
+
+        if modified_since is None:
+            # "Clean slate" query, get runnable jobs first.
+            jobs_coll = current_flamenco.db('jobs')
+            jobs = jobs_coll.find({
+                'manager': manager_id,
+                'status': {'$in': DEPSGRAPH_RUNNABLE_JOB_STATUSES}},
+                projection={'_id': 1},
+            )
+            job_ids = [job['_id'] for job in jobs]
+            if not job_ids:
+                return '', 204  # empty response
+
+            log.debug('Requiring jobs to be in %s', job_ids)
+            task_query['job'] = {'$in': job_ids}
+            task_query['status'] = {'$in': DEPSGRAPH_CLEAN_SLATE_TASK_STATUSES}
+        else:
+            # Not clean slate, just give all updated tasks assigned to this manager.
             modified_since = dateutil.parser.parse(modified_since)
-            query['_updated'] = {'$gt': modified_since}
+            task_query['_updated'] = {'$gt': modified_since}
+            task_query['status'] = {'$in': DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES}
 
-        cursor = tasks_coll.find(query, {
-            '_id': 1,
-            '_updated': 1,
-            'status': 1,
-            'parents': 1,
-        })
-
+        cursor = tasks_coll.find(task_query)
         depsgraph = list(cursor)
 
     log.info('Returning depsgraph of %i tasks', len(depsgraph))
     if modified_since is not None and len(depsgraph) == 0:
-        return '', 304
+        return '', 304  # Not Modified
+
+    # Update the task status in the database to move queued tasks to claimed-by-manager.
+    task_query['status'] = u'queued'
+    tasks_coll.update_many(task_query,
+                           {u'$set': {u'status': u'claimed-by-manager'}})
+
+    # Update the returned task statuses. Unfortunately Mongo doesn't support
+    # find_and_modify() on multiple documents.
+    for task in depsgraph:
+        if task['status'] == u'queued':
+            task['status'] = u'claimed-by-manager'
 
     # Must be a dict to convert to BSON.
     respdoc = {
@@ -263,8 +292,9 @@ def get_depsgraph(manager_id, request_json):
     else:
         resp = jsonify(respdoc)
 
-    last_modification = max(task['_updated'] for task in depsgraph)
-    resp.headers['Last-Modified'] = last_modification
+    if depsgraph:
+        last_modification = max(task['_updated'] for task in depsgraph)
+        resp.headers['Last-Modified'] = last_modification
     return resp
 
 

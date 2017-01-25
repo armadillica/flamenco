@@ -75,11 +75,14 @@ class AbstractFlamencoTest(AbstractPillarTest):
                                      projection={'status': 1})
         self.assertEqual(job['status'], unicode(expected_status))
 
-    def set_job_status(self, new_status):
+    def set_job_status(self, new_status, job_id=None):
         """Nice, official, ripple-to-task-status approach"""
 
+        if job_id is None:
+            job_id = self.job_id
+
         with self.app.test_request_context():
-            self.jmngr.api_set_job_status(self.job_id, new_status)
+            self.jmngr.api_set_job_status(job_id, new_status)
 
     def force_job_status(self, new_status):
         """Directly to MongoDB approach"""
