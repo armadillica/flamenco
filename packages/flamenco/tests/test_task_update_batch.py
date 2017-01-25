@@ -7,15 +7,52 @@ from pillar.tests import common_test_data as ctd
 from abstract_flamenco_test import AbstractFlamencoTest
 
 
-class TaskBatchUpdateTest(AbstractFlamencoTest):
+class AbstractTaskBatchUpdateTest(AbstractFlamencoTest):
+    TASK_COUNT = 0
+
     def setUp(self, **kwargs):
         AbstractFlamencoTest.setUp(self, **kwargs)
-
-        from pillar.api.utils.authentication import force_cli_user
 
         mngr_doc, account, token = self.create_manager_service_account()
         self.mngr_id = mngr_doc['_id']
         self.mngr_token = token['token']
+
+    def do_schedule_tasks(self):
+        # The test job consists of 4 tasks; get their IDs through the scheduler.
+        # This should set the job status to active, and the task status to claimed-by-manager.
+        tasks = self.get('/flamenco/scheduler/tasks/%s?chunk_size=1000' % self.mngr_id,
+                         auth_token=self.mngr_token).json()
+        self.assert_job_status('active')
+        self.assertEqual(self.TASK_COUNT, len(tasks))
+        return tasks
+
+    def do_batch_update(self, tasks, task_indices, task_statuses, expect_cancel_task_ids=()):
+        assert len(task_indices) == len(task_statuses)
+        update_batch = [{'_id': str(ObjectId()),
+                         'task_id': tasks[idx]['_id'],
+                         'task_status': status}
+                        for idx, status in zip(task_indices, task_statuses)
+                        ]
+        resp = self.post('/api/flamenco/managers/%s/task-update-batch' % self.mngr_id,
+                         json=update_batch,
+                         auth_token=self.mngr_token)
+        resp_json = resp.json()
+
+        self.assertEqual({item['_id'] for item in update_batch},
+                         set(resp_json['handled_update_ids']))
+        if expect_cancel_task_ids:
+            self.assertEqual(set(expect_cancel_task_ids), set(resp_json['cancel_task_ids']))
+        else:
+            self.assertNotIn('cancel_task_ids', resp_json)
+
+
+class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
+    TASK_COUNT = 4
+
+    def setUp(self, **kwargs):
+        AbstractTaskBatchUpdateTest.setUp(self, **kwargs)
+
+        from pillar.api.utils.authentication import force_cli_user
 
         with self.app.test_request_context():
             force_cli_user()
@@ -133,7 +170,8 @@ class TaskBatchUpdateTest(AbstractFlamencoTest):
         tasks = self.do_schedule_tasks()
 
         # After setting a single task to 'failed', the job should be 'failed', and the remaining
-        # tasks should be canceled.
+        # tasks should be canceled. This is only true in this test because a single task is more
+        # than the threshold of nr of tasks that are allowed to fail.
         self.maxDiff = None
         self.do_batch_update(
             tasks, [1], ['failed'],
@@ -188,30 +226,74 @@ class TaskBatchUpdateTest(AbstractFlamencoTest):
         # Without confirmation from the Manager, the job should go to canceled.
         self.assert_job_status('canceled')
 
-    def do_schedule_tasks(self):
-        # The test job consists of 4 tasks; get their IDs through the scheduler.
-        # This should set the job status to active, and the task status to claimed-by-manager.
-        tasks = self.get('/flamenco/scheduler/tasks/%s?chunk_size=1000' % self.mngr_id,
-                         auth_token=self.mngr_token).json()
+
+class LargeTaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
+    """Similar tests to TaskBatchUpdateTest, but with a job consisting of many more tasks."""
+
+    TASK_COUNT = 100
+
+    def setUp(self, **kwargs):
+        AbstractTaskBatchUpdateTest.setUp(self, **kwargs)
+
+        from pillar.api.utils.authentication import force_cli_user
+
+        with self.app.test_request_context():
+            force_cli_user()
+            job = self.jmngr.api_create_job(
+                'test job',
+                u'Wörk wørk w°rk.',
+                'sleep',
+                {
+                    'frames': '1-100',
+                    'chunk_size': 1,
+                    'time_in_seconds': 3,
+                },
+                self.proj_id,
+                ctd.EXAMPLE_PROJECT_OWNER_ID,
+                self.mngr_id,
+            )
+            self.job_id = job['_id']
+
+    def test_job_status_not_failed_due_to_few_task_failures(self):
+        self.force_job_status('queued')
+        tasks = self.do_schedule_tasks()
+
+        # After setting a single task to 'failed', the job should not be 'failed' yet.
+        self.maxDiff = None
+        self.do_batch_update(
+            tasks, [1], ['failed'],
+            expect_cancel_task_ids=set())
         self.assert_job_status('active')
-        self.assertEqual(4, len(tasks))
-        return tasks
 
-    def do_batch_update(self, tasks, task_indices, task_statuses, expect_cancel_task_ids=()):
-        assert len(task_indices) == len(task_statuses)
-        update_batch = [{'_id': 24 * str(idx),
-                         'task_id': tasks[idx]['_id'],
-                         'task_status': status}
-                        for idx, status in zip(task_indices, task_statuses)
-                        ]
-        resp = self.post('/api/flamenco/managers/%s/task-update-batch' % self.mngr_id,
-                         json=update_batch,
-                         auth_token=self.mngr_token)
-        resp_json = resp.json()
+        # After setting 8 more, job should still be 'active'
+        self.do_batch_update(
+            tasks, [2, 3, 4, 5, 6, 7, 8, 9], 8 * ['failed'],
+            expect_cancel_task_ids=set())
+        self.assert_job_status('active')
 
-        self.assertEqual({item['_id'] for item in update_batch},
-                         set(resp_json['handled_update_ids']))
-        if expect_cancel_task_ids:
-            self.assertEqual(set(expect_cancel_task_ids), set(resp_json['cancel_task_ids']))
-        else:
-            self.assertNotIn('cancel_task_ids', resp_json)
+    def test_job_status_failed_due_to_many_task_failures(self):
+        self.force_job_status('queued')
+        tasks = self.do_schedule_tasks()
+
+        # After setting 10 tasks to failed, job should be 'failed' and other tasks should cancel.
+        self.do_batch_update(
+            tasks, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10 * ['failed'],
+            expect_cancel_task_ids={t['_id'] for t in tasks[10:]})
+        self.assert_job_status('failed')
+
+    def test_job_status_failed_with_mixture_of_canceled_and_failed_tasks(self):
+        self.force_job_status('queued')
+        tasks = self.do_schedule_tasks()
+
+        self.do_batch_update(
+            tasks, range(14), 14 * ['claimed-by-manager'])
+
+        self.do_batch_update(
+            tasks, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10 * ['failed'],
+            expect_cancel_task_ids={t['_id'] for t in tasks[10:]})
+        self.assert_job_status('failed')
+
+        self.do_batch_update(
+            tasks, [10, 11, 12, 13], 4 * ['canceled'],
+            expect_cancel_task_ids={t['_id'] for t in tasks[14:]})
+        self.assert_job_status('failed')

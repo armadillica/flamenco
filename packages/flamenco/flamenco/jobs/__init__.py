@@ -4,6 +4,7 @@ import collections
 import copy
 
 import attr
+
 import pillarsdk
 from pillar import attrs_extra
 from pillar.web.system_util import pillar_api
@@ -12,6 +13,7 @@ from flamenco import current_flamenco
 
 CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
 REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed'}
+TASK_FAIL_JOB_PERCENTAGE = 10  # integer from 0 to 100
 
 
 class ProjectSummary(object):
@@ -149,9 +151,19 @@ class JobManager(object):
             return
 
         if new_task_status == 'failed':
-            self._log.warning('Failing job %s because one of its tasks %s failed',
-                              job_id, task_id)
-            self.api_set_job_status(job_id, 'failed')
+            # Count the number of failed tasks. If it is more than 10, fail the job.
+            tasks_coll = current_flamenco.db('tasks')
+            total_count = tasks_coll.find({'job': job_id}).count()
+            fail_count = tasks_coll.find({'job': job_id, 'status': 'failed'}).count()
+            fail_perc = fail_count / float(total_count) * 100
+            if fail_perc >= TASK_FAIL_JOB_PERCENTAGE:
+                self._log.warning('Failing job %s because %i of its %i tasks (%i%%) failed',
+                                  job_id, fail_count, total_count, fail_perc)
+                self.api_set_job_status(job_id, 'failed')
+            else:
+                self._log.warning('Task %s of job %s failed; '
+                                  'only %i of its %i tasks failed (%i%%), so ignoring for now',
+                                  task_id, job_id, fail_count, total_count, fail_perc)
             return
 
         if new_task_status in {'claimed-by-manager', 'active', 'processing'}:

@@ -176,8 +176,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
 
     def test_status_from_active_to_failed(self):
-        # If one task fails, the job fails and cancels all remaining tasks.
-        # TODO: only do this after a certain number/percentage of tasks failed.
+        # If the job fails, it cancels all remaining tasks.
         self.force_job_status('active')
         self.set_job_status('failed')
 
