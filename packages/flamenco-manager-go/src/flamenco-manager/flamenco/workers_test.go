@@ -2,6 +2,7 @@ package flamenco
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 
@@ -11,6 +12,32 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+func WorkerTestRequest(worker_id bson.ObjectId, method, url string, vargs ...interface{}) (*httptest.ResponseRecorder, *auth.AuthenticatedRequest) {
+	return WorkerTestRequestWithBody(worker_id, nil, method, url, vargs...)
+}
+
+func WorkerTestRequestWithBody(worker_id bson.ObjectId, body io.Reader, method, url string, vargs ...interface{}) (*httptest.ResponseRecorder, *auth.AuthenticatedRequest) {
+	resp_rec := httptest.NewRecorder()
+	if resp_rec == nil {
+		panic("WorkerTestRequest: resp_rec is nil")
+	}
+
+	request, err := http.NewRequest(method, fmt.Sprintf(url, vargs...), body)
+	if err != nil {
+		panic(err)
+	}
+	if request == nil {
+		panic("WorkerTestRequest: request is nil")
+	}
+
+	ar := &auth.AuthenticatedRequest{Request: *request, Username: worker_id.Hex()}
+	if ar == nil {
+		panic("WorkerTestRequest: ar is nil")
+	}
+
+	return resp_rec, ar
+}
+
 func (s *SchedulerTestSuite) TestWorkerMayRun(t *check.C) {
 	// Store task in DB.
 	task := ConstructTestTask("aaaaaaaaaaaaaaaaaaaaaaaa", "sleeping")
@@ -19,15 +46,11 @@ func (s *SchedulerTestSuite) TestWorkerMayRun(t *check.C) {
 	}
 
 	// Make sure the scheduler gives us this task.
-	resp_rec := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/task", nil)
-	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	resp_rec, ar := WorkerTestRequest(s.worker_lnx.Id, "GET", "/task")
 	s.sched.ScheduleTask(resp_rec, ar)
 
 	// Right after obtaining the task, we should be allowed to keep running it.
-	resp_rec = httptest.NewRecorder()
-	request, _ = http.NewRequest("GET", fmt.Sprintf("/may-i-run/%s", task.Id.Hex()), nil)
-	ar = &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	resp_rec, ar = WorkerTestRequest(s.worker_lnx.Id, "GET", "/may-i-run/%s", task.Id.Hex())
 	WorkerMayRunTask(resp_rec, ar, s.db, task.Id)
 
 	resp := MayKeepRunningResponse{}
@@ -38,9 +61,7 @@ func (s *SchedulerTestSuite) TestWorkerMayRun(t *check.C) {
 	// If we now change the task status to "cancel-requested", the worker should be denied.
 	assert.Nil(t, s.db.C("flamenco_tasks").UpdateId(task.Id,
 		bson.M{"$set": bson.M{"status": "cancel-requested"}}))
-	resp_rec = httptest.NewRecorder()
-	request, _ = http.NewRequest("GET", fmt.Sprintf("/may-i-run/%s", task.Id.Hex()), nil)
-	ar = &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	resp_rec, ar = WorkerTestRequest(s.worker_lnx.Id, "GET", "/may-i-run/%s", task.Id.Hex())
 	WorkerMayRunTask(resp_rec, ar, s.db, task.Id)
 
 	resp = MayKeepRunningResponse{}
@@ -52,9 +73,7 @@ func (s *SchedulerTestSuite) TestWorkerMayRun(t *check.C) {
 		"status":    "active",
 		"worker_id": s.worker_win.Id,
 	}}))
-	resp_rec = httptest.NewRecorder()
-	request, _ = http.NewRequest("GET", fmt.Sprintf("/may-i-run/%s", task.Id.Hex()), nil)
-	ar = &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	resp_rec, ar = WorkerTestRequest(s.worker_lnx.Id, "GET", "/may-i-run/%s", task.Id.Hex())
 	WorkerMayRunTask(resp_rec, ar, s.db, task.Id)
 
 	resp = MayKeepRunningResponse{}
