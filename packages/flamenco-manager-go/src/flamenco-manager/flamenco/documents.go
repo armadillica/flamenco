@@ -33,6 +33,7 @@ type Task struct {
 	LastWorkerPing *time.Time     `bson:"last_worker_ping,omitempty" json:"-"`
 }
 
+// Both sent from Worker to Manager, as well as from Manager to Server.
 type TaskUpdate struct {
 	Id                        bson.ObjectId `bson:"_id" json:"_id"`
 	TaskId                    bson.ObjectId `bson:"task_id" json:"task_id,omitempty"`
@@ -46,6 +47,7 @@ type TaskUpdate struct {
 	Worker                    string        `bson:"worker" json:"worker"`
 }
 
+// Received from Server.
 type TaskUpdateResponse struct {
 	ModifiedCount    int             `json:"modified_count"`
 	HandledUpdateIds []bson.ObjectId `json:"handled_update_ids,omitempty"`
