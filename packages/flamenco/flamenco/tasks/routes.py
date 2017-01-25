@@ -100,14 +100,16 @@ def view_task_log(project, task_id):
                           'page': page_idx,
                           'max_results': TASK_LOG_PAGE_SIZE}}
 
+    last_page_idx = last_page_index(logs['_meta'])
+    has_next_page = page_idx < last_page_idx
     has_prev_page = page_idx > 1
-    has_next_page = page_idx < last_page_index(logs['_meta'])
 
     return render_template('flamenco/tasks/view_task_log_embed.html',
                            page_idx=page_idx,
                            logs=logs,
                            has_prev_page=has_prev_page,
                            has_next_page=has_next_page,
+                           last_page_idx=last_page_idx,
                            project=project,
                            task_id=task_id)
 
