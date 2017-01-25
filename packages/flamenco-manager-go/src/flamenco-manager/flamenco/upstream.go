@@ -70,6 +70,7 @@ func (self *UpstreamConnection) Close() {
 func (self *UpstreamConnection) KickDownloader(synchronous bool) {
 	if synchronous {
 		pingback := make(chan bool)
+		defer close(pingback)
 		self.download_kick <- pingback
 		log.Info("KickDownloader: Waiting for task downloader to finish.")
 
@@ -137,12 +138,9 @@ func (self *UpstreamConnection) download_task_loop() {
  * Downloads a chunkn of tasks from the upstream Flamenco Server.
  */
 func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
-	// Try to get as many tasks as we have workers.
 	db := mongo_sess.DB("")
-	worker_count := WorkerCount(db)
 
-	url_str := fmt.Sprintf("/flamenco/scheduler/tasks/%s?chunk_size=%d",
-		config.ManagerId, MaxInt(worker_count, 1))
+	url_str := fmt.Sprintf("/api/flamenco/managers/%s/depsgraph", config.ManagerId)
 	rel_url, err := url.Parse(url_str)
 	if err != nil {
 		log.Warningf("Error parsing '%s' as URL; unable to fetch tasks.", url_str)
@@ -150,8 +148,6 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	}
 
 	get_url := config.Flamenco.ResolveReference(rel_url)
-	log.Infof("Getting tasks from upstream Flamenco %s", get_url)
-
 	req, err := http.NewRequest("GET", get_url.String(), nil)
 	if err != nil {
 		log.Warningf("Unable to create GET request: %s", err)
@@ -159,31 +155,43 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	}
 	req.SetBasicAuth(config.ManagerSecret, "")
 
+	// Set If-Modified-Since header on our request.
+	settings := GetSettings(db)
+	if settings.DepsgraphLastModified != nil {
+		log.Infof("Getting tasks from upstream Flamenco %s If-Modified-Since %s", get_url,
+			settings.DepsgraphLastModified)
+		req.Header.Set("If-Modified-Since",
+			settings.DepsgraphLastModified.Format(LastModifiedHeaderFormat))
+	} else {
+		log.Infof("Getting tasks from upstream Flamenco %s", get_url)
+	}
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Warningf("Unable to GET %s: %s", get_url, err)
 		return
 	}
-
-	if resp.StatusCode >= 300 {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Warningf("Error %d GETing %s: %s", resp.StatusCode, get_url, err)
-			return
-		}
-
-		log.Warningf("Error %d GETing %s: %s", resp.StatusCode, get_url, body)
+	if resp.StatusCode == http.StatusNotModified {
+		log.Debug("Server-side depsgraph was not modified, nothing to do.")
 		return
 	}
-
 	if resp.StatusCode == 204 {
 		log.Info("No tasks for us; sleeping.")
 		return
 	}
+	if resp.StatusCode >= 300 {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Errorf("Error %d GETing %s: %s", resp.StatusCode, get_url, err)
+			return
+		}
+		log.Errorf("Error %d GETing %s: %s", resp.StatusCode, get_url, body)
+		return
+	}
 
 	// Parse the received tasks.
-	var scheduled_tasks []Task
+	var scheduled_tasks ScheduledTasks
 	decoder := json.NewDecoder(resp.Body)
 	defer resp.Body.Close()
 
@@ -193,14 +201,15 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	}
 
 	// Insert them into the MongoDB
-	// TODO Sybren: before inserting, compare to the database and deal with any changed statuses.
-	if len(scheduled_tasks) > 0 {
-		log.Infof("Received %d tasks from upstream Flamenco Server.", len(scheduled_tasks))
+	depsgraph := scheduled_tasks.Depsgraph
+	if len(depsgraph) > 0 {
+		log.Infof("Received %d tasks from upstream Flamenco Server.", len(depsgraph))
 	} else {
-		log.Debugf("Received %d tasks from upstream Flamenco Server.", len(scheduled_tasks))
+		// This shouldn't happen, as it should actually have been a 204 or 306.
+		log.Debugf("Received %d tasks from upstream Flamenco Server.", len(depsgraph))
 	}
 	tasks_coll := db.C("flamenco_tasks")
-	for _, task := range scheduled_tasks {
+	for _, task := range depsgraph {
 		change, err := tasks_coll.Upsert(bson.M{"_id": task.Id}, task)
 		if err != nil {
 			log.Errorf("unable to insert new task %s: %s", task.Id.Hex(), err)
@@ -208,10 +217,22 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 		}
 
 		if change.Updated > 0 {
-			log.Infof("Upstream server re-queued existing task %s", task.Id.Hex())
+			log.Debug("Upstream server re-queued existing task ", task.Id.Hex())
 		} else if change.Matched > 0 {
-			log.Infof("Upstream server re-queued existing task %s, but nothing changed",
+			log.Debugf("Upstream server re-queued existing task %s, but nothing changed",
 				task.Id.Hex())
+		}
+	}
+
+	// Check if we had a Last-Modified header, since we need to remember that.
+	last_modified := resp.Header.Get("Last-Modified")
+	if last_modified != "" {
+		log.Info("Last modified task was at ", last_modified)
+		if parsed, err := time.Parse(LastModifiedHeaderFormat, last_modified); err != nil {
+			log.Errorf("Unable to parse Last-Modified header: ", err)
+		} else {
+			settings.DepsgraphLastModified = &parsed
+			SaveSettings(db, settings)
 		}
 	}
 }

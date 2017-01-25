@@ -33,6 +33,11 @@ type Task struct {
 	LastWorkerPing *time.Time     `bson:"last_worker_ping,omitempty" json:"-"`
 }
 
+// Dependency graph response from Server.
+type ScheduledTasks struct {
+	Depsgraph []Task `json:"depsgraph"`
+}
+
 // Both sent from Worker to Manager, as well as from Manager to Server.
 type TaskUpdate struct {
 	Id                        bson.ObjectId `bson:"_id" json:"_id"`
@@ -91,4 +96,10 @@ type StartupNotification struct {
 type MayKeepRunningResponse struct {
 	MayKeepRunning bool   `json:"may_keep_running"`
 	Reason         string `json:"reason,omitempty"`
+}
+
+// Settings we want to be able to update from within Flamenco Manager itself,
+// so those are stored in MongoDB itself.
+type SettingsInMongo struct {
+	DepsgraphLastModified *time.Time
 }

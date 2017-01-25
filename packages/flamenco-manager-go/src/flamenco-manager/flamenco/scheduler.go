@@ -17,8 +17,6 @@ import (
  * tasks left for workers. */
 var last_upstream_check time.Time
 
-const IsoFormat = "2006-01-02T15:04:05-0700"
-
 type TaskScheduler struct {
 	config   *Conf
 	upstream *UpstreamConnection
@@ -128,7 +126,7 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 	dtrt := ts.config.DownloadTaskRecheckThrottle
 
 	for attempt := 0; attempt < 2; attempt++ {
-		// TODO: possibly sort on something else.
+		// TODO: take depsgraph (i.e. parent task status) and task status into account.
 		info, err := tasks_coll.Find(query).Sort("-priority").Limit(1).Apply(change, &task)
 		if err == mgo.ErrNotFound {
 			if attempt == 0 && dtrt >= 0 && time.Now().Sub(last_upstream_check) > dtrt {
