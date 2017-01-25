@@ -147,7 +147,7 @@ func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 		log.Warningf("%s WorkerMayRunTask: unable to find task %s for worker %s",
 			r.RemoteAddr, task_id.Hex(), worker.Id.Hex())
 		response.Reason = fmt.Sprintf("unable to find task %s", task_id.Hex())
-	} else if task.WorkerId != worker.Id {
+	} else if task.WorkerId != nil && *task.WorkerId != worker.Id {
 		log.Warningf("%s WorkerMayRunTask: task %s was assigned from worker %s to %s",
 			r.RemoteAddr, task_id.Hex(), worker.Id.Hex(), task.WorkerId.Hex())
 		response.Reason = fmt.Sprintf("task %s reassigned to another worker", task_id.Hex())
@@ -157,7 +157,7 @@ func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 		response.Reason = fmt.Sprintf("task %s in non-runnable status %s", task_id.Hex(), task.Status)
 	} else {
 		response.MayKeepRunning = true
-		WorkerPingedTask(task_id, db)
+		WorkerPingedTask(&worker.Id, task_id, db)
 	}
 
 	// Send the response
@@ -177,10 +177,22 @@ func IsRunnableTaskStatus(status string) bool {
 	return runnable && found
 }
 
-func WorkerPingedTask(task_id bson.ObjectId, db *mgo.Database) {
+/*
+ * Mark the task as pinged by the worker.
+ * If worker_id is not nil, sets the worker_id field of the task. Otherwise doesn't
+ * touch that field and only updates last_worker_ping.
+ */
+func WorkerPingedTask(worker_id *bson.ObjectId, task_id bson.ObjectId, db *mgo.Database) {
 	tasks_coll := db.C("flamenco_tasks")
 
-	if err := tasks_coll.UpdateId(task_id, bson.M{"$set": bson.M{"last_worker_ping": UtcNow()}}); err != nil {
+	updates := bson.M{
+		"last_worker_ping": UtcNow(),
+	}
+	if worker_id != nil {
+		updates["worker_id"] = *worker_id
+	}
+
+	if err := tasks_coll.UpdateId(task_id, bson.M{"$set": updates}); err != nil {
 		log.Errorf("WorkerPingedTask: ERROR unable to update last_worker_ping on task %s: %s",
 			task_id.Hex(), err)
 	}

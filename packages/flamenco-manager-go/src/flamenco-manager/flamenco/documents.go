@@ -29,8 +29,8 @@ type Task struct {
 	Worker   string          `bson:"worker,omitempty" json:"worker,omitempty"`
 
 	// Internal bookkeeping
-	WorkerId       bson.ObjectId `bson:"worker_id,omitempty" json:"-"`
-	LastWorkerPing *time.Time    `bson:"last_worker_ping,omitempty" json:"-"`
+	WorkerId       *bson.ObjectId `bson:"worker_id,omitempty" json:"-"`
+	LastWorkerPing *time.Time     `bson:"last_worker_ping,omitempty" json:"-"`
 }
 
 type TaskUpdate struct {

@@ -56,7 +56,29 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 	tupdate.TaskId = task_id
 	tupdate.Worker = worker.Identifier()
 
-	WorkerPingedTask(tupdate.TaskId, db)
+	// Check that this worker is allowed to update this task.
+	task := Task{}
+	if err := db.C("flamenco_tasks").FindId(task_id).One(&task); err != nil {
+		log.Warningf("%s QueueTaskUpdateFromWorker: unable to find task %s for worker %s",
+			r.RemoteAddr, task_id.Hex(), worker.Identifier())
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Task %s is unknown.", task_id.Hex())
+		return
+	}
+	if task.WorkerId != nil && *task.WorkerId != worker.Id {
+		log.Warningf("%s QueueTaskUpdateFromWorker: task %s update rejected from %s (%s), task is assigned to %s",
+			r.RemoteAddr, task_id.Hex(), worker.Id.Hex(), worker.Identifier(), task.WorkerId.Hex())
+		w.WriteHeader(http.StatusConflict)
+		fmt.Fprintf(w, "Task %s is assigned to another worker.", task_id.Hex())
+		return
+	}
+
+	// Only set the task's worker ID if it's not already set to the current worker.
+	var set_worker_id *bson.ObjectId = nil
+	if task.WorkerId == nil {
+		set_worker_id = &worker.Id
+	}
+	WorkerPingedTask(set_worker_id, tupdate.TaskId, db)
 
 	if err := QueueTaskUpdate(&tupdate, db); err != nil {
 		log.Warningf("%s: %s", worker.Identifier(), err)

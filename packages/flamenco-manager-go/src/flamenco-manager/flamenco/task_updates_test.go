@@ -1,6 +1,8 @@
 package flamenco
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -92,4 +94,53 @@ func (s *TaskUpdatesTestSuite) TestCancelRunningTasks(t *check.C) {
 	assert.Equal(t, "queued", task_db.Status)
 	assert.Nil(t, tasks_coll.FindId(task2.Id).One(&task_db))
 	assert.Equal(t, "canceled", task_db.Status)
+}
+
+func (s *TaskUpdatesTestSuite) TestMultipleWorkersForOneTask(c *check.C) {
+	tasks_coll := s.db.C("flamenco_tasks")
+
+	task1 := ConstructTestTask("1aaaaaaaaaaaaaaaaaaaaaaa", "testing")
+	assert.Nil(c, tasks_coll.Insert(task1))
+
+	worker1 := Worker{
+		Platform:          "linux",
+		SupportedJobTypes: []string{"testing"},
+	}
+	worker2 := Worker{
+		Platform:          "linux",
+		SupportedJobTypes: []string{"testing"},
+	}
+	assert.Nil(c, StoreNewWorker(&worker1, s.db))
+	assert.Nil(c, StoreNewWorker(&worker2, s.db))
+
+	// Task should not be assigned to any worker
+	assert.Nil(c, task1.WorkerId)
+
+	tupdate := TaskUpdate{
+		TaskId:   task1.Id,
+		Activity: "doing stuff by worker1",
+	}
+	payload_bytes, err := json.Marshal(tupdate)
+	assert.Nil(c, err)
+	resp_rec, ar := WorkerTestRequestWithBody(worker1.Id, bytes.NewBuffer(payload_bytes), "POST", "/tasks/1aaaaaaaaaaaaaaaaaaaaaaa/update")
+	QueueTaskUpdateFromWorker(resp_rec, ar, s.db, task1.Id)
+	assert.Equal(c, 204, resp_rec.Code)
+
+	// Because of this update, the task should be assigned to worker 1
+	assert.Nil(c, tasks_coll.FindId(task1.Id).One(&task1))
+	assert.Equal(c, task1.WorkerId, task1.WorkerId)
+	assert.Equal(c, task1.Activity, "doing stuff by worker1")
+
+	// An update by worker 2 should fail.
+	tupdate.Activity = "doing stuff by worker2"
+	payload_bytes, err = json.Marshal(tupdate)
+	assert.Nil(c, err)
+	resp_rec, ar = WorkerTestRequestWithBody(worker2.Id, bytes.NewBuffer(payload_bytes), "POST", "/tasks/1aaaaaaaaaaaaaaaaaaaaaaa/update")
+	QueueTaskUpdateFromWorker(resp_rec, ar, s.db, task1.Id)
+	assert.Equal(c, http.StatusConflict, resp_rec.Code)
+
+	// The task should still be assigned to worker 1
+	assert.Nil(c, tasks_coll.FindId(task1.Id).One(&task1))
+	assert.Equal(c, task1.WorkerId, task1.WorkerId)
+	assert.Equal(c, task1.Activity, "doing stuff by worker1")
 }
