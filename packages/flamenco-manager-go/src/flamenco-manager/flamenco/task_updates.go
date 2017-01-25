@@ -356,3 +356,15 @@ func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []
 
 	return err
 }
+
+func LogTaskActivity(worker *Worker, task_id bson.ObjectId, activity, log_line string, db *mgo.Database) {
+	tupdate := TaskUpdate{
+		TaskId:   task_id,
+		Activity: activity,
+		Log:      log_line,
+	}
+	if err := QueueTaskUpdate(&tupdate, db); err != nil {
+		log.Errorf("LogTaskActivity: Unable to queue task(%s) update for worker %s: %s",
+			task_id.Hex(), worker.Identifier(), err)
+	}
+}

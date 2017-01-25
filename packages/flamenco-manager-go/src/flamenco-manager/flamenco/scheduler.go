@@ -17,6 +17,8 @@ import (
  * tasks left for workers. */
 var last_upstream_check time.Time
 
+const IsoFormat = "2006-01-02T15:04:05-0700"
+
 type TaskScheduler struct {
 	config   *Conf
 	upstream *UpstreamConnection
@@ -39,7 +41,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	db := mongo_sess.DB("")
 
 	// Fetch the worker's info
-	projection := bson.M{"platform": 1, "supported_job_types": 1, "address": 1}
+	projection := bson.M{"platform": 1, "supported_job_types": 1, "address": 1, "nickname": 1}
 	worker, err := FindWorker(r.Username, projection, db)
 	if err != nil {
 		log.Warningf("%s ScheduleTask: Unable to find worker: %s", r.RemoteAddr, err)
@@ -78,7 +80,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	// update the worker_id field of the task.
 	tasks_coll := db.C("flamenco_tasks")
 	if err := tasks_coll.UpdateId(task.Id, bson.M{"$set": bson.M{"worker_id": worker.Id}}); err != nil {
-		log.Warningf("Unable to set worker_id=%s on task %s: %s", worker.Id, task.Id, err)
+		log.Warningf("Unable to set worker_id=%s on task %s: %s", worker.Id.Hex(), task.Id.Hex(), err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -88,7 +90,13 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	encoder := json.NewEncoder(w)
 	encoder.Encode(task)
 
-	log.Infof("%s assigned task %s to worker %s", r.RemoteAddr, task.Id.Hex(), r.Username)
+	log.Infof("%s assigned task %s to worker %s %s",
+		r.RemoteAddr, task.Id.Hex(), r.Username, worker.Identifier())
+
+	// Push a task log line stating we've assigned this task to the given worker.
+	// This is done here, instead of by the worker, so that it's logged even if the worker fails.
+	msg := fmt.Sprintf("Manager assigned task to worker %s", worker.Identifier())
+	LogTaskActivity(worker, task.Id, msg, time.Now().Format(IsoFormat)+": "+msg, db)
 }
 
 /**
