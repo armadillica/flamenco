@@ -105,7 +105,7 @@ type MayKeepRunningResponse struct {
 // Settings we want to be able to update from within Flamenco Manager itself,
 // so those are stored in MongoDB itself.
 type SettingsInMongo struct {
-	DepsgraphLastModified *time.Time `bson:"depsgraph_last_modified"`
+	DepsgraphLastModified *string `bson:"depsgraph_last_modified"`
 }
 
 type StatusReport struct {

@@ -158,9 +158,8 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	settings := GetSettings(db)
 	if settings.DepsgraphLastModified != nil {
 		log.Infof("Getting tasks from upstream Flamenco %s If-Modified-Since %s", get_url,
-			settings.DepsgraphLastModified)
-		req.Header.Set("If-Modified-Since",
-			settings.DepsgraphLastModified.Format(LastModifiedHeaderFormat))
+			*settings.DepsgraphLastModified)
+		req.Header.Set("If-Modified-Since", *settings.DepsgraphLastModified)
 	} else {
 		log.Infof("Getting tasks from upstream Flamenco %s", get_url)
 	}
@@ -227,12 +226,8 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	last_modified := resp.Header.Get("Last-Modified")
 	if last_modified != "" {
 		log.Info("Last modified task was at ", last_modified)
-		if parsed, err := time.Parse(LastModifiedHeaderFormat, last_modified); err != nil {
-			log.Errorf("Unable to parse Last-Modified header: ", err)
-		} else {
-			settings.DepsgraphLastModified = &parsed
-			SaveSettings(db, settings)
-		}
+		settings.DepsgraphLastModified = &last_modified
+		SaveSettings(db, settings)
 	}
 }
 
