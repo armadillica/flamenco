@@ -11,6 +11,17 @@ This is the Flamenco Manager implementation in Go.
 4. Run `systemctl start flamenco-manager` to start Flamenco Manager.
 5. Run `systemctl enable flamenco-manager` to ensure it starts at boot too.
 
+## CLI arguments
+
+Flamenco Manager accepts the following CLI arguments:
+
+- `-debug`: Enable debug-level logging
+- `-verbose`: Enable info-level logging (no-op if `-debug` is also given)
+- `-json`: Log in JSON format, instead of plain text
+- `cleanslate`: Start with a clean slate; erases all tasks from the local MongoDB,
+  then exits Flamenco Manager. This can be run while another Flamenco Manager is
+  running, but this scenario has not been well-tested yet.
+
 
 ## Starting development
 
