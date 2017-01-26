@@ -252,7 +252,7 @@ class TestWorkerTaskExecution(AbstractFWorkerTest):
 
 class WorkerPushToMasterTest(AbstractFWorkerTest):
     def test_one_activity(self):
-        """A single activity should be sent to master within reasonable time."""
+        """A single activity should be sent to manager within reasonable time."""
 
         from datetime import timedelta
 
@@ -307,7 +307,7 @@ class WorkerPushToMasterTest(AbstractFWorkerTest):
         self.assertTrue(self.worker._push_act_to_manager.cancelled())
 
     def test_one_log(self):
-        """A single log should be sent to master within reasonable time."""
+        """A single log should be sent to manager within reasonable time."""
 
         from datetime import timedelta
 

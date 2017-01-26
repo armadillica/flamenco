@@ -76,9 +76,9 @@ class FlamencoWorker:
     push_act_max_interval = attr.ib(default=PUSH_ACT_MAX_INTERVAL,
                                     validator=attr.validators.instance_of(datetime.timedelta))
 
-    # Futures that represent delayed calls to push_to_master().
+    # Futures that represent delayed calls to push_to_manager().
     # They are scheduled when logs & activities are registered but not yet pushed. They are
-    # cancelled when a push_to_master() actually happens for another reason. There are different
+    # cancelled when a push_to_manager() actually happens for another reason. There are different
     # futures for activity and log pushing, as these can have different max intervals.
     _push_log_to_manager = attr.ib(
         default=None, init=False,
@@ -342,11 +342,11 @@ class FlamencoWorker:
 
         if delay is not None:
             delay_sec = delay.total_seconds()
-            self._log.debug('Scheduled delayed push to master in %r seconds', delay_sec)
+            self._log.debug('Scheduled delayed push to manager in %r seconds', delay_sec)
             await asyncio.sleep(delay_sec)
 
             if self.shutdown_future.done():
-                self._log.info('Shutting down, not pushing changes to master.')
+                self._log.info('Shutting down, not pushing changes to manager.')
 
         self._log.info('Updating task %s with status %r and activity %r',
                        self.task_id, self.current_task_status, self.last_task_activity)
