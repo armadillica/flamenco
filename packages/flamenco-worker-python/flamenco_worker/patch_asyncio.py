@@ -24,6 +24,6 @@ def patch_asyncio():
         if not self._loop:
             return
 
-        return orig_resume_reading(*args, **kwargs)
+        return orig_resume_reading(self, *args, **kwargs)
 
     ue._UnixReadPipeTransport.resume_reading = resume_reading
