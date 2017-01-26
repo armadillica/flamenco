@@ -156,6 +156,7 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamCanceled(t *check.C) {
 	}
 
 	timeout := TimeoutAfter(1 * time.Second)
+	defer close(timeout)
 
 	// Mock that the task with highest priority was actually canceled on the Server.
 	httpmock.RegisterResponder(
@@ -207,6 +208,7 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamPrioChange(t *check.C) {
 	}
 
 	timeout := TimeoutAfter(1 * time.Second)
+	defer close(timeout)
 
 	// Mock that the task with highest priority was actually canceled on the Server.
 	httpmock.RegisterResponder(
@@ -264,6 +266,7 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamDeleted(t *check.C) {
 	}
 
 	timeout := TimeoutAfter(1 * time.Second)
+	defer close(timeout)
 
 	// Mock that the task with highest priority was actually canceled on the Server.
 	httpmock.RegisterResponder(

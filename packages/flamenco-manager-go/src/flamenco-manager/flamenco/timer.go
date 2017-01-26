@@ -88,11 +88,23 @@ func UtcNow() *time.Time {
 	return &now
 }
 
+/* Sends a 'true' to the channel after the given timeout.
+ * Send a 'false' to the channel yourself if you want to notify the receiver that
+ * a timeout didn't happen.
+ *
+ * The channel is buffered with size 2, so both your 'false' and this routine's 'true'
+ * write won't block.
+ */
 func TimeoutAfter(duration time.Duration) chan bool {
-	timeout := make(chan bool, 1)
+	timeout := make(chan bool, 2)
 
 	go func() {
 		time.Sleep(duration)
+		defer func() {
+			// Recover from a panic. This panic can happen when the caller closed the
+			// channel while we were sleeping.
+			recover()
+		}()
 		timeout <- true
 	}()
 
