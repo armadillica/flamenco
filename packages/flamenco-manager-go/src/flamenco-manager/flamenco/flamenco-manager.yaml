@@ -1,5 +1,5 @@
 # This file is loaded by unit tests in the 'flamenco' package.
-database_url: mongodb://localhost/testdb
+database_url: mongodb://localhost/flamanager_test
 listen: '[::0]:8083'
 own_url: http://192.168.3.108:8083/
 flamenco: http://localhost:51234/
