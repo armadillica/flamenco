@@ -8,7 +8,7 @@ tlskey: tls/privkey.pem
 tlscert: tls/cert.pem
 
 # How often the Manager should ask the Server for new tasks when the local queue is empty.
-download_task_sleep_seconds: 300
+download_task_sleep_seconds: 60
 
 # The number of seconds between rechecks when there are no more tasks for workers.
 # If set to 0, will not throttle at all.
