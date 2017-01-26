@@ -95,7 +95,7 @@ class DepsgraphTest(AbstractFlamencoTest):
         last_modified = parse(resp.headers['Last-Modified'])
         with self.app.test_request_context():
             task0 = self.flamenco.db('tasks').find_one({'_id': self.task_ids[0]})
-        self.assertEqual(task0['_updated'], last_modified)
+        self.assert_equal_to_second(task0['_updated'], last_modified)
 
         # The tasks in the database, as well as the response, should be set to claimed-by-manager
         with self.app.test_request_context():
@@ -163,9 +163,16 @@ class DepsgraphTest(AbstractFlamencoTest):
         with self.app.test_request_context():
             task0 = self.flamenco.db('tasks').find_one({'_id': self.task_ids[0]})
             task2 = self.flamenco.db('tasks').find_one({'_id': self.task_ids[2]})
-        self.assertEqual(task2['_updated'], last_modified)
+        # They should be equal to second precision
+        self.assert_equal_to_second(task2['_updated'], last_modified)
 
         self.assertEqual(task0['status'], u'claimed-by-manager')
         self.assertEqual(task2['status'], u'claimed-by-manager')
         self.assertEqual(2 * [u'claimed-by-manager'],
                          [task['status'] for task in depsgraph])
+
+    def assert_equal_to_second(self, actual, expected):
+        import datetime
+
+        diff = datetime.timedelta(microseconds=actual.microsecond)
+        self.assertEqual(actual - diff, expected)

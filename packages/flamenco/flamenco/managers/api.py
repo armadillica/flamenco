@@ -229,10 +229,10 @@ def get_depsgraph(manager_id, request_json):
     that have been modified since that timestamp.
     """
 
+    import dateutil.parser
     from pillar.api.utils import jsonify, bsonify
     from flamenco import current_flamenco
     from flamenco.utils import report_duration
-    import dateutil.parser
 
     modified_since = request.headers.get('If-Modified-Since')
 
@@ -264,6 +264,7 @@ def get_depsgraph(manager_id, request_json):
             modified_since = dateutil.parser.parse(modified_since)
             task_query['_updated'] = {'$gt': modified_since}
             task_query['status'] = {'$in': DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES}
+            log.debug('Querying all tasks changed since %s', modified_since)
 
         cursor = tasks_coll.find(task_query)
         depsgraph = list(cursor)
@@ -294,8 +295,36 @@ def get_depsgraph(manager_id, request_json):
 
     if depsgraph:
         last_modification = max(task['_updated'] for task in depsgraph)
-        resp.headers['Last-Modified'] = last_modification
+        log.debug('Last modification was %s', last_modification)
+        resp.headers['Last-Modified'] = format_http_date(last_modification)
     return resp
+
+
+def format_http_date(last_modification):
+    """Format the given timestamp into RFC 1123 format.
+
+    :param last_modification: datetime in UTC timezone
+    :type last_modification: datetime.datetime
+    """
+
+    import time
+    import email.utils
+
+    # This incorrectly represents 'stamp' in local time, instead of the UTC we get
+    # from the database.
+    stamp = time.mktime(last_modification.timetuple())
+
+    # Subtract the UTC to local time offset
+    timediff = time.mktime(time.gmtime(0))
+    stamp -= timediff
+
+    http_date = email.utils.formatdate(
+        timeval=stamp,
+        localtime=False,
+        usegmt=True
+    )  # --> Wed, 22 Oct 2008 10:55:46 GMT
+
+    return http_date
 
 
 def setup_app(app):
