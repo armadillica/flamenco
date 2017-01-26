@@ -21,7 +21,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const FLAMENCO_VERSION = "2.0-beta5"
+const FLAMENCO_VERSION = "2.0-beta6"
 
 // MongoDB session
 var session *mgo.Session
