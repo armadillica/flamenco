@@ -261,6 +261,7 @@ def get_depsgraph(manager_id, request_json):
             task_query['status'] = {'$in': DEPSGRAPH_CLEAN_SLATE_TASK_STATUSES}
         else:
             # Not clean slate, just give all updated tasks assigned to this manager.
+            log.debug('Modified-since header: %s', modified_since)
             modified_since = dateutil.parser.parse(modified_since)
             task_query['_updated'] = {'$gt': modified_since}
             task_query['status'] = {'$in': DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES}
@@ -296,35 +297,10 @@ def get_depsgraph(manager_id, request_json):
     if depsgraph:
         last_modification = max(task['_updated'] for task in depsgraph)
         log.debug('Last modification was %s', last_modification)
-        resp.headers['Last-Modified'] = format_http_date(last_modification)
+        # We need a format that can handle sub-second precision.
+        resp.headers['Last-Modified'] = last_modification.isoformat()
+        resp.headers['X-Last-Modified-Format'] = 'ISO-8601'
     return resp
-
-
-def format_http_date(last_modification):
-    """Format the given timestamp into RFC 1123 format.
-
-    :param last_modification: datetime in UTC timezone
-    :type last_modification: datetime.datetime
-    """
-
-    import time
-    import email.utils
-
-    # This incorrectly represents 'stamp' in local time, instead of the UTC we get
-    # from the database.
-    stamp = time.mktime(last_modification.timetuple())
-
-    # Subtract the UTC to local time offset
-    timediff = time.mktime(time.gmtime(0))
-    stamp -= timediff
-
-    http_date = email.utils.formatdate(
-        timeval=stamp,
-        localtime=False,
-        usegmt=True
-    )  # --> Wed, 22 Oct 2008 10:55:46 GMT
-
-    return http_date
 
 
 def setup_app(app):
