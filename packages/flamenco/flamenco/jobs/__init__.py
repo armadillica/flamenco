@@ -135,9 +135,20 @@ class JobManager(object):
         """Updates the job status based on the status of this task and other tasks in the job.
         """
 
-        if new_task_status == {'queued', 'cancel-requested'}:
+        def __job_active_if_queued():
+            """Set job to active if it was queued."""
+
+            jobs_coll = current_flamenco.db('jobs')
+            job = jobs_coll.find_one(job_id, projection={'status': 1})
+            if job['status'] == 'queued':
+                self._log.info('Job %s became active because one of its tasks %s changed '
+                               'status to %s', job_id, task_id, new_task_status)
+                self.api_set_job_status(job_id, 'active')
+
+        if new_task_status == {'queued', 'cancel-requested', 'claimed-by-manager'}:
             # Ignore; for now re-queueing a task doesn't change the job status.
             # Also, canceling a single task has no influence on the job itself.
+            # A task being claimed by the manager also doesn't change job status.
             return
 
         if new_task_status == 'canceled':
@@ -164,9 +175,10 @@ class JobManager(object):
                 self._log.warning('Task %s of job %s failed; '
                                   'only %i of its %i tasks failed (%i%%), so ignoring for now',
                                   task_id, job_id, fail_count, total_count, fail_perc)
+                __job_active_if_queued()
             return
 
-        if new_task_status in {'claimed-by-manager', 'active', 'processing'}:
+        if new_task_status in {'active', 'processing'}:
             self._log.info('Job %s became active because one of its tasks %s changed status to %s',
                            job_id, task_id, new_task_status)
             self.api_set_job_status(job_id, 'active')
@@ -181,6 +193,8 @@ class JobManager(object):
                                'setting job to completed.',
                                task_id, job_id)
                 self.api_set_job_status(job_id, 'completed')
+            else:
+                __job_active_if_queued()
             return
 
         self._log.warning('Task %s of job %s obtained status %s, '

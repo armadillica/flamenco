@@ -65,7 +65,6 @@ class FlamencoExtension(PillarExtension):
         from . import routes
         import flamenco.jobs.routes
         import flamenco.tasks.routes
-        import flamenco.scheduler.routes
 
         return [
             routes.blueprint,
@@ -73,7 +72,6 @@ class FlamencoExtension(PillarExtension):
             flamenco.jobs.routes.blueprint,
             flamenco.tasks.routes.perjob_blueprint,
             flamenco.tasks.routes.perproject_blueprint,
-            flamenco.scheduler.routes.blueprint,
         ]
 
     @property
@@ -99,9 +97,6 @@ class FlamencoExtension(PillarExtension):
         managers.setup_app(app)
         jobs.setup_app(app)
         tasks.setup_app(app)
-
-        # Imports for side-effects
-        from . import scheduler
 
     def _create_collections(self, db):
         import pymongo

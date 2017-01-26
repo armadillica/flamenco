@@ -126,6 +126,7 @@ class DepsgraphTest(AbstractFlamencoTest):
                          [task['status'] for task in depsgraph])
 
     def test_get_subsequent_call(self):
+        import time
         from dateutil.parser import parse
 
         # Get a clean slate first, so that we get the timestamp of last modification
@@ -140,6 +141,7 @@ class DepsgraphTest(AbstractFlamencoTest):
                  expected_status=304)
 
         # Change some tasks to see what we get back.
+        time.sleep(0.05)  # sleep a bit to stabilise the test.
         self.force_task_status(0, 'claimed-by-manager')
         self.force_task_status(1, 'cancel-requested')
         self.force_task_status(2, 'queued')

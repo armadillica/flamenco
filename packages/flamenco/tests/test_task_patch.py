@@ -38,8 +38,8 @@ class TaskPatchingTest(AbstractFlamencoTest):
             self.job_id = job['_id']
 
     def test_set_task_invalid_status(self):
-        chunk = self.get('/flamenco/scheduler/tasks/%s' % self.mngr_id,
-                         auth_token=self.mngr_token).json()
+        chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json()['depsgraph']
         task = chunk[0]
         task_url = '/api/flamenco/tasks/%s' % task['_id']
 
@@ -59,8 +59,8 @@ class TaskPatchingTest(AbstractFlamencoTest):
             self.assertEqual('claimed-by-manager', task['status'])
 
     def test_set_task_valid_status(self):
-        chunk = self.get('/flamenco/scheduler/tasks/%s' % self.mngr_id,
-                         auth_token=self.mngr_token).json()
+        chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json()['depsgraph']
         task = chunk[0]
         task_url = '/api/flamenco/tasks/%s' % task['_id']
 
@@ -86,9 +86,8 @@ class TaskPatchingTest(AbstractFlamencoTest):
 
         # The test job consists of 4 tasks; get their IDs through the scheduler.
         # This should set the job status to active.
-        tasks = self.get('/flamenco/scheduler/tasks/%s?chunk_size=1000' % self.mngr_id,
-                         auth_token=self.mngr_token).json()
-        self.assert_job_status('active')
+        tasks = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json()['depsgraph']
         self.assertEqual(4, len(tasks))
 
         # After setting tasks 1-3 to 'completed' the job should still not be completed.

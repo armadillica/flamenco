@@ -19,10 +19,11 @@ class AbstractTaskBatchUpdateTest(AbstractFlamencoTest):
 
     def do_schedule_tasks(self):
         # The test job consists of 4 tasks; get their IDs through the scheduler.
-        # This should set the job status to active, and the task status to claimed-by-manager.
-        tasks = self.get('/flamenco/scheduler/tasks/%s?chunk_size=1000' % self.mngr_id,
-                         auth_token=self.mngr_token).json()
-        self.assert_job_status('active')
+        # This should set the task status to claimed-by-manager.
+        tasks = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json()['depsgraph']
+        # TODO: maybe claimed-by-manager?
+        # self.assert_job_status('active')
         self.assertEqual(self.TASK_COUNT, len(tasks))
         return tasks
 
@@ -72,8 +73,8 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
             self.job_id = job['_id']
 
     def test_set_task_invalid_status(self):
-        chunk = self.get('/flamenco/scheduler/tasks/%s' % self.mngr_id,
-                         auth_token=self.mngr_token).json()
+        chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json()['depsgraph']
         task = chunk[0]
 
         # A warning should be logged and the status should be rejected.
@@ -96,8 +97,8 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
     def test_illegal_active_after_cancel_requested(self):
         from flamenco import current_flamenco
 
-        chunk = self.get('/flamenco/scheduler/tasks/%s' % self.mngr_id,
-                         auth_token=self.mngr_token).json()
+        chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json()['depsgraph']
         task = chunk[0]
 
         # Request task cancellation after it was received by the manager.
@@ -124,8 +125,8 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
     def test_canceled_after_cancel_requested(self):
         from flamenco import current_flamenco
 
-        chunk = self.get('/flamenco/scheduler/tasks/%s' % self.mngr_id,
-                         auth_token=self.mngr_token).json()
+        chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json()['depsgraph']
         task = chunk[0]
 
         # Request task cancellation after it was received by the manager.
@@ -178,6 +179,19 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
             expect_cancel_task_ids={tasks[0]['_id'], tasks[2]['_id'], tasks[3]['_id']})
         self.assert_job_status('failed')
 
+    def test_job_status_active_after_task_update(self):
+        """A job should go to active when its tasks are being updated.
+        """
+
+        self.force_job_status('queued')
+        tasks = self.do_schedule_tasks()
+
+        # Any of these statuses should set the job to active.
+        for status in (u'active', u'completed'):
+            self.force_job_status('queued')
+            self.do_batch_update(tasks, [0], [status])
+            self.assert_job_status('active')
+
     def test_job_status_canceled_due_to_task_update(self):
         """When the last cancel-requested task goes to canceled, a cancel-requested job should too.
         """
@@ -213,7 +227,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
 
         # All tasks are queued when we request cancellation of the job.
         self.do_batch_update(tasks, [0, 1, 2, 3], 4 * ['queued'])
-        self.assert_job_status('active')
+        self.assert_job_status('queued')
 
         self.set_job_status('cancel-requested')
 

@@ -71,8 +71,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
     def assert_job_status(self, expected_status):
         with self.app.test_request_context():
             jobs_coll = self.flamenco.db('jobs')
-            job = jobs_coll.find_one({'_id': self.job_id},
-                                     projection={'status': 1})
+            job = jobs_coll.find_one(self.job_id, projection={'status': 1})
         self.assertEqual(job['status'], unicode(expected_status))
 
     def set_job_status(self, new_status, job_id=None):
