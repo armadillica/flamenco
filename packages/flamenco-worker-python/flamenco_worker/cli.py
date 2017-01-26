@@ -24,6 +24,10 @@ def main():
     log = logging.getLogger(__name__)
     log.debug('Starting')
 
+    # Patch AsyncIO
+    from . import patch_asyncio
+    patch_asyncio.patch_asyncio()
+
     # Construct the AsyncIO loop
     loop = construct_asyncio_loop()
     if args.verbose:
