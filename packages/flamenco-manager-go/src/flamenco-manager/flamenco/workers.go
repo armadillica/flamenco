@@ -126,10 +126,9 @@ func WorkerCount(db *mgo.Database) int {
 
 func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 	db *mgo.Database, task_id bson.ObjectId) {
-	log.Infof("%s Received task update for task %s", r.RemoteAddr, task_id.Hex())
 
 	// Get the worker
-	worker, err := FindWorker(r.Username, bson.M{"_id": 1, "address": 1}, db)
+	worker, err := FindWorker(r.Username, M{"_id": 1, "address": 1, "nickname": 1}, db)
 	if err != nil {
 		log.Warningf("%s WorkerMayRunTask: Unable to find worker: %s",
 			r.RemoteAddr, err)
@@ -138,6 +137,8 @@ func WorkerMayRunTask(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 		return
 	}
 	WorkerSeen(worker, r.RemoteAddr, db)
+	log.Debugf("WorkerMayRunTask: %s asking if it is allowed to keep running task %s",
+		worker.Identifier(), task_id.Hex())
 
 	response := MayKeepRunningResponse{}
 

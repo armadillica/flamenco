@@ -34,18 +34,19 @@ type TaskUpdatePusher struct {
  */
 func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedRequest,
 	db *mgo.Database, task_id bson.ObjectId) {
-	log.Infof("%s Received task update for task %s", r.RemoteAddr, task_id.Hex())
 
 	// Get the worker
 	worker, err := FindWorker(r.Username, bson.M{"address": 1, "nickname": 1}, db)
 	if err != nil {
-		log.Warningf("%s QueueTaskUpdate: Unable to find worker address: %s",
-			r.RemoteAddr, err)
+		log.Warningf("QueueTaskUpdate: Unable to find worker %s at address: %s",
+			r.Username, r.RemoteAddr, err)
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprintf(w, "Unable to find worker address: %s", err)
 		return
 	}
 	WorkerSeen(worker, r.RemoteAddr, db)
+	log.Infof("QueueTaskUpdateFromWorker: Received task update for task %s from %s",
+		task_id.Hex(), worker.Identifier())
 
 	// Parse the task JSON
 	tupdate := TaskUpdate{}
@@ -126,7 +127,7 @@ func QueueTaskUpdateWithExtra(tupdate *TaskUpdate, db *mgo.Database, extra_updat
 		updates["activity"] = tupdate.Activity
 	}
 	if len(updates) > 0 {
-		log.Infof("QueueTaskUpdate: applying update %s to task %s", updates, tupdate.TaskId.Hex())
+		log.Debugf("QueueTaskUpdate: applying update %s to task %s", updates, tupdate.TaskId.Hex())
 		if err := task_coll.UpdateId(tupdate.TaskId, bson.M{"$set": updates}); err != nil {
 			if err != mgo.ErrNotFound {
 				return fmt.Errorf("QueueTaskUpdate: error updating local task cache: %s", err)
@@ -237,7 +238,7 @@ func (self *TaskUpdatePusher) Go() {
 
 		// Time to push!
 		if update_count > 0 {
-			log.Infof("TaskUpdatePusher: %d updates are queued", update_count)
+			log.Debugf("TaskUpdatePusher: %d updates are queued", update_count)
 		}
 		if err := self.push(db); err != nil {
 			log.Warning("TaskUpdatePusher: unable to push to upstream Flamenco Server: ", err)

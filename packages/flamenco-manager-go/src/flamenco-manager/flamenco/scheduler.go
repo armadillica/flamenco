@@ -33,8 +33,6 @@ func CreateTaskScheduler(config *Conf, upstream *UpstreamConnection, session *mg
 }
 
 func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
-	log.Infof("%s Worker %s asking for a task", r.RemoteAddr, r.Username)
-
 	mongo_sess := ts.session.Copy()
 	defer mongo_sess.Close()
 	db := mongo_sess.DB("")
@@ -49,6 +47,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 		return
 	}
 	WorkerSeen(worker, r.RemoteAddr, db)
+	log.Infof("ScheduleTask: Worker %s asking for a task", worker.Identifier())
 
 	var task *Task
 	var was_changed bool
@@ -91,8 +90,8 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	encoder := json.NewEncoder(w)
 	encoder.Encode(task)
 
-	log.Infof("%s assigned task %s to worker %s %s",
-		r.RemoteAddr, task.Id.Hex(), r.Username, worker.Identifier())
+	log.Infof("ScheduleTask: assigned task %s to worker %s",
+		task.Id.Hex(), worker.Identifier())
 
 	// Push a task log line stating we've assigned this task to the given worker.
 	// This is done here, instead of by the worker, so that it's logged even if the worker fails.
