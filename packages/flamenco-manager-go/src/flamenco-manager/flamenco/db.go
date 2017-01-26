@@ -1,6 +1,10 @@
 package flamenco
 
 import (
+	"bufio"
+	"fmt"
+	"os"
+
 	log "github.com/Sirupsen/logrus"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -97,4 +101,23 @@ func SaveSettings(db *mgo.Database, settings *SettingsInMongo) {
 	if err != nil && err != mgo.ErrNotFound {
 		log.Errorf("db.SaveSettings: Unable to save settings: ", err)
 	}
+}
+
+/* Erases all tasks in the flamenco_tasks collection. */
+func CleanSlate(db *mgo.Database) {
+	fmt.Println("")
+	fmt.Println("Performing Clean Slate operation, this will erase all tasks from the local DB.")
+	fmt.Println("After performing the Clean Slate, Flamenco-Manager will shut down.")
+	fmt.Println("Press [ENTER] to continue, [Ctrl+C] to abort.")
+	bufio.NewReader(os.Stdin).ReadLine()
+
+	info, err := db.C("flamenco_tasks").RemoveAll(bson.M{})
+	if err != nil {
+		log.WithError(err).Panic("unable to erase all tasks")
+	}
+	log.Warningf("Erased %d tasks", info.Removed)
+
+	settings := GetSettings(db)
+	settings.DepsgraphLastModified = nil
+	SaveSettings(db, settings)
 }

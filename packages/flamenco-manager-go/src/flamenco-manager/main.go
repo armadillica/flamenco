@@ -47,7 +47,7 @@ func http_schedule_task(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
 
 func http_kick(w http.ResponseWriter, r *http.Request) {
 	upstream.KickDownloader(false)
-	w.WriteHeader(204)
+	fmt.Fprintln(w, "Kicked task downloader")
 }
 
 func http_task_update(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
@@ -120,15 +120,17 @@ func shutdown(signum os.Signal) {
 }
 
 var cliArgs struct {
-	verbose bool
-	debug   bool
-	jsonLog bool
+	verbose    bool
+	debug      bool
+	jsonLog    bool
+	cleanSlate bool
 }
 
 func parseCliArgs() {
 	flag.BoolVar(&cliArgs.verbose, "verbose", false, "Enable info-level logging")
 	flag.BoolVar(&cliArgs.debug, "debug", false, "Enable debug-level logging")
 	flag.BoolVar(&cliArgs.jsonLog, "json", false, "Log in JSON format")
+	flag.BoolVar(&cliArgs.cleanSlate, "cleanslate", false, "Start with a clean slate; erases all tasks from the local MongoDB")
 	flag.Parse()
 }
 
@@ -178,6 +180,13 @@ func main() {
 	log.Info("Listening at            :", config.Listen)
 
 	session = flamenco.MongoSession(&config)
+
+	if cliArgs.cleanSlate {
+		flamenco.CleanSlate(session.DB(""))
+		log.Warning("Shutting down after performing clean slate")
+		return
+	}
+
 	upstream = flamenco.ConnectUpstream(&config, session)
 	task_scheduler = flamenco.CreateTaskScheduler(&config, upstream, session)
 	task_update_pusher = flamenco.CreateTaskUpdatePusher(&config, upstream, session)
