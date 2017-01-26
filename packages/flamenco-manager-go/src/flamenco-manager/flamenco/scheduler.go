@@ -72,16 +72,18 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 		return
 	}
 
-	// Perform variable replacement on the task.
-	ReplaceVariables(ts.config, task, worker)
-
-	// update the worker_id field of the task.
-	tasks_coll := db.C("flamenco_tasks")
-	if err := tasks_coll.UpdateId(task.Id, bson.M{"$set": bson.M{"worker_id": worker.Id}}); err != nil {
-		log.Warningf("Unable to set worker_id=%s on task %s: %s", worker.Id.Hex(), task.Id.Hex(), err)
+	// Update the task status to "active", pushing it as a task update to the manager too.
+	task.Status = "active"
+	tupdate := TaskUpdate{TaskId: task.Id, TaskStatus: task.Status}
+	if err := QueueTaskUpdateWithExtra(&tupdate, db, bson.M{"worker_id": worker.Id}); err != nil {
+		log.Errorf("Unable to queue task update while assigning task %s to worker %s: %s",
+			task.Id.Hex(), worker.Identifier(), err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	// Perform variable replacement on the task.
+	ReplaceVariables(ts.config, task, worker)
 
 	// Set it to this worker.
 	w.Header().Set("Content-Type", "application/json")
@@ -107,28 +109,76 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 	if len(worker.SupportedJobTypes) == 0 {
 		log.Warningf("%s: worker %s has no supported job types.",
 			r.RemoteAddr, worker.Id.Hex())
+		w.WriteHeader(http.StatusNotAcceptable)
+		fmt.Fprintln(w, "You do not support any job types.")
 		return nil
 	}
 
-	task := &Task{}
+	result := AggregationPipelineResult{}
 	tasks_coll := db.C("flamenco_tasks")
 
-	// TODO Sybren: also include active tasks that are assigned to this worker.
-	query := bson.M{
-		"status":   bson.M{"$in": []string{"queued", "claimed-by-manager"}},
-		"job_type": bson.M{"$in": worker.SupportedJobTypes},
-	}
-	change := mgo.Change{
-		Update:    bson.M{"$set": bson.M{"status": "active"}},
-		ReturnNew: true,
-	}
-
-	dtrt := ts.config.DownloadTaskRecheckThrottle
-
+	var err error
 	for attempt := 0; attempt < 2; attempt++ {
-		// TODO: take depsgraph (i.e. parent task status) and task status into account.
-		info, err := tasks_coll.Find(query).Sort("-priority").Limit(1).Apply(change, &task)
+		pipe := tasks_coll.Pipe([]M{
+			// 1: Select only tasks that have a runnable status & acceptable job type.
+			M{"$match": M{
+				"status": M{"$in": []string{"queued", "claimed-by-manager"}},
+				// "job_type": M{"$in": []string{"sleeping", "testing"}},
+			}},
+			// 2: Unwind the parents array, so that we can do a lookup in the next stage.
+			M{"$unwind": M{
+				"path": "$parents",
+				"preserveNullAndEmptyArrays": true,
+			}},
+			// 3: Look up the parent document for each unwound task.
+			// This produces 1-length "parent_doc" arrays.
+			M{"$lookup": M{
+				"from":         "flamenco_tasks",
+				"localField":   "parents",
+				"foreignField": "_id",
+				"as":           "parent_doc",
+			}},
+			// 4: Unwind again, to turn the 1-length "parent_doc" arrays into a subdocument.
+			M{"$unwind": M{
+				"path": "$parent_doc",
+				"preserveNullAndEmptyArrays": true,
+			}},
+			// 5: Group by task ID to undo the unwind, and create an array parent_statuses
+			// with booleans indicating whether the parent status is "completed".
+			M{"$group": M{
+				"_id": "$_id",
+				"parent_statuses": M{"$push": M{
+					"$eq": []interface{}{
+						"completed",
+						M{"$ifNull": []string{"$parent_doc.status", "completed"}}}}},
+				// This allows us to keep all dynamic properties of the original task document:
+				"task": M{"$first": "$$ROOT"},
+			}},
+			// 6: Turn the list of "parent_statuses" booleans into a single boolean
+			M{"$project": M{
+				"_id":               0,
+				"parents_completed": M{"$allElementsTrue": []string{"$parent_statuses"}},
+				"task":              1,
+			}},
+			// 7: Select only those tasks for which the parents have completed.
+			M{"$match": M{
+				"parents_completed": true,
+			}},
+			// 8: just keep the task info, the "parents_runnable" is no longer needed.
+			M{"$project": M{"task": 1}},
+			// 9: Sort by priority, with highest prio first. If prio is equal, use newest task.
+			M{"$sort": bson.D{
+				{"task.priority", -1},
+				{"task._id", 1},
+			}},
+			// 10: Only return one task.
+			M{"$limit": 1},
+		})
+
+		err = pipe.One(&result)
 		if err == mgo.ErrNotFound {
+			log.Infof("No tasks for worker %s found on attempt %d.", worker.Identifier(), attempt)
+			dtrt := ts.config.DownloadTaskRecheckThrottle
 			if attempt == 0 && dtrt >= 0 && time.Now().Sub(last_upstream_check) > dtrt {
 				// On first attempt: try fetching new tasks from upstream, then re-query the DB.
 				log.Infof("%s No more tasks available for %s, checking upstream",
@@ -142,7 +192,7 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 			w.WriteHeader(204)
 			return nil
 		} else if err != nil {
-			log.Warningf("%s Error fetching task for %s: %s // %s", r.RemoteAddr, r.Username, err, info)
+			log.Errorf("%s Error fetching task for %s: %s", r.RemoteAddr, r.Username, err)
 			w.WriteHeader(500)
 			return nil
 		}
@@ -150,5 +200,5 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 		break
 	}
 
-	return task
+	return result.Task
 }

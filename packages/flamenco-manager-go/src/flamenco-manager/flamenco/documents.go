@@ -33,6 +33,10 @@ type Task struct {
 	LastWorkerPing *time.Time     `bson:"last_worker_ping,omitempty" json:"-"`
 }
 
+type AggregationPipelineResult struct {
+	Task *Task `bson:"task"`
+}
+
 // Dependency graph response from Server.
 type ScheduledTasks struct {
 	Depsgraph []Task `json:"depsgraph"`

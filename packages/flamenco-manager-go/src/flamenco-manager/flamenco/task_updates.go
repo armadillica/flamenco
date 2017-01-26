@@ -91,6 +91,13 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 }
 
 func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
+	return QueueTaskUpdateWithExtra(tupdate, db, bson.M{})
+}
+
+/* Same as QueueTaskUpdate(), but with extra updates to be performed on the local flamenco_tasks
+ * collection.
+ */
+func QueueTaskUpdateWithExtra(tupdate *TaskUpdate, db *mgo.Database, extra_updates bson.M) error {
 	// For ensuring the ordering of updates. time.Time has nanosecond precision.
 	tupdate.ReceivedOnManager = time.Now().UTC()
 	tupdate.Id = bson.NewObjectId()
@@ -105,7 +112,7 @@ func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 	// This prevents a task being reported active on the worker from overwriting the
 	// cancel-requested state we received from the Server.
 	task_coll := db.C("flamenco_tasks")
-	updates := bson.M{}
+	updates := extra_updates
 	if tupdate.TaskStatus != "" {
 		// Before blindly applying the task status, first check if the transition is valid.
 		if TaskStatusTransitionValid(task_coll, tupdate.TaskId, tupdate.TaskStatus) {

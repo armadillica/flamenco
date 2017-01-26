@@ -13,6 +13,7 @@ import (
 	check "gopkg.in/check.v1"
 	"gopkg.in/jarcoal/httpmock.v1"
 	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type SchedulerTestSuite struct {
@@ -51,6 +52,7 @@ func (s *SchedulerTestSuite) SetUpTest(c *check.C) {
 	s.worker_lnx = Worker{
 		Platform:          "linux",
 		SupportedJobTypes: []string{"sleeping"},
+		Nickname:          "worker_lnx",
 	}
 	if err := StoreNewWorker(&s.worker_lnx, s.db); err != nil {
 		c.Fatal("Unable to insert test worker_lnx", err)
@@ -58,6 +60,7 @@ func (s *SchedulerTestSuite) SetUpTest(c *check.C) {
 	s.worker_win = Worker{
 		Platform:          "windows",
 		SupportedJobTypes: []string{"testing"},
+		Nickname:          "worker_win",
 	}
 	if err := StoreNewWorker(&s.worker_win, s.db); err != nil {
 		c.Fatal("Unable to insert test worker_win", err)
@@ -306,4 +309,87 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamDeleted(t *check.C) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "active", found_task.Status)
 	assert.Equal(t, 50, found_task.Priority)
+}
+
+func (s *SchedulerTestSuite) TestParentTaskNotCompleted(c *check.C) {
+	tasks_coll := s.db.C("flamenco_tasks")
+
+	// Task 1 is being worked on by worker_win
+	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
+	task1.Status = "active"
+	task1.WorkerId = &s.worker_win.Id
+	assert.Nil(c, tasks_coll.Insert(task1))
+
+	// Task 2 is unavailable due to its parent not being completed.
+	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
+	task2.Parents = []bson.ObjectId{task1.Id}
+	task2.Status = "claimed-by-manager"
+	assert.Nil(c, tasks_coll.Insert(task2))
+
+	// Fetch a task from the queue
+	resp_rec, ar := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
+	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, ar, s.db, &s.worker_lnx)
+
+	// We should not get any task back, since task1 is already taken, and task2
+	// has a non-completed parent.
+	assert.Nil(c, task, "Expected nil, got task %v instead", task)
+	assert.Equal(c, http.StatusNoContent, resp_rec.Code)
+}
+
+func (s *SchedulerTestSuite) TestParentTaskCompleted(c *check.C) {
+	tasks_coll := s.db.C("flamenco_tasks")
+
+	// Task 1 has been completed by worker_win
+	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
+	task1.Status = "completed"
+	task1.WorkerId = &s.worker_win.Id
+	assert.Nil(c, tasks_coll.Insert(task1))
+
+	// Task 2 is available due to its parent being completed.
+	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
+	task2.Parents = []bson.ObjectId{task1.Id}
+	task2.Status = "claimed-by-manager"
+	assert.Nil(c, tasks_coll.Insert(task2))
+
+	// Fetch a task from the queue
+	resp_rec, ar := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
+	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, ar, s.db, &s.worker_lnx)
+	assert.Equal(c, http.StatusOK, resp_rec.Code)
+
+	// We should get task 2.
+	assert.NotNil(c, task, "Expected task %s, got nil instead", task2.Id.Hex())
+	if task != nil { // prevent nil pointer dereference
+		assert.Equal(c, task.Id, task2.Id, "Expected task %s, got task %s instead",
+			task2.Id.Hex(), task.Id.Hex())
+	}
+}
+
+func (s *SchedulerTestSuite) TestParentTaskOneCompletedOneNot(c *check.C) {
+	tasks_coll := s.db.C("flamenco_tasks")
+
+	// Task 1 is being worked on by worker_win
+	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
+	task1.Status = "active"
+	task1.WorkerId = &s.worker_win.Id
+	assert.Nil(c, tasks_coll.Insert(task1))
+
+	// Task 2 is already completed.
+	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
+	task2.Status = "completed"
+	task2.WorkerId = &s.worker_win.Id
+	assert.Nil(c, tasks_coll.Insert(task2))
+
+	// Task 3 is unavailable due to one of its parent not being completed.
+	task3 := ConstructTestTaskWithPrio("3aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
+	task3.Parents = []bson.ObjectId{task1.Id, task2.Id}
+	task3.Status = "claimed-by-manager"
+	assert.Nil(c, tasks_coll.Insert(task3))
+
+	// Fetch a task from the queue
+	resp_rec, ar := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
+	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, ar, s.db, &s.worker_lnx)
+
+	// We should not get any task back.
+	assert.Nil(c, task, "Expected nil, got task %v instead", task)
+	assert.Equal(c, http.StatusNoContent, resp_rec.Code)
 }

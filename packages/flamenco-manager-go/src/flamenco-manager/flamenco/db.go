@@ -14,6 +14,8 @@ type countresult struct {
 	Count int `bson:"count"`
 }
 
+type M bson.M
+
 /**
  * Returns a MongoDB session.
  *
