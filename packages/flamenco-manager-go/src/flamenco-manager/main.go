@@ -32,7 +32,7 @@ var task_update_pusher *flamenco.TaskUpdatePusher
 var task_timeout_checker *flamenco.TaskTimeoutChecker
 
 func http_status(w http.ResponseWriter, r *http.Request) {
-	flamenco.SendStatusReport(w, r, session)
+	flamenco.SendStatusReport(w, r, session, FLAMENCO_VERSION)
 }
 
 func http_register_worker(w http.ResponseWriter, r *http.Request) {
@@ -124,6 +124,7 @@ var cliArgs struct {
 	debug      bool
 	jsonLog    bool
 	cleanSlate bool
+	version    bool
 }
 
 func parseCliArgs() {
@@ -131,6 +132,7 @@ func parseCliArgs() {
 	flag.BoolVar(&cliArgs.debug, "debug", false, "Enable debug-level logging")
 	flag.BoolVar(&cliArgs.jsonLog, "json", false, "Log in JSON format")
 	flag.BoolVar(&cliArgs.cleanSlate, "cleanslate", false, "Start with a clean slate; erases all tasks from the local MongoDB")
+	flag.BoolVar(&cliArgs.version, "version", false, "Show the version of Flamenco Manager")
 	flag.Parse()
 }
 
@@ -155,6 +157,11 @@ func configLogging() {
 
 func main() {
 	parseCliArgs()
+	if cliArgs.version {
+		fmt.Println(FLAMENCO_VERSION)
+		return
+	}
+
 	configLogging()
 	log.Infof("Starting Flamenco Manager version %s", FLAMENCO_VERSION)
 

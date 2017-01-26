@@ -107,3 +107,9 @@ type MayKeepRunningResponse struct {
 type SettingsInMongo struct {
 	DepsgraphLastModified *time.Time `bson:"depsgraph_last_modified"`
 }
+
+type StatusReport struct {
+	NrOfWorkers int    `json:"nr_of_workers"`
+	NrOfTasks   int    `json:"nr_of_tasks"`
+	Version     string `json:"version"`
+}

@@ -9,15 +9,11 @@ import (
 	mgo "gopkg.in/mgo.v2"
 )
 
-type StatusReport struct {
-	NrOfWorkers int `json:"nr_of_workers"`
-	NrOfTasks   int `json:"nr_of_tasks"`
-}
-
 /**
  * Reports the status of the manager in JSON.
  */
-func SendStatusReport(w http.ResponseWriter, r *http.Request, session *mgo.Session) {
+func SendStatusReport(w http.ResponseWriter, r *http.Request, session *mgo.Session,
+	flamenco_version string) {
 	log.Info(r.RemoteAddr, "Status request received")
 
 	mongo_sess := session.Copy()
@@ -42,6 +38,7 @@ func SendStatusReport(w http.ResponseWriter, r *http.Request, session *mgo.Sessi
 	statusreport := StatusReport{
 		worker_count,
 		task_count,
+		flamenco_version,
 	}
 
 	encoder := json.NewEncoder(w)
