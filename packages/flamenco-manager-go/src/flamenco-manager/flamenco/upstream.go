@@ -70,7 +70,6 @@ func (self *UpstreamConnection) Close() {
 func (self *UpstreamConnection) KickDownloader(synchronous bool) {
 	if synchronous {
 		pingback := make(chan bool)
-		defer close(pingback)
 		self.download_kick <- pingback
 		log.Info("KickDownloader: Waiting for task downloader to finish.")
 
