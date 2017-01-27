@@ -327,8 +327,8 @@ func (s *SchedulerTestSuite) TestParentTaskNotCompleted(c *check.C) {
 	assert.Nil(c, tasks_coll.Insert(task2))
 
 	// Fetch a task from the queue
-	resp_rec, ar := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
-	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, ar, s.db, &s.worker_lnx)
+	resp_rec, _ := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
+	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, s.db, &s.worker_lnx)
 
 	// We should not get any task back, since task1 is already taken, and task2
 	// has a non-completed parent.
@@ -352,8 +352,8 @@ func (s *SchedulerTestSuite) TestParentTaskCompleted(c *check.C) {
 	assert.Nil(c, tasks_coll.Insert(task2))
 
 	// Fetch a task from the queue
-	resp_rec, ar := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
-	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, ar, s.db, &s.worker_lnx)
+	resp_rec, _ := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
+	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, s.db, &s.worker_lnx)
 	assert.Equal(c, http.StatusOK, resp_rec.Code)
 
 	// We should get task 2.
@@ -386,8 +386,8 @@ func (s *SchedulerTestSuite) TestParentTaskOneCompletedOneNot(c *check.C) {
 	assert.Nil(c, tasks_coll.Insert(task3))
 
 	// Fetch a task from the queue
-	resp_rec, ar := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
-	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, ar, s.db, &s.worker_lnx)
+	resp_rec, _ := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
+	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, s.db, &s.worker_lnx)
 
 	// We should not get any task back.
 	assert.Nil(c, task, "Expected nil, got task %v instead", task)

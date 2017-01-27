@@ -83,6 +83,7 @@ func (self *TaskTimeoutChecker) check(db *mgo.Database) {
 		"last_worker_ping": 1,
 		"worker_id":        1,
 		"worker":           1,
+		"name":             1,
 	}
 	if err := db.C("flamenco_tasks").Find(query).Select(projection).All(&timedout_tasks); err != nil {
 		log.Warningf("Error finding timed-out tasks: %s", err)
@@ -106,7 +107,7 @@ func (self *TaskTimeoutChecker) check(db *mgo.Database) {
 			Log: fmt.Sprintf(
 				"%s Task %s (%s) timed out, was active but untouched since %s. "+
 					"Was handled by worker %s",
-				UtcNow(), task.Name, task.Id.Hex(), task.LastWorkerPing, ident),
+				UtcNow().Format(IsoFormat), task.Name, task.Id.Hex(), task.LastWorkerPing, ident),
 		}
 		QueueTaskUpdate(&tupdate, db)
 	}
