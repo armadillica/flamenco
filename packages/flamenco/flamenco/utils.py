@@ -22,12 +22,12 @@ def frame_range_parse(frame_range=None):
         if num_parts == 1:
             frame = int(x[0])
             frames_list.append(frame)
-            #print("Individual frame %d" % (frame))
+            # print("Individual frame %d" % (frame))
         elif num_parts == 2:
             frame_start = int(x[0])
             frame_end = int(x[1])
             frames_list += range(frame_start, frame_end + 1)
-            #print("Frame range %d-%d" % (frame_start, frame_end))
+            # print("Frame range %d-%d" % (frame_start, frame_end))
     frames_list.sort()
     return frames_list
 
