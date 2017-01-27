@@ -11,7 +11,9 @@ class AbstractCommand(object):
     @classmethod
     def cmdname(cls):
         """Returns the command name."""
-        return cls.__name__.lower()
+        from flamenco.utils import camel_case_to_lower_case_underscore
+
+        return camel_case_to_lower_case_underscore(cls.__name__)
 
     def to_dict(self):
         """Returns a dictionary representation of this command, for JSON serialisation."""
@@ -34,10 +36,6 @@ class Echo(AbstractCommand):
 
 @attr.s
 class BlenderRender(AbstractCommand):
-    @classmethod
-    def cmdname(cls):
-        return 'blender_render'
-
     # Blender executable to run.
     blender_cmd = attr.ib(validator=attr.validators.instance_of(unicode))
     # blend file path.

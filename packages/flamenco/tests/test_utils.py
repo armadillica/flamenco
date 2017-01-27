@@ -59,3 +59,17 @@ class FrameRangeTest(unittest.TestCase):
                 [14, 15, 16],
             ],
             list(iter_frame_range('4-10, 13-16', 4)))
+
+    def test_camel_case_to_lower_case_underscore(self):
+        from flamenco.utils import camel_case_to_lower_case_underscore as cctlcu
+
+        self.assertIsInstance(cctlcu(u'word'), unicode)
+        self.assertIsInstance(cctlcu('word'), str)
+
+        self.assertEqual('word', cctlcu('word'))
+        self.assertEqual(u'word', cctlcu(u'word'))
+        self.assertEqual('camel_case', cctlcu('CamelCase'))
+        self.assertEqual('camel_case', cctlcu('camelCase'))
+        self.assertEqual('camel_case_with_many_words', cctlcu('CamelCaseWithManyWords'))
+        self.assertEqual('', cctlcu(''))
+        self.assertIs(None, cctlcu(None))

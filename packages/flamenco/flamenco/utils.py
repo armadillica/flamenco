@@ -103,3 +103,29 @@ def report_duration(logger, description):
     finally:
         end_time = time.time()
         logger.debug('report_duration: %s took %f seconds', description, end_time - start_time)
+
+
+def camel_case_to_lower_case_underscore(string):
+    """
+    Converts a string from CamelCase to lower_case_underscore.
+
+    None-safe.
+
+    :type string: unicode or str or None
+    :rtype: unicode or str or None
+    """
+
+    if string is None:
+        return None
+
+    words = []
+    from_char_position = 0
+    for current_char_position, char in enumerate(string):
+        if char.isupper() and from_char_position < current_char_position:
+            words.append(string[from_char_position:current_char_position].lower())
+            from_char_position = current_char_position
+    words.append(string[from_char_position:].lower())
+
+    if isinstance(string, str):
+        return '_'.join(words)
+    return u'_'.join(words)
