@@ -225,8 +225,8 @@ def tasks_cancel_requested(manager_id):
 def get_depsgraph(manager_id, request_json):
     """Returns the dependency graph of all tasks assigned to the given Manager.
 
-    Use the HTTP header If-Modified-Since to limit the dependency graph to tasks
-    that have been modified since that timestamp.
+    Use the HTTP header X-Flamenco-If-Updated-Since to limit the dependency
+    graph to tasks that have been modified since that timestamp.
     """
 
     import dateutil.parser
@@ -234,7 +234,7 @@ def get_depsgraph(manager_id, request_json):
     from flamenco import current_flamenco
     from flamenco.utils import report_duration
 
-    modified_since = request.headers.get('If-Modified-Since')
+    modified_since = request.headers.get('X-Flamenco-If-Updated-Since')
 
     with report_duration(log, 'depsgraph query'):
         tasks_coll = current_flamenco.db('tasks')
@@ -297,9 +297,12 @@ def get_depsgraph(manager_id, request_json):
     if depsgraph:
         last_modification = max(task['_updated'] for task in depsgraph)
         log.debug('Last modification was %s', last_modification)
-        # We need a format that can handle sub-second precision.
-        resp.headers['Last-Modified'] = last_modification.isoformat()
-        resp.headers['X-Last-Modified-Format'] = 'ISO-8601'
+        # We need a format that can handle sub-second precision, which is not provided by the
+        # HTTP date format (RFC 1123). This means that we can't use the Last-Modified header, as
+        # it may be incorrectly interpreted and rewritten by HaProxy, Apache or other software
+        # in the path between client & server.
+        resp.headers['X-Flamenco-Last-Updated'] = last_modification.isoformat()
+        resp.headers['X-Flamenco-Last-Updated-Format'] = 'ISO-8601'
     return resp
 
 

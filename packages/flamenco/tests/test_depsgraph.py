@@ -91,8 +91,8 @@ class DepsgraphTest(AbstractFlamencoTest):
         depstask1 = next(t for t in depsgraph if t['_id'] == unicode(task1['_id']))
         self.assertEqual(set(task1.keys()), set(depstask1.keys()))
 
-        # The 'Last-Modified' header should contain the last-changed task.
-        last_modified = parse(resp.headers['Last-Modified'])
+        # The 'X-Flamenco-Last-Updated' header should contain the last-changed task.
+        last_modified = parse(resp.headers['X-Flamenco-Last-Updated'])
         with self.app.test_request_context():
             task0 = self.flamenco.db('tasks').find_one({'_id': self.task_ids[0]})
         self.assertEqual(task0['_updated'], last_modified)
@@ -132,12 +132,12 @@ class DepsgraphTest(AbstractFlamencoTest):
         # Get a clean slate first, so that we get the timestamp of last modification
         resp = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                         auth_token=self.mngr_token)
-        last_modified = resp.headers['Last-Modified']
+        last_modified = resp.headers['X-Flamenco-Last-Updated']
 
         # Do the subsequent call, it should return nothing.
         self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                  auth_token=self.mngr_token,
-                 headers={'If-Modified-Since': last_modified},
+                 headers={'X-Flamenco-If-Updated-Since': last_modified},
                  expected_status=304)
 
         # Change some tasks to see what we get back.
@@ -148,7 +148,7 @@ class DepsgraphTest(AbstractFlamencoTest):
 
         resp = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                         auth_token=self.mngr_token,
-                        headers={'If-Modified-Since': last_modified})
+                        headers={'X-Flamenco-If-Updated-Since': last_modified})
 
         depsgraph = resp.json()['depsgraph']
         self.assertEqual(2, len(depsgraph))  # we should not get the cancel-requested task back.
@@ -158,8 +158,8 @@ class DepsgraphTest(AbstractFlamencoTest):
                           unicode(self.task_ids[2])},
                          deps_tids)
 
-        # The 'Last-Modified' header should contain the last-changed task.
-        last_modified = parse(resp.headers['Last-Modified'])
+        # The 'X-Flamenco-Last-Updated' header should contain the last-changed task.
+        last_modified = parse(resp.headers['X-Flamenco-Last-Updated'])
         with self.app.test_request_context():
             task0 = self.flamenco.db('tasks').find_one({'_id': self.task_ids[0]})
             task2 = self.flamenco.db('tasks').find_one({'_id': self.task_ids[2]})
