@@ -7,9 +7,40 @@ class BlenderRender(AbstractJobCompiler):
     """Basic Blender render job."""
 
     def compile(self, job):
-        from flamenco.utils import iter_frame_range, frame_range_merge
-
         self._log.info('Compiling job %s', job['_id'])
+
+        move_existing_task_id = self._make_move_out_of_way_task(job)
+        task_count = 1 + self._make_render_tasks(job, move_existing_task_id)
+
+        self._log.info('Created %i tasks for job %s', task_count, job['_id'])
+
+    def _make_move_out_of_way_task(self, job):
+        """Creates a MoveOutOfWay command to back up existing frames, and wraps it in a task.
+
+        :returns: the ObjectId of the created task.
+        :rtype: bson.ObjectId
+        """
+
+        import os.path
+
+        # The render path contains a filename pattern, most likely '######' or
+        # something similar. This has to be removed, so that we end up with
+        # the directory that will contain the frames.
+        render_dest_dir = os.path.dirname(job['settings']['render_output'])
+        cmd = commands.MoveOutOfWay(src=render_dest_dir)
+
+        task_id = self.task_manager.api_create_task(
+            job, [cmd], 'move-existing-frames')
+
+        return task_id
+
+    def _make_render_tasks(self, job, parent_task_id):
+        """Creates the render tasks for this job.
+
+        :returns: the number of tasks created
+        :rtype: int
+        """
+        from flamenco.utils import iter_frame_range, frame_range_merge
 
         job_settings = job['settings']
 
@@ -28,7 +59,7 @@ class BlenderRender(AbstractJobCompiler):
             ]
 
             name = 'blender-render-%s' % frame_range
-            self.task_manager.api_create_task(job, task_cmds, name)
+            self.task_manager.api_create_task(job, task_cmds, name, parents=[parent_task_id])
             task_count += 1
 
-        self._log.info('Created %i tasks for job %s', task_count, job['_id'])
+        return task_count

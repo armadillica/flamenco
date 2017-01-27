@@ -87,6 +87,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
                     'frames': u'12-18, 20-25',
                     'chunk_size': 2,
                     'time_in_seconds': 3,
+                    'render_output': u'/not-relevant-now/####',
                 },
                 self.proj_id,
                 ctd.EXAMPLE_PROJECT_OWNER_ID,
@@ -96,7 +97,10 @@ class JobStatusChangeTest(AbstractFlamencoTest):
 
             # Fetch the task IDs and set the task statuses to a fixed list.
             tasks_coll = self.flamenco.db('tasks')
-            tasks = tasks_coll.find({'job': self.job_id}, projection={'_id': 1})
+            tasks = tasks_coll.find({
+                'job': self.job_id,
+                'name': {'$regex': '^blender-render-'},  # don't consider move-out-of-way task.
+            }, projection={'_id': 1})
             self.task_ids = [task['_id'] for task in tasks]
 
         self.assertEqual(len(tasks_schema['status']['allowed']), len(self.task_ids))

@@ -48,3 +48,16 @@ class BlenderRender(AbstractCommand):
 
     # list of frames to render, as frame range string.
     frames = attr.ib(validator=attr.validators.instance_of(unicode))
+
+
+@attr.s
+class MoveOutOfWay(AbstractCommand):
+    """Moves a file or directory out of the way.
+
+    The destination is the same as the source, with the source's modification
+    timestamp appended to it.
+
+    :ivar src: source path
+    """
+
+    src = attr.ib(validator=attr.validators.instance_of(unicode))
