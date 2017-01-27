@@ -248,6 +248,37 @@ class SleepCommand(AbstractCommand):
         await self.worker.register_log('Done sleeping for %s seconds' % time_in_seconds)
 
 
+@command_executor('move_out_of_way')
+class MoveOutOfWayCommand(AbstractCommand):
+    def validate(self, settings: dict):
+        try:
+            src = settings['src']
+        except KeyError:
+            return 'Missing "src"'
+
+        if not isinstance(src, str):
+            return 'src must be a string'
+
+    async def execute(self, settings: dict):
+        from pathlib import Path
+        from datetime import datetime
+
+        src = Path(settings['src'])
+        if not src.exists():
+            self._log.info('Render output path %s does not exist, not moving out of way', src)
+            await self.worker.register_log('%s: Render output path %s does not exist, '
+                                           'not moving out of way', self.command_name, src)
+            return
+
+        mtime = src.stat().st_mtime
+        mdatetime = datetime.fromtimestamp(mtime)
+        dst = src.with_name('%s-%s' % (src.name, mdatetime.isoformat()))
+
+        self._log.info('Moving %s to %s', src, dst)
+        await self.worker.register_log('%s: Moving %s to %s', self.command_name, src, dst)
+        src.rename(dst)
+
+
 @attr.s
 class AbstractSubprocessCommand(AbstractCommand):
     readline_timeout = attr.ib(default=SUBPROC_READLINE_TIMEOUT)
