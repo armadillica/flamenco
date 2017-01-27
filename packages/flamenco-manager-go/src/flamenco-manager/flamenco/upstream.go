@@ -17,9 +17,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// Max. nr of tasks that's allowed to be buffered in the channel.
-const MAX_OUTSTANDING_TASKS = 5
-
 // Gives the system some time to start up (and open listening HTTP port)
 const STARTUP_NOTIFICATION_INITIAL_DELAY = 500 * time.Millisecond
 
