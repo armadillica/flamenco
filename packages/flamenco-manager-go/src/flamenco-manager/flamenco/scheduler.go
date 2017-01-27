@@ -168,6 +168,7 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 		M{"$project": M{"task": 1}},
 		// 9: Sort by priority, with highest prio first. If prio is equal, use newest task.
 		M{"$sort": bson.D{
+			{"task.job_priority", -1},
 			{"task.priority", -1},
 			{"task._id", 1},
 		}},

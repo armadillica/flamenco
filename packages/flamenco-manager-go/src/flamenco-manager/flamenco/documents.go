@@ -12,21 +12,22 @@ type Command struct {
 }
 
 type Task struct {
-	Id       bson.ObjectId   `bson:"_id,omitempty" json:"_id,omitempty"`
-	Etag     string          `bson:"_etag,omitempty" json:"_etag,omitempty"`
-	Job      bson.ObjectId   `bson:"job,omitempty" json:"job"`
-	Manager  bson.ObjectId   `bson:"manager,omitempty" json:"manager"`
-	Project  bson.ObjectId   `bson:"project,omitempty" json:"project"`
-	User     bson.ObjectId   `bson:"user,omitempty" json:"user"`
-	Name     string          `bson:"name" json:"name"`
-	Status   string          `bson:"status" json:"status"`
-	Priority int             `bson:"priority" json:"priority"`
-	JobType  string          `bson:"job_type" json:"job_type"`
-	Commands []Command       `bson:"commands" json:"commands"`
-	Log      string          `bson:"log,omitempty" json:"log,omitempty"`
-	Activity string          `bson:"activity,omitempty" json:"activity,omitempty"`
-	Parents  []bson.ObjectId `bson:"parents,omitempty" json:"parents,omitempty"`
-	Worker   string          `bson:"worker,omitempty" json:"worker,omitempty"`
+	Id          bson.ObjectId   `bson:"_id,omitempty" json:"_id,omitempty"`
+	Etag        string          `bson:"_etag,omitempty" json:"_etag,omitempty"`
+	Job         bson.ObjectId   `bson:"job,omitempty" json:"job"`
+	Manager     bson.ObjectId   `bson:"manager,omitempty" json:"manager"`
+	Project     bson.ObjectId   `bson:"project,omitempty" json:"project"`
+	User        bson.ObjectId   `bson:"user,omitempty" json:"user"`
+	Name        string          `bson:"name" json:"name"`
+	Status      string          `bson:"status" json:"status"`
+	Priority    int             `bson:"priority" json:"priority"`
+	JobPriority int             `bson:"job_priority" json:"job_priority"`
+	JobType     string          `bson:"job_type" json:"job_type"`
+	Commands    []Command       `bson:"commands" json:"commands"`
+	Log         string          `bson:"log,omitempty" json:"log,omitempty"`
+	Activity    string          `bson:"activity,omitempty" json:"activity,omitempty"`
+	Parents     []bson.ObjectId `bson:"parents,omitempty" json:"parents,omitempty"`
+	Worker      string          `bson:"worker,omitempty" json:"worker,omitempty"`
 
 	// Internal bookkeeping
 	WorkerId       *bson.ObjectId `bson:"worker_id,omitempty" json:"-"`

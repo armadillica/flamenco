@@ -141,6 +141,31 @@ func (s *SchedulerTestSuite) TestSchedulerOrderByPriority(t *check.C) {
 	assert.Equal(t, task2.Id.Hex(), json_task.Id.Hex())
 }
 
+func (s *SchedulerTestSuite) TestSchedulerOrderByJobPriority(t *check.C) {
+	// Store task in DB.
+	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
+	task1.JobPriority = 10
+	if err := s.db.C("flamenco_tasks").Insert(task1); err != nil {
+		t.Fatal("Unable to insert test task1", err)
+	}
+	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
+	task2.JobPriority = 5
+	if err := s.db.C("flamenco_tasks").Insert(task2); err != nil {
+		t.Fatal("Unable to insert test task 2", err)
+	}
+
+	// Perform HTTP request to the scheduler.
+	resp_rec := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/task", nil)
+	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	s.sched.ScheduleTask(resp_rec, ar)
+
+	// We should have gotten task 1, because its job has the highest priority.
+	json_task := Task{}
+	parseJson(t, resp_rec, 200, &json_task)
+	assert.Equal(t, task1.Id.Hex(), json_task.Id.Hex())
+}
+
 /**
  * The failure case, where the TaskScheduler cannot reach the Server to check
  * the task for updates, is already implicitly handled in the TestVariableReplacement
