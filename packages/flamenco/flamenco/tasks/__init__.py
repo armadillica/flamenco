@@ -14,7 +14,7 @@ COLOR_FOR_TASK_STATUS = {
     'queued': '#b4bbaa',
     'canceled': '#999',
     'failed': '#ff8080',
-    'claimedbymanager': '#d1c5d3',
+    'claimed-by-manager': '#d1c5d3',
     'processing': '#ffbe00',
     'active': '#00ceff',
     'completed': '#bbe151',
