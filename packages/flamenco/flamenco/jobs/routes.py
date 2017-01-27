@@ -80,6 +80,7 @@ def view_job_depsgraph(project, job_id):
 
     if request.is_xhr:
         from flask import jsonify
+        from flamenco.tasks import COLOR_FOR_TASK_STATUS
 
         # Return the vis.js nodes and edges as JSON
         tasks = current_flamenco.task_manager.tasks_for_job(job_id)
@@ -96,6 +97,7 @@ def view_job_depsgraph(project, job_id):
                 'id': task_id,
                 'label': task['name'],
                 'shape': 'box',
+                'color': COLOR_FOR_TASK_STATUS[task['status']],
             })
             if task.parents:
                 for parent in task.parents:

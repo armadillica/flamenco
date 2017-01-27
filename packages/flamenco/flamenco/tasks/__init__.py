@@ -9,6 +9,17 @@ from pillar.web.system_util import pillar_api
 
 from pillarsdk.exceptions import ResourceNotFound
 
+# Keep this synced with _config.sass
+COLOR_FOR_TASK_STATUS = {
+    'queued': '#b4bbaa',
+    'canceled': '#999',
+    'failed': '#ff8080',
+    'claimedbymanager': '#d1c5d3',
+    'processing': '#ffbe00',
+    'active': '#00ceff',
+    'completed': '#bbe151',
+}
+
 
 @attr.s
 class TaskManager(object):
