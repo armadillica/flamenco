@@ -274,6 +274,21 @@ class MoveOutOfWayCommand(AbstractCommand):
         mdatetime = datetime.fromtimestamp(mtime)
         dst = src.with_name('%s-%s' % (src.name, mdatetime.isoformat()))
 
+        if dst.exists():
+            self._log.debug('Destination %s exists, finding one that does not', dst)
+            # See which suffixes are in use
+            max_nr = 0
+            for path in dst.parent.glob(dst.name + '*'):
+                suffix = path.name.split('-')[-1]
+                try:
+                    suffix = int(suffix)
+                except ValueError:
+                    continue
+                self._log.debug('Found suffix %r', suffix)
+                max_nr = max(max_nr, suffix)
+            dst = dst.with_name(dst.name + '-%i' % (max_nr + 1))
+            self._log.debug('New destination is %s', dst)
+
         self._log.info('Moving %s to %s', src, dst)
         await self.worker.register_log('%s: Moving %s to %s', self.command_name, src, dst)
         src.rename(dst)
