@@ -93,7 +93,7 @@ func (self *UpstreamConnection) KickDownloader(synchronous bool) {
 func (self *UpstreamConnection) download_task_loop() {
 	timer_chan := Timer("download_task_loop",
 		self.config.DownloadTaskSleep,
-		true,
+		false,
 		self.done,
 		self.done_wg,
 	)
