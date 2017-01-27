@@ -16,6 +16,9 @@ function depsgraph(canvas_id, nodes, edges) {
                 parentCentralization: true,
             },
         },
+        edges: {
+            smooth: false,
+        },
         interaction: {
             dragNodes: false,
         },
