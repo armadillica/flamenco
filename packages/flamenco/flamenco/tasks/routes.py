@@ -12,6 +12,9 @@ from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUI
 
 TASK_LOG_PAGE_SIZE = 10
 
+# The task statuses that can be set from the web-interface.
+ALLOWED_TASK_STATUSES_FROM_WEB = {'cancel-requested', 'queued'}
+
 perjob_blueprint = Blueprint('flamenco.tasks.perjob', __name__,
                              url_prefix='/<project_url>/jobs/<job_id>')
 perproject_blueprint = Blueprint('flamenco.tasks.perproject', __name__,
@@ -60,11 +63,34 @@ def view_task(project, flamenco_props, task_id):
         raise wz_exceptions.Forbidden()
 
     task = Task.find(task_id, api=api)
+
+    from . import REQUEABLE_TASK_STATES
+    write_access = current_flamenco.current_user_is_flamenco_admin()
+
     return render_template('flamenco/tasks/view_task_embed.html',
                            task=task,
                            project=project,
                            flamenco_props=flamenco_props.to_dict(),
-                           flamenco_context=request.args.get('context'))
+                           flamenco_context=request.args.get('context'),
+                           can_requeue_task=write_access and task['status'] in REQUEABLE_TASK_STATES)
+
+
+@perproject_blueprint.route('/<task_id>/set-status', methods=['POST'])
+@flask_login.login_required
+@flamenco_project_view(extension_props=False)
+def set_task_status(project, task_id):
+    from flask_login import current_user
+
+    new_status = request.form['status']
+    if new_status not in ALLOWED_TASK_STATUSES_FROM_WEB:
+        log.warning('User %s tried to set status of task %s to disallowed status "%s"; denied.',
+                    current_user.objectid, task_id, new_status)
+        raise wz_exceptions.UnprocessableEntity('Status "%s" not allowed' % new_status)
+
+    log.info('User %s set status of task %s to "%s"', current_user.objectid, task_id, new_status)
+    current_flamenco.task_manager.web_set_task_status(task_id, new_status)
+
+    return '', 204
 
 
 @perproject_blueprint.route('/<task_id>/log')

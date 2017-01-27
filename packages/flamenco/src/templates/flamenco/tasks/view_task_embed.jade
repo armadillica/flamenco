@@ -28,17 +28,17 @@
 		.table.item-properties
 			.table-body
 				.table-row
-					.table-cell Belongs to job
+					.table-cell Belongs to task
 					.table-cell
 						a(
-							href="{{ url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=task.job) }}"
-							data-job-id="{{ task.job }}",
-							class="job-link"
+							href="{{ url_for('flamenco.tasks.perproject.view_task', project_url=project.url, task_id=task._id) }}"
+							data-task-id="{{ task._id }}",
+							class="task-link"
 						)
-							| {{ task.job }}
+							| {{ task.task }}
 				.table-row
-					.table-cell Job Type
-					.table-cell {{ task.job_type | undertitle }}
+					.table-cell task Type
+					.table-cell {{ task.task_type | undertitle }}
 				.table-row.properties-status.js-help(
 					data-url="{{ url_for('flamenco.help', project_url=project.url) }}")
 					.table-cell Status
@@ -56,6 +56,14 @@
 				.table-row
 					.table-cell Worker
 					.table-cell {{ task.worker }}
+
+	#task-action-panel
+		| {% if can_requeue_task %}
+		button.btn.btn-success.requeue-task(onclick="setTaskStatus('{{ task._id }}', 'queued')")
+			i.pi-refresh
+			| Re-queue task
+		| {% endif %}
+		.action-result-panel
 
 #item-view-feed
 	#activities

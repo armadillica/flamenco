@@ -157,7 +157,7 @@ $(function() {
  */
 function setJobStatus(job_id, new_status) {
     if (typeof job_id === 'undefined' || typeof new_status === 'undefined') {
-        if (console) console.log("cancelJob(" + job_id + ", " + new_status + ") called");
+        if (console) console.log("setJobStatus(" + job_id + ", " + new_status + ") called");
         return;
     }
 
@@ -184,5 +184,41 @@ function setJobStatus(job_id, new_status) {
               'Please check your network connection and try again.');
         }
         $('#job-action-panel .action-result-panel').html(show_html);
+    });
+}
+
+/**
+ * Request cancellation or re-queueing of the given task ID.
+ */
+function setTaskStatus(task_id, new_status) {
+    if (typeof task_id === 'undefined' || typeof new_status === 'undefined') {
+        if (console) console.log("setTaskStatus(" + task_id + ", " + new_status + ") called");
+        return;
+    }
+
+    project_url = ProjectUtils.projectUrl();
+    return $.post('/flamenco/' + project_url + '/tasks/' + task_id + '/set-status', {status: new_status})
+    .done(function(data) {
+        if(console) console.log('Job set-status request OK');
+        // Reload the entire page, since both the view-embed and the task list need refreshing.
+        location.reload(true);
+    })
+    .fail(function(xhr) {
+        if (console) {
+            console.log('Error setting task status');
+            console.log('XHR:', xhr);
+        }
+
+        statusBarSet('error', 'Error requesting task status change', 'pi-error');
+
+        var show_html;
+        if (xhr.status) {
+            show_html = xhr.responseText;
+        } else {
+            show_html = $('<p>').addClass('text-danger').text(
+              'Setting task status failed. There possibly was an error connecting to the server. ' +
+              'Please check your network connection and try again.');
+        }
+        $('#task-action-panel .action-result-panel').html(show_html);
     });
 }

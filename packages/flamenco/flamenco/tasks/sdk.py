@@ -1,8 +1,9 @@
 from pillarsdk.resource import List
 from pillarsdk.resource import Find
+from pillarsdk.resource import Patch
 
 
-class Task(List, Find):
+class Task(List, Find, Patch):
     """Task class wrapping the REST nodes endpoint
     """
     path = 'flamenco/tasks'

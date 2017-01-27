@@ -20,6 +20,8 @@ COLOR_FOR_TASK_STATUS = {
     'completed': '#bbe151',
 }
 
+REQUEABLE_TASK_STATES = {'completed', 'canceled', 'failed'}
+
 
 @attr.s
 class TaskManager(object):
@@ -89,6 +91,15 @@ class TaskManager(object):
             return {'_items': [], '_meta': {'total': 0}}
 
         return tasks
+
+    def web_set_task_status(self, task_id, new_status):
+        """Web-level call to updates the task status."""
+        from .sdk import Task
+
+        api = pillar_api()
+        task = Task({'_id': task_id})
+        task.patch({'op': 'set-task-status',
+                    'status': new_status}, api=api)
 
 
 def setup_app(app):
