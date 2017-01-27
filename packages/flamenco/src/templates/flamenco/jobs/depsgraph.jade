@@ -1,0 +1,41 @@
+doctype html
+html(lang="en")
+	head
+		meta(charset="utf-8")
+		title Job Depsgraph - Flamenco
+		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+
+		link(href="{{ url_for('static_flamenco', filename='assets/css/vendor/vis.min.css') }}", rel="stylesheet")
+		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery-3.1.0.min.js')}}")
+		script(src="{{ url_for('static_flamenco', filename='assets/js/vendor/vis.min.js')}}")
+		script(src="{{ url_for('static_flamenco', filename='assets/js/generated/depsgraph.min.js')}}")
+
+		link(href="{{ url_for('static_flamenco', filename='assets/img/favicon.png') }}", rel="shortcut icon")
+
+		style.
+			html, body {
+				background-color: white;
+				color: black;
+				margin: 0;
+				padding: 0;
+			}
+			#depsgraph {
+				position: absolute;
+				left: 0;
+				right: 0;
+				top: 0;
+				bottom: 0;
+			}
+
+	body
+
+		#depsgraph
+
+		script.
+			$.get('depsgraph', function(node_edge_data) {
+				console.log('Node/edge data: ', node_edge_data);
+				depsgraph('depsgraph', node_edge_data.nodes, node_edge_data.edges);
+			})
+			.fail(function(xhr) {
+				console.log('Could not get depsgraph data', xhr);
+			});

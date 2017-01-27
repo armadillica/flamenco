@@ -70,6 +70,47 @@ def view_job(project, flamenco_props, job_id):
                            can_requeue_job=write_access and job['status'] in REQUEABLE_JOB_STATES)
 
 
+@perproject_blueprint.route('/<job_id>/depsgraph')
+@flamenco_project_view(extension_props=False)
+def view_job_depsgraph(project, job_id):
+
+    # Job list is public, job details are not.
+    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
+        raise wz_exceptions.Forbidden()
+
+    if request.is_xhr:
+        from flask import jsonify
+
+        # Return the vis.js nodes and edges as JSON
+        tasks = current_flamenco.task_manager.tasks_for_job(job_id)
+        nodes = []
+        edges = []
+
+        # Make a mapping from database ID to task index
+        tid_to_idx = {task['_id']: tidx
+                      for tidx, task in enumerate(tasks._items)}
+
+        for task in tasks._items:
+            task_id = tid_to_idx[task['_id']]
+            nodes.append({
+                'id': task_id,
+                'label': task['name'],
+                'shape': 'box',
+            })
+            if task.parents:
+                for parent in task.parents:
+                    edges.append({
+                        'from': task_id,
+                        'to': tid_to_idx[parent],
+                        'arrows': 'to',
+                    })
+        return jsonify(nodes=nodes, edges=edges)
+
+    return render_template('flamenco/jobs/depsgraph.html',
+                           job_id=job_id,
+                           project=project)
+
+
 @blueprint.route('/<job_id>/set-status', methods=['POST'])
 def set_job_status(job_id):
     from flask_login import current_user
