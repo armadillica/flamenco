@@ -8,14 +8,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 )
 
 // For timestamp parsing
 const IsoFormat = "2006-01-02T15:04:05-0700"
-const LastModifiedHeaderFormat = time.RFC1123
 
 /**
  * Decodes JSON and writes a Bad Request status if it fails.

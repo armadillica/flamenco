@@ -159,7 +159,7 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	if settings.DepsgraphLastModified != nil {
 		log.Infof("Getting tasks from upstream Flamenco %s If-Modified-Since %s", get_url,
 			*settings.DepsgraphLastModified)
-		req.Header.Set("If-Modified-Since", *settings.DepsgraphLastModified)
+		req.Header.Set("X-Flamenco-If-Updated-Since", *settings.DepsgraphLastModified)
 	} else {
 		log.Infof("Getting tasks from upstream Flamenco %s", get_url)
 	}
@@ -174,7 +174,7 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 		log.Debug("Server-side depsgraph was not modified, nothing to do.")
 		return
 	}
-	if resp.StatusCode == 204 {
+	if resp.StatusCode == http.StatusNoContent {
 		log.Info("No tasks for us; sleeping.")
 		return
 	}
@@ -223,7 +223,7 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	}
 
 	// Check if we had a Last-Modified header, since we need to remember that.
-	last_modified := resp.Header.Get("Last-Modified")
+	last_modified := resp.Header.Get("X-Flamenco-Last-Updated")
 	if last_modified != "" {
 		log.Info("Last modified task was at ", last_modified)
 		settings.DepsgraphLastModified = &last_modified
