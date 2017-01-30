@@ -201,6 +201,25 @@ class AbstractCommand(metaclass=abc.ABCMeta):
 
         return None
 
+    def _setting(self, settings: dict, key: str, is_required: bool, valtype=str) -> (
+            typing.Any, typing.Optional[str]):
+        """Parses a setting, returns either (value, None) or (None, errormsg)"""
+
+        try:
+            value = settings[key]
+        except KeyError:
+            if is_required:
+                return None, 'Missing "%s"' % key
+            return None, None
+
+        if value is None and not is_required:
+            return None, None
+
+        if not isinstance(value, valtype):
+            return None, '"%s" must be a %s, not a %s' % (key, valtype, type(value))
+
+        return value, None
+
 
 def command_executor(cmdname):
     """Class decorator, registers a command executor."""
@@ -414,25 +433,6 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
         self.re_status = re.compile(r'\| (?P<status>[^\|]+)\s*$')
         self.re_path_not_found = re.compile(r"Warning: Path '.*' not found")
 
-    def _setting(self, settings: dict, key: str, is_required: bool) -> (
-            typing.Any, typing.Optional[str]):
-        """Parses a setting, returns either (value, None) or (None, errormsg)"""
-
-        try:
-            value = settings[key]
-        except KeyError:
-            if is_required:
-                return None, 'Missing "%s"' % key
-            return None, None
-
-        if value is None and not is_required:
-            return None, None
-
-        if not isinstance(value, str):
-            return None, '"%s" must be a string, not a %s' % (key, type(value))
-
-        return value, None
-
     def validate(self, settings: dict):
         from pathlib import Path
         import shlex
@@ -545,3 +545,46 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
 
         # Not a render progress line; just log it for now.
         return '> %s' % line
+
+
+@command_executor('merge-exr')
+class MergeExrCommand(AbstractSubprocessCommand):
+    def validate(self, settings: dict):
+        from pathlib import Path
+        import shlex
+
+        blender_cmd, err = self._setting(settings, 'blender_cmd', True)
+        if err:
+            return err
+        cmd = shlex.split(blender_cmd)
+        if not Path(cmd[0]).exists():
+            return 'blender_cmd %r does not exist' % cmd[0]
+        settings['blender_cmd'] = cmd
+
+        _, err = self._setting(settings, 'input1', True, str)
+        if err: return err
+        _, err = self._setting(settings, 'input2', True, str)
+        if err: return err
+        _, err = self._setting(settings, 'weight1', True, int)
+        if err: return err
+        _, err = self._setting(settings, 'weight2', True, int)
+        if err: return err
+
+    async def execute(self, settings: dict):
+        import shlex
+        await self.subprocess(shlex.split(settings['cmd']))
+
+        cmd = settings['blender_cmd'][:]
+        cmd += [
+            '--factory-startup',
+            '--enable-autoexec',
+            '-noaudio',
+            '--background',
+        ]
+
+        # TODO: set up node properties and render settings.
+
+        await self.worker.register_task_update(activity='Starting Blender')
+        await self.subprocess(cmd)
+
+        # TODO: move output files into the correct spot.

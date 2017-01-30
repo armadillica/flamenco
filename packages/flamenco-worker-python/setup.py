@@ -16,6 +16,7 @@ if __name__ == '__main__':
             'Programming Language :: Python',
             'Programming Language :: Python :: 3.5',
         ],
+        package_data={'flamenco_worker': ['merge-exr.blend']},
         install_requires=[
             'attrs >=16.3.0',
             'requests>=2.12.4',
@@ -23,4 +24,5 @@ if __name__ == '__main__':
         entry_points={'console_scripts': [
             'flamenco-worker = flamenco_worker.cli:main',
         ]},
+        zip_safe=False,  # due to the bundled merge-exr.blend file.
     )
