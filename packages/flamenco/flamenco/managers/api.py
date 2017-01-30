@@ -271,8 +271,7 @@ def get_depsgraph(manager_id, request_json):
         cursor = tasks_coll.find(task_query)
         depsgraph = list(cursor)
 
-    is_empty = len(depsgraph) == 0
-    if is_empty:
+    if len(depsgraph) == 0:
         log.debug('Returning empty depsgraph')
         if modified_since is not None:
             return '', 304  # Not Modified
