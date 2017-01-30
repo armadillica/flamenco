@@ -254,6 +254,7 @@ def get_depsgraph(manager_id, request_json):
             )
             job_ids = [job['_id'] for job in jobs]
             if not job_ids:
+                log.debug('Returning empty depsgraph')
                 return '', 204  # empty response
 
             log.debug('Requiring jobs to be in %s', job_ids)
@@ -270,9 +271,13 @@ def get_depsgraph(manager_id, request_json):
         cursor = tasks_coll.find(task_query)
         depsgraph = list(cursor)
 
-    log.info('Returning depsgraph of %i tasks', len(depsgraph))
-    if modified_since is not None and len(depsgraph) == 0:
-        return '', 304  # Not Modified
+    is_empty = len(depsgraph) == 0
+    if is_empty:
+        log.debug('Returning empty depsgraph')
+        if modified_since is not None:
+            return '', 304  # Not Modified
+    else:
+        log.info('Returning depsgraph of %i tasks', len(depsgraph))
 
     # Update the task status in the database to move queued tasks to claimed-by-manager.
     task_query['status'] = u'queued'
