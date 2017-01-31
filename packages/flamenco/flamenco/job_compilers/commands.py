@@ -51,6 +51,19 @@ class BlenderRender(AbstractCommand):
 
 
 @attr.s
+class BlenderRenderProgressive(BlenderRender):
+    # Total number of Cycles sample chunks.
+    cycles_num_chunks = attr.ib(validator=attr.validators.instance_of(int))
+    # Cycle sample chunk to render in this command.
+    cycles_chunk = attr.ib(validator=attr.validators.instance_of(int))
+
+    # Cycles first sample number, base-1
+    cycles_samples_from = attr.ib(validator=attr.validators.instance_of(int))
+    # Cycles last sample number, base-1
+    cycles_samples_to = attr.ib(validator=attr.validators.instance_of(int))
+
+
+@attr.s
 class MoveOutOfWay(AbstractCommand):
     """Moves a file or directory out of the way.
 
@@ -61,3 +74,16 @@ class MoveOutOfWay(AbstractCommand):
     """
 
     src = attr.ib(validator=attr.validators.instance_of(unicode))
+
+
+@attr.s
+class MergeProgressiveRenders(AbstractCommand):
+    """Merges two Cycles outputs into one by taking the weighted average.
+    """
+
+    input1 = attr.ib(validator=attr.validators.instance_of(unicode))
+    input2 = attr.ib(validator=attr.validators.instance_of(unicode))
+    output = attr.ib(validator=attr.validators.instance_of(unicode))
+
+    weight1 = attr.ib(validator=attr.validators.instance_of(int))
+    weight2 = attr.ib(validator=attr.validators.instance_of(int))
