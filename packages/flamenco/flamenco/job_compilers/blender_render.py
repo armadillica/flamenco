@@ -1,3 +1,5 @@
+from pillar import attrs_extra
+
 from .abstract_compiler import AbstractJobCompiler
 from . import commands, register_compiler
 
@@ -5,9 +7,13 @@ from . import commands, register_compiler
 @register_compiler('blender-render')
 class BlenderRender(AbstractJobCompiler):
     """Basic Blender render job."""
+    _log = attrs_extra.log('%s.BlenderRender' % __name__)
+
+    REQUIRED_SETTINGS = ('blender_cmd', 'filepath', 'render_output', 'frames', 'chunk_size')
 
     def compile(self, job):
         self._log.info('Compiling job %s', job['_id'])
+        self.validate_job_settings(job)
 
         move_existing_task_id = self._make_move_out_of_way_task(job)
         task_count = 1 + self._make_render_tasks(job, move_existing_task_id)
