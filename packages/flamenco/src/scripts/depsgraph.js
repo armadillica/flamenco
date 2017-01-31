@@ -10,10 +10,11 @@ function depsgraph(canvas_id, nodes, edges) {
         layout: {
             hierarchical: {
                 direction: "RL",
-                sortMethod: "directed",
+                // sortMethod: "directed",
                 blockShifting: true,
                 edgeMinimization: true,
                 parentCentralization: true,
+                levelSeparation: 250,
             },
         },
         edges: {
