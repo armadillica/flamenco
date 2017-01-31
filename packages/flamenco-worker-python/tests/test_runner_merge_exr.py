@@ -3,17 +3,17 @@ from pathlib import Path
 from test_runner import AbstractCommandTest
 
 
-class MergeExrCommandTest(AbstractCommandTest):
+class MergeProgressiveRendersCommandTest(AbstractCommandTest):
     def setUp(self):
         super().setUp()
 
-        from flamenco_worker.runner import MergeExrCommand
+        from flamenco_worker.runner import MergeProgressiveRendersCommand
         import tempfile
 
         self.tmpdir = tempfile.TemporaryDirectory()
         self.mypath = Path(__file__).parent
 
-        self.cmd = MergeExrCommand(
+        self.cmd = MergeProgressiveRendersCommand(
             worker=self.fworker,
             task_id='12345',
             command_idx=0,
@@ -41,4 +41,6 @@ class MergeExrCommandTest(AbstractCommandTest):
 
         # Assuming that if the files exist, the merge was ok.
         self.assertTrue(output.exists())
+        self.assertTrue(output.is_file())
         self.assertTrue(output.with_suffix('.jpg').exists())
+        self.assertTrue(output.with_suffix('.jpg').is_file())

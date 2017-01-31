@@ -6,6 +6,7 @@ import asyncio.subprocess
 import logging
 import re
 import typing
+from pathlib import Path
 
 import attr
 
@@ -454,7 +455,6 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
         self.re_path_not_found = re.compile(r"Warning: Path '.*' not found")
 
     def validate(self, settings: dict):
-        from pathlib import Path
         import shlex
 
         blender_cmd, err = self._setting(settings, 'blender_cmd', True)
@@ -491,6 +491,12 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
         return None
 
     async def execute(self, settings: dict):
+        cmd = self._build_blender_cmd(settings)
+
+        await self.worker.register_task_update(activity='Starting Blender')
+        await self.subprocess(cmd)
+
+    def _build_blender_cmd(self, settings):
         cmd = settings['blender_cmd'][:]
         cmd += [
             '--factory-startup',
@@ -506,9 +512,7 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
             cmd.extend(['--render-format', settings['format']])
         if settings.get('frames'):
             cmd.extend(['--render-frame', settings['frames']])
-
-        await self.worker.register_task_update(activity='Starting Blender')
-        await self.subprocess(cmd)
+        return cmd
 
     def parse_render_line(self, line: str) -> typing.Optional[dict]:
         """Parses a single line of render progress.
@@ -567,10 +571,35 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
         return '> %s' % line
 
 
-@command_executor('merge-exr')
-class MergeExrCommand(AbstractSubprocessCommand):
+@command_executor('blender_render_progressive')
+class BlenderRenderProgressiveCommand(BlenderRenderCommand):
     def validate(self, settings: dict):
-        from pathlib import Path
+        err = super().validate(settings)
+        if err: return err
+
+        cycles_num_chunks, err = self._setting(settings, 'cycles_num_chunks', True, int)
+        if err: return err
+        if cycles_num_chunks < 1:
+            return '"cycles_num_chunks" must be a positive integer'
+
+        cycles_chunk, err = self._setting(settings, 'cycles_chunk', True, int)
+        if err: return err
+        if cycles_chunk < 1:
+            return '"cycles_chunk" must be a positive integer'
+
+    def _build_blender_cmd(self, settings):
+        cmd = super()._build_blender_cmd(settings)
+
+        return cmd + [
+            '--',
+            '--cycles-resumable-num-chunks', str(settings['cycles_num_chunks']),
+            '--cycles-resumable-current-chunk', str(settings['cycles_chunk']),
+        ]
+
+
+@command_executor('merge_progressive_renders')
+class MergeProgressiveRendersCommand(AbstractSubprocessCommand):
+    def validate(self, settings: dict):
         import shlex
 
         blender_cmd, err = self._setting(settings, 'blender_cmd', True)
@@ -606,8 +635,6 @@ class MergeExrCommand(AbstractSubprocessCommand):
         if err: return err
 
     async def execute(self, settings: dict):
-        from pathlib import Path
-        import shutil
         import tempfile
 
         blendpath = Path(__file__).with_name('merge-exr.blend')
@@ -623,9 +650,9 @@ class MergeExrCommand(AbstractSubprocessCommand):
 
         # set up node properties and render settings.
         output = Path(settings['output'])
-        output.mkdir(parents=True, exist_ok=True)
+        output.parent.mkdir(parents=True, exist_ok=True)
 
-        with tempfile.TemporaryDirectory(dir=str(output)) as tmpdir:
+        with tempfile.TemporaryDirectory(dir=str(output.parent)) as tmpdir:
             tmppath = Path(tmpdir)
             assert tmppath.exists()
 
@@ -638,6 +665,19 @@ class MergeExrCommand(AbstractSubprocessCommand):
             await self.subprocess(cmd)
 
             # move output files into the correct spot.
-            shutil.move(str(tmppath / 'merged0001.exr'), str(output))
-            shutil.move(str(tmppath / 'preview.jpg'), str(output.with_suffix('.jpg')))
+            await self.move(tmppath / 'merged0001.exr', output)
+            await self.move(tmppath / 'preview.jpg', output.with_suffix('.jpg'))
 
+    async def move(self, src: Path, dst: Path):
+        """Moves a file to another location."""
+
+        import shutil
+
+        self._log.info('Moving %s to %s', src, dst)
+
+        assert src.is_file()
+        assert not dst.exists() or dst.is_file()
+        assert dst.exists() or dst.parent.exists()
+
+        await self.worker.register_log('Moving %s to %s', src, dst)
+        shutil.move(str(src), str(dst))

@@ -65,38 +65,29 @@ class BlenderRenderTest(AbstractCommandTest):
         self.loop.run_until_complete(self.cmd.process_line(line))
         self.fworker.register_task_update.assert_called_once_with(activity=line)
 
-    @patch('pathlib.Path')
-    def test_cli_args(self, mock_path):
+    def test_cli_args(self):
         """Test that CLI arguments in the blender_cmd setting are handled properly."""
+        from pathlib import Path
         import subprocess
         from mock_responses import CoroMock
 
+        filepath = str(Path(__file__).parent)
         settings = {
-            'blender_cmd': '/path/to/blender --with --cli="args for CLI"',
+            # Point blender_cmd to this file so that we're sure it exists.
+            'blender_cmd': '%s --with --cli="args for CLI"' % __file__,
             'chunk_size': 100,
             'frames': '1..2',
             'format': 'JPEG',
-            'filepath': '/path/to/output',
+            'filepath': filepath,
         }
-
-        mock_path.Path.exists.side_effect = [True, True]
 
         cse = CoroMock()
         cse.coro.return_value.wait = CoroMock(return_value=0)
         with patch('asyncio.create_subprocess_exec', new=cse) as mock_cse:
             self.loop.run_until_complete(self.cmd.run(settings))
 
-            mock_path.assert_has_calls([
-                call('/path/to/blender'),
-                call().exists(),
-                call().exists().__bool__(),
-                call('/path/to/output'),
-                call().exists(),
-                call().exists().__bool__(),
-            ])
-
             mock_cse.assert_called_once_with(
-                '/path/to/blender',
+                __file__,
                 '--with',
                 '--cli=args for CLI',
                 '--factory-startup',
@@ -104,7 +95,7 @@ class BlenderRenderTest(AbstractCommandTest):
                 '--debug-cycles',
                 '-noaudio',
                 '--background',
-                '/path/to/output',
+                filepath,
                 '--render-format', 'JPEG',
                 '--render-frame', '1..2',
                 stdin=subprocess.DEVNULL,
