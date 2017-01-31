@@ -15,6 +15,26 @@ from . import worker
 # Timeout of subprocess.stdout.readline() call.
 SUBPROC_READLINE_TIMEOUT = 3600  # seconds
 
+MERGE_EXR_PYTHON = """\
+import bpy
+scene = bpy.context.scene
+nodes = scene.node_tree.nodes
+image1 = bpy.data.images.load("%(input1)s")
+image2 = bpy.data.images.load("%(input2)s")
+
+nodes["image1"].image = image1
+nodes["image2"].image = image2
+nodes["weight1"].outputs[0].default_value = %(weight1)i
+nodes["weight2"].outputs[0].default_value = %(weight2)i
+
+nodes["output"].base_path = "%(tmpdir)s"
+scene.render.resolution_x, scene.render.resolution_y = image1.size
+scene.render.tile_x, scene.render.tile_y = image1.size
+scene.render.filepath = "%(tmpdir)s/preview.jpg"
+
+bpy.ops.render.render(write_still=True)
+"""
+
 command_handlers = {}
 
 
@@ -201,7 +221,7 @@ class AbstractCommand(metaclass=abc.ABCMeta):
 
         return None
 
-    def _setting(self, settings: dict, key: str, is_required: bool, valtype=str) -> (
+    def _setting(self, settings: dict, key: str, is_required: bool, valtype: typing.Type = str) -> (
             typing.Any, typing.Optional[str]):
         """Parses a setting, returns either (value, None) or (None, errormsg)"""
 
@@ -561,18 +581,36 @@ class MergeExrCommand(AbstractSubprocessCommand):
             return 'blender_cmd %r does not exist' % cmd[0]
         settings['blender_cmd'] = cmd
 
-        _, err = self._setting(settings, 'input1', True, str)
+        input1, err = self._setting(settings, 'input1', True, str)
         if err: return err
-        _, err = self._setting(settings, 'input2', True, str)
+        if '"' in input1:
+            return 'Double quotes are not allowed in filenames: %r' % input1
+        if not Path(input1).exists():
+            return 'Input 1 %r does not exist' % input1
+        input2, err = self._setting(settings, 'input2', True, str)
         if err: return err
+        if '"' in input2:
+            return 'Double quotes are not allowed in filenames: %r' % input2
+        if not Path(input2).exists():
+            return 'Input 2 %r does not exist' % input2
+
+        output, err = self._setting(settings, 'output', True, str)
+        if err: return err
+        if '"' in output:
+            return 'Double quotes are not allowed in filenames: %r' % output
+
         _, err = self._setting(settings, 'weight1', True, int)
         if err: return err
+
         _, err = self._setting(settings, 'weight2', True, int)
         if err: return err
 
     async def execute(self, settings: dict):
-        import shlex
-        await self.subprocess(shlex.split(settings['cmd']))
+        from pathlib import Path
+        import shutil
+        import tempfile
+
+        blendpath = Path(__file__).with_name('merge-exr.blend')
 
         cmd = settings['blender_cmd'][:]
         cmd += [
@@ -580,11 +618,26 @@ class MergeExrCommand(AbstractSubprocessCommand):
             '--enable-autoexec',
             '-noaudio',
             '--background',
+            str(blendpath),
         ]
 
-        # TODO: set up node properties and render settings.
+        # set up node properties and render settings.
+        output = Path(settings['output'])
+        output.mkdir(parents=True, exist_ok=True)
 
-        await self.worker.register_task_update(activity='Starting Blender')
-        await self.subprocess(cmd)
+        with tempfile.TemporaryDirectory(dir=str(output)) as tmpdir:
+            tmppath = Path(tmpdir)
+            assert tmppath.exists()
 
-        # TODO: move output files into the correct spot.
+            settings['tmpdir'] = tmpdir
+            cmd += [
+                '--python-expr', MERGE_EXR_PYTHON % settings
+            ]
+
+            await self.worker.register_task_update(activity='Starting Blender to merge EXR files')
+            await self.subprocess(cmd)
+
+            # move output files into the correct spot.
+            shutil.move(str(tmppath / 'merged0001.exr'), str(output))
+            shutil.move(str(tmppath / 'preview.jpg'), str(output.with_suffix('.jpg')))
+

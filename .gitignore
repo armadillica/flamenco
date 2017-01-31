@@ -1,5 +1,6 @@
 *.pyc
 *.bak
+*.blend[1-9]
 /temp/
 /docs/site/
 
