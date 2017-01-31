@@ -232,7 +232,7 @@ func WorkerSignOff(w http.ResponseWriter, r *auth.AuthenticatedRequest, db *mgo.
 	}
 	w_ident := worker.Identifier()
 
-	log.Infof("%s Worker %s signing off", r.RemoteAddr, w_ident)
+	log.Warningf("%s Worker %s signing off", r.RemoteAddr, w_ident)
 
 	// Update the tasks assigned to the worker.
 	var tasks []Task
