@@ -19,11 +19,6 @@ class BlenderRenderProgressive(BlenderRender):
     REQUIRED_SETTINGS = ('blender_cmd', 'filepath', 'render_output', 'frames', 'chunk_size',
                          'format', 'cycles_sample_count', 'cycles_num_chunks')
 
-    def __init__(self):
-        import re
-
-        self.hash_re = re.compile('#+')
-
     def compile(self, job):
         import math
         from pathlib2 import Path
@@ -42,23 +37,23 @@ class BlenderRenderProgressive(BlenderRender):
         sample_count_per_chunk = int(math.ceil(float(cycles_sample_count) / self.cycles_num_chunks))
 
         next_merge_task_deps = []
-        prev_samples_from = prev_samples_to = 0
+        prev_samples_to = 0
         for cycles_chunk_idx in range(int(job_settings['cycles_num_chunks'])):
-            # Compute the Cycles sample range for this chunk, in base-0.
-            cycles_samples_from = cycles_chunk_idx * sample_count_per_chunk
+            # Compute the Cycles sample range for this chunk (chunk_idx in base-0), in base-1.
+            cycles_samples_from = cycles_chunk_idx * sample_count_per_chunk + 1
             cycles_samples_to = min((cycles_chunk_idx + 1) * sample_count_per_chunk,
-                                    cycles_sample_count - 1)
+                                    cycles_sample_count)
 
             # Create render tasks for each frame chunk. Only this function uses the base-0
             # chunk/sample numbers, so we also convert to the base-1 numbers that Blender
             # uses.
             render_task_ids = self._make_progressive_render_tasks(
                 job,
-                'render-smpl%i-%i-frm%%s' % (cycles_samples_from + 1, cycles_samples_to + 1),
+                'render-smpl%i-%i-frm%%s' % (cycles_samples_from, cycles_samples_to),
                 move_existing_task_id,
                 cycles_chunk_idx + 1,
-                cycles_samples_from + 1,
-                cycles_samples_to + 1,
+                cycles_samples_from,
+                cycles_samples_to,
                 task_priority=-cycles_chunk_idx * 10,
             )
             task_count += len(render_task_ids)
@@ -70,7 +65,7 @@ class BlenderRenderProgressive(BlenderRender):
             else:
                 merge_task_ids = self._make_merge_tasks(
                     job,
-                    'merge-to-smpl%i-frm%%s' % (cycles_samples_to + 1),
+                    'merge-to-smpl%i-frm%%s' % cycles_samples_to,
                     cycles_chunk_idx + 1,
                     next_merge_task_deps,
                     render_task_ids,
@@ -81,7 +76,6 @@ class BlenderRenderProgressive(BlenderRender):
                 )
                 task_count += len(merge_task_ids)
                 next_merge_task_deps = merge_task_ids
-            prev_samples_from = cycles_samples_from
             prev_samples_to = cycles_samples_to
 
         self._log.info('Created %i tasks for job %s', task_count, job['_id'])
@@ -97,6 +91,13 @@ class BlenderRenderProgressive(BlenderRender):
             raise exceptions.JobSettingError(
                 u'Job %s must use format="EXR", not %r' % (job[u'_id'], render_format))
 
+        # This is quite a limitation, but makes our code to predict the
+        # filename that Blender will use a lot simpler.
+        render_output = job['settings']['render_output']
+        if u'######' not in render_output or u'#######' in render_output:
+            raise exceptions.JobSettingError(
+                u'Setting "render_output" must contain exactly 6 "#" marks.')
+
     def _make_progressive_render_tasks(self,
                                        job, name_fmt, parents,
                                        cycles_chunk_idx,
@@ -106,6 +107,7 @@ class BlenderRenderProgressive(BlenderRender):
 
         :param parents: either a list of parents, one for each task, or a
             single parent used for all tasks.
+        :param cycles_chunk_idx: base-1 sample chunk index
 
         :returns: created task IDs, one render task per frame chunk.
         :rtype: list
@@ -147,8 +149,7 @@ class BlenderRenderProgressive(BlenderRender):
                 parent_task_id = parents
 
             if not isinstance(parent_task_id, ObjectId):
-                raise TypeError('parents should be list of ObjectIds or ObjectId, not %s',
-                                parents)
+                raise TypeError('parents should be list of ObjectIds or ObjectId, not %s' % parents)
 
             task_id = self.task_manager.api_create_task(
                 job, task_cmds, name, parents=[parent_task_id],
@@ -158,14 +159,14 @@ class BlenderRenderProgressive(BlenderRender):
         return task_ids
 
     def _render_output(self, cycles_samples_from, cycles_samples_to):
-        """Intermediate render output path"""
-        render_fname = u'render-smpl%i-%i-frm-######' % (cycles_samples_from, cycles_samples_to)
+        """Intermediate render output path, with ###### placeholder for the frame nr"""
+        render_fname = u'render-smpl-%i-%i-frm-######' % (cycles_samples_from, cycles_samples_to)
         render_output = self.intermediate_path / render_fname
         return render_output
 
     def _merge_output(self, cycles_samples_to):
-        """Intermediate merge output path"""
-        merge_fname = u'merge-smpl%i-frm-######' % cycles_samples_to
+        """Intermediate merge output path, with ###### placeholder for the frame nr"""
+        merge_fname = u'merge-smpl-%i-frm-######' % cycles_samples_to
         merge_output = self.intermediate_path / merge_fname
         return merge_output
 
@@ -176,7 +177,14 @@ class BlenderRenderProgressive(BlenderRender):
                           cycles_samples_from2,
                           cycles_samples_to2,
                           task_priority):
-        """Creates merge tasks for each chunk, consisting of merges for each frame."""
+        """Creates merge tasks for each chunk, consisting of merges for each frame.
+
+        :param cycles_chunk_idx: base-1 sample chunk index
+
+        """
+
+        # Merging cannot happen unless we have at least two chunks
+        assert cycles_chunk_idx >= 2
 
         from flamenco.utils import iter_frame_range, frame_range_merge
 
@@ -186,7 +194,7 @@ class BlenderRenderProgressive(BlenderRender):
 
         cycles_num_chunks = int(job_settings['cycles_num_chunks'])
 
-        weight1 = cycles_samples_from2
+        weight1 = cycles_samples_to1
         weight2 = cycles_samples_to2 - cycles_samples_from2 + 1
 
         # Replace Blender formatting with Python formatting in render output path
@@ -196,32 +204,27 @@ class BlenderRenderProgressive(BlenderRender):
             input1 = self._render_output(1, cycles_samples_to1)
         else:
             input1 = self._merge_output(cycles_samples_to1)
-        input1 = unicode(input1).replace(u'######', u'%06i')
-
         input2 = self._render_output(cycles_samples_from2, cycles_samples_to2)
-        input2 = unicode(input2).replace(u'######', u'%06i')
 
         if cycles_chunk_idx == cycles_num_chunks:
             # At the last merge, we merge to the actual render output, not to intermediary.
-            output =
+            output = job['settings']['render_output']
         else:
             output = self._merge_output(cycles_samples_to2)
-
-        output = unicode(output).replace(u'######', u'%06i')
 
         frame_chunk_iter = iter_frame_range(job_settings['frames'], job_settings['chunk_size'])
         for chunk_idx, chunk_frames in enumerate(frame_chunk_iter):
             # Create a merge command for every frame in the chunk.
-            task_cmds = [
-                commands.MergeProgressiveRenders(
-                    input1=input1 % framenr,
-                    input2=input2 % framenr,
-                    output=output % framenr,
-                    weight1=weight1,
-                    weight2=weight2,
-                )
-                for framenr in chunk_frames
-                ]
+            task_cmds = []
+            for framenr in chunk_frames:
+                task_cmds.append(
+                    commands.MergeProgressiveRenders(
+                        input1=unicode(input1).replace(u'######', u'%06i') % framenr,
+                        input2=unicode(input2).replace(u'######', u'%06i') % framenr,
+                        output=unicode(output).replace(u'######', u'%06i') % framenr,
+                        weight1=weight1,
+                        weight2=weight2,
+                    ))
 
             name = name_fmt % frame_range_merge(chunk_frames)
 
