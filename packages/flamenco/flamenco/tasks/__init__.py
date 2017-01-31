@@ -107,6 +107,36 @@ class TaskManager(object):
         task.patch({'op': 'set-task-status',
                     'status': new_status}, api=api)
 
+    def api_find_job_enders(self, job_id):
+        """Returns a list of tasks that could be the last tasks of a job.
+
+        In other words, returns all tasks that are not a parent of other tasks.
+
+        :returns: list of task IDs
+        :rtype: list
+        """
+
+        from flamenco import current_flamenco
+
+        tasks_coll = current_flamenco.db('tasks')
+
+        # Get the distinct set of tasks used as parents.
+        parent_tasks = tasks_coll.aggregate([
+            {'$match': {'job': job_id}},
+            {'$project': {'parents': 1}},
+            {'$unwind': {'path': '$parents'}},
+            {'$group': {'_id': '$parents'}},
+        ])
+        parent_ids = [t['_id'] for t in parent_tasks]
+
+        # Get all the tasks that do not have such an ID.
+        tasks = tasks_coll.find({'job': job_id,
+                                 '_id': {'$nin': parent_ids}},
+                                projection={'_id': 1})
+
+        tids = [t['_id'] for t in tasks]
+        return tids
+
 
 def setup_app(app):
     from . import eve_hooks, patch
