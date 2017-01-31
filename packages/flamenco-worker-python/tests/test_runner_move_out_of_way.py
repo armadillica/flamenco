@@ -16,6 +16,7 @@ class MoveOutOfWayTest(AbstractCommandTest):
         )
 
     def tearDown(self):
+        super().tearDown()
         del self.tmpdir
 
     def test_nonexistant_source(self):
