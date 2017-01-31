@@ -150,7 +150,7 @@ def create_render_job(server_url, auth_token, settings, args):
         u'priority': 50,
         u'name': args.name or u'render %s' % filename,
         u'settings': settings,
-        u'job_type': u'blender-render',
+        u'job_type': args.jobtype,
         u'user': user_id,
         u'manager': manager_id,
         u'project': project_id,
@@ -236,6 +236,11 @@ def main():
                         help='Blender command, defaults to "{blender}".')
     parser.add_argument('-n', '--name', help='Optional job name, defaults to "render {filename}".')
     parser.add_argument('-d', '--description', help='Optional job description.')
+    parser.add_argument('-p', '--progressive',
+                        help='Progressive render information, '
+                             'in the format "sample_count:num_chunks"')
+    parser.add_argument('--jobtype', default='blender-render',
+                        help='Sets the job type; set automatically when using --progressive')
 
     args = parser.parse_args()
 
@@ -251,6 +256,11 @@ def main():
         settings['format'] = args.format
     if args.chunk_size:
         settings['chunk_size'] = int(args.chunk_size)
+    if args.progressive:
+        scount, nchunks = args.progressive.split(':')
+        settings['cycles_sample_count'] = int(scount)
+        settings['cycles_num_chunks'] = int(nchunks)
+        args.jobtype = 'blender-render-progressive'
     if not args.token:
         args.token = find_credentials()
 
