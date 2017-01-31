@@ -27,7 +27,7 @@ REQUEABLE_TASK_STATES = {'completed', 'canceled', 'failed'}
 class TaskManager(object):
     _log = attrs_extra.log('%s.TaskManager' % __name__)
 
-    def api_create_task(self, job, commands, name, parents=None):
+    def api_create_task(self, job, commands, name, parents=None, priority=50):
         """Creates a task in MongoDB for the given job, executing commands.
 
         Returns the ObjectId of the created task.
@@ -43,7 +43,8 @@ class TaskManager(object):
             'status': 'queued',
             'job_type': job['job_type'],
             'commands': [cmd.to_dict() for cmd in commands],
-            'priority': job['priority'],
+            'job_priority': job['priority'],
+            'priority': priority,
             'project': job['project'],
         }
         # Insertion of None parents is not supported
@@ -68,7 +69,12 @@ class TaskManager(object):
         payload = {
             'where': {
                 'job': unicode(job_id),
-            }}
+            },
+            'sorted': [
+                ('priority', -1),
+                ('_id', 1),
+            ],
+        }
         if status:
             payload['where']['status'] = status
         tasks = Task.all(payload, api=api)

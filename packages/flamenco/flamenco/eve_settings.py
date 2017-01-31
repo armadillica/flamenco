@@ -222,6 +222,10 @@ tasks_schema = {
     },
     'priority': {
         'type': 'integer',
+        'default': 0
+    },
+    'job_priority': {
+        'type': 'integer',
         'min': 1,
         'max': 100,
         'default': 50

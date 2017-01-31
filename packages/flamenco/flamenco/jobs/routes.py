@@ -91,7 +91,7 @@ def view_job_depsgraph(project, job_id):
         tid_to_idx = {task['_id']: tidx
                       for tidx, task in enumerate(tasks._items)}
 
-        for task in tasks._items:
+        for task in sorted(tasks._items, key=lambda task: task['priority']):
             task_id = tid_to_idx[task['_id']]
             nodes.append({
                 'id': task_id,
