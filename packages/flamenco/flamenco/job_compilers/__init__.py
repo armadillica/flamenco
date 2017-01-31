@@ -23,7 +23,30 @@ from . import sleep, blender_render, blender_render_progressive
 def compile_job(job):
     """Creates tasks from the given job."""
 
+    compiler = construct_job_compiler(job)
+    compiler.compile(job)
+
+
+def validate_job(job):
+    """Validates job settings.
+
+    :raises flamenco.exceptions.JobSettingError if the settings are bad.
+    """
+
+    compiler = construct_job_compiler(job)
+    compiler.validate_job_settings(job)
+
+
+def construct_job_compiler(job):
     from flamenco import current_flamenco
+
+    compiler_class = find_job_compiler(job)
+    compiler = compiler_class(task_manager=current_flamenco.task_manager)
+
+    return compiler
+
+
+def find_job_compiler(job):
     from .abstract_compiler import AbstractJobCompiler
 
     # Get the compiler class for the job type.
@@ -35,6 +58,4 @@ def compile_job(job):
         raise KeyError('No compiler for job type %r' % job_type)
 
     assert issubclass(compiler_class, AbstractJobCompiler)
-
-    compiler = compiler_class(task_manager=current_flamenco.task_manager)
-    compiler.compile(job)
+    return compiler_class

@@ -10,6 +10,17 @@ from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
 log = logging.getLogger(__name__)
 
 
+def before_inserting_jobs(jobs):
+    from flamenco import job_compilers, exceptions
+
+    for job in jobs:
+        try:
+            job_compilers.validate_job(job)
+        except exceptions.JobSettingError as ex:
+            # We generally only submit one job at a time anyway.
+            raise wz_exceptions.BadRequest('Invalid job: %s' % ex)
+
+
 def after_inserting_jobs(jobs):
     from flamenco import job_compilers
 
@@ -107,7 +118,8 @@ def handle_job_status_update(job_doc, original_doc):
 
 
 def setup_app(app):
-    app.on_inserted_flamenco_jobs = after_inserting_jobs
+    app.on_insert_flamenco_jobs += before_inserting_jobs
+    app.on_inserted_flamenco_jobs += after_inserting_jobs
     app.on_fetched_item_flamenco_jobs += check_job_permission_fetch
     app.on_fetched_resource_flamenco_jobs += check_job_permission_fetch_resource
 
