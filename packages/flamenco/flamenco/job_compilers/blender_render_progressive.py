@@ -49,7 +49,7 @@ class BlenderRenderProgressive(BlenderRender):
             # uses.
             render_task_ids = self._make_progressive_render_tasks(
                 job,
-                'render-smpl%i-%i-frm%%s' % (cycles_samples_from, cycles_samples_to),
+                u'render-smpl%i-%i-frm%%s' % (cycles_samples_from, cycles_samples_to),
                 move_existing_task_id,
                 cycles_chunk_idx + 1,
                 cycles_samples_from,
@@ -65,7 +65,7 @@ class BlenderRenderProgressive(BlenderRender):
             else:
                 merge_task_ids = self._make_merge_tasks(
                     job,
-                    'merge-to-smpl%i-frm%%s' % cycles_samples_to,
+                    u'merge-to-smpl%i-frm%%s' % cycles_samples_to,
                     cycles_chunk_idx + 1,
                     next_merge_task_deps,
                     render_task_ids,

@@ -13,7 +13,7 @@ class AbstractCommand(object):
         """Returns the command name."""
         from flamenco.utils import camel_case_to_lower_case_underscore
 
-        return camel_case_to_lower_case_underscore(cls.__name__)
+        return camel_case_to_lower_case_underscore(unicode(cls.__name__))
 
     def to_dict(self):
         """Returns a dictionary representation of this command, for JSON serialisation."""
