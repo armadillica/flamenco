@@ -94,9 +94,9 @@ class BlenderRenderProgressive(BlenderRender):
         # This is quite a limitation, but makes our code to predict the
         # filename that Blender will use a lot simpler.
         render_output = job['settings']['render_output']
-        if u'######' not in render_output or u'#######' in render_output:
+        if not render_output.endswith(u'######') or render_output.endswith(u'#######'):
             raise exceptions.JobSettingError(
-                u'Setting "render_output" must contain exactly 6 "#" marks.')
+                u'Setting "render_output" must end in exactly 6 "#" marks.')
 
     def _make_progressive_render_tasks(self,
                                        job, name_fmt, parents,
@@ -219,9 +219,9 @@ class BlenderRenderProgressive(BlenderRender):
             for framenr in chunk_frames:
                 task_cmds.append(
                     commands.MergeProgressiveRenders(
-                        input1=unicode(input1).replace(u'######', u'%06i') % framenr,
-                        input2=unicode(input2).replace(u'######', u'%06i') % framenr,
-                        output=unicode(output).replace(u'######', u'%06i') % framenr,
+                        input1=unicode(input1).replace(u'######', u'%06i.exr') % framenr,
+                        input2=unicode(input2).replace(u'######', u'%06i.exr') % framenr,
+                        output=unicode(output).replace(u'######', u'%06i.exr') % framenr,
                         weight1=weight1,
                         weight2=weight2,
                     ))

@@ -87,3 +87,8 @@ class MergeProgressiveRenders(AbstractCommand):
 
     weight1 = attr.ib(validator=attr.validators.instance_of(int))
     weight2 = attr.ib(validator=attr.validators.instance_of(int))
+
+    # Blender command to run in order to merge the two EXR files.
+    # This is usually determined by the Flamenco Manager configuration.
+    blender_cmd = attr.ib(validator=attr.validators.instance_of(unicode),
+                          default=u'{blender}')
