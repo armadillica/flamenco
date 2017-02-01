@@ -65,23 +65,24 @@
 		| {% endif %}
 		.action-result-panel
 
-#item-view-feed
-	#activities
-	#comments-embed
+#item-log.task
+	.item-log-loader
+		span Loading Logs
+		i.pi-spin.spin
 
-	| {% if config.DEBUG %}
-	.debug-info
-		a.debug-info-toggle(role='button',
-			data-toggle='collapse',
-			href='#debug-content-task',
-			aria-expanded='false',
-			aria-controls='debug-content-task')
-			i.pi-info
-			| Debug Info
-		#debug-content-task.collapse
-			pre.
-				{{ task.to_dict() | pprint }}
-		| {% endif %}
+| {% if config.DEBUG %}
+.debug-info
+	a.debug-info-toggle(role='button',
+		data-toggle='collapse',
+		href='#debug-content-task',
+		aria-expanded='false',
+		aria-controls='debug-content-task')
+		i.pi-info
+		| Debug Info
+	#debug-content-task.collapse
+		pre.
+			{{ task.to_dict() | pprint }}
+	| {% endif %}
 
 script.
 	new Clipboard('.copy-to-clipboard-id')
@@ -92,6 +93,11 @@ script.
 	$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
 
 	setupJsJobLinkClickHandlers();
+
+	// Task Logs
+	var url = "{{ url_for('flamenco.tasks.perproject.view_task_log', project_url=project.url, task_id=task._id) }}";
+	var item_log = $('#item-log.task');
+	getTaskLog(url, item_log); // on tasks.js
 
 	// Close Task Details
 	function closeTaskDetails(){

@@ -1,23 +1,43 @@
-| {% if page_idx != 1 %}
-a(href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=1) }}")
-    | ... first logs ...
-| {% endif %}
-| {% if has_prev_page %}
-a(href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=page_idx-1) }}")
-    | ... earlier logs ...
-| {% endif %}
+.item-log-header
+	span.header-title Task Log
 
-| {% for task_log in logs['_items'] %}
-|     {% for line in task_log.log.split('\n') %}
-p.task-log-line {{ line }}
-|     {% endfor %}
-| {% endfor %}
+	.item-log-navigation
 
-| {% if has_next_page %}
-a(href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=page_idx+1) }}")
-    | ... later logs ...
-| {% endif %}
-| {% if page_idx != last_page_idx and last_page_idx > 1 %}
-a(href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=last_page_idx) }}")
-    | ... last logs ...
-| {% endif %}
+		a.download-log(href="{{ url_for('flamenco.tasks.perproject.download_task_log', project_url=project.url, task_id=task_id) }}")
+			i.pi-download
+
+		span.log-page Page {{ page_idx }}
+		a.log-navigate.js-log-navigate(
+			class="{% if page_idx == 1 %}active{% endif %}",
+			href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=1) }}")
+			| first
+
+		a.log-navigate.js-log-navigate(
+			class="{% if not has_prev_page %}disabled{% endif %}",
+			href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=page_idx-1) }}")
+			| prev
+
+		a.log-navigate.js-log-navigate(
+			class="{% if not has_next_page %}disabled{% endif %}",
+			href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=page_idx+1) }}")
+			| next
+
+		a.log-navigate.js-log-navigate(
+			class="{% if page_idx == last_page_idx %}active{% endif %}",
+			href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=last_page_idx) }}")
+			| last
+
+.item-log-content
+	| {% for task_log in logs['_items'] %}
+	|		{% for line in task_log.log.split('\n') %}
+	p.item-log-line {{ line }}
+	|		{% endfor %}
+	| {% endfor %}
+
+script.
+	$('a.js-log-navigate').on('click', function(e){
+		e.preventDefault();
+
+		var url = $(this).attr('href');
+		getTaskLog(url, item_log);
+	});

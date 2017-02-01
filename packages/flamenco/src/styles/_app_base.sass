@@ -286,3 +286,95 @@ nav.sidebar
 
 	.btn
 		font-size: .8em
+#item-log
+	margin: 10px
+	border-radius: 3px
+	background-color: white
+	position: relative
+
+	.item-log-header
+		padding: 5px 0 4px 5px
+		color: $color-text-dark-secondary
+		box-shadow: 0 5px 15px rgba(black, .1)
+
+		.header-title
+			padding-left: 5px
+
+		.download-log
+			padding: 5px
+			font-size: .9em
+			color: $color-text-dark-secondary
+
+			&:hover
+				color: $color-primary
+
+	.item-log-content
+		position: relative
+		overflow: auto
+		width: 100%
+		cursor: default
+
+	.item-log-navigation
+		float: right
+		a.log-navigate, span.log-page
+			padding: 7px 10px 4px 10px
+			user-select: none
+			text-transform: uppercase
+			font-size: .8em
+			color: $color-text-dark
+
+		span.log-page
+			cursor: default
+			padding: 0 15px
+			color: $color-text-dark-secondary
+
+		a.log-navigate
+			text-decoration: none
+			border-bottom: 2px solid $color-text-dark-hint
+			&:hover
+				color: $color-primary
+				border-color: $color-primary
+
+			&.disabled, &.active
+				cursor: default
+				pointer-events: none
+
+			&.disabled
+				color: $color-text-dark-hint
+				border-bottom-color: rgba(black, .1)
+			&.active
+				color: $color-primary
+				border-bottom: 2px solid $color-primary
+				font-weight: bold
+
+	.item-log-loader
+		padding: 20px
+		width: 100%
+		display: flex
+		align-items: center
+		justify-content: center
+		font-size: 1.2em
+		color: $color-text-dark-hint
+
+		span
+			margin-right: 15px
+			display: inline-block
+
+.item-log-line
+	color: $color-text-dark-primary
+	font:
+		family: monospace
+		size: .8em
+	line-height: 1.2em
+	position: relative
+	margin: 0
+	padding: 0 10px 0 5px
+
+	white-space: nowrap
+	width: 100%
+
+	&:hover
+		color: black
+
+	&:first-child
+		padding-top: 5px

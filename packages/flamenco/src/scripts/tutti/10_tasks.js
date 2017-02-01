@@ -222,3 +222,40 @@ function setTaskStatus(task_id, new_status) {
         $('.task #task-action-panel .action-result-panel').html(show_html);
     });
 }
+
+/* Get the task log and populate the container */
+function getTaskLog(url, container){
+    if (typeof url === 'undefined' || typeof container === 'undefined') {
+        if (console) console.log("getTaskLog(" + url + ", " + container + ") called");
+        return;
+    }
+
+    var log_height = $('#col_main-overlay-content').height() - $('.flamenco-box.task').offset().top - $('.flamenco-box.task').height() - 20;
+
+    $.get(url)
+        .done(function(data) {
+            if(console) console.log('Logs loaded OK');
+            $(container).html(data);
+
+            var container_content = $(container).children('.item-log-content');
+            $(container_content)
+                .height(log_height)
+                .scrollTop($(container_content).prop('scrollHeight'));
+        })
+        .fail(function(xhr) {
+                if (console) {
+                        console.log('Error fetching task log');
+                        console.log('XHR:', xhr);
+                }
+
+                    statusBarSet('error', 'Opening task log failed.', 'pi-warning');
+
+                if (xhr.status) {
+                        $(container).html(xhr.responseText);
+                } else {
+                        $(container).html('<p class="text-danger">Opening task log failed. There possibly was ' +
+                        'an error connecting to the server. Please check your network connection and ' +
+                        'try again.</p>');
+                }
+        });
+}
