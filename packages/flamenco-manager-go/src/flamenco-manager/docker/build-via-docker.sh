@@ -8,7 +8,7 @@ docker run -i --rm \
     -v $(pwd):/docker \
     -v "${GOPATH}:/go-local" \
     --env GOPATH=/go-local \
-     golang /bin/bash -ex << EOT
+     golang /bin/bash -e << EOT
 go version
 cd \${GOPATH}/src/flamenco-manager
 CGO_ENABLED=0 go get -a -ldflags '-s'
