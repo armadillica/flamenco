@@ -53,7 +53,7 @@ func (self *TaskTimeoutChecker) Go() {
 		self.done_chan, self.done_wg)
 
 	for _ = range timer {
-		self.check(db)
+		self.Check(db)
 	}
 
 }
@@ -65,7 +65,7 @@ func (self *TaskTimeoutChecker) Close() {
 	log.Debug("TaskTimeoutChecker: shutdown complete.")
 }
 
-func (self *TaskTimeoutChecker) check(db *mgo.Database) {
+func (self *TaskTimeoutChecker) Check(db *mgo.Database) {
 	timeout_threshold := UtcNow().Add(-self.config.ActiveTaskTimeoutInterval)
 	log.Debugf("Failing all active tasks that have not been touched since %s", timeout_threshold)
 

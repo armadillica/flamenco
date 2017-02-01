@@ -50,6 +50,14 @@ func http_kick(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Kicked task downloader")
 }
 
+func http_timeout(w http.ResponseWriter, r *http.Request) {
+	mongo_sess := session.Copy()
+	defer mongo_sess.Close()
+	task_timeout_checker.Check(mongo_sess.DB(""))
+
+	fmt.Fprintln(w, "Kicked task timeouter")
+}
+
 func http_task_update(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
 	mongo_sess := session.Copy()
 	defer mongo_sess.Close()
@@ -209,6 +217,7 @@ func main() {
 	router.HandleFunc("/may-i-run/{task-id}", worker_authenticator.Wrap(http_worker_may_run_task)).Methods("GET")
 	router.HandleFunc("/sign-off", worker_authenticator.Wrap(http_worker_sign_off)).Methods("POST")
 	router.HandleFunc("/kick", http_kick)
+	router.HandleFunc("/timeout", http_timeout)
 
 	upstream.SendStartupNotification()
 	go task_update_pusher.Go()
