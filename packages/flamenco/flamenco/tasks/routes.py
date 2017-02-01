@@ -66,13 +66,14 @@ def view_task(project, flamenco_props, task_id):
 
     from . import REQUEABLE_TASK_STATES
     write_access = current_flamenco.current_user_is_flamenco_admin()
+    can_requeue_task = write_access and task['status'] in REQUEABLE_TASK_STATES
 
     return render_template('flamenco/tasks/view_task_embed.html',
                            task=task,
                            project=project,
                            flamenco_props=flamenco_props.to_dict(),
                            flamenco_context=request.args.get('context'),
-                           can_requeue_task=write_access and task['status'] in REQUEABLE_TASK_STATES)
+                           can_requeue_task=can_requeue_task)
 
 
 @perproject_blueprint.route('/<task_id>/set-status', methods=['POST'])
