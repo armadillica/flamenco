@@ -126,8 +126,14 @@ class TaskUpdateQueue:
 
             self._log.info('Pushing task update to Manager')
             resp = await self.manager.post(url, json=payload, loop=loop)
-            resp.raise_for_status()
-            self._log.debug('Master accepted pushed update.')
+            if resp.status_code == 409:
+                # The task was assigned to another worker, so we're not allowed to
+                # push updates for it. We have to un-queue this update, as it will
+                # never be accepted.
+                self._log.warning('Task was assigned to another worker, discarding update.')
+            else:
+                resp.raise_for_status()
+                self._log.debug('Master accepted pushed update.')
             self._unqueue(rowid)
 
         if queue_is_empty:
