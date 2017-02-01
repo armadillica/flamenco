@@ -57,7 +57,7 @@
 					.table-cell Worker
 					.table-cell {{ task.worker }}
 
-	#task-action-panel
+	#item-action-panel
 		| {% if can_requeue_task %}
 		button.btn.btn-success.requeue-task(onclick="setTaskStatus('{{ task._id }}', 'queued')")
 			i.pi-refresh
@@ -93,6 +93,7 @@ script.
 
 	setupJsJobLinkClickHandlers();
 
+	// Close Task Details
 	function closeTaskDetails(){
 		clearMainOverlay();
 

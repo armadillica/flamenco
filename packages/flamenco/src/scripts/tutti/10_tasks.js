@@ -183,7 +183,7 @@ function setJobStatus(job_id, new_status) {
               'Setting job status failed. There possibly was an error connecting to the server. ' +
               'Please check your network connection and try again.');
         }
-        $('#job-action-panel .action-result-panel').html(show_html);
+        $('.job #item-action-panel .action-result-panel').html(show_html);
     });
 }
 
@@ -219,6 +219,6 @@ function setTaskStatus(task_id, new_status) {
               'Setting task status failed. There possibly was an error connecting to the server. ' +
               'Please check your network connection and try again.');
         }
-        $('#task-action-panel .action-result-panel').html(show_html);
+        $('.task #task-action-panel .action-result-panel').html(show_html);
     });
 }
