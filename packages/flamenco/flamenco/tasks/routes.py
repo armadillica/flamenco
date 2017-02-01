@@ -35,12 +35,19 @@ def list_for_project(project, task_id=None):
 @perjob_blueprint.route('/tasks')
 @flamenco_project_view()
 def list_for_job(project, job_id, task_id=None):
-    tasks = current_flamenco.task_manager.tasks_for_job(job_id)
+    from pillar.web.utils import last_page_index
+
+    page_idx = int(request.args.get('page', '1'))
+
+    tasks = current_flamenco.task_manager.tasks_for_job(job_id, page=page_idx)
     return render_template('flamenco/tasks/list_for_job_embed.html',
                            tasks=tasks['_items'],
                            open_task_id=task_id,
                            project=project,
-                           task_count=tasks['_meta']['total'])
+                           task_count=tasks['_meta']['total'],
+                           page_idx=page_idx,
+                           page_count=last_page_index(tasks['_meta']),
+                           )
 
 
 @perproject_blueprint.route('/<task_id>')
