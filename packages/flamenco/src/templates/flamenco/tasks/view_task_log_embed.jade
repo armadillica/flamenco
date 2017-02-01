@@ -41,3 +41,5 @@ script.
 		var url = $(this).attr('href');
 		getTaskLog(url, item_log);
 	});
+
+	$("p.item-log-line:contains('> Warning:')").addClass('log-warning');
