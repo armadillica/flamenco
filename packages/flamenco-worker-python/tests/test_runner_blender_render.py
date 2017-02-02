@@ -92,7 +92,6 @@ class BlenderRenderTest(AbstractCommandTest):
                 '--cli=args for CLI',
                 '--factory-startup',
                 '--enable-autoexec',
-                '--debug-cycles',
                 '-noaudio',
                 '--background',
                 filepath,

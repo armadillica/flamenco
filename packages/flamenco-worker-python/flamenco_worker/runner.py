@@ -501,7 +501,6 @@ class BlenderRenderCommand(AbstractSubprocessCommand):
         cmd += [
             '--factory-startup',
             '--enable-autoexec',
-            '--debug-cycles',
             '-noaudio',
             '--background',
             settings['filepath'],
