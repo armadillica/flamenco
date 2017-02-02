@@ -89,6 +89,7 @@ nav.sidebar
 .item-list
 	font-size: .9em
 	overflow-x: auto
+
 	.table
 		background-color: white
 	.table-row:hover
@@ -126,10 +127,15 @@ nav.sidebar
 
 	.table-body
 		.table-row
-			@include status-color-property(background-color, ' .item-status', '')
+			@include status-color-property(background-color, ' .item-status a', 'dark')
+			@include status-color-property(border-color, ' .item-status a', 'light')
 
 		.table-cell
 			text-align: center
+			font:
+				family: monospace
+				size: .95em
+			line-height: 1.2em
 
 			&.active
 				background-color: $color-background
@@ -146,26 +152,32 @@ nav.sidebar
 				height: 100%
 				a
 					display: flex
-					padding: 4px 10px
+					padding: 3px 10px
 					color: $color-text-dark-primary
 
 					span
 						margin: auto 0
 						line-height: 1.1em
 
-			&.item-progress a
-				color: $color-text-dark-secondary
+			&.item-type
+				text-align: left
+				a
+					+text-overflow-ellipsis
+					color: $color-text-dark-primary
 
 			&.item-priority a
 				color: $color-text-dark-secondary
 
-			&.item-status a
-				color: white
-				font-size: .8em
-				text-transform: uppercase
-				font-weight: bold
-				padding: 0 10px
-				text-shadow: 0 0 10px rgba(black, .2)
+			&.item-status
+				a
+					display: inline-block
+					color: white
+					font-size: .75em
+					text-transform: uppercase
+					font-family: $font-body
+					padding: 1px 5px
+					border-radius: 3px
+					width: 90%
 
 .item-list-header
 	a

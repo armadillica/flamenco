@@ -61,27 +61,36 @@
 
 	.table
 		&.item-properties
+			margin-top: 10px
 			.table-body
 				text-shadow: 1px 1px 0 white
 
 				.table-row
+					&:hover
+						background-color: $color-background-light
 					.table-cell
 						padding: 0 10px
-						vertical-align: top
-						line-height: 1.6em
-						border: none
+						vertical-align: bottom
 						color: $color-text-dark-primary
 						word-break: break-word
+						line-height: 1.3em
+						padding: 3px 10px
+						font-family: monospace
+						font-size: .9em
+
 						@include status-color-property(color, '', 'dark')
 
 						&:first-child
 							width: 120px
 							max-width: 200px
 							text-align: right
-							font-weight: bold
 							padding-right: 10px
-							border-right: thin solid $color-background-dark
-							+text-overflow-ellipsis
+							vertical-align: top
+							color: black
+
+					&:last-child .table-cell
+						border-bottom: none
+
 
 					&.properties-assignees
 						.table-cell span
@@ -115,7 +124,8 @@
 
 .task-list-item
 	color: $color-text-dark
-	font-size: .9em
+	font-size: .8em
+	font-family: monospace
 
 	&:hover
 		text-decoration: none
@@ -128,7 +138,7 @@
 	&.active
 		text-decoration: none
 		background-color: $color-background-active
-		box-shadow: inset -5px 0 0 $color-primary
+		box-shadow: inset 5px 0 0 $color-primary
 		text-shadow: 1px 1px 0 white
 
 		.status-indicator
@@ -147,7 +157,7 @@
 		+text-overflow-ellipsis
 
 	.name
-		padding: 4px 10px
+		padding: 2px 10px
 		+text-overflow-ellipsis
 
 	.shotname
