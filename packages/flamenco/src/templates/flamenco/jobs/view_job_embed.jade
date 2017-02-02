@@ -43,7 +43,8 @@
 			| {% endfor %}
 	| {% endif %}
 
-	#item-action-panel
+#item-action-panel
+	.pull-right
 		| {% if can_cancel_job %}
 		button.btn.btn-danger(onclick="setJobStatus('{{ job._id }}', 'cancel-requested')")
 			i.pi-cancel

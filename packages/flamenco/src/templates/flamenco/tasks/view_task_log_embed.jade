@@ -39,7 +39,7 @@ script.
 		e.preventDefault();
 
 		var url = $(this).attr('href');
-		getTaskLog(url, item_log);
+		getTaskLog(url, $('#item-log.task'));
 	});
 
 	$("p.item-log-line:contains('> Warning:')").addClass('log-warning');

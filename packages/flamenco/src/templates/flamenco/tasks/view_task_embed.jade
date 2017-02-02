@@ -35,7 +35,7 @@
 							data-task-id="{{ task._id }}",
 							class="task-link"
 						)
-							| {{ task.task }}
+							| {{ task._id }}
 				.table-row
 					.table-cell task Type
 					.table-cell {{ task.task_type | undertitle }}
@@ -57,7 +57,13 @@
 					.table-cell Worker
 					.table-cell {{ task.worker }}
 
-	#item-action-panel
+#item-action-panel
+	button.btn.item-log-load.js-log-load(
+		data-url="{{ url_for('flamenco.tasks.perproject.view_task_log', project_url=project.url, task_id=task._id) }}")
+		i.pi-list
+		| View Log
+
+	.pull-right
 		| {% if can_requeue_task %}
 		button.btn.btn-success.requeue-task(onclick="setTaskStatus('{{ task._id }}', 'queued')")
 			i.pi-refresh
@@ -66,9 +72,6 @@
 		.action-result-panel
 
 #item-log.task
-	.item-log-loader
-		span Loading Logs
-		i.pi-spin.spin
 
 | {% if config.DEBUG %}
 .debug-info
@@ -95,9 +98,13 @@ script.
 	setupJsJobLinkClickHandlers();
 
 	// Task Logs
-	var url = "{{ url_for('flamenco.tasks.perproject.view_task_log', project_url=project.url, task_id=task._id) }}";
-	var item_log = $('#item-log.task');
-	getTaskLog(url, item_log); // on tasks.js
+	$('.js-log-load').on('click', function(){
+		var url = $(this).data('url');
+		var container = $('#item-log.task');
+
+		$(container).html('<div class="item-log-loader"><i class="pi-spin spin"></i></div>');
+		getTaskLog(url, $(container)); // on tasks.js
+	});
 
 	// Close Task Details
 	function closeTaskDetails(){

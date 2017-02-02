@@ -118,7 +118,7 @@ function loadActivities(url)
 function loadTasks(url) {
     return $.get(url)
     .done(function(data) {
-        if(console) console.log('Tasks loaded OK');
+        if(console) console.log('Tasks loaded OK\n' + url);
         $('#tasks').html(data);
         setupJsTaskLinkClickHandlers();
     })
@@ -230,11 +230,11 @@ function getTaskLog(url, container){
         return;
     }
 
-    var log_height = $('#col_main-overlay-content').height() - $('.flamenco-box.task').offset().top - $('.flamenco-box.task').height() - 20;
+    var log_height = $('#col_main-overlay-content').height() - $('.flamenco-box.task').offset().top - $('.flamenco-box.task').height() - 100;
 
     $.get(url)
         .done(function(data) {
-            if(console) console.log('Logs loaded OK');
+            if(console) console.log('Task log loaded OK\n' + url);
             $(container).html(data);
 
             var container_content = $(container).children('.item-log-content');
