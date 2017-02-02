@@ -31,7 +31,6 @@
 				.table-cell(title="Higher number means higher priority")
 					| {{ job.priority }}
 
-	| {% if job.job_type == 'blender-render' %}
 	.table.item-properties.item-job-settings
 		.table-body
 			| {% for set_key, set_val in job.settings.to_dict().iteritems()  %}
@@ -41,7 +40,6 @@
 				.table-cell
 					| {{ set_val }}
 			| {% endfor %}
-	| {% endif %}
 
 #item-action-panel
 	.pull-right
