@@ -27,18 +27,6 @@
 
 		.table.item-properties
 			.table-body
-				.table-row
-					.table-cell Belongs to task
-					.table-cell
-						a(
-							href="{{ url_for('flamenco.tasks.perproject.view_task', project_url=project.url, task_id=task._id) }}"
-							data-task-id="{{ task._id }}",
-							class="task-link"
-						)
-							| {{ task._id }}
-				.table-row
-					.table-cell task Type
-					.table-cell {{ task.task_type | undertitle }}
 				.table-row.properties-status.js-help(
 					data-url="{{ url_for('flamenco.help', project_url=project.url) }}")
 					.table-cell Status
