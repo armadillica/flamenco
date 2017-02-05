@@ -1,23 +1,23 @@
 # Flamenco Docs
 
-Flamenco is a distributed rendering solution for the 3D animation suite
-Blender. It supports many features that make it a perfect fit for a small
-or medium CG studio, such as workstations/nodes availability scheduling,
-project management, render previews via web interface, pre and post-render
-actions.
+Welcome to the Flamenco Documentation pages! Here we collect both development and user docs.
+Flamenco is primarily a distributed render management solution, but it is designed to
+support any kind of job that can be split across multiple machines.
+
+Currently Flamenco is used for Render Management at Blender Institute, so it's heavily
+tested for Blender jobs, but it is quite trivial to add more.
 
 ## Main features
 
-* Runs on Linux, macOS and Windows
+* Every component runs on Linux, macOS and Windows
 * Automatic detection of clients
-* Supports multiple Projects
-* Stats on shot completions
-* Priority system
+* Powerful user and project management tools
+* Dependency-graph-based priority system
+* Resilient design (every individual component can fail without consequences)
+* Extensible Jobs, Tasks and Commands
 
+## Status of the documentation
 
-## Supported software
-
-Flamenco is designed to be quite flexible and support other software than
-just Blender. The integration of other packages is not possible just yet
-but if you are interested to work on this, feel free to get in touch and
-we will figure out how to do it.
+We are currently updating the documentation after a large rewrite of Flamenco, therefore
+the user manual is not available, and the developer docs are work in progress. We have
+removed any legacy content though, so everything that can be found here is up to date.
