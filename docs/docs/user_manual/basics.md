@@ -4,7 +4,8 @@ Flamenco is still under development, therefore this installation guide is rather
 In the future it will be a straightforward process, in two variants.
 
 ## Using the cloud.blender.org Server
-**Note: This feature is not yet available**
+
+**Note: This feature is not available yet.**
 
 In this case, only two components of the stack are controlled by the user: Manager and 
 Workers. The setup:
@@ -16,7 +17,8 @@ the Manager (it will automatically connect with Blender Cloud)
 - Download the Worker bundle and start it (it will automatically connect with the Manager)
 
 ## Using a self-provisioned Server
-**Note: This feature is not yet available**
+
+**Note: This feature is not available yet.**
 
 - Download and start the server (using Docker)
 - Follow the steps for setting up with Blender Cloud, updating the configuration to point

@@ -13,6 +13,8 @@ The DG is generated with a database query to the Tasks collection and, depending
 can return hundred-thousands of Tasks, which are then stored by the Manager in its own 
 database, so that they can be served to the Workers.
 
+[![Architecture diagram](img/scheduling_diagram.svg)](img/scheduling_diagram.svg)
+
 ## Priority rules
 
 The priority for the execution of a Task is determined by three factors:
@@ -26,7 +28,7 @@ Job priority, with the highest Task priority will be dispatched first.
 
 ## Task requirements and resource allocation
 
-**Note: This feature is not implemented yet.**
+**Note: This feature is not available yet.**
 
 When a Worker queries the Manager for a Task, we use the *services* offered by it as a query
 parameter to find the highest priority Task that can be executed. For example, a Worker 
