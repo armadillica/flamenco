@@ -20,4 +20,5 @@ tested for Blender jobs, but it is quite trivial to add more.
 
 We are currently updating the documentation after a large rewrite of Flamenco, therefore
 the user manual is not available, and the developer docs are work in progress. We have
-removed any legacy content though, so everything that can be found here is up to date.
+removed any legacy content though, so everything that can be found here is up to date,
+or has been highlighted as upcoming functionality.
