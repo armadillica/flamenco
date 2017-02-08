@@ -2,8 +2,8 @@
 
 The architecture of Flamenco is simple, hierarchical.
 
-In a production setup we have one server and one or more managers which control one or 
-more workers each.
+In a production setup we have one Server and one or more Managers which control one or 
+more Workers each.
 
 ![Architecture diagram](img/architecture_diagram.svg)
 
