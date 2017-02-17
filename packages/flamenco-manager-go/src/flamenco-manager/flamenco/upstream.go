@@ -198,17 +198,17 @@ func download_tasks_from_upstream(config *Conf, mongo_sess *mgo.Session) {
 	}
 	tasks_coll := db.C("flamenco_tasks")
 	for _, task := range depsgraph {
-		change, err := tasks_coll.Upsert(bson.M{"_id": task.Id}, task)
+		change, err := tasks_coll.Upsert(bson.M{"_id": task.ID}, task)
 		if err != nil {
-			log.Errorf("unable to insert new task %s: %s", task.Id.Hex(), err)
+			log.Errorf("unable to insert new task %s: %s", task.ID.Hex(), err)
 			continue
 		}
 
 		if change.Updated > 0 {
-			log.Debug("Upstream server re-queued existing task ", task.Id.Hex())
+			log.Debug("Upstream server re-queued existing task ", task.ID.Hex())
 		} else if change.Matched > 0 {
 			log.Debugf("Upstream server re-queued existing task %s, but nothing changed",
-				task.Id.Hex())
+				task.ID.Hex())
 		}
 	}
 
@@ -249,7 +249,7 @@ func (self *UpstreamConnection) SendJson(logprefix, method string, url *url.URL,
 func (self *UpstreamConnection) SendStartupNotification() {
 
 	notification := StartupNotification{
-		ManagerUrl:         self.config.OwnUrl,
+		ManagerURL:         self.config.OwnUrl,
 		VariablesByVarname: self.config.VariablesByVarname,
 		NumberOfWorkers:    0,
 	}
@@ -341,7 +341,7 @@ func (self *UpstreamConnection) SendTaskUpdates(updates *[]TaskUpdate) (*TaskUpd
  * If it was changed or removed, this function return true.
  */
 func (self *UpstreamConnection) RefetchTask(task *Task) bool {
-	get_url, err := self.ResolveUrl("/api/flamenco/tasks/%s", task.Id.Hex())
+	get_url, err := self.ResolveUrl("/api/flamenco/tasks/%s", task.ID.Hex())
 	log.Infof("Verifying task with Flamenco Server %s", get_url)
 
 	req, err := http.NewRequest("GET", get_url.String(), nil)
@@ -361,20 +361,20 @@ func (self *UpstreamConnection) RefetchTask(task *Task) bool {
 
 	if resp.StatusCode == http.StatusNotModified {
 		// Nothing changed, we're good to go.
-		log.Infof("Cached task %s is still the same on the Server", task.Id.Hex())
+		log.Infof("Cached task %s is still the same on the Server", task.ID.Hex())
 		return false
 	}
 
 	if resp.StatusCode >= 500 {
 		// Internal errors, we'll ignore that.
 		log.Warningf("Error %d trying to re-fetch task %s",
-			resp.StatusCode, task.Id.Hex())
+			resp.StatusCode, task.ID.Hex())
 		return false
 	}
 	if 300 <= resp.StatusCode && resp.StatusCode < 400 {
 		// Redirects, we'll ignore those too for now.
 		log.Warningf("Redirect %d trying to re-fetch task %s, not following redirect.",
-			resp.StatusCode, task.Id.Hex())
+			resp.StatusCode, task.ID.Hex())
 		return false
 	}
 
@@ -386,7 +386,7 @@ func (self *UpstreamConnection) RefetchTask(task *Task) bool {
 		// Not found, access denied, that kind of stuff. Locally cancel the task.
 		// TODO: probably better to go to "failed".
 		log.Warningf("Code %d when re-fetching task %s; canceling local copy",
-			resp.StatusCode, task.Id.Hex())
+			resp.StatusCode, task.ID.Hex())
 
 		new_task = *task
 		new_task.Status = "canceled"
@@ -407,9 +407,9 @@ func (self *UpstreamConnection) RefetchTask(task *Task) bool {
 
 	// save the task to the queue.
 	log.Infof("Cached task %s was changed on the Server, status=%s, priority=%d.",
-		task.Id.Hex(), new_task.Status, new_task.Priority)
+		task.ID.Hex(), new_task.Status, new_task.Priority)
 	tasks_coll := self.session.DB("").C("flamenco_tasks")
-	tasks_coll.UpdateId(task.Id,
+	tasks_coll.UpdateId(task.ID,
 		bson.M{"$set": new_task})
 
 	return true

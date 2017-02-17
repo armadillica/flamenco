@@ -50,7 +50,7 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 	if err := DecodeJson(w, r.Body, &tupdate, fmt.Sprintf("%s QueueTaskUpdate:", worker.Identifier())); err != nil {
 		return
 	}
-	tupdate.TaskId = task_id
+	tupdate.TaskID = task_id
 	tupdate.Worker = worker.Identifier()
 
 	// Check that this worker is allowed to update this task.
@@ -62,20 +62,20 @@ func QueueTaskUpdateFromWorker(w http.ResponseWriter, r *auth.AuthenticatedReque
 		fmt.Fprintf(w, "Task %s is unknown.", task_id.Hex())
 		return
 	}
-	if task.WorkerId != nil && *task.WorkerId != worker.Id {
+	if task.WorkerID != nil && *task.WorkerID != worker.ID {
 		log.Warningf("%s QueueTaskUpdateFromWorker: task %s update rejected from %s (%s), task is assigned to %s",
-			r.RemoteAddr, task_id.Hex(), worker.Id.Hex(), worker.Identifier(), task.WorkerId.Hex())
+			r.RemoteAddr, task_id.Hex(), worker.ID.Hex(), worker.Identifier(), task.WorkerID.Hex())
 		w.WriteHeader(http.StatusConflict)
 		fmt.Fprintf(w, "Task %s is assigned to another worker.", task_id.Hex())
 		return
 	}
 
-	// Only set the task's worker ID if it's not already set to the current worker.
-	var set_worker_id *bson.ObjectId = nil
-	if task.WorkerId == nil {
-		set_worker_id = &worker.Id
+	// Only set the task's worker.ID if it's not already set to the current worker.
+	var setWorkerID *bson.ObjectId
+	if task.WorkerID == nil {
+		setWorkerID = &worker.ID
 	}
-	WorkerPingedTask(set_worker_id, tupdate.TaskId, db)
+	WorkerPingedTask(setWorkerID, tupdate.TaskID, db)
 
 	if err := QueueTaskUpdate(&tupdate, db); err != nil {
 		log.Warningf("%s: %s", worker.Identifier(), err)
@@ -97,7 +97,7 @@ func QueueTaskUpdate(tupdate *TaskUpdate, db *mgo.Database) error {
 func QueueTaskUpdateWithExtra(tupdate *TaskUpdate, db *mgo.Database, extra_updates bson.M) error {
 	// For ensuring the ordering of updates. time.Time has nanosecond precision.
 	tupdate.ReceivedOnManager = time.Now().UTC()
-	tupdate.Id = bson.NewObjectId()
+	tupdate.ID = bson.NewObjectId()
 
 	// Store the update in the queue for sending to the Flamenco Server later.
 	task_update_queue := db.C(QUEUE_MGO_COLLECTION)
@@ -112,27 +112,27 @@ func QueueTaskUpdateWithExtra(tupdate *TaskUpdate, db *mgo.Database, extra_updat
 	updates := extra_updates
 	if tupdate.TaskStatus != "" {
 		// Before blindly applying the task status, first check if the transition is valid.
-		if TaskStatusTransitionValid(task_coll, tupdate.TaskId, tupdate.TaskStatus) {
+		if TaskStatusTransitionValid(task_coll, tupdate.TaskID, tupdate.TaskStatus) {
 			updates["status"] = tupdate.TaskStatus
 		} else {
 			log.Warningf("QueueTaskUpdate: not locally applying status=%s for %s",
-				tupdate.TaskStatus, tupdate.TaskId.Hex())
+				tupdate.TaskStatus, tupdate.TaskID.Hex())
 		}
 	}
 	if tupdate.Activity != "" {
 		updates["activity"] = tupdate.Activity
 	}
 	if len(updates) > 0 {
-		log.Debugf("QueueTaskUpdate: applying update %s to task %s", updates, tupdate.TaskId.Hex())
-		if err := task_coll.UpdateId(tupdate.TaskId, bson.M{"$set": updates}); err != nil {
+		log.Debugf("QueueTaskUpdate: applying update %s to task %s", updates, tupdate.TaskID.Hex())
+		if err := task_coll.UpdateId(tupdate.TaskID, bson.M{"$set": updates}); err != nil {
 			if err != mgo.ErrNotFound {
 				return fmt.Errorf("QueueTaskUpdate: error updating local task cache: %s", err)
 			} else {
-				log.Warningf("QueueTaskUpdate: cannot find task %s to update locally", tupdate.TaskId.Hex())
+				log.Warningf("QueueTaskUpdate: cannot find task %s to update locally", tupdate.TaskID.Hex())
 			}
 		}
 	} else {
-		log.Debugf("QueueTaskUpdate: nothing to do locally for task %s", tupdate.TaskId.Hex())
+		log.Debugf("QueueTaskUpdate: nothing to do locally for task %s", tupdate.TaskID.Hex())
 	}
 
 	return nil
@@ -323,7 +323,7 @@ func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []
 
 	queue_task_cancel := func(task_id bson.ObjectId) {
 		tupdate := TaskUpdate{
-			TaskId:     task_id,
+			TaskID:     task_id,
 			TaskStatus: "canceled",
 		}
 		if err := QueueTaskUpdate(&tupdate, db); err != nil {
@@ -335,13 +335,13 @@ func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []
 	}
 
 	for _, task_to_cancel := range tasks_to_cancel {
-		seen_tasks[task_to_cancel.Id] = true
+		seen_tasks[task_to_cancel.ID] = true
 
 		if task_to_cancel.Status == "active" {
 			// This needs to be canceled through the worker, and thus go to cancel-requested.
-			go_to_cancel_requested = append(go_to_cancel_requested, task_to_cancel.Id)
+			go_to_cancel_requested = append(go_to_cancel_requested, task_to_cancel.ID)
 		} else {
-			queue_task_cancel(task_to_cancel.Id)
+			queue_task_cancel(task_to_cancel.ID)
 		}
 	}
 
@@ -379,7 +379,7 @@ func (self *TaskUpdatePusher) handle_incoming_cancel_requests(cancel_task_ids []
 
 func LogTaskActivity(worker *Worker, task_id bson.ObjectId, activity, log_line string, db *mgo.Database) {
 	tupdate := TaskUpdate{
-		TaskId:   task_id,
+		TaskID:   task_id,
 		Activity: activity,
 		Log:      log_line,
 	}

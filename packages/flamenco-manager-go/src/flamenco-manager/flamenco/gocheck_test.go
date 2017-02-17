@@ -20,7 +20,7 @@ func ConstructTestTask(task_id, job_type string) Task {
 
 func ConstructTestTaskWithPrio(task_id, job_type string, priority int) Task {
 	return Task{
-		Id:       bson.ObjectIdHex(task_id),
+		ID:       bson.ObjectIdHex(task_id),
 		Etag:     "1234567",
 		Job:      bson.ObjectIdHex("bbbbbbbbbbbbbbbbbbbbbbbb"),
 		Manager:  bson.ObjectIdHex("cccccccccccccccccccccccc"),

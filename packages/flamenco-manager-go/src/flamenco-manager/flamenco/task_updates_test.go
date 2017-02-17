@@ -64,7 +64,7 @@ func (s *TaskUpdatesTestSuite) TestCancelRunningTasks(t *check.C) {
 			log.Info("POST from manager received on server, sending back TaskUpdateResponse.")
 
 			resp := TaskUpdateResponse{
-				CancelTasksIds: []bson.ObjectId{task2.Id},
+				CancelTasksIds: []bson.ObjectId{task2.ID},
 			}
 			return httpmock.NewJsonResponse(200, &resp)
 		},
@@ -90,9 +90,9 @@ func (s *TaskUpdatesTestSuite) TestCancelRunningTasks(t *check.C) {
 
 	// Check that one task was canceled and the other was not.
 	task_db := Task{}
-	assert.Nil(t, tasks_coll.FindId(task1.Id).One(&task_db))
+	assert.Nil(t, tasks_coll.FindId(task1.ID).One(&task_db))
 	assert.Equal(t, "queued", task_db.Status)
-	assert.Nil(t, tasks_coll.FindId(task2.Id).One(&task_db))
+	assert.Nil(t, tasks_coll.FindId(task2.ID).One(&task_db))
 	assert.Equal(t, "canceled", task_db.Status)
 }
 
@@ -114,33 +114,33 @@ func (s *TaskUpdatesTestSuite) TestMultipleWorkersForOneTask(c *check.C) {
 	assert.Nil(c, StoreNewWorker(&worker2, s.db))
 
 	// Task should not be assigned to any worker
-	assert.Nil(c, task1.WorkerId)
+	assert.Nil(c, task1.WorkerID)
 
 	tupdate := TaskUpdate{
-		TaskId:   task1.Id,
+		TaskID:   task1.ID,
 		Activity: "doing stuff by worker1",
 	}
 	payload_bytes, err := json.Marshal(tupdate)
 	assert.Nil(c, err)
-	resp_rec, ar := WorkerTestRequestWithBody(worker1.Id, bytes.NewBuffer(payload_bytes), "POST", "/tasks/1aaaaaaaaaaaaaaaaaaaaaaa/update")
-	QueueTaskUpdateFromWorker(resp_rec, ar, s.db, task1.Id)
+	resp_rec, ar := WorkerTestRequestWithBody(worker1.ID, bytes.NewBuffer(payload_bytes), "POST", "/tasks/1aaaaaaaaaaaaaaaaaaaaaaa/update")
+	QueueTaskUpdateFromWorker(resp_rec, ar, s.db, task1.ID)
 	assert.Equal(c, 204, resp_rec.Code)
 
 	// Because of this update, the task should be assigned to worker 1
-	assert.Nil(c, tasks_coll.FindId(task1.Id).One(&task1))
-	assert.Equal(c, task1.WorkerId, task1.WorkerId)
+	assert.Nil(c, tasks_coll.FindId(task1.ID).One(&task1))
+	assert.Equal(c, task1.WorkerID, task1.WorkerID)
 	assert.Equal(c, task1.Activity, "doing stuff by worker1")
 
 	// An update by worker 2 should fail.
 	tupdate.Activity = "doing stuff by worker2"
 	payload_bytes, err = json.Marshal(tupdate)
 	assert.Nil(c, err)
-	resp_rec, ar = WorkerTestRequestWithBody(worker2.Id, bytes.NewBuffer(payload_bytes), "POST", "/tasks/1aaaaaaaaaaaaaaaaaaaaaaa/update")
-	QueueTaskUpdateFromWorker(resp_rec, ar, s.db, task1.Id)
+	resp_rec, ar = WorkerTestRequestWithBody(worker2.ID, bytes.NewBuffer(payload_bytes), "POST", "/tasks/1aaaaaaaaaaaaaaaaaaaaaaa/update")
+	QueueTaskUpdateFromWorker(resp_rec, ar, s.db, task1.ID)
 	assert.Equal(c, http.StatusConflict, resp_rec.Code)
 
 	// The task should still be assigned to worker 1
-	assert.Nil(c, tasks_coll.FindId(task1.Id).One(&task1))
-	assert.Equal(c, task1.WorkerId, task1.WorkerId)
+	assert.Nil(c, tasks_coll.FindId(task1.ID).One(&task1))
+	assert.Equal(c, task1.WorkerID, task1.WorkerID)
 	assert.Equal(c, task1.Activity, "doing stuff by worker1")
 }

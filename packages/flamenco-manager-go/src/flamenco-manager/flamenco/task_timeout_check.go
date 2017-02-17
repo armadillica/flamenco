@@ -83,24 +83,24 @@ func (self *TaskTimeoutChecker) Check(db *mgo.Database) {
 	}
 
 	for _, task := range timedout_tasks {
-		log.Warningf("    - Task %s (%s) timed out", task.Name, task.Id.Hex())
+		log.Warningf("    - Task %s (%s) timed out", task.Name, task.ID.Hex())
 		var ident string
 		if task.Worker != "" {
 			ident = task.Worker
-		} else if task.WorkerId != nil {
-			ident = task.WorkerId.Hex()
+		} else if task.WorkerID != nil {
+			ident = task.WorkerID.Hex()
 		} else {
 			ident = "-no worker-"
 		}
 
 		tupdate := TaskUpdate{
-			TaskId:     task.Id,
+			TaskID:     task.ID,
 			TaskStatus: "failed",
 			Activity:   fmt.Sprintf("Task timed out on worker %s", ident),
 			Log: fmt.Sprintf(
 				"%s Task %s (%s) timed out, was active but untouched since %s. "+
 					"Was handled by worker %s",
-				UtcNow().Format(IsoFormat), task.Name, task.Id.Hex(), task.LastWorkerPing, ident),
+				UtcNow().Format(IsoFormat), task.Name, task.ID.Hex(), task.LastWorkerPing, ident),
 		}
 		QueueTaskUpdate(&tupdate, db)
 	}

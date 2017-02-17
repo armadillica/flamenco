@@ -12,7 +12,7 @@ type Command struct {
 }
 
 type Task struct {
-	Id          bson.ObjectId   `bson:"_id,omitempty" json:"_id,omitempty"`
+	ID          bson.ObjectId   `bson:"_id,omitempty" json:"_id,omitempty"`
 	Etag        string          `bson:"_etag,omitempty" json:"_etag,omitempty"`
 	Job         bson.ObjectId   `bson:"job,omitempty" json:"job"`
 	Manager     bson.ObjectId   `bson:"manager,omitempty" json:"manager"`
@@ -30,11 +30,11 @@ type Task struct {
 	Worker      string          `bson:"worker,omitempty" json:"worker,omitempty"`
 
 	// Internal bookkeeping
-	WorkerId       *bson.ObjectId `bson:"worker_id,omitempty" json:"-"`
+	WorkerID       *bson.ObjectId `bson:"worker_id,omitempty" json:"-"`
 	LastWorkerPing *time.Time     `bson:"last_worker_ping,omitempty" json:"-"`
 }
 
-type AggregationPipelineResult struct {
+type aggregationPipelineResult struct {
 	Task *Task `bson:"task"`
 }
 
@@ -45,8 +45,8 @@ type ScheduledTasks struct {
 
 // Both sent from Worker to Manager, as well as from Manager to Server.
 type TaskUpdate struct {
-	Id                        bson.ObjectId `bson:"_id" json:"_id"`
-	TaskId                    bson.ObjectId `bson:"task_id" json:"task_id,omitempty"`
+	ID                        bson.ObjectId `bson:"_id" json:"_id"`
+	TaskID                    bson.ObjectId `bson:"task_id" json:"task_id,omitempty"`
 	TaskStatus                string        `bson:"task_status,omitempty" json:"task_status,omitempty"`
 	ReceivedOnManager         time.Time     `bson:"received_on_manager" json:"received_on_manager"`
 	Activity                  string        `bson:"activity,omitempty" json:"activity,omitempty"`
@@ -72,7 +72,7 @@ type WorkerRegistration struct {
 }
 
 type Worker struct {
-	Id                bson.ObjectId `bson:"_id,omitempty" json:"_id,omitempty"`
+	ID                bson.ObjectId `bson:"_id,omitempty" json:"_id,omitempty"`
 	Secret            string        `bson:"-" json:"-"`
 	HashedSecret      []byte        `bson:"hashed_secret" json:"-"`
 	Nickname          string        `bson:"nickname" json:"nickname"`
@@ -91,7 +91,7 @@ type Worker struct {
  */
 type StartupNotification struct {
 	// Settings
-	ManagerUrl         string                       `json:"manager_url"`
+	ManagerURL         string                       `json:"manager_url"`
 	VariablesByVarname map[string]map[string]string `json:"variables"`
 
 	// From our local database
