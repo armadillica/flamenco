@@ -92,7 +92,7 @@ func GetSettings(db *mgo.Database) *SettingsInMongo {
 	settings := &SettingsInMongo{}
 	err := db.C("settings").Find(bson.M{}).One(settings)
 	if err != nil && err != mgo.ErrNotFound {
-		log.Errorf("db.GetSettings: Unable to get settings: ", err)
+		log.Error("db.GetSettings: Unable to get settings: ", err)
 	}
 
 	return settings
@@ -101,7 +101,7 @@ func GetSettings(db *mgo.Database) *SettingsInMongo {
 func SaveSettings(db *mgo.Database, settings *SettingsInMongo) {
 	_, err := db.C("settings").Upsert(bson.M{}, settings)
 	if err != nil && err != mgo.ErrNotFound {
-		log.Errorf("db.SaveSettings: Unable to save settings: ", err)
+		log.Error("db.SaveSettings: Unable to save settings: ", err)
 	}
 }
 
