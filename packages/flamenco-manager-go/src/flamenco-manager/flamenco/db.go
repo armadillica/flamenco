@@ -14,14 +14,13 @@ type countresult struct {
 	Count int `bson:"count"`
 }
 
+// M is a shortcut for bson.M to make longer queries easier to read.
 type M bson.M
 
-/**
- * Returns a MongoDB session.
- *
- * The database name should be configured in the database URL.
- * You can use this default database using session.DB("").
- */
+// MongoSession returns a MongoDB session.
+//
+// The database name should be configured in the database URL.
+// You can use this default database using session.DB("").
 func MongoSession(config *Conf) *mgo.Session {
 	var err error
 	var session *mgo.Session
@@ -32,12 +31,12 @@ func MongoSession(config *Conf) *mgo.Session {
 	}
 	session.SetMode(mgo.Monotonic, true)
 
-	ensure_indices(session)
+	ensureIndices(session)
 
 	return session
 }
 
-func ensure_indices(session *mgo.Session) {
+func ensureIndices(session *mgo.Session) {
 	db := session.DB("")
 
 	index := mgo.Index{
@@ -63,11 +62,9 @@ func ensure_indices(session *mgo.Session) {
 	}
 }
 
-/**
- * Counts the number of documents in the given collection.
- */
+// Count returns the number of documents in the given collection.
 func Count(coll *mgo.Collection) (int, error) {
-	aggr_ops := []bson.M{
+	aggrOps := []bson.M{
 		bson.M{
 			"$group": bson.M{
 				"_id":   nil,
@@ -75,7 +72,7 @@ func Count(coll *mgo.Collection) (int, error) {
 			},
 		},
 	}
-	pipe := coll.Pipe(aggr_ops)
+	pipe := coll.Pipe(aggrOps)
 	result := countresult{}
 	if err := pipe.One(&result); err != nil {
 		if err == mgo.ErrNotFound {
@@ -88,6 +85,7 @@ func Count(coll *mgo.Collection) (int, error) {
 	return result.Count, nil
 }
 
+// GetSettings returns the settings as saved in our MongoDB.
 func GetSettings(db *mgo.Database) *SettingsInMongo {
 	settings := &SettingsInMongo{}
 	err := db.C("settings").Find(bson.M{}).One(settings)
@@ -98,6 +96,7 @@ func GetSettings(db *mgo.Database) *SettingsInMongo {
 	return settings
 }
 
+// SaveSettings stores the given settings in MongoDB.
 func SaveSettings(db *mgo.Database, settings *SettingsInMongo) {
 	_, err := db.C("settings").Upsert(bson.M{}, settings)
 	if err != nil && err != mgo.ErrNotFound {
@@ -105,7 +104,7 @@ func SaveSettings(db *mgo.Database, settings *SettingsInMongo) {
 	}
 }
 
-/* Erases all tasks in the flamenco_tasks collection. */
+// CleanSlate erases all tasks in the flamenco_tasks collection.
 func CleanSlate(db *mgo.Database) {
 	fmt.Println("")
 	fmt.Println("Performing Clean Slate operation, this will erase all tasks from the local DB.")

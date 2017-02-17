@@ -35,13 +35,13 @@ func (self *TaskTimeoutChecker) Go() {
 
 	self.closableAdd(1)
 	defer self.closableDone()
-	defer log.Infof("TaskTimeoutChecker: shutting down.")
+	defer log.Info("TaskTimeoutChecker: shutting down.")
 
 	// Start with a delay, so that workers get a chance to push their updates
 	// after the manager has started up.
 	ok := KillableSleep("TaskTimeoutChecker-initial", TASK_TIMEOUT_CHECK_INITIAL_SLEEP, &self.closable)
 	if !ok {
-		log.Warningf("TaskTimeoutChecker: Killable sleep was killed, not even starting checker.")
+		log.Info("TaskTimeoutChecker: Killable sleep was killed, not even starting checker.")
 		return
 	}
 
