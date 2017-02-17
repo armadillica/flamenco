@@ -6,7 +6,6 @@ package flamenco
 import (
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -20,13 +19,10 @@ const QUEUE_MGO_COLLECTION = "task_update_queue"
 const TASK_QUEUE_INSPECT_PERIOD = 1 * time.Second
 
 type TaskUpdatePusher struct {
+	closable
 	config   *Conf
 	upstream *UpstreamConnection
 	session  *mgo.Session
-
-	// For allowing shutdown.
-	done    chan bool
-	done_wg *sync.WaitGroup
 }
 
 /**
@@ -179,11 +175,10 @@ func ValidForCancelRequested(new_status string) bool {
 
 func CreateTaskUpdatePusher(config *Conf, upstream *UpstreamConnection, session *mgo.Session) *TaskUpdatePusher {
 	return &TaskUpdatePusher{
+		makeClosable(),
 		config,
 		upstream,
 		session,
-		make(chan bool),
-		new(sync.WaitGroup),
 	}
 }
 
@@ -191,15 +186,8 @@ func CreateTaskUpdatePusher(config *Conf, upstream *UpstreamConnection, session 
  * Closes the task update pusher by stopping all timers & goroutines.
  */
 func (self *TaskUpdatePusher) Close() {
-	close(self.done)
-
-	// Dirty hack: sleep for a bit to ensure the closing of the 'done'
-	// channel can be handled by other goroutines, before handling the
-	// closing of the other channels.
-	time.Sleep(1)
-
 	log.Info("TaskUpdatePusher: shutting down, waiting for shutdown to complete.")
-	self.done_wg.Wait()
+	self.closableCloseAndWait()
 	log.Info("TaskUpdatePusher: shutdown complete.")
 }
 
@@ -212,12 +200,14 @@ func (self *TaskUpdatePusher) Go() {
 	db := mongo_sess.DB("")
 	queue := db.C(QUEUE_MGO_COLLECTION)
 
-	self.done_wg.Add(1)
-	defer self.done_wg.Done()
+	if !self.closableAdd(1) {
+		return
+	}
+	defer self.closableDone()
 
 	// Investigate the queue periodically.
 	timer_chan := Timer("TaskUpdatePusherTimer",
-		TASK_QUEUE_INSPECT_PERIOD, false, self.done, self.done_wg)
+		TASK_QUEUE_INSPECT_PERIOD, false, &self.closable)
 
 	for _ = range timer_chan {
 		// log.Info("TaskUpdatePusher: checking task update queue")

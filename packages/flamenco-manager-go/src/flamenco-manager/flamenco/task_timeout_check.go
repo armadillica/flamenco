@@ -5,7 +5,6 @@ package flamenco
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -17,17 +16,15 @@ const TASK_TIMEOUT_CHECK_INTERVAL = 5 * time.Second
 const TASK_TIMEOUT_CHECK_INITIAL_SLEEP = 5 * time.Minute
 
 type TaskTimeoutChecker struct {
-	config    *Conf
-	session   *mgo.Session
-	done_chan chan bool
-	done_wg   *sync.WaitGroup
+	closable
+	config  *Conf
+	session *mgo.Session
 }
 
 func CreateTaskTimeoutChecker(config *Conf, session *mgo.Session) *TaskTimeoutChecker {
 	return &TaskTimeoutChecker{
+		makeClosable(),
 		config, session,
-		make(chan bool),
-		&sync.WaitGroup{},
 	}
 }
 
@@ -36,21 +33,19 @@ func (self *TaskTimeoutChecker) Go() {
 	defer session.Close()
 	db := session.DB("")
 
-	self.done_wg.Add(1)
-	defer self.done_wg.Done()
+	self.closableAdd(1)
+	defer self.closableDone()
 	defer log.Infof("TaskTimeoutChecker: shutting down.")
 
 	// Start with a delay, so that workers get a chance to push their updates
 	// after the manager has started up.
-	ok := KillableSleep("TaskTimeoutChecker-initial", TASK_TIMEOUT_CHECK_INITIAL_SLEEP,
-		self.done_chan, self.done_wg)
+	ok := KillableSleep("TaskTimeoutChecker-initial", TASK_TIMEOUT_CHECK_INITIAL_SLEEP, &self.closable)
 	if !ok {
 		log.Warningf("TaskTimeoutChecker: Killable sleep was killed, not even starting checker.")
 		return
 	}
 
-	timer := Timer("TaskTimeoutCheck", TASK_TIMEOUT_CHECK_INTERVAL, false,
-		self.done_chan, self.done_wg)
+	timer := Timer("TaskTimeoutCheck", TASK_TIMEOUT_CHECK_INTERVAL, false, &self.closable)
 
 	for _ = range timer {
 		self.Check(db)
@@ -59,9 +54,7 @@ func (self *TaskTimeoutChecker) Go() {
 }
 
 func (self *TaskTimeoutChecker) Close() {
-	close(self.done_chan)
-	log.Debug("TaskTimeoutChecker: waiting for shutdown to finish.")
-	self.done_wg.Wait()
+	self.closableCloseAndWait()
 	log.Debug("TaskTimeoutChecker: shutdown complete.")
 }
 

@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -24,23 +23,20 @@ const STARTUP_NOTIFICATION_INITIAL_DELAY = 500 * time.Millisecond
 const STARTUP_NOTIFICATION_RETRY = 30 * time.Second
 
 type UpstreamConnection struct {
+	closable
 	config  *Conf
 	session *mgo.Session
 
 	// Send any boolean here to kick the task downloader into downloading new tasks.
 	download_kick chan chan bool
-
-	done    chan bool
-	done_wg *sync.WaitGroup
 }
 
 func ConnectUpstream(config *Conf, session *mgo.Session) *UpstreamConnection {
 	upconn := UpstreamConnection{
+		makeClosable(),
 		config,
 		session,
 		make(chan chan bool),
-		make(chan bool),
-		new(sync.WaitGroup),
 	}
 	upconn.download_task_loop()
 
@@ -51,16 +47,9 @@ func ConnectUpstream(config *Conf, session *mgo.Session) *UpstreamConnection {
  * Closes the upstream connection by stopping all upload/download loops.
  */
 func (self *UpstreamConnection) Close() {
-	close(self.done)
-
-	// Dirty hack: sleep for a bit to ensure the closing of the 'done'
-	// channel can be handled by other goroutines, before handling the
-	// closing of the other channels.
-	time.Sleep(1)
-	close(self.download_kick)
-
 	log.Debugf("UpstreamConnection: shutting down, waiting for shutdown to complete.")
-	self.done_wg.Wait()
+	close(self.download_kick) // TODO: maybe move this between closing of done channel and waiting
+	self.closableCloseAndWait()
 	log.Info("UpstreamConnection: shutdown complete.")
 }
 
@@ -71,15 +60,18 @@ func (self *UpstreamConnection) KickDownloader(synchronous bool) {
 		log.Info("KickDownloader: Waiting for task downloader to finish.")
 
 		// wait for the download to be complete, or the connection to be shut down.
-		self.done_wg.Add(1)
-		defer self.done_wg.Done()
+		if !self.closableAdd(1) {
+			log.Debugf("KickDownloader: Aborting waiting for task downloader; shutting down.")
+			return
+		}
+		defer self.closableDone()
 
 		for {
 			select {
 			case <-pingback:
 				log.Debugf("KickDownloader: done.")
 				return
-			case <-self.done:
+			case <-self.doneChan:
 				log.Debugf("KickDownloader: Aborting waiting for task downloader; shutting down.")
 				return
 			}
@@ -94,21 +86,22 @@ func (self *UpstreamConnection) download_task_loop() {
 	timer_chan := Timer("download_task_loop",
 		self.config.DownloadTaskSleep,
 		false,
-		self.done,
-		self.done_wg,
+		&self.closable,
 	)
 
 	go func() {
 		mongo_sess := self.session.Copy()
 		defer mongo_sess.Close()
 
-		self.done_wg.Add(1)
-		defer self.done_wg.Done()
+		if !self.closableAdd(1) {
+			return
+		}
+		defer self.closableDone()
 		defer log.Info("download_task_loop: Task download goroutine shutting down.")
 
 		for {
 			select {
-			case <-self.done:
+			case <-self.doneChan:
 				return
 			case _, ok := <-timer_chan:
 				if !ok {
@@ -282,20 +275,23 @@ func (self *UpstreamConnection) SendStartupNotification() {
 
 	go func() {
 		// Register as a loop that responds to 'done' being closed.
-		self.done_wg.Add(1)
-		defer self.done_wg.Done()
+		if !self.closableAdd(1) {
+			log.Warning("SendStartupNotification: shutting down early without sending startup notification.")
+			return
+		}
+		defer self.closableDone()
 
 		mongo_sess := self.session.Copy()
 		defer mongo_sess.Close()
 
 		ok := KillableSleep("SendStartupNotification-initial", STARTUP_NOTIFICATION_INITIAL_DELAY,
-			self.done, self.done_wg)
+			&self.closable)
 		if !ok {
 			log.Warning("SendStartupNotification: shutting down without sending startup notification.")
 			return
 		}
 		timer_chan := Timer("SendStartupNotification", STARTUP_NOTIFICATION_RETRY,
-			false, self.done, self.done_wg)
+			false, &self.closable)
 
 		for _ = range timer_chan {
 			log.Info("SendStartupNotification: trying to send notification.")

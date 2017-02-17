@@ -117,14 +117,15 @@ func shutdown(signum os.Signal) {
 		task_update_pusher.Close()
 		upstream.Close()
 		session.Close()
-		log.Warning("Shutdown complete, stopping process.")
 		timeout <- false
 	}()
 
 	if <-timeout {
-		log.Warning("Shutdown forced, stopping process.")
+		log.Error("Shutdown forced, stopping process.")
+		os.Exit(-2)
 	}
-	os.Exit(-2)
+	log.Warning("Shutdown complete, stopping process.")
+	os.Exit(0)
 }
 
 var cliArgs struct {
