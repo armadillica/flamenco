@@ -29,7 +29,7 @@ Flamenco Manager accepts the following CLI arguments:
 of this `flamenco-manager-go` directory.
 
 0. Make sure you have MongoDB up and running (on localhost)
-1. Install Go 1.7 or newer
+1. Install Go 1.8 or newer
 2. `export GOPATH=$FM`
 3. `cd $FM/src/flamenco-manager`
 4. Download all dependencies with `go get`
