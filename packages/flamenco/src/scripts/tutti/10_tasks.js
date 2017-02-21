@@ -17,7 +17,8 @@ function item_open(item_id, item_type, pushState, project_url)
 
     // Style elements starting with item_type and dash, e.g. "#job-uuid"
     $('[id^="' + item_type + '-"]').removeClass('active');
-    $('#' + item_type + '-' + item_id).addClass('active');
+    var current_item = $('#' + item_type + '-' + item_id);
+    current_item.addClass('processing');
 
     var item_url = '/flamenco/' + project_url + '/' + item_type + 's/' + item_id;
     var push_url = item_url;
@@ -40,12 +41,17 @@ function item_open(item_id, item_type, pushState, project_url)
             $('#col_right .col_header span.header_text').text(item_type + ' details');
         }
 
+        current_item
+            .removeClass('processing')
+            .addClass('active');
+
     }).fail(function(xhr) {
         if (console) {
             console.log('Error fetching task', item_id, 'from', item_url);
             console.log('XHR:', xhr);
         }
 
+        current_item.removeClass('processing');
         statusBarSet('error', 'Failed to open ' + item_type, 'pi-warning');
 
         if (xhr.status) {
