@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -e  # error out when one of the commands in the script errors.
 
 FLAMENCO_DIR="$(dirname "$(readlink -f "$0")")"
 if [ ! -d "$FLAMENCO_DIR" ]; then
