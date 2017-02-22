@@ -2,7 +2,15 @@
 
 set -e  # error out when one of the commands in the script errors.
 
-FLAMENCO_DIR="$(dirname "$(readlink -f "$0")")"
+# macOS does not support readlink -f, so we use greadlink instead
+if [[ `uname` == 'Darwin' ]]; then
+    command -v greadlink 2>/dev/null 2>&1 || { echo >&2 "Install greadlink using brew."; exit 1; }
+    readlink='greadlink'
+else
+    readlink='readlink'
+fi
+
+FLAMENCO_DIR="$(dirname "$($readlink -f "$0")")"
 if [ ! -d "$FLAMENCO_DIR" ]; then
     echo "Unable to find Flamenco dir '$FLAMENCO_DIR'"
     exit 1
