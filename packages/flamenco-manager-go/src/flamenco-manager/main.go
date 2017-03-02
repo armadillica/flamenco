@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -30,6 +31,8 @@ var upstream *flamenco.UpstreamConnection
 var task_scheduler *flamenco.TaskScheduler
 var task_update_pusher *flamenco.TaskUpdatePusher
 var task_timeout_checker *flamenco.TaskTimeoutChecker
+var httpServer *http.Server
+var shutdownComplete chan struct{}
 
 func http_status(w http.ResponseWriter, r *http.Request) {
 	flamenco.SendStatusReport(w, r, session, FLAMENCO_VERSION)
@@ -113,18 +116,28 @@ func shutdown(signum os.Signal) {
 
 	go func() {
 		log.Infof("Signal '%s' received, shutting down.", signum)
+
+		if httpServer != nil {
+			log.Info("Shutting down HTTP server")
+			httpServer.Shutdown(context.Background())
+		} else {
+			log.Warning("HTTP server was not even started yet")
+		}
+
 		task_timeout_checker.Close()
 		task_update_pusher.Close()
 		upstream.Close()
 		session.Close()
-		log.Warning("Shutdown complete, stopping process.")
 		timeout <- false
 	}()
 
 	if <-timeout {
-		log.Warning("Shutdown forced, stopping process.")
+		log.Error("Shutdown forced, stopping process.")
+		os.Exit(-2)
 	}
-	os.Exit(-2)
+
+	log.Warning("Shutdown complete, stopping process.")
+	close(shutdownComplete)
 }
 
 var cliArgs struct {
@@ -223,6 +236,12 @@ func main() {
 	go task_update_pusher.Go()
 	go task_timeout_checker.Go()
 
+	// Create the HTTP server before allowing the shutdown signal Handler
+	// to exist. This prevents a race condition when Ctrl+C is pressed after
+	// the http.Server is created, but before it is assigned to httpServer.
+	httpServer = &http.Server{Addr: config.Listen, Handler: router}
+	shutdownComplete = make(chan struct{})
+
 	// Handle Ctrl+C
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -236,12 +255,10 @@ func main() {
 
 	// Fall back to insecure server if TLS certificate/key is not defined.
 	if !has_tls {
-		log.Fatal(http.ListenAndServe(config.Listen, router))
+		log.Warning(httpServer.ListenAndServe())
 	} else {
-		log.Fatal(http.ListenAndServeTLS(
-			config.Listen,
-			config.TLSCert,
-			config.TLSKey,
-			router))
+		log.Warning(httpServer.ListenAndServeTLS(config.TLSCert, config.TLSKey))
 	}
+
+	<-shutdownComplete
 }

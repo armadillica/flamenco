@@ -94,7 +94,7 @@ func (s *SchedulerTestSuite) TestVariableReplacement(t *check.C) {
 	// Perform HTTP request
 	resp_rec := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/task", nil)
-	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.ID.Hex()}
 	s.sched.ScheduleTask(resp_rec, ar)
 
 	// Check the response JSON
@@ -106,7 +106,7 @@ func (s *SchedulerTestSuite) TestVariableReplacement(t *check.C) {
 		json_task.Commands[0].Settings["message"])
 
 	// Check worker with other job type
-	ar = &auth.AuthenticatedRequest{Request: *request, Username: s.worker_win.Id.Hex()}
+	ar = &auth.AuthenticatedRequest{Request: *request, Username: s.worker_win.ID.Hex()}
 	s.sched.ScheduleTask(resp_rec, ar)
 
 	// Check the response JSON
@@ -132,13 +132,13 @@ func (s *SchedulerTestSuite) TestSchedulerOrderByPriority(t *check.C) {
 	// Perform HTTP request to the scheduler.
 	resp_rec := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/task", nil)
-	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.ID.Hex()}
 	s.sched.ScheduleTask(resp_rec, ar)
 
 	// We should have gotten task 2, because it has the highest priority.
 	json_task := Task{}
 	parseJson(t, resp_rec, 200, &json_task)
-	assert.Equal(t, task2.Id.Hex(), json_task.Id.Hex())
+	assert.Equal(t, task2.ID.Hex(), json_task.ID.Hex())
 }
 
 func (s *SchedulerTestSuite) TestSchedulerOrderByJobPriority(t *check.C) {
@@ -157,13 +157,13 @@ func (s *SchedulerTestSuite) TestSchedulerOrderByJobPriority(t *check.C) {
 	// Perform HTTP request to the scheduler.
 	resp_rec := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/task", nil)
-	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.ID.Hex()}
 	s.sched.ScheduleTask(resp_rec, ar)
 
 	// We should have gotten task 1, because its job has the highest priority.
 	json_task := Task{}
 	parseJson(t, resp_rec, 200, &json_task)
-	assert.Equal(t, task1.Id.Hex(), json_task.Id.Hex())
+	assert.Equal(t, task1.ID.Hex(), json_task.ID.Hex())
 }
 
 /**
@@ -204,7 +204,7 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamCanceled(t *check.C) {
 	// Perform HTTP request to the scheduler.
 	resp_rec := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/task", nil)
-	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.ID.Hex()}
 	s.sched.ScheduleTask(resp_rec, ar)
 
 	timedout := <-timeout
@@ -215,11 +215,11 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamCanceled(t *check.C) {
 	parseJson(t, resp_rec, 200, &json_task)
 
 	// We should have gotten task 1, because task 2 was canceled.
-	assert.Equal(t, task1.Id.Hex(), json_task.Id.Hex())
+	assert.Equal(t, task1.ID.Hex(), json_task.ID.Hex())
 
 	// In our queue, task 2 should have been canceled, since it was canceled on the server.
 	found_task2 := Task{}
-	err := s.db.C("flamenco_tasks").FindId(task2.Id).One(&found_task2)
+	err := s.db.C("flamenco_tasks").FindId(task2.ID).One(&found_task2)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "canceled", found_task2.Status)
 }
@@ -256,7 +256,7 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamPrioChange(t *check.C) {
 	// Perform HTTP request to the scheduler.
 	resp_rec := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/task", nil)
-	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.ID.Hex()}
 	s.sched.ScheduleTask(resp_rec, ar)
 
 	timedout := <-timeout
@@ -267,16 +267,16 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamPrioChange(t *check.C) {
 	parseJson(t, resp_rec, 200, &json_task)
 
 	// We should have gotten task 1, because task 2 was lowered in prio.
-	assert.Equal(t, task1.Id.Hex(), json_task.Id.Hex())
+	assert.Equal(t, task1.ID.Hex(), json_task.ID.Hex())
 
 	// In our queue, task 2 should have been lowered in prio, and task1 should be active.
 	found_task := Task{}
-	err := s.db.C("flamenco_tasks").FindId(task2.Id).One(&found_task)
+	err := s.db.C("flamenco_tasks").FindId(task2.ID).One(&found_task)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "queued", found_task.Status)
 	assert.Equal(t, 5, found_task.Priority)
 
-	err = s.db.C("flamenco_tasks").FindId(task1.Id).One(&found_task)
+	err = s.db.C("flamenco_tasks").FindId(task1.ID).One(&found_task)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "active", found_task.Status)
 	assert.Equal(t, 50, found_task.Priority)
@@ -310,7 +310,7 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamDeleted(t *check.C) {
 	// Perform HTTP request to the scheduler.
 	resp_rec := httptest.NewRecorder()
 	request, _ := http.NewRequest("GET", "/task", nil)
-	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.Id.Hex()}
+	ar := &auth.AuthenticatedRequest{Request: *request, Username: s.worker_lnx.ID.Hex()}
 	s.sched.ScheduleTask(resp_rec, ar)
 
 	timedout := <-timeout
@@ -321,16 +321,16 @@ func (s *SchedulerTestSuite) TestSchedulerVerifyUpstreamDeleted(t *check.C) {
 	parseJson(t, resp_rec, 200, &json_task)
 
 	// We should have gotten task 1, because task 2 was deleted.
-	assert.Equal(t, task1.Id.Hex(), json_task.Id.Hex())
+	assert.Equal(t, task1.ID.Hex(), json_task.ID.Hex())
 
 	// In our queue, task 2 should have been canceled, and task1 should be active.
 	found_task := Task{}
-	err := s.db.C("flamenco_tasks").FindId(task2.Id).One(&found_task)
+	err := s.db.C("flamenco_tasks").FindId(task2.ID).One(&found_task)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "canceled", found_task.Status)
 	assert.Equal(t, 100, found_task.Priority)
 
-	err = s.db.C("flamenco_tasks").FindId(task1.Id).One(&found_task)
+	err = s.db.C("flamenco_tasks").FindId(task1.ID).One(&found_task)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, "active", found_task.Status)
 	assert.Equal(t, 50, found_task.Priority)
@@ -342,17 +342,17 @@ func (s *SchedulerTestSuite) TestParentTaskNotCompleted(c *check.C) {
 	// Task 1 is being worked on by worker_win
 	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
 	task1.Status = "active"
-	task1.WorkerId = &s.worker_win.Id
+	task1.WorkerID = &s.worker_win.ID
 	assert.Nil(c, tasks_coll.Insert(task1))
 
 	// Task 2 is unavailable due to its parent not being completed.
 	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
-	task2.Parents = []bson.ObjectId{task1.Id}
+	task2.Parents = []bson.ObjectId{task1.ID}
 	task2.Status = "claimed-by-manager"
 	assert.Nil(c, tasks_coll.Insert(task2))
 
 	// Fetch a task from the queue
-	resp_rec, _ := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
+	resp_rec, _ := WorkerTestRequest(s.worker_lnx.ID, "TEST", "/whatevah")
 	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, s.db, &s.worker_lnx)
 
 	// We should not get any task back, since task1 is already taken, and task2
@@ -367,25 +367,25 @@ func (s *SchedulerTestSuite) TestParentTaskCompleted(c *check.C) {
 	// Task 1 has been completed by worker_win
 	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
 	task1.Status = "completed"
-	task1.WorkerId = &s.worker_win.Id
+	task1.WorkerID = &s.worker_win.ID
 	assert.Nil(c, tasks_coll.Insert(task1))
 
 	// Task 2 is available due to its parent being completed.
 	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
-	task2.Parents = []bson.ObjectId{task1.Id}
+	task2.Parents = []bson.ObjectId{task1.ID}
 	task2.Status = "claimed-by-manager"
 	assert.Nil(c, tasks_coll.Insert(task2))
 
 	// Fetch a task from the queue
-	resp_rec, _ := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
+	resp_rec, _ := WorkerTestRequest(s.worker_lnx.ID, "TEST", "/whatevah")
 	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, s.db, &s.worker_lnx)
 	assert.Equal(c, http.StatusOK, resp_rec.Code)
 
 	// We should get task 2.
-	assert.NotNil(c, task, "Expected task %s, got nil instead", task2.Id.Hex())
+	assert.NotNil(c, task, "Expected task %s, got nil instead", task2.ID.Hex())
 	if task != nil { // prevent nil pointer dereference
-		assert.Equal(c, task.Id, task2.Id, "Expected task %s, got task %s instead",
-			task2.Id.Hex(), task.Id.Hex())
+		assert.Equal(c, task.ID, task2.ID, "Expected task %s, got task %s instead",
+			task2.ID.Hex(), task.ID.Hex())
 	}
 }
 
@@ -395,23 +395,23 @@ func (s *SchedulerTestSuite) TestParentTaskOneCompletedOneNot(c *check.C) {
 	// Task 1 is being worked on by worker_win
 	task1 := ConstructTestTaskWithPrio("1aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
 	task1.Status = "active"
-	task1.WorkerId = &s.worker_win.Id
+	task1.WorkerID = &s.worker_win.ID
 	assert.Nil(c, tasks_coll.Insert(task1))
 
 	// Task 2 is already completed.
 	task2 := ConstructTestTaskWithPrio("2aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 50)
 	task2.Status = "completed"
-	task2.WorkerId = &s.worker_win.Id
+	task2.WorkerID = &s.worker_win.ID
 	assert.Nil(c, tasks_coll.Insert(task2))
 
 	// Task 3 is unavailable due to one of its parent not being completed.
 	task3 := ConstructTestTaskWithPrio("3aaaaaaaaaaaaaaaaaaaaaaa", "sleeping", 100)
-	task3.Parents = []bson.ObjectId{task1.Id, task2.Id}
+	task3.Parents = []bson.ObjectId{task1.ID, task2.ID}
 	task3.Status = "claimed-by-manager"
 	assert.Nil(c, tasks_coll.Insert(task3))
 
 	// Fetch a task from the queue
-	resp_rec, _ := WorkerTestRequest(s.worker_lnx.Id, "TEST", "/whatevah")
+	resp_rec, _ := WorkerTestRequest(s.worker_lnx.ID, "TEST", "/whatevah")
 	task := s.sched.fetchTaskFromQueueOrManager(resp_rec, s.db, &s.worker_lnx)
 
 	// We should not get any task back.

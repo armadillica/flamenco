@@ -64,7 +64,7 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 			break
 		}
 
-		log.Debugf("Task %s was changed, reexamining queue.", task.Id.Hex())
+		log.Debugf("Task %s was changed, reexamining queue.", task.ID.Hex())
 	}
 	if was_changed {
 		log.Errorf("Infinite loop detected, tried 1000 tasks and they all changed...")
@@ -74,14 +74,14 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 
 	// Update the task status to "active", pushing it as a task update to the manager too.
 	task.Status = "active"
-	tupdate := TaskUpdate{TaskId: task.Id, TaskStatus: task.Status}
+	tupdate := TaskUpdate{TaskID: task.ID, TaskStatus: task.Status}
 	local_updates := bson.M{
-		"worker_id":        worker.Id,
+		"worker_id":        worker.ID,
 		"last_worker_ping": UtcNow(),
 	}
 	if err := QueueTaskUpdateWithExtra(&tupdate, db, local_updates); err != nil {
 		log.Errorf("Unable to queue task update while assigning task %s to worker %s: %s",
-			task.Id.Hex(), worker.Identifier(), err)
+			task.ID.Hex(), worker.Identifier(), err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -95,12 +95,12 @@ func (ts *TaskScheduler) ScheduleTask(w http.ResponseWriter, r *auth.Authenticat
 	encoder.Encode(task)
 
 	log.Infof("ScheduleTask: assigned task %s to worker %s",
-		task.Id.Hex(), worker.Identifier())
+		task.ID.Hex(), worker.Identifier())
 
 	// Push a task log line stating we've assigned this task to the given worker.
 	// This is done here, instead of by the worker, so that it's logged even if the worker fails.
 	msg := fmt.Sprintf("Manager assigned task to worker %s", worker.Identifier())
-	LogTaskActivity(worker, task.Id, msg, time.Now().Format(IsoFormat)+": "+msg, db)
+	LogTaskActivity(worker, task.ID, msg, time.Now().Format(IsoFormat)+": "+msg, db)
 }
 
 /**
@@ -116,7 +116,7 @@ func (ts *TaskScheduler) fetchTaskFromQueueOrManager(
 		return nil
 	}
 
-	result := AggregationPipelineResult{}
+	result := aggregationPipelineResult{}
 	tasks_coll := db.C("flamenco_tasks")
 
 	pipe := tasks_coll.Pipe([]M{

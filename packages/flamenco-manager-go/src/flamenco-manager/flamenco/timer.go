@@ -1,7 +1,6 @@
 package flamenco
 
 import (
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -14,13 +13,15 @@ type TimerPing struct{}
  *
  * :param sleep_first: if true: sleep first, then ping. If false: ping first, then sleep.
  */
-func Timer(name string, sleep_duration time.Duration, sleep_first bool,
-	done_chan <-chan bool, done_wg *sync.WaitGroup) <-chan TimerPing {
+func Timer(name string, sleep_duration time.Duration, sleep_first bool, closable *closable) <-chan TimerPing {
 	timer_chan := make(chan TimerPing, 1) // don't let the timer block
 
 	go func() {
-		done_wg.Add(1)
-		defer done_wg.Done()
+		if !closable.closableAdd(1) {
+			log.Infof("Timer '%s' goroutine shutting down.", name)
+			return
+		}
+		defer closable.closableDone()
 		defer close(timer_chan)
 
 		last_timer := time.Time{}
@@ -30,7 +31,7 @@ func Timer(name string, sleep_duration time.Duration, sleep_first bool,
 
 		for {
 			select {
-			case <-done_chan:
+			case <-closable.doneChan:
 				log.Infof("Timer '%s' goroutine shutting down.", name)
 				return
 			default:
@@ -55,17 +56,18 @@ func Timer(name string, sleep_duration time.Duration, sleep_first bool,
  *
  * :returns: "ok", so true when the sleep stopped normally, and false if it was killed.
  */
-func KillableSleep(name string, sleep_duration time.Duration,
-	done_chan <-chan bool, done_wg *sync.WaitGroup) bool {
+func KillableSleep(name string, sleep_duration time.Duration, closable *closable) bool {
 
-	done_wg.Add(1)
-	defer done_wg.Done()
+	if !closable.closableAdd(1) {
+		return false
+	}
+	defer closable.closableDone()
 	defer log.Infof("Sleep '%s' goroutine is shut down.", name)
 
 	sleep_start := time.Now()
 	for {
 		select {
-		case <-done_chan:
+		case <-closable.doneChan:
 			log.Infof("Sleep '%s' goroutine shutting down.", name)
 			return false
 		default:
@@ -88,7 +90,7 @@ func UtcNow() *time.Time {
 	return &now
 }
 
-/* Sends a 'true' to the channel after the given timeout.
+/* TimeoutAfter: Sends a 'true' to the channel after the given timeout.
  * Send a 'false' to the channel yourself if you want to notify the receiver that
  * a timeout didn't happen.
  *

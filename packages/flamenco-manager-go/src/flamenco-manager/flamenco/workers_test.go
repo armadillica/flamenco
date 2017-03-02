@@ -46,12 +46,12 @@ func (s *SchedulerTestSuite) TestWorkerMayRun(t *check.C) {
 	}
 
 	// Make sure the scheduler gives us this task.
-	resp_rec, ar := WorkerTestRequest(s.worker_lnx.Id, "GET", "/task")
+	resp_rec, ar := WorkerTestRequest(s.worker_lnx.ID, "GET", "/task")
 	s.sched.ScheduleTask(resp_rec, ar)
 
 	// Right after obtaining the task, we should be allowed to keep running it.
-	resp_rec, ar = WorkerTestRequest(s.worker_lnx.Id, "GET", "/may-i-run/%s", task.Id.Hex())
-	WorkerMayRunTask(resp_rec, ar, s.db, task.Id)
+	resp_rec, ar = WorkerTestRequest(s.worker_lnx.ID, "GET", "/may-i-run/%s", task.ID.Hex())
+	WorkerMayRunTask(resp_rec, ar, s.db, task.ID)
 
 	resp := MayKeepRunningResponse{}
 	parseJson(t, resp_rec, 200, &resp)
@@ -59,22 +59,22 @@ func (s *SchedulerTestSuite) TestWorkerMayRun(t *check.C) {
 	assert.Equal(t, true, resp.MayKeepRunning)
 
 	// If we now change the task status to "cancel-requested", the worker should be denied.
-	assert.Nil(t, s.db.C("flamenco_tasks").UpdateId(task.Id,
+	assert.Nil(t, s.db.C("flamenco_tasks").UpdateId(task.ID,
 		bson.M{"$set": bson.M{"status": "cancel-requested"}}))
-	resp_rec, ar = WorkerTestRequest(s.worker_lnx.Id, "GET", "/may-i-run/%s", task.Id.Hex())
-	WorkerMayRunTask(resp_rec, ar, s.db, task.Id)
+	resp_rec, ar = WorkerTestRequest(s.worker_lnx.ID, "GET", "/may-i-run/%s", task.ID.Hex())
+	WorkerMayRunTask(resp_rec, ar, s.db, task.ID)
 
 	resp = MayKeepRunningResponse{}
 	parseJson(t, resp_rec, 200, &resp)
 	assert.Equal(t, false, resp.MayKeepRunning)
 
 	// Changing status back to "active", but assigning to another worker
-	assert.Nil(t, s.db.C("flamenco_tasks").UpdateId(task.Id, bson.M{"$set": bson.M{
+	assert.Nil(t, s.db.C("flamenco_tasks").UpdateId(task.ID, bson.M{"$set": bson.M{
 		"status":    "active",
-		"worker_id": s.worker_win.Id,
+		"worker_id": s.worker_win.ID,
 	}}))
-	resp_rec, ar = WorkerTestRequest(s.worker_lnx.Id, "GET", "/may-i-run/%s", task.Id.Hex())
-	WorkerMayRunTask(resp_rec, ar, s.db, task.Id)
+	resp_rec, ar = WorkerTestRequest(s.worker_lnx.ID, "GET", "/may-i-run/%s", task.ID.Hex())
+	WorkerMayRunTask(resp_rec, ar, s.db, task.ID)
 
 	resp = MayKeepRunningResponse{}
 	parseJson(t, resp_rec, 200, &resp)
