@@ -1,9 +1,0 @@
--r requirements.txt
-
-# Primary dependencies
-pytest==3.0.5
-pytest-cov==2.4.0
-
-# Secondary dependencies
-coverage==4.2
-py==1.4.32

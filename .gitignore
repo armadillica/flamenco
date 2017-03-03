@@ -1,25 +1,19 @@
 *.pyc
+__pycache__
 *.bak
 *.blend[1-9]
 /temp/
 /docs/site/
 
-.cache/
 .coverage
 *.css.map
 
-/packages/flamenco-manager-go/bin/
-/packages/flamenco-manager-go/pkg/
-/packages/flamenco-manager-go/src/[a-eg-z]*
-/packages/flamenco-manager-go/src/flamenco-manager/flamenco-manager
-/packages/flamenco-manager-go/src/flamenco-manager/flamenco-manager.yaml
-/packages/flamenco-manager-go/src/flamenco-manager/test_*.json
-/packages/flamenco-manager-go/src/flamenco-manager/docker/flamenco-manager
-/packages/flamenco-manager-go/src/flamenco-manager/docker/flamenco-manager.yaml
-/packages/flamenco-manager-go/src/flamenco-manager/docker/flamenco-manager-install-*.sh
-/packages/flamenco-manager-go/src/flamenco-manager/docker/flamenco-manager-*.docker.tgz
+/build
+/.cache
+/*.egg-info/
+/.eggs/
+/node_modules/
+/flamenco/templates/
+/flamenco/static/assets/css/
+/flamenco/static/assets/js/generated/
 
-/packages/flamenco-worker-python/flamenco_worker.egg-info/
-/packages/flamenco-worker-python/flamenco-worker.db
-/packages/flamenco-worker-python/build/
-/packages/flamenco-worker-python/dist/

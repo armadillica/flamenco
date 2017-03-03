@@ -1,33 +1,54 @@
-# Flamenco 2.0
+# Flamenco Server
 
-Development repo for Flamenco 2.0 (originally known as brender). Flamenco is a Free and Open Source 
-Job distribution system for render farms.
+This is the Flamenco Server component, implemented as a Pillar extension.
 
-Warning: currently Flamenco is in beta stage, and can still change in major ways.
+## Development Setup
 
-This project contains the 3 main components of the system: Server, Manager(s) and Worker(s)
+In order to get Flamenco up and running, we need to follow these steps:
 
-## Server
-Flamenco Server is a [Pillar](https://pillarframework.org) extension, therefore it is implemented
-in Python and shares all the existing Pillar requirements. Flamenco Server relies on Pillar to
-provide all the authentication, authorization, project and user management functionality.
+- add Flamenco as Pillar extension to our project
+- create a Manager doc
+- give a user 'admin' rights for Flamenco (this is temporary)
+- give setup a project to use Flamenco
 
-## Manager
-The Manager is written in [Go](https://golang.org/). The Manager is documented in its own
-[README](./packages/flamenco-manager-go/README.md).
-
-## Worker
-The Flamenco worker is a very simple standalone component implemented in
-[Python](https://www.python.org/). The Worker is documented
-in its own [README](./packages/flamenco-worker-python/README.md).
-
-## User and Developer documentation
-The documentation is built with [MkDocs](http://www.mkdocs.org/) and uses the 
-[mkdocs-material](http://squidfunk.github.io/mkdocs-material/) theme, so make sure you have it 
-installed. You can build the docs by running.
+Add Flamenco to your Pillar application as an extension (docs will be available in the Pillar 
+documentaiton). At this point we can proceed with the setup of our first manager.
 
 ```
-pip install mkdocs-material
-cd docs
-mkdocs serve
+python manage.py flamenco create_manager flm-manager@example.com local-manager 'Local manager'
 ```
+
+The required params are: 
+- `flm-manager@example.com` is a new Pillar service account that gets associated with the
+new manager created
+- `local-manager` is the name of the manager
+- `'Local manager` is a description of the manager
+
+Once the manager doc is created, we note down the following info:
+
+- `_id` in the new manager doc
+- the *Access Token*
+
+We will use these values in the `flamenco-manager.yaml` config file for the Manager.
+
+Next, we allow a user to interact with a Flamenco project:
+
+```
+python manage.py make_admin user@example.com
+```
+
+where `user@example.com` is an existing user.
+
+Finally, we set up a project to be used with Flamenco:
+
+```
+python manage.py setup_for_flamenco project-url
+```
+
+At this point we can run our server and access Flamenco on the `/flamenco` endpoint.
+
+## TODO
+
+- When a certain percentage of a job's tasks have failed, cancel the remaining
+  tasks and only then mark the job as failed.
+- Handle parent relations between tasks (scheduling, canceling, failing etc.)

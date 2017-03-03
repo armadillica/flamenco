@@ -1,8 +1,0 @@
-# Run Flamenco-Worker outside office hours.
-
-SHELL=/bin/bash
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
-
-# m h dom mon dow user  command
-0 20 *  * mon-fri root  /usr/sbin/service flamenco-worker start
-0  8 *  * mon-fri root  /usr/sbin/service flamenco-worker stop

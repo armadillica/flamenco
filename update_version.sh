@@ -5,9 +5,7 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-sed "s/version='[^']*'/version='$1'/" -i packages/flamenco/setup.py
-sed "s/version='[^']*'/version='$1'/" -i packages/flamenco-worker-python/setup.py
-sed "s/FLAMENCO_VERSION = \"[^\"]*\"/FLAMENCO_VERSION = \"$1\"/" -i packages/flamenco-manager-go/src/flamenco-manager/main.go
+sed "s/version='[^']*'/version='$1'/" -i setup.py
 
 git diff
 echo
