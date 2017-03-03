@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-from __future__ import absolute_import
 
 from bson import ObjectId
 
@@ -17,14 +16,14 @@ class TaskPatchingTest(AbstractFlamencoTest):
         self.mngr_id = mngr_doc['_id']
         self.mngr_token = token['token']
 
-        self.create_user(user_id=24 * 'f', roles={u'flamenco-admin'})
-        self.create_valid_auth_token(24 * 'f', u'fladmin-token')
+        self.create_user(user_id=24 * 'f', roles={'flamenco-admin'})
+        self.create_valid_auth_token(24 * 'f', 'fladmin-token')
 
         with self.app.test_request_context():
             force_cli_user()
             job = self.jmngr.api_create_job(
                 'test job',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep',
                 {
                     'frames': '12-18, 20-22',

@@ -68,7 +68,7 @@ class TaskManager(object):
         api = pillar_api()
         payload = {
             'where': {
-                'job': unicode(job_id),
+                'job': str(job_id),
             },
             'sorted': [
                 ('priority', -1),

@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-from __future__ import absolute_import
 
 import mock
 
@@ -17,7 +16,7 @@ class JobManagerTest(AbstractFlamencoTest):
             force_cli_user()
             self.jmngr.api_create_job(
                 'test job',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep',
                 {
                     'frames': '12-18, 20-22',
@@ -37,8 +36,8 @@ class JobManagerTest(AbstractFlamencoTest):
             self.assertEqual(1, len(jobs))
             job = jobs[0]
 
-            self.assertEqual(u'Wörk wørk w°rk.', job['description'])
-            self.assertEqual(u'sleep', job['job_type'])
+            self.assertEqual('Wörk wørk w°rk.', job['description'])
+            self.assertEqual('sleep', job['job_type'])
 
         # Test the tasks
         with self.app.test_request_context():
@@ -48,18 +47,18 @@ class JobManagerTest(AbstractFlamencoTest):
             self.assertEqual(2, len(tasks))
             task = tasks[0]
 
-            self.assertEqual(u'sleep-12-16', task['name'])
+            self.assertEqual('sleep-12-16', task['name'])
             self.assertEqual({
-                u'name': u'echo',
-                u'settings': {
-                    u'message': u'Preparing to sleep',
+                'name': 'echo',
+                'settings': {
+                    'message': 'Preparing to sleep',
                 }
             }, task['commands'][0])
 
             self.assertEqual({
-                u'name': u'sleep',
-                u'settings': {
-                    u'time_in_seconds': 3,
+                'name': 'sleep',
+                'settings': {
+                    'time_in_seconds': 3,
                 }
             }, task['commands'][1])
 
@@ -79,15 +78,15 @@ class JobStatusChangeTest(AbstractFlamencoTest):
             force_cli_user()
             job = self.jmngr.api_create_job(
                 'test job',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'blender-render',
                 {
-                    'blender_cmd': u'{blender}',
-                    'filepath': u'/my/blend.file',
-                    'frames': u'12-18, 20-25',
+                    'blender_cmd': '{blender}',
+                    'filepath': '/my/blend.file',
+                    'frames': '12-18, 20-25',
                     'chunk_size': 2,
                     'time_in_seconds': 3,
-                    'render_output': u'/not-relevant-now/####',
+                    'render_output': '/not-relevant-now/####',
                 },
                 self.proj_id,
                 ctd.EXAMPLE_PROJECT_OWNER_ID,
@@ -119,7 +118,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
                                        projection={'status': 1})
 
         self.assertIsNotNone(task)
-        self.assertEqual(task['status'], unicode(expected_status),
+        self.assertEqual(task['status'], str(expected_status),
                          "Task %i:\n   has status: '%s'\n but expected: '%s'" % (
                              task_idx, task['status'], expected_status))
 

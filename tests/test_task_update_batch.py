@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-from __future__ import absolute_import
 
 from bson import ObjectId
 
@@ -59,7 +58,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
             force_cli_user()
             job = self.jmngr.api_create_job(
                 'test job',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep',
                 {
                     'frames': '12-18, 20-22',
@@ -187,7 +186,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         tasks = self.do_schedule_tasks()
 
         # Any of these statuses should set the job to active.
-        for status in (u'active', u'completed'):
+        for status in ('active', 'completed'):
             self.force_job_status('queued')
             self.do_batch_update(tasks, [0], [status])
             self.assert_job_status('active')
@@ -255,7 +254,7 @@ class LargeTaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
             force_cli_user()
             job = self.jmngr.api_create_job(
                 'test job',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep',
                 {
                     'frames': '1-100',
@@ -300,7 +299,7 @@ class LargeTaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         tasks = self.do_schedule_tasks()
 
         self.do_batch_update(
-            tasks, range(14), 14 * ['claimed-by-manager'])
+            tasks, list(range(14)), 14 * ['claimed-by-manager'])
 
         self.do_batch_update(
             tasks, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 10 * ['failed'],

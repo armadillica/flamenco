@@ -15,7 +15,7 @@ class Sleep(AbstractJobCompiler):
         task_count = 0
         for chunk_frames in iter_frame_range(job_settings['frames'], job_settings['chunk_size']):
             task_cmds = [
-                commands.Echo(message=u'Preparing to sleep'),
+                commands.Echo(message='Preparing to sleep'),
                 commands.Sleep(time_in_seconds=job_settings['time_in_seconds']),
             ]
             name = 'sleep-%s' % frame_range_merge(chunk_frames)

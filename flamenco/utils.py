@@ -26,7 +26,7 @@ def frame_range_parse(frame_range=None):
         elif num_parts == 2:
             frame_start = int(x[0])
             frame_end = int(x[1])
-            frames_list += range(frame_start, frame_end + 1)
+            frames_list += list(range(frame_start, frame_end + 1))
             # print("Frame range %d-%d" % (frame_start, frame_end))
     frames_list.sort()
     return frames_list
@@ -66,7 +66,7 @@ def frame_range_merge(frames_list=None, blender_style=False):
                 ranges.append(str(start_frame))
                 ranges.append(str(prev_frame))
             else:
-                ranges.append(u'{}{}{}'.format(start_frame, range_sep, prev_frame))
+                ranges.append('{}{}{}'.format(start_frame, range_sep, prev_frame))
             start_frame = current_frame
         prev_frame = current_frame
     if start_frame == current_frame:
@@ -75,8 +75,8 @@ def frame_range_merge(frames_list=None, blender_style=False):
         ranges.append(str(start_frame))
         ranges.append(str(current_frame))
     else:
-        ranges.append(u'{}{}{}'.format(start_frame, range_sep, current_frame))
-    return u','.join(ranges)
+        ranges.append('{}{}{}'.format(start_frame, range_sep, current_frame))
+    return ','.join(ranges)
 
 
 def iter_frame_range(merged_frame_range, chunk_size):
@@ -128,4 +128,4 @@ def camel_case_to_lower_case_underscore(string):
 
     if isinstance(string, str):
         return '_'.join(words)
-    return u'_'.join(words)
+    return '_'.join(words)

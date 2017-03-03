@@ -13,14 +13,14 @@ class AbstractCommand(object):
         """Returns the command name."""
         from flamenco.utils import camel_case_to_lower_case_underscore
 
-        return camel_case_to_lower_case_underscore(unicode(cls.__name__))
+        return camel_case_to_lower_case_underscore(str(cls.__name__))
 
     def to_dict(self):
         """Returns a dictionary representation of this command, for JSON serialisation."""
 
         return {
-            u'name': self.cmdname(),
-            u'settings': attr.asdict(self),
+            'name': self.cmdname(),
+            'settings': attr.asdict(self),
         }
 
 
@@ -31,23 +31,23 @@ class Sleep(AbstractCommand):
 
 @attr.s
 class Echo(AbstractCommand):
-    message = attr.ib(validator=attr.validators.instance_of(unicode))
+    message = attr.ib(validator=attr.validators.instance_of(str))
 
 
 @attr.s
 class BlenderRender(AbstractCommand):
     # Blender executable to run.
-    blender_cmd = attr.ib(validator=attr.validators.instance_of(unicode))
+    blender_cmd = attr.ib(validator=attr.validators.instance_of(str))
     # blend file path.
-    filepath = attr.ib(validator=attr.validators.instance_of(unicode))
+    filepath = attr.ib(validator=attr.validators.instance_of(str))
     # output format.
-    format = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(unicode)))
+    format = attr.ib(validator=attr.validators.optional(attr.validators.instance_of(str)))
     # output file path, defaults to the path in the blend file itself.
     render_output = attr.ib(
-        validator=attr.validators.optional(attr.validators.instance_of(unicode)))
+        validator=attr.validators.optional(attr.validators.instance_of(str)))
 
     # list of frames to render, as frame range string.
-    frames = attr.ib(validator=attr.validators.instance_of(unicode))
+    frames = attr.ib(validator=attr.validators.instance_of(str))
 
 
 @attr.s
@@ -73,7 +73,7 @@ class MoveOutOfWay(AbstractCommand):
     :ivar src: source path
     """
 
-    src = attr.ib(validator=attr.validators.instance_of(unicode))
+    src = attr.ib(validator=attr.validators.instance_of(str))
 
 
 @attr.s
@@ -81,14 +81,14 @@ class MergeProgressiveRenders(AbstractCommand):
     """Merges two Cycles outputs into one by taking the weighted average.
     """
 
-    input1 = attr.ib(validator=attr.validators.instance_of(unicode))
-    input2 = attr.ib(validator=attr.validators.instance_of(unicode))
-    output = attr.ib(validator=attr.validators.instance_of(unicode))
+    input1 = attr.ib(validator=attr.validators.instance_of(str))
+    input2 = attr.ib(validator=attr.validators.instance_of(str))
+    output = attr.ib(validator=attr.validators.instance_of(str))
 
     weight1 = attr.ib(validator=attr.validators.instance_of(int))
     weight2 = attr.ib(validator=attr.validators.instance_of(int))
 
     # Blender command to run in order to merge the two EXR files.
     # This is usually determined by the Flamenco Manager configuration.
-    blender_cmd = attr.ib(validator=attr.validators.instance_of(unicode),
-                          default=u'{blender}')
+    blender_cmd = attr.ib(validator=attr.validators.instance_of(str),
+                          default='{blender}')

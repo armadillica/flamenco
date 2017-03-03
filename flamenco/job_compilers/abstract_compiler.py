@@ -34,13 +34,13 @@ class AbstractJobCompiler(object):
             return
 
         from flamenco import exceptions
-        job_id = job.get(u'_id', u'')
+        job_id = job.get('_id', '')
         if job_id:
-            job_id = u' ' + job_id
+            job_id = ' ' + job_id
         if len(missing) == 1:
-            setting = u'setting'
+            setting = 'setting'
         else:
-            setting = u'settings'
+            setting = 'settings'
 
         raise exceptions.JobSettingError(
-            u'Job%s is missing required %s: %s' % (job_id, setting, u', '.join(missing)))
+            'Job%s is missing required %s: %s' % (job_id, setting, ', '.join(missing)))

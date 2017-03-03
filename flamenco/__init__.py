@@ -8,8 +8,8 @@ from pillar.extension import PillarExtension
 EXTENSION_NAME = 'flamenco'
 
 # Roles required to view job, manager or task details.
-ROLES_REQUIRED_TO_VIEW_ITEMS = {u'demo', u'subscriber', u'admin', u'flamenco-admin'}
-ROLES_REQUIRED_TO_VIEW_LOGS = {u'admin', u'flamenco-admin'}
+ROLES_REQUIRED_TO_VIEW_ITEMS = {'demo', 'subscriber', 'admin', 'flamenco-admin'}
+ROLES_REQUIRED_TO_VIEW_LOGS = {'admin', 'flamenco-admin'}
 
 
 class FlamencoExtension(PillarExtension):
@@ -50,7 +50,7 @@ class FlamencoExtension(PillarExtension):
 
         :rtype: dict
         """
-        from eve_settings import DOMAIN
+        from .eve_settings import DOMAIN
         return {'DOMAIN': DOMAIN}
 
     def blueprints(self):
@@ -198,7 +198,7 @@ class FlamencoExtension(PillarExtension):
 
         from pillar.api.utils.authorization import user_matches_roles
 
-        return user_matches_roles({u'admin', u'flamenco-admin'})
+        return user_matches_roles({'admin', 'flamenco-admin'})
 
     def sidebar_links(self, project):
 

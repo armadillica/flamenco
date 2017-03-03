@@ -54,8 +54,8 @@ def patch_job(job_id):
     return handler(job_id, patch)
 
 
-@patch_handler(u'set-job-status')
-@authorization.require_login(require_roles={u'flamenco-admin'})
+@patch_handler('set-job-status')
+@authorization.require_login(require_roles={'flamenco-admin'})
 def patch_set_job_status(job_id, patch):
     """Updates a job's status in the database."""
 

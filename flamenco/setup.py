@@ -4,8 +4,6 @@ This is intended to be used by the CLI and unittests only, not tested
 for live/production situations.
 """
 
-from __future__ import print_function, division
-
 import logging
 
 from bson import ObjectId
@@ -94,8 +92,8 @@ def create_manager(email, name, description, url=None):
     def update_existing(service):
         pass
     account, token = create_service_account(email,
-                                            [u'flamenco_manager'],
-                                            {u'flamenco_manager': {}},
+                                            ['flamenco_manager'],
+                                            {'flamenco_manager': {}},
                                             update_existing=update_existing)
 
     mngr_doc = current_flamenco.manager_manager.create_manager(

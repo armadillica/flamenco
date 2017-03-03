@@ -25,7 +25,7 @@ ALLOWED_JOB_STATUSES_FROM_WEB = {'cancel-requested', 'queued'}
 def for_project(project, job_id=None, task_id=None):
     jobs = current_flamenco.job_manager.jobs_for_project(project['_id'])
     return render_template('flamenco/jobs/list_for_project.html',
-                           stats={'nr_of_jobs': u'∞', 'nr_of_tasks': u'∞'},
+                           stats={'nr_of_jobs': '∞', 'nr_of_tasks': '∞'},
                            jobs=jobs['_items'],
                            open_job_id=job_id,
                            open_task_id=task_id,

@@ -12,17 +12,17 @@ log = logging.getLogger(__name__)
 # TODO: maybe move allowed task transition handling to a different bit of code.
 ACCEPTED_AFTER_CANCEL_REQUESTED = {'canceled', 'failed', 'completed'}
 
-DEPSGRAPH_RUNNABLE_JOB_STATUSES = [u'queued', u'active', u'cancel-requested']
-DEPSGRAPH_CLEAN_SLATE_TASK_STATUSES = [u'queued', u'claimed-by-manager',
-                                       u'active', u'cancel-requested']
-DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES = [u'queued', u'claimed-by-manager']
+DEPSGRAPH_RUNNABLE_JOB_STATUSES = ['queued', 'active', 'cancel-requested']
+DEPSGRAPH_CLEAN_SLATE_TASK_STATUSES = ['queued', 'claimed-by-manager',
+                                       'active', 'cancel-requested']
+DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES = ['queued', 'claimed-by-manager']
 
 
 def manager_api_call(wrapped):
     """Decorator, performs some standard stuff for Manager API endpoints."""
     import functools
 
-    @authorization.require_login(require_roles={u'service', u'flamenco_manager'}, require_all=True)
+    @authorization.require_login(require_roles={'service', 'flamenco_manager'}, require_all=True)
     @functools.wraps(wrapped)
     def wrapper(manager_id, *args, **kwargs):
         from flamenco import current_flamenco
@@ -279,15 +279,15 @@ def get_depsgraph(manager_id, request_json):
         log.info('Returning depsgraph of %i tasks', len(depsgraph))
 
     # Update the task status in the database to move queued tasks to claimed-by-manager.
-    task_query['status'] = u'queued'
+    task_query['status'] = 'queued'
     tasks_coll.update_many(task_query,
-                           {u'$set': {u'status': u'claimed-by-manager'}})
+                           {'$set': {'status': 'claimed-by-manager'}})
 
     # Update the returned task statuses. Unfortunately Mongo doesn't support
     # find_and_modify() on multiple documents.
     for task in depsgraph:
-        if task['status'] == u'queued':
-            task['status'] = u'claimed-by-manager'
+        if task['status'] == 'queued':
+            task['status'] = 'claimed-by-manager'
 
     # Must be a dict to convert to BSON.
     respdoc = {

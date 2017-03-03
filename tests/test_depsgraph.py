@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-from __future__ import absolute_import
 
 from bson import ObjectId
 
@@ -22,7 +21,7 @@ class DepsgraphTest(AbstractFlamencoTest):
             force_cli_user()
             job = self.jmngr.api_create_job(
                 'test job 1',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep',
                 {
                     'frames': '12-18, 20-22',
@@ -36,7 +35,7 @@ class DepsgraphTest(AbstractFlamencoTest):
             self.jobid1 = job['_id']
             job = self.jmngr.api_create_job(
                 'test job 2',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep',
                 {
                     'frames': '12-18, 20-22',
@@ -50,7 +49,7 @@ class DepsgraphTest(AbstractFlamencoTest):
             self.jobid2 = job['_id']
             job = self.jmngr.api_create_job(
                 'test job 3',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep',
                 {
                     'frames': '12-18, 20-22',
@@ -83,12 +82,12 @@ class DepsgraphTest(AbstractFlamencoTest):
                         auth_token=self.mngr_token)
         depsgraph = resp.json()['depsgraph']
         self.assertEqual(len(self.tasks), len(depsgraph))
-        self.assertEqual({unicode(t['_id']) for t in self.tasks},
+        self.assertEqual({str(t['_id']) for t in self.tasks},
                          {t['_id'] for t in depsgraph})
 
         # Tasks should be returned in full, no projection.
         task1 = self.tasks[1]
-        depstask1 = next(t for t in depsgraph if t['_id'] == unicode(task1['_id']))
+        depstask1 = next(t for t in depsgraph if t['_id'] == str(task1['_id']))
         self.assertEqual(set(task1.keys()), set(depstask1.keys()))
 
         # The 'X-Flamenco-Last-Updated' header should contain the last-changed task.
@@ -100,8 +99,8 @@ class DepsgraphTest(AbstractFlamencoTest):
         # The tasks in the database, as well as the response, should be set to claimed-by-manager
         with self.app.test_request_context():
             dbtasks = self.flamenco.db('tasks').find({'_id': {'$in': self.task_ids}})
-            self.assertEqual(8 * [u'claimed-by-manager'], [task['status'] for task in dbtasks])
-        self.assertEqual(8 * [u'claimed-by-manager'], [task['status'] for task in depsgraph])
+            self.assertEqual(8 * ['claimed-by-manager'], [task['status'] for task in dbtasks])
+        self.assertEqual(8 * ['claimed-by-manager'], [task['status'] for task in depsgraph])
 
     def test_get_clean_slate_some_tasks_unrunnable(self):
         self.force_task_status(0, 'failed')
@@ -114,15 +113,15 @@ class DepsgraphTest(AbstractFlamencoTest):
         self.assertEqual(len(self.tasks) - 3, len(depsgraph))
 
         deps_tids = {t['_id'] for t in depsgraph}
-        self.assertEqual({unicode(tid) for tid in self.task_ids[3:]}, deps_tids)
+        self.assertEqual({str(tid) for tid in self.task_ids[3:]}, deps_tids)
 
         # The previously queued tasks in the database, as well as the response,
         # should be set to claimed-by-manager
         with self.app.test_request_context():
             dbtasks = self.flamenco.db('tasks').find({'_id': {'$in': self.task_ids}})
-            self.assertEqual([u'failed', u'canceled', u'completed'] + 5 * [u'claimed-by-manager'],
+            self.assertEqual(['failed', 'canceled', 'completed'] + 5 * ['claimed-by-manager'],
                              [task['status'] for task in dbtasks])
-        self.assertEqual(5 * [u'claimed-by-manager'],
+        self.assertEqual(5 * ['claimed-by-manager'],
                          [task['status'] for task in depsgraph])
 
     def test_get_subsequent_call(self):
@@ -154,8 +153,8 @@ class DepsgraphTest(AbstractFlamencoTest):
         self.assertEqual(2, len(depsgraph))  # we should not get the cancel-requested task back.
 
         deps_tids = {t['_id'] for t in depsgraph}
-        self.assertEqual({unicode(self.task_ids[0]),
-                          unicode(self.task_ids[2])},
+        self.assertEqual({str(self.task_ids[0]),
+                          str(self.task_ids[2])},
                          deps_tids)
 
         # The 'X-Flamenco-Last-Updated' header should contain the last-changed task.
@@ -166,7 +165,7 @@ class DepsgraphTest(AbstractFlamencoTest):
         # They should be equal to second precision
         self.assertEqual(task2['_updated'], last_modified)
 
-        self.assertEqual(task0['status'], u'claimed-by-manager')
-        self.assertEqual(task2['status'], u'claimed-by-manager')
-        self.assertEqual(2 * [u'claimed-by-manager'],
+        self.assertEqual(task0['status'], 'claimed-by-manager')
+        self.assertEqual(task2['status'], 'claimed-by-manager')
+        self.assertEqual(2 * ['claimed-by-manager'],
                          [task['status'] for task in depsgraph])

@@ -49,7 +49,7 @@ class BlenderRenderProgressive(BlenderRender):
             # uses.
             render_task_ids = self._make_progressive_render_tasks(
                 job,
-                u'render-smpl%i-%i-frm%%s' % (cycles_samples_from, cycles_samples_to),
+                'render-smpl%i-%i-frm%%s' % (cycles_samples_from, cycles_samples_to),
                 move_existing_task_id,
                 cycles_chunk_idx + 1,
                 cycles_samples_from,
@@ -65,7 +65,7 @@ class BlenderRenderProgressive(BlenderRender):
             else:
                 merge_task_ids = self._make_merge_tasks(
                     job,
-                    u'merge-to-smpl%i-frm%%s' % cycles_samples_to,
+                    'merge-to-smpl%i-frm%%s' % cycles_samples_to,
                     cycles_chunk_idx + 1,
                     next_merge_task_deps,
                     render_task_ids,
@@ -87,16 +87,16 @@ class BlenderRenderProgressive(BlenderRender):
         from flamenco import exceptions
 
         render_format = job['settings']['format']
-        if render_format.upper() != u'EXR':
+        if render_format.upper() != 'EXR':
             raise exceptions.JobSettingError(
-                u'Job %s must use format="EXR", not %r' % (job[u'_id'], render_format))
+                'Job %s must use format="EXR", not %r' % (job['_id'], render_format))
 
         # This is quite a limitation, but makes our code to predict the
         # filename that Blender will use a lot simpler.
         render_output = job['settings']['render_output']
-        if not render_output.endswith(u'######') or render_output.endswith(u'#######'):
+        if not render_output.endswith('######') or render_output.endswith('#######'):
             raise exceptions.JobSettingError(
-                u'Setting "render_output" must end in exactly 6 "#" marks.')
+                'Setting "render_output" must end in exactly 6 "#" marks.')
 
     def _make_progressive_render_tasks(self,
                                        job, name_fmt, parents,
@@ -134,7 +134,7 @@ class BlenderRenderProgressive(BlenderRender):
                     filepath=job_settings['filepath'],
                     format=job_settings.get('format'),
                     # Don't render to actual render output, but to an intermediate file.
-                    render_output=unicode(render_output),
+                    render_output=str(render_output),
                     frames=frame_range_bstyle,
                     cycles_num_chunks=self.cycles_num_chunks,
                     cycles_chunk=cycles_chunk_idx,
@@ -160,13 +160,13 @@ class BlenderRenderProgressive(BlenderRender):
 
     def _render_output(self, cycles_samples_from, cycles_samples_to):
         """Intermediate render output path, with ###### placeholder for the frame nr"""
-        render_fname = u'render-smpl-%i-%i-frm-######' % (cycles_samples_from, cycles_samples_to)
+        render_fname = 'render-smpl-%i-%i-frm-######' % (cycles_samples_from, cycles_samples_to)
         render_output = self.intermediate_path / render_fname
         return render_output
 
     def _merge_output(self, cycles_samples_to):
         """Intermediate merge output path, with ###### placeholder for the frame nr"""
-        merge_fname = u'merge-smpl-%i-frm-######' % cycles_samples_to
+        merge_fname = 'merge-smpl-%i-frm-######' % cycles_samples_to
         merge_output = self.intermediate_path / merge_fname
         return merge_output
 
@@ -219,9 +219,9 @@ class BlenderRenderProgressive(BlenderRender):
             for framenr in chunk_frames:
                 task_cmds.append(
                     commands.MergeProgressiveRenders(
-                        input1=unicode(input1).replace(u'######', u'%06i.exr') % framenr,
-                        input2=unicode(input2).replace(u'######', u'%06i.exr') % framenr,
-                        output=unicode(output).replace(u'######', u'%06i.exr') % framenr,
+                        input1=str(input1).replace('######', '%06i.exr') % framenr,
+                        input2=str(input2).replace('######', '%06i.exr') % framenr,
+                        output=str(output).replace('######', '%06i.exr') % framenr,
                         weight1=weight1,
                         weight2=weight2,
                     ))

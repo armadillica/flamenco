@@ -50,8 +50,8 @@ def patch_task(task_id):
     return handler(task_id, patch)
 
 
-@patch_handler(u'set-task-status')
-@authorization.require_login(require_roles={u'flamenco-admin'})
+@patch_handler('set-task-status')
+@authorization.require_login(require_roles={'flamenco-admin'})
 def patch_set_task_status(task_id, patch):
     """Updates a task's status in the database."""
 

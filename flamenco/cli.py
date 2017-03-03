@@ -68,9 +68,9 @@ def create_test_job(manager_id, user_email, project_url):
 
     # Create the job
     job = flamenco.current_flamenco.job_manager.api_create_job(
-        u'CLI test job',
-        u'Test job created from the server CLI',
-        u'sleep',
+        'CLI test job',
+        'Test job created from the server CLI',
+        'sleep',
         {
             'frames': '1-30, 40-44',
             'chunk_size': 13,
@@ -87,7 +87,7 @@ def make_admin(user_email):
 
     from pillar.api.service import do_badger
 
-    _, status = do_badger('grant', user_email, u'flamenco-admin')
+    _, status = do_badger('grant', user_email, 'flamenco-admin')
     if status != 204:
         log.error('Unable to find user %s', user_email)
         return 1
@@ -102,7 +102,7 @@ def revoke_admin(user_email):
 
     from pillar.api.service import do_badger
 
-    _, status = do_badger('revoke', user_email, u'flamenco-admin')
+    _, status = do_badger('revoke', user_email, 'flamenco-admin')
     if status != 204:
         log.error('Unable to find user %s', user_email)
         return 1

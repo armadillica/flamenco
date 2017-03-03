@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-from __future__ import absolute_import
 
 from pillar.tests import common_test_data as ctd
 from abstract_flamenco_test import AbstractFlamencoTest
@@ -16,7 +15,7 @@ class TaskManagerTest(AbstractFlamencoTest):
             force_cli_user()
             job_doc = self.jmngr.api_create_job(
                 'test job',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep', {
                     'frames': '12-18, 20-22',
                     'chunk_size': 7,
@@ -30,7 +29,7 @@ class TaskManagerTest(AbstractFlamencoTest):
             self.tmngr.api_create_task(
                 job_doc,
                 [
-                    commands.Echo(message=u'ẑžƶźz'),
+                    commands.Echo(message='ẑžƶźz'),
                     commands.Sleep(time_in_seconds=3),
                 ],
                 'sleep-1-13',
@@ -45,16 +44,16 @@ class TaskManagerTest(AbstractFlamencoTest):
             dbtask = dbtasks[-1]
 
             self.assertEqual({
-                u'name': u'echo',
-                u'settings': {
-                    u'message': u'ẑžƶźz',
+                'name': 'echo',
+                'settings': {
+                    'message': 'ẑžƶźz',
                 }
             }, dbtask['commands'][0])
 
             self.assertEqual({
-                u'name': u'sleep',
-                u'settings': {
-                    u'time_in_seconds': 3,
+                'name': 'sleep',
+                'settings': {
+                    'time_in_seconds': 3,
                 }
             }, dbtask['commands'][1])
 
@@ -68,7 +67,7 @@ class TaskManagerTest(AbstractFlamencoTest):
             force_cli_user()
             job_doc = self.jmngr.api_create_job(
                 'test job',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep', {
                     'frames': '12-18, 20-22',
                     'chunk_size': 7,
@@ -87,22 +86,22 @@ class TaskManagerTest(AbstractFlamencoTest):
 
             # dependent task that is used as a single parent.
             taskid1 = self.tmngr.api_create_task(
-                job_doc, [commands.Echo(message=u'ẑžƶźz')], 'zzz 1', parents=task_ids,
+                job_doc, [commands.Echo(message='ẑžƶźz')], 'zzz 1', parents=task_ids,
             )
 
             # task dependent on multiple tasks that is not used as a parent.
             taskid2 = self.tmngr.api_create_task(
-                job_doc, [commands.Echo(message=u'ẑžƶźz')], 'zzz 2', parents=task_ids,
+                job_doc, [commands.Echo(message='ẑžƶźz')], 'zzz 2', parents=task_ids,
             )
 
             # task dependent on a single task that is not used as a parent.
             taskid3 = self.tmngr.api_create_task(
-                job_doc, [commands.Echo(message=u'ẑžƶźz')], 'zzz 3', parents=[taskid1],
+                job_doc, [commands.Echo(message='ẑžƶźz')], 'zzz 3', parents=[taskid1],
             )
 
             # independent task
             taskid4 = self.tmngr.api_create_task(
-                job_doc, [commands.Echo(message=u'ẑžƶźz')], 'zzz 4',
+                job_doc, [commands.Echo(message='ẑžƶźz')], 'zzz 4',
             )
 
             job_enders = self.tmngr.api_find_job_enders(job_id)

@@ -55,16 +55,16 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
     def create_manager_service_account(
             self,
-            email=u'testmanager@example.com',
-            name=u'tēst mānēgūr',
-            url=u'https://username:password@[fe80::42:99ff:fe66:91bd]:5123/path/to/'):
+            email='testmanager@example.com',
+            name='tēst mānēgūr',
+            url='https://username:password@[fe80::42:99ff:fe66:91bd]:5123/path/to/'):
         from flamenco.setup import create_manager
         from pillar.api.utils.authentication import force_cli_user
 
         # Main project will have a manager, job, and tasks.
         with self.app.test_request_context():
             force_cli_user()
-            mngr_doc, account, token = create_manager(email, name, u'descr', url)
+            mngr_doc, account, token = create_manager(email, name, 'descr', url)
 
         return mngr_doc, account, token
 
@@ -72,7 +72,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
         with self.app.test_request_context():
             jobs_coll = self.flamenco.db('jobs')
             job = jobs_coll.find_one(self.job_id, projection={'status': 1})
-        self.assertEqual(job['status'], unicode(expected_status))
+        self.assertEqual(job['status'], str(expected_status))
 
     def set_job_status(self, new_status, job_id=None):
         """Nice, official, ripple-to-task-status approach"""
@@ -93,7 +93,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
         self.assertEqual(1, result.matched_count)
 
     def assert_task_status(self, task_id, expected_status):
-        if isinstance(task_id, basestring):
+        if isinstance(task_id, str):
             from pillar.api.utils import str2id
             task_id = str2id(task_id)
 
@@ -102,7 +102,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
             task = tasks_coll.find_one({'_id': task_id})
 
         self.assertIsNotNone(task, 'Task %s does not exist in the database' % task_id)
-        self.assertEqual(task['status'], unicode(expected_status),
+        self.assertEqual(task['status'], str(expected_status),
                          "Task %s:\n   has status: '%s'\n but expected: '%s'" % (
                              task_id, task['status'], expected_status))
         return task

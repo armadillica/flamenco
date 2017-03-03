@@ -1,5 +1,4 @@
 # -*- encoding: utf-8 -*-
-from __future__ import absolute_import
 
 from pillar.tests import common_test_data as ctd
 from pillar.api.utils.authentication import force_cli_user
@@ -23,7 +22,7 @@ class AccessTest(AbstractFlamencoTest):
         return resp.json()
 
     def _create_user_and_project(self, roles, user_id='cafef00df00df00df00df00d', token='token',
-                                 project_name=u'Prøject El Niño'):
+                                 project_name='Prøject El Niño'):
         self._create_user_with_token(roles, token, user_id=user_id)
         return self._create_project(project_name, token)
 
@@ -42,7 +41,7 @@ class AccessTest(AbstractFlamencoTest):
             force_cli_user()
             job = self.jmngr.api_create_job(
                 'test job',
-                u'Wörk wørk w°rk.',
+                'Wörk wørk w°rk.',
                 'sleep',
                 {
                     'frames': '12-18, 20-22',
@@ -61,8 +60,8 @@ class AccessTest(AbstractFlamencoTest):
         # Another project, also with manager, job, and tasks.
         proj2_owner_id = 24 * 'a'
         self.proj2 = self._create_user_and_project(user_id=proj2_owner_id,
-                                                   roles={u'subscriber'},
-                                                   project_name=u'Prøject 2',
+                                                   roles={'subscriber'},
+                                                   project_name='Prøject 2',
                                                    token='token-proj2-owner')
         self.proj2_id = self.proj2['_id']
 
@@ -77,7 +76,7 @@ class AccessTest(AbstractFlamencoTest):
 
             job = self.jmngr.api_create_job(
                 'test job 2',
-                u'Wörk² wørk² w°rk².',
+                'Wörk² wørk² w°rk².',
                 'sleep',
                 {
                     'frames': '12-18, 20-22',

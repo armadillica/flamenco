@@ -60,7 +60,7 @@ class ManagerManager(object):
 
         from pillar.api.utils.authorization import user_matches_roles
 
-        return user_matches_roles(require_roles={u'service', u'flamenco_manager'},
+        return user_matches_roles(require_roles={'service', 'flamenco_manager'},
                                   require_all=True)
 
     def user_manages(self, mngr_doc_id=None, mngr_doc=None):

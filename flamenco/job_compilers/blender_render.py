@@ -36,7 +36,7 @@ class BlenderRender(AbstractJobCompiler):
         cmd = commands.MoveOutOfWay(src=render_dest_dir)
 
         task_id = self.task_manager.api_create_task(
-            job, [cmd], u'move-existing-frames')
+            job, [cmd], 'move-existing-frames')
 
         return task_id
 
