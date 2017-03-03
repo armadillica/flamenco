@@ -1,0 +1,6 @@
+# Development requirements
+-r requirements.txt
+-r ../pillar/requirements-dev.txt
+
+-e ../pillar-python-sdk
+-e ../pillar

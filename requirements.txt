@@ -1,0 +1,3 @@
+# Primary requirements:
+-r ../pillar-python-sdk/requirements.txt
+-r ../pillar/requirements.txt
