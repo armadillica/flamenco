@@ -33,7 +33,7 @@
 
 	.table.item-properties.item-job-settings
 		.table-body
-			| {% for set_key, set_val in job.settings.to_dict().iteritems()  %}
+			| {% for set_key, set_val in job.settings.to_dict().items()  %}
 			.table-row
 				.table-cell
 					| {{ set_key | undertitle }}
