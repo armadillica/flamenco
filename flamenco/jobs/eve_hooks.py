@@ -48,7 +48,7 @@ def check_job_permission_fetch(job_doc):
 
 
 def check_job_permission_fetch_resource(response):
-    from pylru import lrudecorator
+    from functools import lru_cache
 
     if current_flamenco.current_user_is_flamenco_admin():
         return
@@ -59,7 +59,7 @@ def check_job_permission_fetch_resource(response):
             return
         raise wz_exceptions.Forbidden()
 
-    @lrudecorator(32)
+    @lru_cache(32)
     def user_managers(mngr_doc_id):
         return current_flamenco.manager_manager.user_manages(mngr_doc_id=mngr_doc_id)
 

@@ -21,7 +21,7 @@ class BlenderRenderProgressive(BlenderRender):
 
     def compile(self, job):
         import math
-        from pathlib2 import Path
+        from pathlib import Path
 
         self._log.info('Compiling job %s', job['_id'])
         self.validate_job_settings(job)
