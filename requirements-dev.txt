@@ -2,5 +2,4 @@
 -r requirements.txt
 -r ../pillar/requirements-dev.txt
 
--e ../pillar-python-sdk
--e ../pillar
+-e ../flamenco  # also works from parent project, like blender-cloud
