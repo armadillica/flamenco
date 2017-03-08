@@ -37,8 +37,8 @@ echo "*** GULPA GULPA ***"
 echo
 echo "*** SYNCING ASSETS ***"
 # Exclude files managed by Git.
-rsync -avh $ASSETS --exclude js/vendor/ root@cloud.blender.org:/data/git/flamenco/packages/flamenco/flamenco/static/assets/
+rsync -avh $ASSETS --exclude js/vendor/ root@cloud.blender.org:/data/git/flamenco/flamenco/static/assets/
 
 echo
 echo "*** SYNCING TEMPLATES ***"
-rsync -avh $TEMPLATES root@cloud.blender.org:/data/git/flamenco/packages/flamenco/flamenco/templates/
+rsync -avh $TEMPLATES root@cloud.blender.org:/data/git/flamenco/flamenco/templates/
