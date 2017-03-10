@@ -2,6 +2,13 @@
 
 set -e  # error out when one of the commands in the script errors.
 
+if [ -z "$1" ]; then
+    echo "Usage: $0 {host-to-deploy-to}" >&2
+    exit 1
+fi
+
+DEPLOYHOST="$1"
+
 # macOS does not support readlink -f, so we use greadlink instead
 if [[ `uname` == 'Darwin' ]]; then
     command -v greadlink 2>/dev/null 2>&1 || { echo >&2 "Install greadlink using brew."; exit 1; }
@@ -37,8 +44,8 @@ echo "*** GULPA GULPA ***"
 echo
 echo "*** SYNCING ASSETS ***"
 # Exclude files managed by Git.
-rsync -avh $ASSETS --exclude js/vendor/ root@cloud.blender.org:/data/git/flamenco/flamenco/static/assets/
+rsync -avh $ASSETS --exclude js/vendor/ root@${DEPLOYHOST}:/data/git/flamenco/flamenco/static/assets/
 
 echo
 echo "*** SYNCING TEMPLATES ***"
-rsync -avh $TEMPLATES root@cloud.blender.org:/data/git/flamenco/flamenco/templates/
+rsync -avh $TEMPLATES root@${DEPLOYHOST}:/data/git/flamenco/flamenco/templates/
