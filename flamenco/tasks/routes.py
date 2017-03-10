@@ -15,11 +15,32 @@ TASK_LOG_PAGE_SIZE = 10
 # The task statuses that can be set from the web-interface.
 ALLOWED_TASK_STATUSES_FROM_WEB = {'cancel-requested', 'queued'}
 
+global_blueprint = Blueprint('flamenco.tasks', __name__,
+                             url_prefix='/tasks')
+
 perjob_blueprint = Blueprint('flamenco.tasks.perjob', __name__,
                              url_prefix='/<project_url>/jobs/<job_id>')
 perproject_blueprint = Blueprint('flamenco.tasks.perproject', __name__,
                                  url_prefix='/<project_url>/tasks')
 log = logging.getLogger(__name__)
+
+
+@global_blueprint.route('/<task_id>')
+def redirect_to_task(task_id):
+    """Allows creation of task links without knowing the job or project ID."""
+
+    from flamenco.tasks.sdk import Task
+    from pillarsdk import Project
+    from flask import url_for, redirect
+
+    api = pillar_api()
+
+    task = Task.find(task_id, {'projection': {'project': 1}}, api=api)
+    project = Project.find(task['project'], {'projection': {'url': 1}}, api=api)
+
+    url = url_for('flamenco.jobs.perproject.for_project_with_task',
+                  project_url=project['url'], task_id=task_id)
+    return redirect(url, code=301)
 
 
 @perproject_blueprint.route('/', endpoint='index')
