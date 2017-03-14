@@ -238,27 +238,31 @@ def get_depsgraph(manager_id, request_json):
 
     with report_duration(log, 'depsgraph query'):
         tasks_coll = current_flamenco.db('tasks')
+        jobs_coll = current_flamenco.db('jobs')
 
+        # Get runnable jobs first, as non-runnable jobs are not interesting.
+        # Note that jobs going from runnable to non-runnable should have their
+        # tasks set to cancel-requested, which is communicated to the Manager
+        # through a different channel.
+        jobs = jobs_coll.find({
+            'manager': manager_id,
+            'status': {'$in': DEPSGRAPH_RUNNABLE_JOB_STATUSES}},
+            projection={'_id': 1},
+        )
+        job_ids = [job['_id'] for job in jobs]
+        if not job_ids:
+            log.debug('Returning empty depsgraph')
+            return '', 204  # empty response
+
+        log.debug('Requiring jobs to be in %s', job_ids)
         task_query = {
             'manager': manager_id,
             'status': {'$nin': ['active']},
+            'job': {'$in': job_ids},
         }
 
         if modified_since is None:
-            # "Clean slate" query, get runnable jobs first.
-            jobs_coll = current_flamenco.db('jobs')
-            jobs = jobs_coll.find({
-                'manager': manager_id,
-                'status': {'$in': DEPSGRAPH_RUNNABLE_JOB_STATUSES}},
-                projection={'_id': 1},
-            )
-            job_ids = [job['_id'] for job in jobs]
-            if not job_ids:
-                log.debug('Returning empty depsgraph')
-                return '', 204  # empty response
-
-            log.debug('Requiring jobs to be in %s', job_ids)
-            task_query['job'] = {'$in': job_ids}
+            # "Clean slate" query.
             task_query['status'] = {'$in': DEPSGRAPH_CLEAN_SLATE_TASK_STATUSES}
         else:
             # Not clean slate, just give all updated tasks assigned to this manager.
