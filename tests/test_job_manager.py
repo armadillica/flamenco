@@ -45,6 +45,10 @@ class JobManagerTest(AbstractFlamencoTest):
 
             tasks = list(tasks_coll.find())
             self.assertEqual(2, len(tasks))
+
+            statuses = [task['status'] for task in tasks]
+            self.assertEqual(['queued', 'queued'], statuses)
+
             task = tasks[0]
 
             self.assertEqual('sleep-12-16', task['name'])
@@ -102,7 +106,11 @@ class JobStatusChangeTest(AbstractFlamencoTest):
             }, projection={'_id': 1})
             self.task_ids = [task['_id'] for task in tasks]
 
-        self.assertEqual(len(tasks_schema['status']['allowed']), len(self.task_ids))
+        allowed_statuses: list = tasks_schema['status']['allowed']
+        # this status should never occur after job compilation
+        allowed_statuses.remove('under-construction')
+
+        self.assertEqual(len(allowed_statuses), len(self.task_ids))
         self.force_task_status(0, 'queued')
         self.force_task_status(1, 'claimed-by-manager')
         self.force_task_status(2, 'completed')

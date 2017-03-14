@@ -17,14 +17,27 @@ def register_compiler(job_type):
 
 
 # Import subpackages to register the compilers
-from . import sleep, blender_render, blender_render_progressive
+from . import sleep, blender_render, blender_render_progressive, abstract_compiler
 
 
 def compile_job(job):
     """Creates tasks from the given job."""
 
+    import datetime
+    from bson import tz_util
+    from flamenco import current_flamenco
+
     compiler = construct_job_compiler(job)
     compiler.compile(job)
+
+    # Flip all tasks for this job from 'under-construction' to 'queued', and do the same
+    # with the job. This must all happen using a single '_updated' timestamp to prevent
+    # race conditions.
+    job_id = job['_id']
+    now = datetime.datetime.now(tz=tz_util.utc)
+    current_flamenco.task_manager.api_set_task_status_for_job(
+        job_id, 'under-construction', 'queued', now=now)
+    current_flamenco.job_manager.api_set_job_status(job_id, 'queued', now=now)
 
 
 def validate_job(job):
@@ -37,11 +50,12 @@ def validate_job(job):
     compiler.validate_job_settings(job)
 
 
-def construct_job_compiler(job):
+def construct_job_compiler(job) -> abstract_compiler.AbstractJobCompiler:
     from flamenco import current_flamenco
 
     compiler_class = find_job_compiler(job)
-    compiler = compiler_class(task_manager=current_flamenco.task_manager)
+    compiler = compiler_class(task_manager=current_flamenco.task_manager,
+                              job_manager=current_flamenco.job_manager)
 
     return compiler
 

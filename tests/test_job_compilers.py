@@ -1,10 +1,12 @@
+import datetime
 import unittest
 import mock
-from bson import ObjectId
+from bson import ObjectId, tz_util
 
 
 class SleepSimpleTest(unittest.TestCase):
-    def test_job_compilation(self):
+    @mock.patch('datetime.datetime')
+    def test_job_compilation(self, mock_datetime):
         from flamenco.job_compilers import sleep, commands
 
         job_doc = {
@@ -16,7 +18,13 @@ class SleepSimpleTest(unittest.TestCase):
             }
         }
         task_manager = mock.Mock()
-        compiler = sleep.Sleep(task_manager=task_manager)
+        job_manager = mock.Mock()
+
+        # Create a stable 'now' for testing.
+        mock_now = datetime.datetime.now(tz=tz_util.utc)
+        mock_datetime.now.side_effect = [mock_now]
+
+        compiler = sleep.Sleep(task_manager=task_manager, job_manager=job_manager)
         compiler.compile(job_doc)
 
         task_manager.api_create_task.assert_has_calls([
@@ -27,6 +35,7 @@ class SleepSimpleTest(unittest.TestCase):
                     commands.Sleep(time_in_seconds=3),
                 ],
                 'sleep-1-13',
+                status='under-construction',
             ),
             mock.call(
                 job_doc,
@@ -35,6 +44,7 @@ class SleepSimpleTest(unittest.TestCase):
                     commands.Sleep(time_in_seconds=3),
                 ],
                 'sleep-14-26',
+                status='under-construction',
             ),
             mock.call(
                 job_doc,
@@ -43,9 +53,14 @@ class SleepSimpleTest(unittest.TestCase):
                     commands.Sleep(time_in_seconds=3),
                 ],
                 'sleep-27-30,40-44',
+                status='under-construction',
             ),
         ])
 
+        # Both calls should be performed with the same 'now'.
+        task_manager.api_set_task_status_for_job.assert_called_with(
+            job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock_now)
 
 class CommandTest(unittest.TestCase):
     def test_to_dict(self):
@@ -79,11 +94,14 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
             }
         }
         task_manager = mock.Mock()
-        compiler = blender_render_progressive.BlenderRenderProgressive(task_manager=task_manager)
+        job_manager = mock.Mock()
+        compiler = blender_render_progressive.BlenderRenderProgressive(
+            task_manager=task_manager, job_manager=job_manager)
 
         self.assertRaises(JobSettingError, compiler.compile, job_doc)
 
-    def test_small_job(self):
+    @mock.patch('datetime.datetime')
+    def test_small_job(self, mock_datetime):
         from flamenco.job_compilers import blender_render_progressive, commands
 
         job_doc = {
@@ -100,6 +118,11 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
             }
         }
         task_manager = mock.Mock()
+        job_manager = mock.Mock()
+
+        # Create a stable 'now' for testing.
+        mock_now = datetime.datetime.now(tz=tz_util.utc)
+        mock_datetime.now.side_effect = [mock_now]
 
         # We expect:
         # - 1 move-out-of-way task
@@ -110,13 +133,15 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
         task_ids = [ObjectId() for _ in range(16)]
         task_manager.api_create_task.side_effect = task_ids
 
-        compiler = blender_render_progressive.BlenderRenderProgressive(task_manager=task_manager)
+        compiler = blender_render_progressive.BlenderRenderProgressive(
+            task_manager=task_manager, job_manager=job_manager)
         compiler.compile(job_doc)
 
         task_manager.api_create_task.assert_has_calls([
             mock.call(job_doc,
                       [commands.MoveOutOfWay(src='/render/out')],
-                      'move-existing-frames'),
+                      'move-existing-frames',
+                      status='under-construction'),
 
             # First Cycles chunk
             mock.call(
@@ -133,7 +158,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     cycles_samples_to=10)],
                 'render-smpl1-10-frm1,2',
                 parents=[task_ids[0]],
-                priority=0),
+                priority=0,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -148,7 +174,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     cycles_samples_to=10)],
                 'render-smpl1-10-frm3,4',
                 parents=[task_ids[0]],
-                priority=0),
+                priority=0,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -163,7 +190,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     cycles_samples_to=10)],
                 'render-smpl1-10-frm5,6',
                 parents=[task_ids[0]],
-                priority=0),
+                priority=0,
+                status='under-construction'),
 
             # Second Cycles chunk
             mock.call(
@@ -180,7 +208,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     cycles_samples_to=20)],
                 'render-smpl11-20-frm1,2',
                 parents=[task_ids[0]],
-                priority=-10),
+                priority=-10,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -195,7 +224,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     cycles_samples_to=20)],
                 'render-smpl11-20-frm3,4',
                 parents=[task_ids[0]],
-                priority=-10),
+                priority=-10,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -210,7 +240,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     cycles_samples_to=20)],
                 'render-smpl11-20-frm5,6',
                 parents=[task_ids[0]],
-                priority=-10),
+                priority=-10,
+                status='under-construction'),
 
             # First merge pass
             mock.call(
@@ -233,7 +264,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'merge-to-smpl20-frm1,2',
                 parents=[task_ids[1], task_ids[4]],
-                priority=-11),
+                priority=-11,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [
@@ -254,7 +286,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'merge-to-smpl20-frm3,4',
                 parents=[task_ids[2], task_ids[5]],
-                priority=-11),
+                priority=-11,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [
@@ -275,7 +308,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'merge-to-smpl20-frm5,6',
                 parents=[task_ids[3], task_ids[6]],
-                priority=-11),
+                priority=-11,
+                status='under-construction'),
 
             # Third Cycles chunk
             mock.call(
@@ -292,7 +326,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     cycles_samples_to=30)],
                 'render-smpl21-30-frm1,2',
                 parents=[task_ids[0]],
-                priority=-20),
+                priority=-20,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -307,7 +342,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     cycles_samples_to=30)],
                 'render-smpl21-30-frm3,4',
                 parents=[task_ids[0]],
-                priority=-20),
+                priority=-20,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -322,7 +358,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     cycles_samples_to=30)],
                 'render-smpl21-30-frm5,6',
                 parents=[task_ids[0]],
-                priority=-20),
+                priority=-20,
+                status='under-construction'),
 
             # Final merge pass
             mock.call(
@@ -345,7 +382,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'merge-to-smpl30-frm1,2',
                 parents=[task_ids[7], task_ids[10]],
-                priority=-21),
+                priority=-21,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [
@@ -366,7 +404,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'merge-to-smpl30-frm3,4',
                 parents=[task_ids[8], task_ids[11]],
-                priority=-21),
+                priority=-21,
+                status='under-construction'),
             mock.call(
                 job_doc,
                 [
@@ -387,5 +426,10 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'merge-to-smpl30-frm5,6',
                 parents=[task_ids[9], task_ids[12]],
-                priority=-21),
+                priority=-21,
+                status='under-construction'),
         ])
+
+        task_manager.api_set_task_status_for_job.assert_called_with(
+            job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock_now)

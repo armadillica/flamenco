@@ -1,7 +1,9 @@
 """Task management."""
 
 import attr
+import datetime
 
+import bson
 import werkzeug.exceptions as wz_exceptions
 
 from pillar import attrs_extra
@@ -27,7 +29,8 @@ REQUEABLE_TASK_STATES = {'completed', 'canceled', 'failed'}
 class TaskManager(object):
     _log = attrs_extra.log('%s.TaskManager' % __name__)
 
-    def api_create_task(self, job, commands, name, parents=None, priority=50):
+    def api_create_task(self, job, commands, name, parents=None, priority=50,
+                        status='queued') -> bson.ObjectId:
         """Creates a task in MongoDB for the given job, executing commands.
 
         Returns the ObjectId of the created task.
@@ -40,7 +43,7 @@ class TaskManager(object):
             'manager': job['manager'],
             'user': job['user'],
             'name': name,
-            'status': 'queued',
+            'status': status,
             'job_type': job['job_type'],
             'commands': [cmd.to_dict() for cmd in commands],
             'job_priority': job['priority'],
@@ -64,7 +67,7 @@ class TaskManager(object):
 
     def tasks_for_job(self, job_id, status=None, *,
                       page=1, max_results=250,
-                      extra_where: dict=None):
+                      extra_where: dict = None):
         from .sdk import Task
 
         api = pillar_api()
@@ -117,6 +120,20 @@ class TaskManager(object):
         task = Task({'_id': task_id})
         task.patch({'op': 'set-task-status',
                     'status': new_status}, api=api)
+
+    def api_set_task_status_for_job(self, job_id: bson.ObjectId, from_status: str, to_status: str,
+                                    *, now: datetime.datetime = None):
+        """Updates the task status for all tasks of a job that have a particular status."""
+
+        self._log.info('Flipping all tasks of job %s from status %r to %r',
+                       job_id, from_status, to_status)
+
+        from flamenco import current_flamenco
+
+        current_flamenco.update_status_q('tasks',
+                                         {'job': job_id, 'status': from_status},
+                                         to_status,
+                                         now=now)
 
     def api_find_job_enders(self, job_id):
         """Returns a list of tasks that could be the last tasks of a job.

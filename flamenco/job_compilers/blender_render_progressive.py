@@ -19,7 +19,7 @@ class BlenderRenderProgressive(BlenderRender):
     REQUIRED_SETTINGS = ('blender_cmd', 'filepath', 'render_output', 'frames', 'chunk_size',
                          'format', 'cycles_sample_count', 'cycles_num_chunks')
 
-    def compile(self, job):
+    def _compile(self, job):
         import math
         from pathlib import Path
 
@@ -151,7 +151,7 @@ class BlenderRenderProgressive(BlenderRender):
             if not isinstance(parent_task_id, ObjectId):
                 raise TypeError('parents should be list of ObjectIds or ObjectId, not %s' % parents)
 
-            task_id = self.task_manager.api_create_task(
+            task_id = self._create_task(
                 job, task_cmds, name, parents=[parent_task_id],
                 priority=task_priority)
             task_ids.append(task_id)
@@ -231,7 +231,7 @@ class BlenderRenderProgressive(BlenderRender):
             parent1 = parents1[chunk_idx]
             parent2 = parents2[chunk_idx]
 
-            task_id = self.task_manager.api_create_task(
+            task_id = self._create_task(
                 job, task_cmds, name, parents=[parent1, parent2],
                 priority=task_priority)
             task_ids.append(task_id)

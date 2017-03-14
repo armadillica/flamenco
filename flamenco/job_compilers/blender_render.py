@@ -11,7 +11,7 @@ class BlenderRender(AbstractJobCompiler):
 
     REQUIRED_SETTINGS = ('blender_cmd', 'filepath', 'render_output', 'frames', 'chunk_size')
 
-    def compile(self, job):
+    def _compile(self, job):
         self._log.info('Compiling job %s', job['_id'])
         self.validate_job_settings(job)
 
@@ -35,9 +35,7 @@ class BlenderRender(AbstractJobCompiler):
         render_dest_dir = os.path.dirname(job['settings']['render_output'])
         cmd = commands.MoveOutOfWay(src=render_dest_dir)
 
-        task_id = self.task_manager.api_create_task(
-            job, [cmd], 'move-existing-frames')
-
+        task_id = self._create_task(job, [cmd], 'move-existing-frames')
         return task_id
 
     def _make_render_tasks(self, job, parent_task_id):
@@ -65,7 +63,7 @@ class BlenderRender(AbstractJobCompiler):
             ]
 
             name = 'blender-render-%s' % frame_range
-            self.task_manager.api_create_task(job, task_cmds, name, parents=[parent_task_id])
+            self._create_task(job, task_cmds, name, parents=[parent_task_id])
             task_count += 1
 
         return task_count

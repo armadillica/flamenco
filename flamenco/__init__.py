@@ -1,7 +1,9 @@
+import datetime
 import logging
 import os.path
 
 import flask
+import pymongo.results
 from werkzeug.local import LocalProxy
 from pillar.extension import PillarExtension
 
@@ -215,28 +217,31 @@ class FlamencoExtension(PillarExtension):
         """Returns a Flamenco-specific MongoDB collection."""
         return flask.current_app.db()['flamenco_%s' % collection_name]
 
-    def update_status(self, collection_name, document_id, new_status):
+    def update_status(self, collection_name, document_id, new_status,
+                      *, now: datetime.datetime = None):
         """Updates a document's status, avoiding Eve.
 
         Doesn't use Eve patch_internal to avoid Eve's authorisation. For
         example, Eve doesn't know certain PATCH operations are allowed by
         Flamenco managers.
 
+        :param now: the _updated field is set to this timestamp; use this to set multiple
+            objects to the same _updated field.
         :rtype: pymongo.results.UpdateResult
         """
 
-        return self.update_status_q(collection_name, {'_id': document_id}, new_status)
+        return self.update_status_q(collection_name, {'_id': document_id}, new_status, now=now)
 
-    def update_status_q(self, collection_name, query, new_status):
+    def update_status_q(self, collection_name, query, new_status, *, now: datetime.datetime = None):
         """Updates the status for the queried objects.
 
+        :param now: the _updated field is set to this timestamp; use this to set multiple
+            objects to the same _updated field.
         :returns: the result of the collection.update_many() call
         :rtype: pymongo.results.UpdateResult
         """
         from flamenco import eve_settings, current_flamenco
-        import datetime
         import uuid
-        from bson import tz_util
 
         singular_name = collection_name.rstrip('s')  # jobs -> job
         schema = eve_settings.DOMAIN['flamenco_%s' % collection_name]['schema']
@@ -250,11 +255,15 @@ class FlamencoExtension(PillarExtension):
         # change; this is unavoidable without fetching the entire document.
         etag = uuid.uuid4().hex
 
+        if now is None:
+            from bson import tz_util
+            now = datetime.datetime.now(tz=tz_util.utc)
+
         collection = current_flamenco.db(collection_name)
         result = collection.update_many(
             query,
             {'$set': {'status': new_status,
-                      '_updated': datetime.datetime.now(tz=tz_util.utc),
+                      '_updated': now,
                       '_etag': etag}}
         )
 
@@ -270,5 +279,5 @@ def _get_current_flamenco():
     return flask.current_app.pillar_extensions[EXTENSION_NAME]
 
 
-current_flamenco = LocalProxy(_get_current_flamenco)
+current_flamenco: FlamencoExtension = LocalProxy(_get_current_flamenco)
 """Flamenco extension of the current app."""

@@ -138,6 +138,7 @@ jobs_schema = {
     'status': {
         'type': 'string',
         'allowed': [
+            'under-construction',  # Job is still being compiled, tasks must be ignored by Manager.
             'completed',
             'active',
             'canceled',
@@ -211,6 +212,7 @@ tasks_schema = {
     'status': {
         'type': 'string',
         'allowed': [
+            'under-construction',  # Job is still being compiled, task must be ignored by Manager.
             'queued',
             'claimed-by-manager',
             'completed',

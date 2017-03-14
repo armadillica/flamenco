@@ -14,6 +14,10 @@ def before_inserting_jobs(jobs):
     from flamenco import job_compilers, exceptions
 
     for job in jobs:
+        # Jobs are forced to be 'under construction' when they are created.
+        # This is set to 'queued' when job compilation is finished.
+        job['status'] = 'under-construction'
+
         try:
             job_compilers.validate_job(job)
         except exceptions.JobSettingError as ex:
@@ -22,12 +26,13 @@ def before_inserting_jobs(jobs):
 
 
 def after_inserting_jobs(jobs):
-    from flamenco import job_compilers
+    from flamenco import job_compilers, current_flamenco
 
     for job in jobs:
+        job_id = job['_id']
         # Prepare storage dir for the job files?
         # Generate tasks
-        log.info('Generating tasks for job {}'.format(job['_id']))
+        log.info(f'Generating tasks for job {job_id}')
         job_compilers.compile_job(job)
 
 

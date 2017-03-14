@@ -2,6 +2,7 @@
 
 import collections
 import copy
+import datetime
 
 import attr
 
@@ -65,7 +66,7 @@ class JobManager(object):
             'project': project_id,
             'user': user_id,
             'manager': manager_id,
-            'status': 'queued',
+            'status': 'under-construction',
             'priority': int(priority),
             'settings': copy.deepcopy(job_settings),
         }
@@ -210,7 +211,8 @@ class JobManager(object):
         job.patch({'op': 'set-job-status',
                    'status': new_status}, api=api)
 
-    def api_set_job_status(self, job_id, new_status):
+    def api_set_job_status(self, job_id, new_status,
+                           *, now: datetime.datetime = None):
         """API-level call to updates the job status."""
 
         self._log.info('Setting job %s status to "%s"', job_id, new_status)
@@ -219,7 +221,7 @@ class JobManager(object):
         curr_job = jobs_coll.find_one({'_id': job_id}, projection={'status': 1})
         old_status = curr_job['status']
 
-        current_flamenco.update_status('jobs', job_id, new_status)
+        current_flamenco.update_status('jobs', job_id, new_status, now=now)
         self.handle_job_status_change(job_id, old_status, new_status)
 
     def handle_job_status_change(self, job_id, old_status, new_status):

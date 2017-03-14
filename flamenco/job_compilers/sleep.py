@@ -6,7 +6,7 @@ from . import commands, register_compiler
 class Sleep(AbstractJobCompiler):
     """Sleeps for N seconds for each frame chunk."""
 
-    def compile(self, job):
+    def _compile(self, job):
         from flamenco.utils import iter_frame_range, frame_range_merge
 
         self._log.info('Compiling job %s', job['_id'])
@@ -20,7 +20,7 @@ class Sleep(AbstractJobCompiler):
             ]
             name = 'sleep-%s' % frame_range_merge(chunk_frames)
 
-            self.task_manager.api_create_task(job, task_cmds, name)
+            self._create_task(job, task_cmds, name)
             task_count += 1
 
         self._log.info('Created %i tasks for job %s', task_count, job['_id'])

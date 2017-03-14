@@ -33,6 +33,7 @@ class TaskManagerTest(AbstractFlamencoTest):
                     commands.Sleep(time_in_seconds=3),
                 ],
                 'sleep-1-13',
+                status='under-construction'
             )
 
         # Now test the database contents.
@@ -40,6 +41,9 @@ class TaskManagerTest(AbstractFlamencoTest):
             tasks_coll = self.flamenco.db('tasks')
             dbtasks = list(tasks_coll.find())
             self.assertEqual(3, len(dbtasks))  # 2 of compiled job + the one we added after.
+
+            statuses = [task['status'] for task in dbtasks]
+            self.assertEqual(['queued', 'queued', 'under-construction'], statuses)
 
             dbtask = dbtasks[-1]
 
@@ -56,6 +60,8 @@ class TaskManagerTest(AbstractFlamencoTest):
                     'time_in_seconds': 3,
                 }
             }, dbtask['commands'][1])
+
+        return job_doc['_id']
 
     def test_api_find_jobfinal_tasks(self):
         from pillar.api.utils.authentication import force_cli_user
@@ -106,3 +112,40 @@ class TaskManagerTest(AbstractFlamencoTest):
 
             job_enders = self.tmngr.api_find_job_enders(job_id)
             self.assertEqual({taskid2, taskid3, taskid4}, set(job_enders))
+
+    def test_api_set_task_status_for_job(self):
+        import time
+
+        # Create some tasks to flip.
+        job_id = self.test_create_task()
+
+        with self.app.test_request_context():
+            tasks_coll = self.flamenco.db('tasks')
+
+            db_tasks = list(tasks_coll.find())
+            statuses = [task['status'] for task in db_tasks]
+            pre_flip_updated = [task['_updated'] for task in db_tasks]
+            pre_flip_etags = [task['_etag'] for task in db_tasks]
+            self.assertEqual(['queued', 'queued', 'under-construction'], statuses)
+
+            # Sleep a bit so we can check the change in _updated fields.
+            time.sleep(1)
+
+            # Flip and re-check the status.
+            self.tmngr.api_set_task_status_for_job(job_id, 'queued', 'active')
+
+            db_tasks = list(tasks_coll.find())
+            statuses = [task['status'] for task in db_tasks]
+            post_flip_updated = [task['_updated'] for task in db_tasks]
+            post_flip_etags = [task['_etag'] for task in db_tasks]
+            self.assertEqual(['active', 'active', 'under-construction'], statuses)
+
+            # Check changed timestamps.
+            self.assertLess(pre_flip_updated[0], post_flip_updated[0])
+            self.assertLess(pre_flip_updated[1], post_flip_updated[1])
+            self.assertEqual(pre_flip_updated[2], post_flip_updated[2])
+
+            # Check changed etags.
+            self.assertNotEqual(pre_flip_etags[0], post_flip_etags[0])
+            self.assertNotEqual(pre_flip_etags[1], post_flip_etags[1])
+            self.assertEqual(pre_flip_etags[2], post_flip_etags[2])
