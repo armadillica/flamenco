@@ -21,8 +21,12 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
     def setUp(self, **kwargs):
         AbstractPillarTest.setUp(self, **kwargs)
-        self.tmngr = self.flamenco.task_manager
-        self.jmngr = self.flamenco.job_manager
+
+        from flamenco.tasks import TaskManager
+        from flamenco.jobs import JobManager
+
+        self.tmngr: TaskManager = self.flamenco.task_manager
+        self.jmngr: JobManager = self.flamenco.job_manager
 
         self.proj_id, self.project = self.ensure_project_exists()
 
