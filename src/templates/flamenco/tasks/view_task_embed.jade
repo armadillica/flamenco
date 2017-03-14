@@ -21,6 +21,12 @@
 							target="_blank")
 							i.pi-download
 							| Download Task Log
+					li
+						a(href="{{ url_for('flamenco.jobs.perproject.view_job_depsgraph', project_url=project.url, job_id=task.job, t=task._id) }}",
+							target="_blank")
+							i.pi-share
+							| Show partial depsgraph around this task
+
 		| {% if task.description %}
 		p.item-description {{ task.description | hide_none }}
 		| {% endif %}

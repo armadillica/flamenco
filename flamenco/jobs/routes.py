@@ -73,44 +73,151 @@ def view_job(project, flamenco_props, job_id):
 @perproject_blueprint.route('/<job_id>/depsgraph')
 @flamenco_project_view(extension_props=False)
 def view_job_depsgraph(project, job_id):
-
     # Job list is public, job details are not.
     if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
         raise wz_exceptions.Forbidden()
 
-    if request.is_xhr:
-        from flask import jsonify
-        from flamenco.tasks import COLOR_FOR_TASK_STATUS
-
-        # Return the vis.js nodes and edges as JSON
-        tasks = current_flamenco.task_manager.tasks_for_job(job_id)
-        nodes = []
-        edges = []
-
-        # Make a mapping from database ID to task index
-        tid_to_idx = {task['_id']: tidx
-                      for tidx, task in enumerate(tasks._items)}
-
-        for task in sorted(tasks._items, key=lambda task: task['priority']):
-            task_id = tid_to_idx[task['_id']]
-            nodes.append({
-                'id': task_id,
-                'label': task['name'],
-                'shape': 'box',
-                'color': COLOR_FOR_TASK_STATUS[task['status']],
-            })
-            if task.parents:
-                for parent in task.parents:
-                    edges.append({
-                        'from': task_id,
-                        'to': tid_to_idx[parent],
-                        'arrows': 'to',
-                    })
-        return jsonify(nodes=nodes, edges=edges)
-
+    focus_task_id = request.args.get('t', None)
     return render_template('flamenco/jobs/depsgraph.html',
                            job_id=job_id,
-                           project=project)
+                           project=project,
+                           focus_task_id=focus_task_id)
+
+
+@perproject_blueprint.route('/<job_id>/depsgraph-data')
+@perproject_blueprint.route('/<job_id>/depsgraph-data/<focus_task_id>')
+@flamenco_project_view(extension_props=False)
+def view_job_depsgraph_data(project, job_id, focus_task_id=None):
+    # Job list is public, job details are not.
+    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
+        raise wz_exceptions.Forbidden()
+
+    import collections
+    from flask import jsonify
+    from flamenco.tasks import COLOR_FOR_TASK_STATUS
+    from pillar.web.utils import last_page_index
+
+    # Collect tasks page-by-page. Stored in a dict to prevent duplicates.
+    tasks = {}
+
+    LIMITED_RESULT_COUNT = 8
+
+    def query_tasks(extra_where, extra_update, limit_results: bool):
+        page_idx = 1
+        added_in_this_query = 0
+        while True:
+            task_page = current_flamenco.task_manager.tasks_for_job(
+                job_id,
+                page=page_idx,
+                max_results=LIMITED_RESULT_COUNT if limit_results else 250,
+                extra_where=extra_where)
+            for task in task_page._items:
+                if task._id in tasks:
+                    continue
+                task = task.to_dict()
+                task.update(extra_update)
+                tasks[task['_id']] = task
+                added_in_this_query += 1
+
+            if limit_results and added_in_this_query >= LIMITED_RESULT_COUNT:
+                break
+
+            if page_idx >= last_page_index(task_page._meta):
+                break
+            page_idx += 1
+
+    if focus_task_id is None:
+        # Get the top-level tasks as 'focus tasks'.
+        # TODO: Test for case of multiple top-level tasks.
+        extra_where = {
+            'parents': {'$exists': 0},
+        }
+    else:
+        # Otherwise just put in the focus task ID; querying like this ensures
+        # the returned task belongs to the current job.
+        extra_where = {'_id': focus_task_id}
+
+    log.debug('Querying tasks, focused on %s', extra_where)
+    query_tasks(extra_where, {'_generation': 0}, False)
+
+    # Query for the children & parents of these tasks
+    already_queried_parents = set()
+    already_queried_children = set()
+
+    def add_parents_children(generation: int, is_outside: bool):
+        nonlocal already_queried_parents
+        nonlocal already_queried_children
+
+        if not tasks:
+            return
+
+        if is_outside:
+            extra_update = {'_outside': True}
+        else:
+            extra_update = {}
+
+        parent_ids = {parent
+                      for task in tasks.values()
+                      for parent in task.get('parents', ())}
+
+        # Get the children of these tasks, but only those we haven't queried for already.
+        query_children = set(tasks.keys()) - already_queried_children
+        if query_children:
+            update = {'_generation': generation, **extra_update}
+            query_tasks({'parents': {'$in': list(query_children)}}, update, is_outside)
+            already_queried_children.update(query_children)
+
+        # Get the parents of these tasks, but only those we haven't queried for already.
+        query_parents = parent_ids - already_queried_parents
+        if query_parents:
+            update = {'_generation': -generation, **extra_update}
+            query_tasks({'_id': {'$in': list(query_parents)}}, update, False)
+            already_queried_parents.update(query_parents)
+
+    # Add parents/children and grandparents/grandchildren.
+    # This queries too much, but that's ok for now; this is just a debugging tool.
+    log.debug('Querying first-level family')
+    add_parents_children(1, False)
+    log.debug('Querying second-level family')
+    add_parents_children(2, True)
+
+    # nodes and edges are only told apart by (not) having 'source' and 'target' properties.
+    graph_items = []
+    roots = []
+    xpos_per_generation = collections.defaultdict(int)
+    for task in sorted(tasks.values(), key=lambda task: task['priority']):
+        gen = task['_generation']
+        xpos = xpos_per_generation[gen]
+        xpos_per_generation[gen] += 1
+
+        graph_items.append({
+            'group': 'nodes',
+            'data': {
+                'id': task['_id'],
+                'label': task['name'],
+                'status': task['status'],
+                'color': COLOR_FOR_TASK_STATUS[task['status']],
+                'outside': task.get('_outside', False),
+                'focus': task['_id'] == focus_task_id,
+            },
+            'position': {'x': xpos * 100, 'y': gen * -100},
+        })
+        if task.get('parents'):
+            for parent in task['parents']:
+                # Skip edges to tasks that aren't even in the graph.
+                if parent not in tasks: continue
+
+                graph_items.append({
+                    'group': 'edges',
+                    'data': {
+                        'id': '%s-%s' % (task['_id'], parent),
+                        'target': task['_id'],
+                        'source': parent,
+                    }
+                })
+        else:
+            roots.append(task['_id'])
+    return jsonify(elements=graph_items, roots=roots)
 
 
 @blueprint.route('/<job_id>/set-status', methods=['POST'])

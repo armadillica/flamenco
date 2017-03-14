@@ -62,24 +62,33 @@ class TaskManager(object):
 
         return r['_id']
 
-    def tasks_for_job(self, job_id, status=None, page=1):
+    def tasks_for_job(self, job_id, status=None, *,
+                      page=1, max_results=250,
+                      extra_where: dict=None):
         from .sdk import Task
 
         api = pillar_api()
+
+        where = {'job': str(job_id)}
+        if extra_where:
+            where.update(extra_where)
+
         payload = {
-            'where': {
-                'job': str(job_id),
-            },
+            'where': where,
             'sorted': [
                 ('priority', -1),
                 ('_id', 1),
             ],
-            # 'max_results': 100,
+            'max_results': max_results,
             'page': page,
         }
         if status:
             payload['where']['status'] = status
+
         tasks = Task.all(payload, api=api)
+        self._log.debug(
+            'task_for_job: where=%s  -> %i tasks in total, fetched page %i (%i per page)',
+            payload['where'], tasks['_meta']['total'], page, max_results)
         return tasks
 
     def tasks_for_project(self, project_id):
