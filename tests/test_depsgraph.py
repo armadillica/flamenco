@@ -1,9 +1,13 @@
 # -*- encoding: utf-8 -*-
 
+import logging
+
 from bson import ObjectId
 
 from pillar.tests import common_test_data as ctd
 from abstract_flamenco_test import AbstractFlamencoTest
+
+log = logging.getLogger(__name__)
 
 
 class DepsgraphTest(AbstractFlamencoTest):
@@ -129,15 +133,18 @@ class DepsgraphTest(AbstractFlamencoTest):
         from dateutil.parser import parse
 
         # Get a clean slate first, so that we get the timestamp of last modification
+        log.info('Getting clean slate first, for timestamp')
         resp = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                         auth_token=self.mngr_token)
         last_modified = resp.headers['X-Flamenco-Last-Updated']
 
         # Do the subsequent call, it should return nothing.
+        log.info('Getting changes since %s', last_modified)
         self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                  auth_token=self.mngr_token,
                  headers={'X-Flamenco-If-Updated-Since': last_modified},
                  expected_status=304)
+        log.info('New last-modified is %s', resp.headers['X-Flamenco-Last-Updated'])
 
         # Change some tasks to see what we get back.
         time.sleep(0.05)  # sleep a bit to stabilise the test.
