@@ -57,17 +57,19 @@ def view_job(project, flamenco_props, job_id):
     api = pillar_api()
     job = Job.find(job_id, api=api)
 
-    from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES
+    from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES
 
     write_access = current_flamenco.current_user_is_flamenco_admin()
 
-    return render_template('flamenco/jobs/view_job_embed.html',
-                           job=job,
-                           project=project,
-                           flamenco_props=flamenco_props.to_dict(),
-                           flamenco_context=request.args.get('context'),
-                           can_cancel_job=write_access and job['status'] in CANCELABLE_JOB_STATES,
-                           can_requeue_job=write_access and job['status'] in REQUEABLE_JOB_STATES)
+    return render_template(
+        'flamenco/jobs/view_job_embed.html',
+        job=job,
+        project=project,
+        flamenco_props=flamenco_props.to_dict(),
+        flamenco_context=request.args.get('context'),
+        can_cancel_job=write_access and job['status'] in CANCELABLE_JOB_STATES,
+        can_requeue_job=write_access and job['status'] in REQUEABLE_JOB_STATES,
+        can_recreate_job=write_access and job['status'] in RECREATABLE_JOB_STATES)
 
 
 @perproject_blueprint.route('/<job_id>/depsgraph')
@@ -218,6 +220,23 @@ def view_job_depsgraph_data(project, job_id, focus_task_id=None):
         else:
             roots.append(task['_id'])
     return jsonify(elements=graph_items, roots=roots)
+
+
+@blueprint.route('/<job_id>/recreate', methods=['POST'])
+def recreate_job(job_id):
+    # Job list is public, job details are not.
+    if not current_flamenco.current_user_is_flamenco_admin():
+        raise wz_exceptions.Forbidden()
+
+    from pillar.api.utils import str2id
+    from pillar.api.utils.authentication import current_user_id
+
+    log.info('Recreating job %s on behalf of user %s', job_id, current_user_id())
+
+    job_id = str2id(job_id)
+    current_flamenco.api_recreate_job(job_id)
+
+    return '', 204
 
 
 @blueprint.route('/<job_id>/set-status', methods=['POST'])

@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-
 import mock
 
 from pillar.tests import common_test_data as ctd
@@ -211,6 +209,29 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+
+    def test_status_from_active_to_canceled(self):
+        self.force_job_status('active')
+
+        # Force any task that would ordinarily go to 'cancel-requested' to something that won't.
+        self.force_task_status(1, 'queued')
+        self.force_task_status(3, 'completed')
+        self.force_task_status(6, 'failed')
+
+        # This should immediately go to canceled, since
+        # there are no tasks to request cancellation of.
+        self.set_job_status('cancel-requested')
+
+        self.assert_task_status(0, 'canceled')  # was: queued
+        self.assert_task_status(1, 'canceled')  # was: also queued
+        self.assert_task_status(2, 'completed')  # was: completed
+        self.assert_task_status(3, 'completed')  # was: also completed
+        self.assert_task_status(4, 'canceled')  # was: canceled
+        self.assert_task_status(5, 'failed')  # was: failed
+        self.assert_task_status(6, 'failed')  # was: also failed
+
+        self.assert_job_status('canceled')
+
 
     @mock.patch('flamenco.jobs.JobManager.handle_job_status_change')
     def test_put_job(self, handle_job_status_change):

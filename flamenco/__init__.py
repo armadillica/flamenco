@@ -2,8 +2,8 @@ import datetime
 import logging
 import os.path
 
+import bson
 import flask
-import pymongo.results
 from werkzeug.local import LocalProxy
 from pillar.extension import PillarExtension
 
@@ -271,6 +271,34 @@ class FlamencoExtension(PillarExtension):
                         result.modified_count, singular_name, query, new_status)
 
         return result
+
+    def api_recreate_job(self, job_id: bson.ObjectId):
+        """Deletes all tasks of a job, then recompiles the job to construct new tasks.
+
+        The job MUST be in state 'canceled', to ensure that the manager has stopped task execution.
+
+        As this functionality requires access to both the task manager and the job manager,
+        this is implemented on FlamencoExtension itself.
+        """
+
+        from flamenco import job_compilers
+        from flamenco.jobs import RECREATABLE_JOB_STATES
+
+        jobs_coll = current_flamenco.db('jobs')
+        job_doc = jobs_coll.find_one({'_id': job_id})
+        if not job_doc:
+            raise ValueError('Job ID %s not found', job_id)
+
+        if job_doc['status'] not in RECREATABLE_JOB_STATES:
+            raise ValueError('Job recreation is only possible on jobs in state %s.',
+                             ', '.join(RECREATABLE_JOB_STATES))
+
+        # Delete the tasks and revert the job to 'under-construction' status before recompiling it.
+        self._log.info('Recreating job %s', job_id)
+        self.job_manager.api_set_job_status(job_id, 'under-construction')
+        self.task_manager.api_delete_tasks_for_job(job_id)
+        job_compilers.compile_job(job_doc)
+        self._log.info('Recreated job %s', job_id)
 
 
 def _get_current_flamenco():

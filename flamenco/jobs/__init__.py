@@ -5,6 +5,7 @@ import copy
 import datetime
 
 import attr
+import bson
 
 import pillarsdk
 from pillar import attrs_extra
@@ -14,6 +15,7 @@ from flamenco import current_flamenco
 
 CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
 REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed'}
+RECREATABLE_JOB_STATES = {'canceled'}
 TASK_FAIL_JOB_PERCENTAGE = 10  # integer from 0 to 100
 
 

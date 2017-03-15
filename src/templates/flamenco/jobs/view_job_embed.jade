@@ -53,6 +53,11 @@
 			i.pi-refresh
 			| Re-queue Job
 		| {% endif %}
+		| {% if can_recreate_job %}
+		button.btn.btn-success.requeue-job(onclick="recreateJob('{{ job._id }}')")
+			i.pi-refresh
+			| Recreate Job (experimental)
+		| {% endif %}
 		.action-result-panel
 
 #item-view-feed

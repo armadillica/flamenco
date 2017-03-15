@@ -39,6 +39,17 @@
 					.table-cell(class="status-{{ task.status }}")
 						| {{ task.status | undertitle }}
 				.table-row
+					.table-cell Last Update
+					.table-cell(title="{{ task._updated }}")
+						span(role='button',
+							data-toggle='collapse',
+							data-target='#task-time-creation',
+							aria-expanded='false',
+							aria-controls='#task-time-creation')
+							| {{ task._updated | pretty_date_time }}
+						#task-time-creation.collapse
+							| Created on {{ task._created | pretty_date_time }}
+				.table-row
 					.table-cell Priority
 					.table-cell {{ task.priority }}
 				//- .table-row

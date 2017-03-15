@@ -2,6 +2,7 @@
 
 import attr
 import datetime
+import typing
 
 import bson
 import werkzeug.exceptions as wz_exceptions
@@ -164,6 +165,20 @@ class TaskManager(object):
 
         tids = [t['_id'] for t in tasks]
         return tids
+
+    def api_delete_tasks_for_job(self, job_id: bson.ObjectId):
+        """Deletes all tasks for a given job.
+
+        NOTE: this breaks references in the task log database.
+        """
+
+        from flamenco import current_flamenco
+        from pymongo.results import DeleteResult
+
+        self._log.info('Deleting all tasks of job %s', job_id)
+        tasks_coll = current_flamenco.db('tasks')
+        delres: DeleteResult = tasks_coll.delete_many({'job': job_id})
+        self._log.info('Deleted %i tasks of job %s', delres.deleted_count, job_id)
 
 
 def setup_app(app):
