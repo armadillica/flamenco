@@ -1,11 +1,11 @@
 from pillar import attrs_extra
 
-from .blender_render import BlenderRender
+from .abstract_compiler import AbstractJobCompiler
 from . import commands, register_compiler
 
 
 @register_compiler('blender-render-progressive')
-class BlenderRenderProgressive(BlenderRender):
+class BlenderRenderProgressive(AbstractJobCompiler):
     """Progressive Blender render job.
 
     Creates a render task for each Cycles sample chunk, and creates merge
@@ -82,7 +82,7 @@ class BlenderRenderProgressive(BlenderRender):
 
     def validate_job_settings(self, job):
         """Ensure that the job uses format=EXR."""
-        super(BlenderRenderProgressive, self).validate_job_settings(job)
+        super().validate_job_settings(job)
 
         from flamenco import exceptions
 
@@ -97,6 +97,24 @@ class BlenderRenderProgressive(BlenderRender):
         if not render_output.endswith('######') or render_output.endswith('#######'):
             raise exceptions.JobSettingError(
                 'Setting "render_output" must end in exactly 6 "#" marks.')
+
+    def _make_move_out_of_way_task(self, job):
+        """Creates a MoveOutOfWay command to back up existing frames, and wraps it in a task.
+
+        :returns: the ObjectId of the created task.
+        :rtype: bson.ObjectId
+        """
+
+        import os.path
+
+        # The render path contains a filename pattern, most likely '######' or
+        # something similar. This has to be removed, so that we end up with
+        # the directory that will contain the frames.
+        render_dest_dir = os.path.dirname(job['settings']['render_output'])
+        cmd = commands.MoveOutOfWay(src=render_dest_dir)
+
+        task_id = self._create_task(job, [cmd], 'move-existing-frames')
+        return task_id
 
     def _make_progressive_render_tasks(self,
                                        job, name_fmt, parents,

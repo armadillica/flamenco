@@ -4,6 +4,19 @@ import mock
 from bson import ObjectId, tz_util
 
 
+class JobDocForTesting(dict):
+    """Dict that doesn't show the contents in its repr().
+
+    Used to make failing mock calls less verbose.
+    """
+
+    def __init__(self, somedict: dict):
+        super().__init__(somedict)
+
+    def __repr__(self):
+        return '<test-job-doc>'
+
+
 class SleepSimpleTest(unittest.TestCase):
     @mock.patch('datetime.datetime')
     def test_job_compilation(self, mock_datetime):
@@ -62,6 +75,7 @@ class SleepSimpleTest(unittest.TestCase):
             job_doc['_id'], 'under-construction', 'queued', now=mock_now)
         job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock_now)
 
+
 class CommandTest(unittest.TestCase):
     def test_to_dict(self):
         from flamenco.job_compilers import commands
@@ -73,6 +87,90 @@ class CommandTest(unittest.TestCase):
                 'message': 'Preparing to sleep',
             }
         }, cmd.to_dict())
+
+
+class BlenderRenderTest(unittest.TestCase):
+    @mock.patch('datetime.datetime')
+    def test_small_job(self, mock_datetime):
+        from flamenco.job_compilers import blender_render, commands
+
+        job_doc = JobDocForTesting({
+            '_id': ObjectId(24 * 'f'),
+            'settings': {
+                'frames': '1-5',
+                'chunk_size': 2,
+                'render_output': '/render/out/frames-######',
+                'format': 'EXR',
+                'filepath': '/agent327/scenes/someshot/somefile.blend',
+                'blender_cmd': '/path/to/blender --enable-new-depsgraph',
+            }
+        })
+
+        task_manager = mock.Mock()
+        job_manager = mock.Mock()
+
+        # Create a stable 'now' for testing.
+        mock_now = datetime.datetime.now(tz=tz_util.utc)
+        mock_datetime.now.side_effect = [mock_now]
+
+        # We expect:
+        # - 3 frame chunks of 2 frames each
+        # - 1 move-to-final task
+        # so that's 4 tasks in total.
+        task_ids = [ObjectId() for _ in range(4)]
+        task_manager.api_create_task.side_effect = task_ids
+
+        compiler = blender_render.BlenderRender(
+            task_manager=task_manager, job_manager=job_manager)
+        compiler.compile(job_doc)
+
+        task_manager.api_create_task.assert_has_calls([
+            # Render tasks
+            mock.call(
+                job_doc,
+                [commands.BlenderRender(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    format='EXR',
+                    render_output='/render/out__intermediate/frames-######',
+                    frames='1,2')],
+                'blender-render-1,2',
+                status='under-construction'),
+            mock.call(
+                job_doc,
+                [commands.BlenderRender(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    format='EXR',
+                    render_output='/render/out__intermediate/frames-######',
+                    frames='3,4')],
+                'blender-render-3,4',
+                status='under-construction'),
+            mock.call(
+                job_doc,
+                [commands.BlenderRender(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    format='EXR',
+                    render_output='/render/out__intermediate/frames-######',
+                    frames='5')],
+                'blender-render-5',
+                status='under-construction'),
+
+            # Move to final location
+            mock.call(
+                job_doc,
+                [commands.MoveToFinal(
+                    src='/render/out__intermediate',
+                    dest='/render/out')],
+                'move-to-final',
+                parents=task_ids[0:3],
+                status='under-construction'),
+        ])
+
+        task_manager.api_set_task_status_for_job.assert_called_with(
+            job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock_now)
 
 
 class BlenderRenderProgressiveTest(unittest.TestCase):
