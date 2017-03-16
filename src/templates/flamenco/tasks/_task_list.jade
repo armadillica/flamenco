@@ -1,6 +1,31 @@
-| {% macro task_list(task_count, tasks, project) -%}
+| {% macro task_list(job_id, task_count, tasks, project, page_idx, page_count) -%}
 .col_header.task-list-header
 	| Tasks ({{ task_count }})
+	.task-navigation
+		span.page Page {{ page_idx }}
+
+		a.page-navigate(
+			class="{% if page_idx == 1 %}active{% endif %}",
+			href="javascript:loadTaskPage(1)")
+			| first
+
+		a.page-navigate(
+			class!="{% if page_idx < 2 %}disabled{% endif %}",
+			href="javascript:loadTaskPage({{ page_idx-1 }})")
+			| prev
+
+		a.page-navigate(
+			class!="{% if page_idx >= page_count %}disabled{% endif %}",
+			href="javascript:loadTaskPage({{ page_idx+1 }})")
+			| next
+
+		a.page-navigate(
+			class!="{% if page_idx == page_count %}active{% endif %}",
+			href="javascript:loadTaskPage({{ page_count }})")
+			| last
+
+		i.pi-spin.spin#task-navigation-loader(style='display: none')
+
 
 #task-list.col-list
 	| {% for task in tasks %}
@@ -13,4 +38,13 @@
 		span.name {{ task.name }}
 		span.type {{ task.status }} - {{ task.job_type | undertitle }}
 	| {% endfor %}
+script.
+	function loadTaskPage(page_idx) {
+		var loader = $('#task-navigation-loader');
+		loader.show();
+		loadTasks("{{url_for('flamenco.tasks.perjob.list_for_job', job_id=job_id, project_url=project.url)}}?page=" + page_idx)
+		.always(function() {
+			loader.hide();
+		});
+	}
 | {%- endmacro %}

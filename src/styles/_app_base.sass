@@ -311,60 +311,60 @@ nav.sidebar
 	background-color: white
 	position: relative
 
-	.item-log-header
-		padding: 5px 0 4px 5px
+.item-log-header
+	padding: 5px 0 4px 5px
+	color: $color-text-dark-secondary
+	box-shadow: 0 5px 15px rgba(black, .1)
+
+	.header-title
+		padding-left: 5px
+
+	.download-log
+		padding: 5px
+		font-size: .9em
 		color: $color-text-dark-secondary
-		box-shadow: 0 5px 15px rgba(black, .1)
 
-		.header-title
-			padding-left: 5px
+		&:hover
+			color: $color-primary
 
-		.download-log
-			padding: 5px
-			font-size: .9em
-			color: $color-text-dark-secondary
+.item-log-content
+	position: relative
+	overflow: auto
+	width: 100%
+	cursor: default
 
-			&:hover
-				color: $color-primary
+.item-log-navigation, .task-navigation
+	float: right
+	a.page-navigate, span.log-page
+		padding: 7px 10px 4px 10px
+		user-select: none
+		text-transform: uppercase
+		font-size: .8em
+		color: $color-text-dark
 
-	.item-log-content
-		position: relative
-		overflow: auto
-		width: 100%
+	span.page
 		cursor: default
+		padding: 0 15px
+		color: $color-text-dark-secondary
 
-	.item-log-navigation
-		float: right
-		a.log-navigate, span.log-page
-			padding: 7px 10px 4px 10px
-			user-select: none
-			text-transform: uppercase
-			font-size: .8em
-			color: $color-text-dark
+	a.page-navigate
+		text-decoration: none
+		border-bottom: 2px solid $color-text-dark-hint
+		&:hover
+			color: $color-primary
+			border-color: $color-primary
 
-		span.log-page
+		&.disabled
 			cursor: default
-			padding: 0 15px
-			color: $color-text-dark-secondary
+			pointer-events: none
 
-		a.log-navigate
-			text-decoration: none
-			border-bottom: 2px solid $color-text-dark-hint
-			&:hover
-				color: $color-primary
-				border-color: $color-primary
-
-			&.disabled
-				cursor: default
-				pointer-events: none
-
-			&.disabled
-				color: $color-text-dark-hint
-				border-bottom-color: rgba(black, .1)
-			&.active
-				color: $color-primary
-				border-bottom: 2px solid $color-primary
-				font-weight: bold
+		&.disabled
+			color: $color-text-dark-hint
+			border-bottom-color: rgba(black, .1)
+		&.active
+			color: $color-primary
+			border-bottom: 2px solid $color-primary
+			font-weight: bold
 
 	.item-log-loader
 		padding: 20px

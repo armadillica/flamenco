@@ -7,22 +7,22 @@
 			i.pi-download
 
 		span.log-page Page {{ page_idx }}
-		a.log-navigate.js-log-navigate(
+		a.page-navigate.js-log-navigate(
 			class="{% if page_idx == 1 %}active{% endif %}",
 			href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=1) }}")
 			| first
 
-		a.log-navigate.js-log-navigate(
+		a.page-navigate.js-log-navigate(
 			class="{% if not has_prev_page %}disabled{% endif %}",
 			href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=page_idx-1) }}")
 			| prev
 
-		a.log-navigate.js-log-navigate(
+		a.page-navigate.js-log-navigate(
 			class="{% if not has_next_page %}disabled{% endif %}",
 			href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=page_idx+1) }}")
 			| next
 
-		a.log-navigate.js-log-navigate(
+		a.page-navigate.js-log-navigate(
 			class="{% if page_idx == last_page_idx %}active{% endif %}",
 			href="{{ url_for(request.endpoint, project_url=project.url, task_id=task_id, page=last_page_idx) }}")
 			| last

@@ -60,8 +60,11 @@ def list_for_job(project, job_id, task_id=None):
 
     page_idx = int(request.args.get('page', '1'))
 
-    tasks = current_flamenco.task_manager.tasks_for_job(job_id, page=page_idx)
+    tasks = current_flamenco.task_manager.tasks_for_job(
+        job_id, page=page_idx, max_results=40)
+
     return render_template('flamenco/tasks/list_for_job_embed.html',
+                           job_id=job_id,
                            tasks=tasks['_items'],
                            open_task_id=task_id,
                            project=project,
