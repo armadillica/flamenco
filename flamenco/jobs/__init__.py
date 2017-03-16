@@ -239,17 +239,17 @@ class JobManager(object):
             # do with other tasks in the job.
             return
         elif new_status in {'cancel-requested', 'failed'}:
-            # Request cancel of any task that might run on the manager.
-            cancelreq_result = current_flamenco.update_status_q(
-                'tasks',
-                {'job': job_id, 'status': {'$in': ['active', 'claimed-by-manager']}},
-                'cancel-requested')
             # Directly cancel any task that might run in the future, but is not touched by
             # a manager yet.
             current_flamenco.update_status_q(
                 'tasks',
                 {'job': job_id, 'status': 'queued'},
                 'canceled')
+            # Request cancel of any task that might run on the manager.
+            cancelreq_result = current_flamenco.update_status_q(
+                'tasks',
+                {'job': job_id, 'status': {'$in': ['active', 'claimed-by-manager']}},
+                'cancel-requested')
 
             # If the new status is cancel-requested, and no tasks were marked as cancel-requested,
             # we can directly transition the job to 'canceled', without waiting for more task
