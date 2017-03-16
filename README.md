@@ -52,3 +52,8 @@ At this point we can run our server and access Flamenco on the `/flamenco` endpo
 - When a certain percentage of a job's tasks have failed, cancel the remaining
   tasks and only then mark the job as failed.
 - Handle parent relations between tasks (scheduling, canceling, failing etc.)
+
+## Assumptions
+
+- Each render job has its own output directory. If not, jobs may overwrite or delete
+  each other's files.

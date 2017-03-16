@@ -77,11 +77,33 @@ class MoveOutOfWay(AbstractCommand):
 
 
 @attr.s
+class RemoveTree(AbstractCommand):
+    """Deletes an entire directory tree, without creating any backup.
+
+    :ivar path: path to delete
+    """
+
+    path = attr.ib(validator=attr.validators.instance_of(str))
+
+
+@attr.s
 class MoveToFinal(AbstractCommand):
     """Moves a directory from one place to another, safely moving the destination out of the way.
 
     If the destination already exists, it will be renamed to have its modification
     timestamp appended to it.
+
+    :ivar src: source path
+    :ivar dest: destination path
+    """
+
+    src = attr.ib(validator=attr.validators.instance_of(str))
+    dest = attr.ib(validator=attr.validators.instance_of(str))
+
+
+@attr.s
+class CopyFile(AbstractCommand):
+    """Copies a file from one place to another.
 
     :ivar src: source path
     :ivar dest: destination path

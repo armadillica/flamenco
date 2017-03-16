@@ -1,3 +1,8 @@
+from pathlib import PurePath
+import typing
+
+from bson import ObjectId
+
 from pillar import attrs_extra
 
 from .abstract_compiler import AbstractJobCompiler
@@ -21,24 +26,28 @@ class BlenderRenderProgressive(AbstractJobCompiler):
 
     def _compile(self, job):
         import math
-        from pathlib import Path
 
         self._log.info('Compiling job %s', job['_id'])
         self.validate_job_settings(job)
+        self.job_settings = job['settings']
 
-        job_settings = job['settings']
-        self.intermediate_path = Path(job_settings['render_output']).with_name('_intermediate')
+        # The render output contains a filename pattern, most likely '######' or
+        # something similar. This has to be removed, so that we end up with
+        # the directory that will contain the frames.
+        self.render_output = PurePath(job['settings']['render_output'])
+        self.render_path = self.render_output.parent
+        self.intermediate_path = self.render_path.with_name(self.render_path.name + '__intermediate')
 
-        move_existing_task_id = self._make_move_out_of_way_task(job)
+        destroy_interm_task_id = self._make_destroy_intermediate_task(job)
         task_count = 1
 
-        cycles_sample_count = int(job_settings['cycles_sample_count'])
-        self.cycles_num_chunks = int(job_settings['cycles_num_chunks'])
+        cycles_sample_count = int(self.job_settings['cycles_sample_count'])
+        self.cycles_num_chunks = int(self.job_settings['cycles_num_chunks'])
         sample_count_per_chunk = int(math.ceil(float(cycles_sample_count) / self.cycles_num_chunks))
 
         next_merge_task_deps = []
         prev_samples_to = 0
-        for cycles_chunk_idx in range(int(job_settings['cycles_num_chunks'])):
+        for cycles_chunk_idx in range(int(self.job_settings['cycles_num_chunks'])):
             # Compute the Cycles sample range for this chunk (chunk_idx in base-0), in base-1.
             cycles_samples_from = cycles_chunk_idx * sample_count_per_chunk + 1
             cycles_samples_to = min((cycles_chunk_idx + 1) * sample_count_per_chunk,
@@ -50,7 +59,7 @@ class BlenderRenderProgressive(AbstractJobCompiler):
             render_task_ids = self._make_progressive_render_tasks(
                 job,
                 'render-smpl%i-%i-frm%%s' % (cycles_samples_from, cycles_samples_to),
-                move_existing_task_id,
+                destroy_interm_task_id,
                 cycles_chunk_idx + 1,
                 cycles_samples_from,
                 cycles_samples_to,
@@ -61,8 +70,18 @@ class BlenderRenderProgressive(AbstractJobCompiler):
             # Create progressive image merge tasks, based on previous list of render tasks
             # and the just-created list.
             if cycles_chunk_idx == 0:
-                next_merge_task_deps = render_task_ids
+                # Nothing to merge yet, just copy the first renders.
+                publish_task_id = self._make_publish_first_chunk_task(
+                    job,
+                    render_task_ids,
+                    cycles_samples_from,
+                    cycles_samples_to,
+                )
+                task_count += 1
+                next_merge_task_deps = len(render_task_ids) * [publish_task_id]
             else:
+                # Both merge and render tasks should have same number of frame chunks.
+                assert len(next_merge_task_deps) == len(render_task_ids)
                 merge_task_ids = self._make_merge_tasks(
                     job,
                     'merge-to-smpl%i-frm%%s' % cycles_samples_to,
@@ -98,22 +117,33 @@ class BlenderRenderProgressive(AbstractJobCompiler):
             raise exceptions.JobSettingError(
                 'Setting "render_output" must end in exactly 6 "#" marks.')
 
-    def _make_move_out_of_way_task(self, job):
-        """Creates a MoveOutOfWay command to back up existing frames, and wraps it in a task.
+    def _make_destroy_intermediate_task(self, job: dict) -> ObjectId:
+        """Removes the entire intermediate directory."""
 
-        :returns: the ObjectId of the created task.
-        :rtype: bson.ObjectId
-        """
+        cmd = commands.RemoveTree(path=str(self.intermediate_path))
+        task_id = self._create_task(job, [cmd], 'destroy-preexisting-intermediate')
+        return task_id
 
-        import os.path
+    def _make_publish_first_chunk_task(self, job: dict, parents: typing.List[ObjectId],
+                                       cycles_samples_from: int,
+                                       cycles_samples_to: int) -> ObjectId:
+        """Publishes the first cycles-chunk of renders."""
 
-        # The render path contains a filename pattern, most likely '######' or
-        # something similar. This has to be removed, so that we end up with
-        # the directory that will contain the frames.
-        render_dest_dir = os.path.dirname(job['settings']['render_output'])
-        cmd = commands.MoveOutOfWay(src=render_dest_dir)
+        cmds: typing.List[commands.AbstractCommand] = [commands.MoveOutOfWay(
+            src=str(self.render_path))]
 
-        task_id = self._create_task(job, [cmd], 'move-existing-frames')
+        src_path = self._render_output(cycles_samples_from, cycles_samples_to)
+        src_fmt = str(src_path).replace('######', '%06i.exr')
+        dest_fmt = str(self.render_output).replace('######', '%06i.exr')
+
+        for chunk_frames in self._iter_frame_chunks():
+            for frame in chunk_frames:
+                cmds.append(commands.CopyFile(
+                    src=src_fmt % frame,
+                    dest=dest_fmt % frame,
+                ))
+
+        task_id = self._create_task(job, cmds, 'publish-first-chunk', parents=parents)
         return task_id
 
     def _make_progressive_render_tasks(self,
@@ -176,17 +206,23 @@ class BlenderRenderProgressive(AbstractJobCompiler):
 
         return task_ids
 
-    def _render_output(self, cycles_samples_from, cycles_samples_to):
+    def _render_output(self, cycles_samples_from, cycles_samples_to) -> PurePath:
         """Intermediate render output path, with ###### placeholder for the frame nr"""
-        render_fname = 'render-smpl-%i-%i-frm-######' % (cycles_samples_from, cycles_samples_to)
+        render_fname = 'render-smpl-%04i-%04i-frm-######' % (cycles_samples_from, cycles_samples_to)
         render_output = self.intermediate_path / render_fname
         return render_output
 
-    def _merge_output(self, cycles_samples_to):
+    def _merge_output(self, cycles_samples_to) -> PurePath:
         """Intermediate merge output path, with ###### placeholder for the frame nr"""
-        merge_fname = 'merge-smpl-%i-frm-######' % cycles_samples_to
+        merge_fname = 'merge-smpl-%04i-frm-######' % cycles_samples_to
         merge_output = self.intermediate_path / merge_fname
         return merge_output
+
+    def _iter_frame_chunks(self) -> typing.Iterable[typing.List[int]]:
+        """Iterates over the frame chunks"""
+        from flamenco.utils import iter_frame_range
+
+        yield from iter_frame_range(self.job_settings['frames'], self.job_settings['chunk_size'])
 
     def _make_merge_tasks(self, job, name_fmt,
                           cycles_chunk_idx,
@@ -204,13 +240,9 @@ class BlenderRenderProgressive(AbstractJobCompiler):
         # Merging cannot happen unless we have at least two chunks
         assert cycles_chunk_idx >= 2
 
-        from flamenco.utils import iter_frame_range, frame_range_merge
-
-        job_settings = job['settings']
+        from flamenco.utils import frame_range_merge
 
         task_ids = []
-
-        cycles_num_chunks = int(job_settings['cycles_num_chunks'])
 
         weight1 = cycles_samples_to1
         weight2 = cycles_samples_to2 - cycles_samples_from2 + 1
@@ -223,25 +255,31 @@ class BlenderRenderProgressive(AbstractJobCompiler):
         else:
             input1 = self._merge_output(cycles_samples_to1)
         input2 = self._render_output(cycles_samples_from2, cycles_samples_to2)
+        output = self._merge_output(cycles_samples_to2)
 
-        if cycles_chunk_idx == cycles_num_chunks:
-            # At the last merge, we merge to the actual render output, not to intermediary.
-            output = job['settings']['render_output']
-        else:
-            output = self._merge_output(cycles_samples_to2)
+        # Construct format strings from the paths.
+        input1_fmt = str(input1).replace('######', '%06i.exr')
+        input2_fmt = str(input2).replace('######', '%06i.exr')
+        output_fmt = str(output).replace('######', '%06i.exr')
+        final_dest_fmt = str(self.render_output).replace('######', '%06i.exr')
 
-        frame_chunk_iter = iter_frame_range(job_settings['frames'], job_settings['chunk_size'])
-        for chunk_idx, chunk_frames in enumerate(frame_chunk_iter):
+        for chunk_idx, chunk_frames in enumerate(self._iter_frame_chunks()):
             # Create a merge command for every frame in the chunk.
             task_cmds = []
             for framenr in chunk_frames:
+                intermediate = output_fmt % framenr
                 task_cmds.append(
                     commands.MergeProgressiveRenders(
-                        input1=str(input1).replace('######', '%06i.exr') % framenr,
-                        input2=str(input2).replace('######', '%06i.exr') % framenr,
-                        output=str(output).replace('######', '%06i.exr') % framenr,
+                        input1=input1_fmt % framenr,
+                        input2=input2_fmt % framenr,
+                        output=intermediate,
                         weight1=weight1,
                         weight2=weight2,
+                    ))
+                task_cmds.append(
+                    commands.CopyFile(
+                        src=intermediate,
+                        dest=final_dest_fmt % framenr,
                     ))
 
             name = name_fmt % frame_range_merge(chunk_frames)

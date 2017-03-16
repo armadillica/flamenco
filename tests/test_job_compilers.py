@@ -178,7 +178,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
         from flamenco.job_compilers import blender_render_progressive
         from flamenco.exceptions import JobSettingError
 
-        job_doc = {
+        job_doc = JobDocForTesting({
             '_id': ObjectId(24 * 'f'),
             'settings': {
                 'frames': '1-6',
@@ -190,7 +190,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'cycles_sample_count': 30,
                 'cycles_num_chunks': 3,
             }
-        }
+        })
         task_manager = mock.Mock()
         job_manager = mock.Mock()
         compiler = blender_render_progressive.BlenderRenderProgressive(
@@ -202,10 +202,10 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
     def test_small_job(self, mock_datetime):
         from flamenco.job_compilers import blender_render_progressive, commands
 
-        job_doc = {
+        job_doc = JobDocForTesting({
             '_id': ObjectId(24 * 'f'),
             'settings': {
-                'frames': '1-6',
+                'frames': '1-4',
                 'chunk_size': 2,
                 'render_output': '/render/out/frames-######',
                 'format': 'EXR',
@@ -214,7 +214,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'cycles_sample_count': 30,
                 'cycles_num_chunks': 3,
             }
-        }
+        })
         task_manager = mock.Mock()
         job_manager = mock.Mock()
 
@@ -222,13 +222,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
         mock_now = datetime.datetime.now(tz=tz_util.utc)
         mock_datetime.now.side_effect = [mock_now]
 
-        # We expect:
-        # - 1 move-out-of-way task
-        # - 3 frame chunks of 2 frames each
-        # - 3 progressive renders per frame
-        # - 2 merge tasks per frame chunk
-        # so that's a 9 render tasks and 6 merge tasks, giving 16 tasks in total.
-        task_ids = [ObjectId() for _ in range(16)]
+        task_ids = [ObjectId() for _ in range(12)]
         task_manager.api_create_task.side_effect = task_ids
 
         compiler = blender_render_progressive.BlenderRenderProgressive(
@@ -236,294 +230,265 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
         compiler.compile(job_doc)
 
         task_manager.api_create_task.assert_has_calls([
-            mock.call(job_doc,
-                      [commands.MoveOutOfWay(src='/render/out')],
-                      'move-existing-frames',
-                      status='under-construction'),
+            # Pre-existing intermediate directory is destroyed.
+            mock.call(  # task 0
+                job_doc,
+                [commands.RemoveTree(path='/render/out__intermediate')],
+                'destroy-preexisting-intermediate',
+                status='under-construction'),
 
-            # First Cycles chunk
-            mock.call(
+            # First Cycles chunk goes into intermediate directory
+            mock.call(  # task 1
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out/_intermediate/render-smpl-1-10-frm-######',
+                    render_output='/render/out__intermediate/render-smpl-0001-0010-frm-######',
                     frames='1,2',
                     cycles_num_chunks=3,
                     cycles_chunk=1,
                     cycles_samples_from=1,
                     cycles_samples_to=10)],
                 'render-smpl1-10-frm1,2',
-                parents=[task_ids[0]],
                 priority=0,
+                parents=[task_ids[0]],
                 status='under-construction'),
-            mock.call(
+            mock.call(  # task 2
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out/_intermediate/render-smpl-1-10-frm-######',
+                    render_output='/render/out__intermediate/render-smpl-0001-0010-frm-######',
                     frames='3,4',
                     cycles_num_chunks=3,
                     cycles_chunk=1,
                     cycles_samples_from=1,
                     cycles_samples_to=10)],
                 'render-smpl1-10-frm3,4',
-                parents=[task_ids[0]],
                 priority=0,
-                status='under-construction'),
-            mock.call(
-                job_doc,
-                [commands.BlenderRenderProgressive(
-                    blender_cmd='/path/to/blender --enable-new-depsgraph',
-                    filepath='/agent327/scenes/someshot/somefile.blend',
-                    format='EXR',
-                    render_output='/render/out/_intermediate/render-smpl-1-10-frm-######',
-                    frames='5,6',
-                    cycles_num_chunks=3,
-                    cycles_chunk=1,
-                    cycles_samples_from=1,
-                    cycles_samples_to=10)],
-                'render-smpl1-10-frm5,6',
                 parents=[task_ids[0]],
-                priority=0,
                 status='under-construction'),
 
-            # Second Cycles chunk
-            mock.call(
+            # Pre-existing render output dir is moved aside, and intermediate is destroyed.
+            # Copy first sample chunk of frames to the output directory.
+            mock.call(  # task 3
+                job_doc,
+                [
+                    commands.MoveOutOfWay(src='/render/out'),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/render-smpl-0001-0010-frm-000001.exr',
+                        dest='/render/out/frames-000001.exr',
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/render-smpl-0001-0010-frm-000002.exr',
+                        dest='/render/out/frames-000002.exr',
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/render-smpl-0001-0010-frm-000003.exr',
+                        dest='/render/out/frames-000003.exr',
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/render-smpl-0001-0010-frm-000004.exr',
+                        dest='/render/out/frames-000004.exr',
+                    ),
+                ],
+                'publish-first-chunk',
+                parents=task_ids[1:3],
+                status='under-construction'),
+
+            # Second Cycles chunk renders to intermediate directory.
+            mock.call(  # task 4
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out/_intermediate/render-smpl-11-20-frm-######',
+                    render_output='/render/out__intermediate/render-smpl-0011-0020-frm-######',
                     frames='1,2',
                     cycles_num_chunks=3,
                     cycles_chunk=2,
                     cycles_samples_from=11,
                     cycles_samples_to=20)],
                 'render-smpl11-20-frm1,2',
-                parents=[task_ids[0]],
                 priority=-10,
+                parents=[task_ids[0]],
                 status='under-construction'),
-            mock.call(
+            mock.call(  # task 5
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out/_intermediate/render-smpl-11-20-frm-######',
+                    render_output='/render/out__intermediate/render-smpl-0011-0020-frm-######',
                     frames='3,4',
                     cycles_num_chunks=3,
                     cycles_chunk=2,
                     cycles_samples_from=11,
                     cycles_samples_to=20)],
                 'render-smpl11-20-frm3,4',
-                parents=[task_ids[0]],
                 priority=-10,
-                status='under-construction'),
-            mock.call(
-                job_doc,
-                [commands.BlenderRenderProgressive(
-                    blender_cmd='/path/to/blender --enable-new-depsgraph',
-                    filepath='/agent327/scenes/someshot/somefile.blend',
-                    format='EXR',
-                    render_output='/render/out/_intermediate/render-smpl-11-20-frm-######',
-                    frames='5,6',
-                    cycles_num_chunks=3,
-                    cycles_chunk=2,
-                    cycles_samples_from=11,
-                    cycles_samples_to=20)],
-                'render-smpl11-20-frm5,6',
                 parents=[task_ids[0]],
-                priority=-10,
                 status='under-construction'),
 
-            # First merge pass
-            mock.call(
+            # First merge pass, outputs to intermediate directory and copies to output dir
+            mock.call(  # task 6
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/render-smpl-1-10-frm-000001.exr',
-                        input2='/render/out/_intermediate/render-smpl-11-20-frm-000001.exr',
-                        output='/render/out/_intermediate/merge-smpl-20-frm-000001.exr',
+                        input1='/render/out__intermediate/render-smpl-0001-0010-frm-000001.exr',
+                        input2='/render/out__intermediate/render-smpl-0011-0020-frm-000001.exr',
+                        output='/render/out__intermediate/merge-smpl-0020-frm-000001.exr',
                         weight1=10,
                         weight2=10,
                     ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/merge-smpl-0020-frm-000001.exr',
+                        dest='/render/out/frames-000001.exr',
+                    ),
                     commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/render-smpl-1-10-frm-000002.exr',
-                        input2='/render/out/_intermediate/render-smpl-11-20-frm-000002.exr',
-                        output='/render/out/_intermediate/merge-smpl-20-frm-000002.exr',
+                        input1='/render/out__intermediate/render-smpl-0001-0010-frm-000002.exr',
+                        input2='/render/out__intermediate/render-smpl-0011-0020-frm-000002.exr',
+                        output='/render/out__intermediate/merge-smpl-0020-frm-000002.exr',
                         weight1=10,
                         weight2=10,
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/merge-smpl-0020-frm-000002.exr',
+                        dest='/render/out/frames-000002.exr',
                     ),
                 ],
                 'merge-to-smpl20-frm1,2',
-                parents=[task_ids[1], task_ids[4]],
+                parents=[task_ids[3], task_ids[4]],
                 priority=-11,
                 status='under-construction'),
-            mock.call(
+            mock.call(  # task 7
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/render-smpl-1-10-frm-000003.exr',
-                        input2='/render/out/_intermediate/render-smpl-11-20-frm-000003.exr',
-                        output='/render/out/_intermediate/merge-smpl-20-frm-000003.exr',
+                        input1='/render/out__intermediate/render-smpl-0001-0010-frm-000003.exr',
+                        input2='/render/out__intermediate/render-smpl-0011-0020-frm-000003.exr',
+                        output='/render/out__intermediate/merge-smpl-0020-frm-000003.exr',
                         weight1=10,
                         weight2=10,
                     ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/merge-smpl-0020-frm-000003.exr',
+                        dest='/render/out/frames-000003.exr',
+                    ),
                     commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/render-smpl-1-10-frm-000004.exr',
-                        input2='/render/out/_intermediate/render-smpl-11-20-frm-000004.exr',
-                        output='/render/out/_intermediate/merge-smpl-20-frm-000004.exr',
+                        input1='/render/out__intermediate/render-smpl-0001-0010-frm-000004.exr',
+                        input2='/render/out__intermediate/render-smpl-0011-0020-frm-000004.exr',
+                        output='/render/out__intermediate/merge-smpl-0020-frm-000004.exr',
                         weight1=10,
                         weight2=10,
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/merge-smpl-0020-frm-000004.exr',
+                        dest='/render/out/frames-000004.exr',
                     ),
                 ],
                 'merge-to-smpl20-frm3,4',
-                parents=[task_ids[2], task_ids[5]],
-                priority=-11,
-                status='under-construction'),
-            mock.call(
-                job_doc,
-                [
-                    commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/render-smpl-1-10-frm-000005.exr',
-                        input2='/render/out/_intermediate/render-smpl-11-20-frm-000005.exr',
-                        output='/render/out/_intermediate/merge-smpl-20-frm-000005.exr',
-                        weight1=10,
-                        weight2=10,
-                    ),
-                    commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/render-smpl-1-10-frm-000006.exr',
-                        input2='/render/out/_intermediate/render-smpl-11-20-frm-000006.exr',
-                        output='/render/out/_intermediate/merge-smpl-20-frm-000006.exr',
-                        weight1=10,
-                        weight2=10,
-                    ),
-                ],
-                'merge-to-smpl20-frm5,6',
-                parents=[task_ids[3], task_ids[6]],
+                parents=[task_ids[3], task_ids[5]],
                 priority=-11,
                 status='under-construction'),
 
-            # Third Cycles chunk
-            mock.call(
+            # Third Cycles chunk renders to intermediate directory.
+            mock.call(  # task 8
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out/_intermediate/render-smpl-21-30-frm-######',
+                    render_output='/render/out__intermediate/render-smpl-0021-0030-frm-######',
                     frames='1,2',
                     cycles_num_chunks=3,
                     cycles_chunk=3,
                     cycles_samples_from=21,
                     cycles_samples_to=30)],
                 'render-smpl21-30-frm1,2',
-                parents=[task_ids[0]],
                 priority=-20,
+                parents=[task_ids[0]],
                 status='under-construction'),
-            mock.call(
+            mock.call(  # task 9
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out/_intermediate/render-smpl-21-30-frm-######',
+                    render_output='/render/out__intermediate/render-smpl-0021-0030-frm-######',
                     frames='3,4',
                     cycles_num_chunks=3,
                     cycles_chunk=3,
                     cycles_samples_from=21,
                     cycles_samples_to=30)],
                 'render-smpl21-30-frm3,4',
-                parents=[task_ids[0]],
                 priority=-20,
-                status='under-construction'),
-            mock.call(
-                job_doc,
-                [commands.BlenderRenderProgressive(
-                    blender_cmd='/path/to/blender --enable-new-depsgraph',
-                    filepath='/agent327/scenes/someshot/somefile.blend',
-                    format='EXR',
-                    render_output='/render/out/_intermediate/render-smpl-21-30-frm-######',
-                    frames='5,6',
-                    cycles_num_chunks=3,
-                    cycles_chunk=3,
-                    cycles_samples_from=21,
-                    cycles_samples_to=30)],
-                'render-smpl21-30-frm5,6',
                 parents=[task_ids[0]],
-                priority=-20,
                 status='under-construction'),
 
-            # Final merge pass
-            mock.call(
+            # Final merge pass. Could happen directly to the output directory, but to ensure the
+            # intermediate directory shows a complete picture (pun intended), we take a similar
+            # approach as earlier merge passes.
+            mock.call(  # task 10
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/merge-smpl-20-frm-000001.exr',
-                        input2='/render/out/_intermediate/render-smpl-21-30-frm-000001.exr',
-                        output='/render/out/frames-000001.exr',
+                        input1='/render/out__intermediate/merge-smpl-0020-frm-000001.exr',
+                        input2='/render/out__intermediate/render-smpl-0021-0030-frm-000001.exr',
+                        output='/render/out__intermediate/merge-smpl-0030-frm-000001.exr',
                         weight1=20,
                         weight2=10,
                     ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/merge-smpl-0030-frm-000001.exr',
+                        dest='/render/out/frames-000001.exr',
+                    ),
                     commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/merge-smpl-20-frm-000002.exr',
-                        input2='/render/out/_intermediate/render-smpl-21-30-frm-000002.exr',
-                        output='/render/out/frames-000002.exr',
+                        input1='/render/out__intermediate/merge-smpl-0020-frm-000002.exr',
+                        input2='/render/out__intermediate/render-smpl-0021-0030-frm-000002.exr',
+                        output='/render/out__intermediate/merge-smpl-0030-frm-000002.exr',
                         weight1=20,
                         weight2=10,
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/merge-smpl-0030-frm-000002.exr',
+                        dest='/render/out/frames-000002.exr',
                     ),
                 ],
                 'merge-to-smpl30-frm1,2',
-                parents=[task_ids[7], task_ids[10]],
+                parents=[task_ids[6], task_ids[8]],
                 priority=-21,
                 status='under-construction'),
-            mock.call(
+            mock.call(  # task 11
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/merge-smpl-20-frm-000003.exr',
-                        input2='/render/out/_intermediate/render-smpl-21-30-frm-000003.exr',
-                        output='/render/out/frames-000003.exr',
+                        input1='/render/out__intermediate/merge-smpl-0020-frm-000003.exr',
+                        input2='/render/out__intermediate/render-smpl-0021-0030-frm-000003.exr',
+                        output='/render/out__intermediate/merge-smpl-0030-frm-000003.exr',
                         weight1=20,
                         weight2=10,
                     ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/merge-smpl-0030-frm-000003.exr',
+                        dest='/render/out/frames-000003.exr',
+                    ),
                     commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/merge-smpl-20-frm-000004.exr',
-                        input2='/render/out/_intermediate/render-smpl-21-30-frm-000004.exr',
-                        output='/render/out/frames-000004.exr',
+                        input1='/render/out__intermediate/merge-smpl-0020-frm-000004.exr',
+                        input2='/render/out__intermediate/render-smpl-0021-0030-frm-000004.exr',
+                        output='/render/out__intermediate/merge-smpl-0030-frm-000004.exr',
                         weight1=20,
                         weight2=10,
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate/merge-smpl-0030-frm-000004.exr',
+                        dest='/render/out/frames-000004.exr',
                     ),
                 ],
                 'merge-to-smpl30-frm3,4',
-                parents=[task_ids[8], task_ids[11]],
-                priority=-21,
-                status='under-construction'),
-            mock.call(
-                job_doc,
-                [
-                    commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/merge-smpl-20-frm-000005.exr',
-                        input2='/render/out/_intermediate/render-smpl-21-30-frm-000005.exr',
-                        output='/render/out/frames-000005.exr',
-                        weight1=20,
-                        weight2=10,
-                    ),
-                    commands.MergeProgressiveRenders(
-                        input1='/render/out/_intermediate/merge-smpl-20-frm-000006.exr',
-                        input2='/render/out/_intermediate/render-smpl-21-30-frm-000006.exr',
-                        output='/render/out/frames-000006.exr',
-                        weight1=20,
-                        weight2=10,
-                    ),
-                ],
-                'merge-to-smpl30-frm5,6',
-                parents=[task_ids[9], task_ids[12]],
+                parents=[task_ids[7], task_ids[9]],
                 priority=-21,
                 status='under-construction'),
         ])
