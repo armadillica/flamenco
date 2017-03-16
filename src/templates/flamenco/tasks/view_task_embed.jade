@@ -117,6 +117,10 @@ script.
 
 	// Close Task Details
 	function closeTaskDetails(){
+		// Notify the rest of the page that this task is no longer showing.
+		$('#task-{{ task._id }}').removeClass('active');
+		delete document.body.dataset.taskId;
+
 		clearMainOverlay();
 
 		// Push the correct URL onto the history.
