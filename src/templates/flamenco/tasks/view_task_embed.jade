@@ -100,6 +100,10 @@ script.
 
 	$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
 
+	// Notify the rest of the page that this task is showing.
+	document.body.dataset.taskId = '{{ task._id }}';
+	$('#task-{{ task._id }}').addClass('active');
+
 	setupJsJobLinkClickHandlers();
 
 	// Task Logs

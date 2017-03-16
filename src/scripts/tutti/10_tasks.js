@@ -127,6 +127,12 @@ function loadTasks(url) {
         if(console) console.log('Tasks loaded OK\n' + url);
         $('#tasks').html(data);
         setupJsTaskLinkClickHandlers();
+
+        // Mark the showing task as 'active' in the task list.
+        var task_id = document.body.dataset.taskId;
+        if (typeof task_id != 'undefined') {
+            $('#task-' + task_id).addClass('active');
+        }
     })
 }
 
