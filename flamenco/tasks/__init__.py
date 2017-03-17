@@ -143,6 +143,21 @@ class TaskManager(object):
                                          to_status,
                                          now=now)
 
+    def api_set_activity(self, task_query: dict, new_activity: str):
+        """Updates the activity for all tasks that match the query."""
+
+        import uuid
+        from bson import tz_util
+
+        update = {
+            'activity': new_activity,
+            '_etag': uuid.uuid4().hex,
+            '_updated': datetime.datetime.now(tz=tz_util.utc),
+        }
+
+        tasks_coll = self.collection()
+        tasks_coll.update_many(task_query, {'$set': update})
+
     def api_find_job_enders(self, job_id):
         """Returns a list of tasks that could be the last tasks of a job.
 

@@ -165,7 +165,7 @@ class JobManager(object):
             return
 
         if new_task_status == 'failed':
-            # Count the number of failed tasks. If it is more than 10, fail the job.
+            # Count the number of failed tasks. If it is more than 10%, fail the job.
             tasks_coll = current_flamenco.db('tasks')
             total_count = tasks_coll.find({'job': job_id}).count()
             fail_count = tasks_coll.find({'job': job_id, 'status': 'failed'}).count()
@@ -250,6 +250,15 @@ class JobManager(object):
                 'tasks',
                 {'job': job_id, 'status': {'$in': ['active', 'claimed-by-manager']}},
                 'cancel-requested')
+
+            # Update the activity of all the tasks we just cancelled (or requested cancellation),
+            # so that users can tell why they were cancelled.
+            current_flamenco.task_manager.api_set_activity(
+                {'job': job_id,
+                 'status': {'$in': ['cancel-requested', 'canceled']},
+                 'activity': {'$exists': False}},
+                'Server cancelled this task because the job failed.'
+            )
 
             # If the new status is cancel-requested, and no tasks were marked as cancel-requested,
             # we can directly transition the job to 'canceled', without waiting for more task

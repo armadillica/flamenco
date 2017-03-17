@@ -149,3 +149,32 @@ class TaskManagerTest(AbstractFlamencoTest):
             self.assertNotEqual(pre_flip_etags[0], post_flip_etags[0])
             self.assertNotEqual(pre_flip_etags[1], post_flip_etags[1])
             self.assertEqual(pre_flip_etags[2], post_flip_etags[2])
+
+    def test_api_set_activity(self):
+        job_id = self.test_create_task()
+
+        # Ensure we have three activities:
+        #   - non-existent
+        #   - empty string
+        #   - non-empty string
+        with self.app.test_request_context():
+            tasks_coll = self.tmngr.collection()
+            dbtasks = list(tasks_coll.find())
+            self.assertEqual(3, len(dbtasks))  # 2 of compiled job + the one we added after.
+
+            tasks_coll.update_one({'_id': dbtasks[0]['_id']}, {'$unset': {'activity': ''}})
+            tasks_coll.update_one({'_id': dbtasks[1]['_id']}, {'$set': {'activity': ''}})
+            tasks_coll.update_one({'_id': dbtasks[2]['_id']}, {'$set': {'activity': 'Trés active'}})
+
+            # Set a new activity
+            self.tmngr.api_set_activity(
+                {'job': job_id,
+                 'activity': {'$exists': False}},
+                'Activiteit geüpdated.'
+            )
+
+            # Test the result
+            dbtasks = list(self.tmngr.collection().find())
+            self.assertEqual('Activiteit geüpdated.', dbtasks[0]['activity'])
+            self.assertEqual('', dbtasks[1]['activity'])
+            self.assertEqual('Trés active', dbtasks[2]['activity'])
