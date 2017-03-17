@@ -261,6 +261,12 @@ class JobManager(object):
                 self.api_set_job_status(job_id, 'canceled')
             return
         elif new_status == 'queued':
+            if old_status == 'under-construction':
+                # Nothing to do, the job compiler has just finished its work; the tasks have
+                # already been set to 'queued' status.
+                self._log.debug('Ignoring job status change %r -> %r', old_status, new_status)
+                return
+
             if old_status == 'completed':
                 # Re-queue all tasks except cancel-requested; those should remain
                 # untouched; changing their status is only allowed by managers, to avoid
