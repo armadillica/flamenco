@@ -257,7 +257,7 @@ class JobManager(object):
                 {'job': job_id,
                  'status': {'$in': ['cancel-requested', 'canceled']},
                  'activity': {'$exists': False}},
-                'Server cancelled this task because the job failed.'
+                'Server cancelled this task because the job got status %r.' % new_status
             )
 
             # If the new status is cancel-requested, and no tasks were marked as cancel-requested,
