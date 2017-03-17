@@ -5,6 +5,7 @@ import datetime
 import typing
 
 import bson
+import pymongo.collection
 import werkzeug.exceptions as wz_exceptions
 
 from pillar import attrs_extra
@@ -29,6 +30,12 @@ REQUEABLE_TASK_STATES = {'completed', 'canceled', 'failed'}
 @attr.s
 class TaskManager(object):
     _log = attrs_extra.log('%s.TaskManager' % __name__)
+
+    def collection(self) -> pymongo.collection.Collection:
+        """Returns the Mongo database collection."""
+        from flamenco import current_flamenco
+
+        return current_flamenco.db('tasks')
 
     def api_create_task(self, job, commands, name, parents=None, priority=50,
                         status='queued') -> bson.ObjectId:
@@ -145,9 +152,7 @@ class TaskManager(object):
         :rtype: list
         """
 
-        from flamenco import current_flamenco
-
-        tasks_coll = current_flamenco.db('tasks')
+        tasks_coll = self.collection()
 
         # Get the distinct set of tasks used as parents.
         parent_tasks = tasks_coll.aggregate([
@@ -172,11 +177,10 @@ class TaskManager(object):
         NOTE: this breaks references in the task log database.
         """
 
-        from flamenco import current_flamenco
         from pymongo.results import DeleteResult
 
         self._log.info('Deleting all tasks of job %s', job_id)
-        tasks_coll = current_flamenco.db('tasks')
+        tasks_coll = self.collection()
         delres: DeleteResult = tasks_coll.delete_many({'job': job_id})
         self._log.info('Deleted %i tasks of job %s', delres.deleted_count, job_id)
 
