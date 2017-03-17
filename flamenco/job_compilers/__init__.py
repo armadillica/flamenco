@@ -30,15 +30,6 @@ def compile_job(job):
     compiler = construct_job_compiler(job)
     compiler.compile(job)
 
-    # Flip all tasks for this job from 'under-construction' to 'queued', and do the same
-    # with the job. This must all happen using a single '_updated' timestamp to prevent
-    # race conditions.
-    job_id = job['_id']
-    now = datetime.datetime.now(tz=tz_util.utc)
-    current_flamenco.task_manager.api_set_task_status_for_job(
-        job_id, 'under-construction', 'queued', now=now)
-    current_flamenco.job_manager.api_set_job_status(job_id, 'queued', now=now)
-
 
 def validate_job(job):
     """Validates job settings.
