@@ -171,7 +171,7 @@ nav.sidebar
 			&.item-status
 				a
 					display: inline-block
-					color: white
+					color: $color-text-light
 					font-size: .75em
 					text-transform: uppercase
 					font-family: $font-body
@@ -179,6 +179,7 @@ nav.sidebar
 					border-radius: 3px
 					width: 100%
 					margin-left: 3px
+					background-color: $color-text-dark-secondary // fallback, gets overriden by individual status
 
 .item-list-header
 	a
