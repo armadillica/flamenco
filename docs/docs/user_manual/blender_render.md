@@ -26,7 +26,7 @@ Flamenco, which is something only server administrators can do at the moment.
 
 1. Select your Flamenco project. If this project doesn't show up, or if the Flamenco panel
    doesn't show when you select your Flamenco project, press the refresh button.
-2. Choose your Local Cloud Project Path. For reliable results, we reccomend using an
+2. Choose your Local Cloud Project Path. For reliable results, we recommend using an
    absolute path. This path should point at the top-level directory of your project.
 3. Choose your Flamenco Manager. Again, if it doesn't show up, press the refresh button.
 4. Choose the Job File Path (also known as the Storage Path), which is where Blender will
@@ -92,7 +92,8 @@ The "Simple Render" job type performs frame-by-frame rendering. Roughly, the tas
   moved apart (by appending its last modification timestamp to the name).
 - The intermediate directory is renamed to the Output Directory.
 
-**NOTE** that this render type does *not require* rendering as images. If you configure Blender to output to video files, it will do so. Each video file will have "Frame Chunk Size" frames in it.
+**NOTE** that this render type does *not require* rendering as images. If you configure Blender to output to video files, it will do so. However, the videos will be named the
+same for each render task and be overwritten, so this is not a good way to go.
 
 
 ## Specifics: Progressive Render
