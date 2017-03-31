@@ -38,7 +38,7 @@ class TaskManager(object):
         return current_flamenco.db('tasks')
 
     def api_create_task(self, job, commands, name, parents=None, priority=50,
-                        status='queued') -> bson.ObjectId:
+                        status='queued', *, task_type: str) -> bson.ObjectId:
         """Creates a task in MongoDB for the given job, executing commands.
 
         Returns the ObjectId of the created task.
@@ -53,6 +53,7 @@ class TaskManager(object):
             'name': name,
             'status': status,
             'job_type': job['job_type'],
+            'task_type': task_type,
             'commands': [cmd.to_dict() for cmd in commands],
             'job_priority': job['priority'],
             'priority': priority,

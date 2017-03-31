@@ -236,6 +236,16 @@ tasks_schema = {
         'type': 'string',
         'required': True,
     },
+    'task_type': {
+        'type': 'string',
+        'required': True,
+        'allowed': [
+            'sleep',  # sleeping; just used for testing stuff.
+            'blender-render',  # Rendering with Blender.
+            'exr-merge',  # EXR merging, probably also happens with Blender.
+            'file-management',  # removing directory trees, moving files around, etc.
+        ]
+    },
     'commands': {
         'type': 'list',
         'schema': {

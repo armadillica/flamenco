@@ -43,7 +43,8 @@ class BlenderRender(AbstractJobCompiler):
             dest=str(self.final_dir),
         )
 
-        task_id = self._create_task(job, [cmd], 'move-to-final', parents=parent_task_ids)
+        task_id = self._create_task(job, [cmd], 'move-to-final', 'file-management',
+                                    parents=parent_task_ids)
         return task_id
 
     def _make_render_tasks(self, job) -> typing.List[bson.ObjectId]:
@@ -70,6 +71,6 @@ class BlenderRender(AbstractJobCompiler):
             ]
 
             name = 'blender-render-%s' % frame_range
-            task_ids.append(self._create_task(job, task_cmds, name))
+            task_ids.append(self._create_task(job, task_cmds, name, 'blender-render'))
 
         return task_ids

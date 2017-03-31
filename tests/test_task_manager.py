@@ -33,7 +33,8 @@ class TaskManagerTest(AbstractFlamencoTest):
                     commands.Sleep(time_in_seconds=3),
                 ],
                 'sleep-1-13',
-                status='under-construction'
+                status='under-construction',
+                task_type='exr-merge',
             )
 
         # Now test the database contents.
@@ -44,6 +45,9 @@ class TaskManagerTest(AbstractFlamencoTest):
 
             statuses = [task['status'] for task in dbtasks]
             self.assertEqual(['queued', 'queued', 'under-construction'], statuses)
+
+            types = [task['task_type'] for task in dbtasks]
+            self.assertEqual(['sleep', 'sleep', 'exr-merge'], types)
 
             dbtask = dbtasks[-1]
 
@@ -93,21 +97,25 @@ class TaskManagerTest(AbstractFlamencoTest):
             # dependent task that is used as a single parent.
             taskid1 = self.tmngr.api_create_task(
                 job_doc, [commands.Echo(message='ẑžƶźz')], 'zzz 1', parents=task_ids,
+                task_type='sleep',
             )
 
             # task dependent on multiple tasks that is not used as a parent.
             taskid2 = self.tmngr.api_create_task(
                 job_doc, [commands.Echo(message='ẑžƶźz')], 'zzz 2', parents=task_ids,
+                task_type='sleep',
             )
 
             # task dependent on a single task that is not used as a parent.
             taskid3 = self.tmngr.api_create_task(
                 job_doc, [commands.Echo(message='ẑžƶźz')], 'zzz 3', parents=[taskid1],
+                task_type='sleep',
             )
 
             # independent task
             taskid4 = self.tmngr.api_create_task(
                 job_doc, [commands.Echo(message='ẑžƶźz')], 'zzz 4',
+                task_type='sleep',
             )
 
             job_enders = self.tmngr.api_find_job_enders(job_id)

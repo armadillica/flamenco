@@ -20,7 +20,7 @@ class Sleep(AbstractJobCompiler):
             ]
             name = 'sleep-%s' % frame_range_merge(chunk_frames)
 
-            self._create_task(job, task_cmds, name)
+            self._create_task(job, task_cmds, name, 'sleep')
             task_count += 1
 
         self._log.info('Created %i tasks for job %s', task_count, job['_id'])

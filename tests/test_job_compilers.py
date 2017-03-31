@@ -51,6 +51,7 @@ class SleepSimpleTest(unittest.TestCase):
                 ],
                 'sleep-1-13',
                 status='under-construction',
+                task_type='sleep',
             ),
             mock.call(
                 job_doc,
@@ -60,6 +61,7 @@ class SleepSimpleTest(unittest.TestCase):
                 ],
                 'sleep-14-26',
                 status='under-construction',
+                task_type='sleep',
             ),
             mock.call(
                 job_doc,
@@ -69,6 +71,7 @@ class SleepSimpleTest(unittest.TestCase):
                 ],
                 'sleep-27-30,40-44',
                 status='under-construction',
+                task_type='sleep',
             ),
         ])
 
@@ -105,7 +108,8 @@ class BlenderRenderTest(unittest.TestCase):
                 'format': 'EXR',
                 'filepath': '/agent327/scenes/someshot/somefile.blend',
                 'blender_cmd': '/path/to/blender --enable-new-depsgraph',
-            }
+            },
+            'job_type': 'blender-render',
         })
 
         task_manager = mock.Mock()
@@ -137,7 +141,9 @@ class BlenderRenderTest(unittest.TestCase):
                     render_output='/render/out__intermediate/frames-######',
                     frames='1,2')],
                 'blender-render-1,2',
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
             mock.call(
                 job_doc,
                 [commands.BlenderRender(
@@ -147,7 +153,9 @@ class BlenderRenderTest(unittest.TestCase):
                     render_output='/render/out__intermediate/frames-######',
                     frames='3,4')],
                 'blender-render-3,4',
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
             mock.call(
                 job_doc,
                 [commands.BlenderRender(
@@ -157,7 +165,9 @@ class BlenderRenderTest(unittest.TestCase):
                     render_output='/render/out__intermediate/frames-######',
                     frames='5')],
                 'blender-render-5',
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
 
             # Move to final location
             mock.call(
@@ -167,7 +177,9 @@ class BlenderRenderTest(unittest.TestCase):
                     dest='/render/out')],
                 'move-to-final',
                 parents=task_ids[0:3],
-                status='under-construction'),
+                status='under-construction',
+                task_type='file-management',
+            ),
         ])
 
         task_manager.api_set_task_status_for_job.assert_called_with(
@@ -191,7 +203,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'blender_cmd': '/path/to/blender --enable-new-depsgraph',
                 'cycles_sample_count': 30,
                 'cycles_num_chunks': 3,
-            }
+            },
+            'job_type': 'blender-render-progressive',
         })
         task_manager = mock.Mock()
         job_manager = mock.Mock()
@@ -217,7 +230,8 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'blender_cmd': '/path/to/blender --enable-new-depsgraph',
                 'cycles_sample_count': 30,
                 'cycles_num_chunks': 3,
-            }
+            },
+            'job_type': 'blender-render-progressive',
         })
         task_manager = mock.Mock()
         job_manager = mock.Mock()
@@ -239,7 +253,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 job_doc,
                 [commands.RemoveTree(path='/render/out__intermediate')],
                 'destroy-preexisting-intermediate',
-                status='under-construction'),
+                status='under-construction',
+                task_type='file-management',
+            ),
 
             # First Cycles chunk goes into intermediate directory
             mock.call(  # task 1
@@ -257,7 +273,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'render-smpl1-10-frm1,2',
                 priority=0,
                 parents=[task_ids[0]],
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
             mock.call(  # task 2
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -273,7 +291,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'render-smpl1-10-frm3,4',
                 priority=0,
                 parents=[task_ids[0]],
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
             mock.call(  # task 3
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -289,7 +309,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'render-smpl1-10-frm5',
                 priority=0,
                 parents=[task_ids[0]],
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
 
             # Pre-existing render output dir is moved aside, and intermediate is destroyed.
             # Copy first sample chunk of frames to the output directory.
@@ -320,7 +342,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'publish-first-chunk',
                 parents=task_ids[1:4],
-                status='under-construction'),
+                status='under-construction',
+                task_type='file-management',
+            ),
 
             # Second Cycles chunk renders to intermediate directory.
             mock.call(  # task 5
@@ -338,7 +362,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'render-smpl11-20-frm1,2',
                 priority=-10,
                 parents=[task_ids[0]],
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
             mock.call(  # task 6
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -354,7 +380,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'render-smpl11-20-frm3,4',
                 priority=-10,
                 parents=[task_ids[0]],
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
             mock.call(  # task 7
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -370,7 +398,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'render-smpl11-20-frm5',
                 priority=-10,
                 parents=[task_ids[0]],
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
 
             # First merge pass, outputs to intermediate directory and copies to output dir
             mock.call(  # task 8
@@ -402,7 +432,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'merge-to-smpl20-frm1,2',
                 parents=[task_ids[4], task_ids[5]],
                 priority=-11,
-                status='under-construction'),
+                status='under-construction',
+                task_type='exr-merge',
+            ),
             mock.call(  # task 9
                 job_doc,
                 [
@@ -432,7 +464,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'merge-to-smpl20-frm3,4',
                 parents=[task_ids[4], task_ids[6]],
                 priority=-11,
-                status='under-construction'),
+                status='under-construction',
+                task_type='exr-merge',
+            ),
             mock.call(  # task 10
                 job_doc,
                 [
@@ -451,7 +485,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'merge-to-smpl20-frm5',
                 parents=[task_ids[4], task_ids[7]],
                 priority=-11,
-                status='under-construction'),
+                status='under-construction',
+                task_type='exr-merge',
+            ),
 
             # Third Cycles chunk renders to intermediate directory.
             mock.call(  # task 11
@@ -469,7 +505,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'render-smpl21-30-frm1,2',
                 priority=-20,
                 parents=[task_ids[0]],
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
             mock.call(  # task 12
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -485,7 +523,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'render-smpl21-30-frm3,4',
                 priority=-20,
                 parents=[task_ids[0]],
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
             mock.call(  # task 13
                 job_doc,
                 [commands.BlenderRenderProgressive(
@@ -501,7 +541,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'render-smpl21-30-frm5',
                 priority=-20,
                 parents=[task_ids[0]],
-                status='under-construction'),
+                status='under-construction',
+                task_type='blender-render',
+            ),
 
             # Final merge pass. Could happen directly to the output directory, but to ensure the
             # intermediate directory shows a complete picture (pun intended), we take a similar
@@ -535,7 +577,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'merge-to-smpl30-frm1,2',
                 parents=[task_ids[8], task_ids[11]],
                 priority=-21,
-                status='under-construction'),
+                status='under-construction',
+                task_type='exr-merge',
+            ),
             mock.call(  # task 15
                 job_doc,
                 [
@@ -565,7 +609,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'merge-to-smpl30-frm3,4',
                 parents=[task_ids[9], task_ids[12]],
                 priority=-21,
-                status='under-construction'),
+                status='under-construction',
+                task_type='exr-merge',
+            ),
             mock.call(  # task 16
                 job_doc,
                 [
@@ -584,7 +630,9 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'merge-to-smpl30-frm5',
                 parents=[task_ids[10], task_ids[13]],
                 priority=-21,
-                status='under-construction'),
+                status='under-construction',
+                task_type='exr-merge',
+            ),
         ])
 
         task_manager.api_set_task_status_for_job.assert_called_with(

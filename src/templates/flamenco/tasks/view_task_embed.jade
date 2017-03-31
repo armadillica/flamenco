@@ -39,6 +39,9 @@
 					.table-cell(class="status-{{ task.status }}")
 						| {{ task.status | undertitle }}
 				.table-row
+					.table-cell Task type
+					.table-cell {{ task.task_type | default("unknown", true) }}
+				.table-row
 					.table-cell Last Update
 					.table-cell(title="{{ task._updated }}")
 						span(role='button',

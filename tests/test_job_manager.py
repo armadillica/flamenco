@@ -47,6 +47,8 @@ class JobManagerTest(AbstractFlamencoTest):
             statuses = [task['status'] for task in tasks]
             self.assertEqual(['queued', 'queued'], statuses)
 
+            self.assertEqual(['sleep', 'sleep'], [task['task_type'] for task in tasks])
+
             task = tasks[0]
 
             self.assertEqual('sleep-12-16', task['name'])

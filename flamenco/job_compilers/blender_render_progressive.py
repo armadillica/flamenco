@@ -121,7 +121,8 @@ class BlenderRenderProgressive(AbstractJobCompiler):
         """Removes the entire intermediate directory."""
 
         cmd = commands.RemoveTree(path=str(self.intermediate_path))
-        task_id = self._create_task(job, [cmd], 'destroy-preexisting-intermediate')
+        task_id = self._create_task(job, [cmd], 'destroy-preexisting-intermediate',
+                                    'file-management')
         return task_id
 
     def _make_publish_first_chunk_task(self, job: dict, parents: typing.List[ObjectId],
@@ -143,7 +144,8 @@ class BlenderRenderProgressive(AbstractJobCompiler):
                     dest=dest_fmt % frame,
                 ))
 
-        task_id = self._create_task(job, cmds, 'publish-first-chunk', parents=parents)
+        task_id = self._create_task(job, cmds, 'publish-first-chunk', 'file-management',
+                                    parents=parents)
         return task_id
 
     def _make_progressive_render_tasks(self,
@@ -200,7 +202,8 @@ class BlenderRenderProgressive(AbstractJobCompiler):
                 raise TypeError('parents should be list of ObjectIds or ObjectId, not %s' % parents)
 
             task_id = self._create_task(
-                job, task_cmds, name, parents=[parent_task_id],
+                job, task_cmds, name, 'blender-render',
+                parents=[parent_task_id],
                 priority=task_priority)
             task_ids.append(task_id)
 
@@ -288,7 +291,8 @@ class BlenderRenderProgressive(AbstractJobCompiler):
             parent2 = parents2[chunk_idx]
 
             task_id = self._create_task(
-                job, task_cmds, name, parents=[parent1, parent2],
+                job, task_cmds, name, 'exr-merge',
+                parents=[parent1, parent2],
                 priority=task_priority)
             task_ids.append(task_id)
 
