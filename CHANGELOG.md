@@ -1,6 +1,11 @@
 Flamenco Server Changelog
 =========================
 
+## Version 2.0.2 (released 2017-04-26)
+
+- Re-queueing a task on a completed job now re-queues the job too.
+
+
 ## Version 2.0.1 (released 2017-04-07)
 
 - Added support for task types. This requires Flamenco Manager 2.0.4+ and Flamenco Worker 2.0.2+

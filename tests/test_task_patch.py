@@ -106,3 +106,12 @@ class TaskPatchingTest(AbstractFlamencoTest):
             expected_status=204,
         )
         self.assert_job_status('completed')
+
+        # Re-queueing a task on a completed job should re-queue the job too.
+        self.patch(
+            '/api/flamenco/tasks/%s' % tasks[-1]['_id'],
+            json={'op': 'set-task-status', 'status': 'queued'},
+            auth_token='fladmin-token',
+            expected_status=204,
+        )
+        self.assert_job_status('queued')
