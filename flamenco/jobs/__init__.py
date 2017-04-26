@@ -138,10 +138,12 @@ class JobManager(object):
         """Updates the job status based on the status of this task and other tasks in the job.
         """
 
+        jobs_coll = current_flamenco.db('jobs')
+        tasks_coll = current_flamenco.db('tasks')
+
         def __job_status_if_a_then_b(if_status: str, then_new_status: str):
             """Set job to active if it was queued."""
 
-            jobs_coll = current_flamenco.db('jobs')
             job = jobs_coll.find_one(job_id, projection={'status': 1})
             if job['status'] == if_status:
                 self._log.info('Job %s became %s because one of its tasks %s changed '
@@ -160,7 +162,6 @@ class JobManager(object):
 
         if new_task_status == 'canceled':
             # This could be the last cancel-requested task to go to 'canceled.
-            tasks_coll = current_flamenco.db('tasks')
             statuses = tasks_coll.distinct('status', {'job': job_id})
             if 'cancel-requested' not in statuses:
                 self._log.info('Last task %s of job %s went from cancel-requested to canceld.',
@@ -170,7 +171,6 @@ class JobManager(object):
 
         if new_task_status == 'failed':
             # Count the number of failed tasks. If it is more than 10%, fail the job.
-            tasks_coll = current_flamenco.db('tasks')
             total_count = tasks_coll.find({'job': job_id}).count()
             fail_count = tasks_coll.find({'job': job_id, 'status': 'failed'}).count()
             fail_perc = fail_count / float(total_count) * 100
@@ -186,14 +186,15 @@ class JobManager(object):
             return
 
         if new_task_status in {'active', 'processing'}:
-            self._log.info('Job %s became active because one of its tasks %s changed status to %s',
-                           job_id, task_id, new_task_status)
-            self.api_set_job_status(job_id, 'active')
+            job = jobs_coll.find_one(job_id, projection={'status': 1})
+            if job['status'] != 'active':
+                self._log.info('Job %s became active because one of its tasks %s changed '
+                               'status to %s', job_id, task_id, new_task_status)
+                self.api_set_job_status(job_id, 'active')
             return
 
         if new_task_status == 'completed':
             # Maybe all tasks are completed, which should complete the job.
-            tasks_coll = current_flamenco.db('tasks')
             statuses = tasks_coll.distinct('status', {'job': job_id})
             if statuses == ['completed']:
                 self._log.info('All tasks (last one was %s) of job %s are completed, '
