@@ -4,6 +4,7 @@ Flamenco Server Changelog
 ## Version 2.0.2 (released 2017-04-26)
 
 - Re-queueing a task on a completed job now re-queues the job too.
+- Reduced log level when receiving task updates from manager.
 
 
 ## Version 2.0.1 (released 2017-04-07)
