@@ -103,7 +103,7 @@ def handle_task_update_batch(manager_id, task_updates):
 
     from flamenco import current_flamenco, eve_settings
 
-    log.info('Received %i task updates from manager %s', len(task_updates), manager_id)
+    log.debug('Received %i task updates from manager %s', len(task_updates), manager_id)
 
     tasks_coll = current_flamenco.db('tasks')
     logs_coll = current_flamenco.db('task_logs')
