@@ -148,7 +148,7 @@ class JobManager(object):
                                'status to %s', job_id, task_id, new_task_status)
                 self.api_set_job_status(job_id, 'active')
 
-        if new_task_status == {'queued', 'cancel-requested', 'claimed-by-manager'}:
+        if new_task_status in {'queued', 'cancel-requested', 'claimed-by-manager'}:
             # Ignore; for now re-queueing a task doesn't change the job status.
             # Also, canceling a single task has no influence on the job itself.
             # A task being claimed by the manager also doesn't change job status.
