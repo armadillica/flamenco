@@ -239,6 +239,28 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         # Without confirmation from the Manager, the job should go to canceled.
         self.assert_job_status('canceled')
 
+    def test_nonmanager_access_fladmin(self):
+        """Try sending batch updates as flamenco-admin instead of manager"""
+
+        self.create_project_member(user_id=24 * 'f',
+                                   token='fladmin-token',
+                                   roles={'flamenco-admin'})
+        tasks = self.do_schedule_tasks()
+        task_id = tasks[0]['_id']
+
+        self.force_task_status(task_id, 'active')
+
+        self.post('/api/flamenco/managers/%s/task-update-batch' % self.mngr_id,
+                  auth_token='fladmin-token',
+                  json=[{
+                      '_id': 24 * '0',
+                      'task_id': task_id,
+                      'task_status': 'failed',
+                  }],
+                  expected_status=403)
+
+        self.assert_task_status(task_id, 'active')
+
 
 class LargeTaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
     """Similar tests to TaskBatchUpdateTest, but with a job consisting of many more tasks."""

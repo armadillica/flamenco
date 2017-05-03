@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 def index():
     api = pillar_api()
 
+    # FIXME Sybren: add permission check.
     # TODO: add projections.
     projects = current_flamenco.flamenco_projects()
 
@@ -78,6 +79,8 @@ def flamenco_project_view(extra_project_projections=None, extension_props=False)
     def decorator(wrapped):
         @functools.wraps(wrapped)
         def wrapper(project_url, *args, **kwargs):
+            # FIXME Sybren: add permission check.
+
             if isinstance(project_url, pillarsdk.Resource):
                 # This is already a resource, so this call probably is from one
                 # view to another. Assume the caller knows what he's doing and

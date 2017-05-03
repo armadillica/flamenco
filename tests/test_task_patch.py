@@ -115,3 +115,49 @@ class TaskPatchingTest(AbstractFlamencoTest):
             expected_status=204,
         )
         self.assert_job_status('queued')
+
+    def _get_first_task_id(self) -> str:
+        """Uses the manager's token to get the first task ID from the depsgraph."""
+
+        chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json()['depsgraph']
+        task = chunk[0]
+        task_id = task['_id']
+        return task_id
+
+    def test_outside_subscriber_permissions(self):
+        """Check that a regular subscriber cannot PATCH."""
+
+        self.create_user(user_id=24 * 'e', roles={'subscriber'})
+        self.create_valid_auth_token(24 * 'e', 'subscriber-token')
+
+        task_id = self._get_first_task_id()
+        self.patch(
+            '/api/flamenco/tasks/%s' % task_id,
+            json={'op': 'set-task-status',
+                  'status': 'completed'},
+            auth_token='subscriber-token',
+            expected_status=403,
+        )
+
+        # Check that the status in the database didn't change too.
+        self.assert_task_status(task_id, 'claimed-by-manager')
+
+    def test_projmember_subscriber_permissions(self):
+        """Check that a project member subscriber can PATCH."""
+
+        self.create_project_member(user_id=24 * 'e',
+                                   token='subscriber-token',
+                                   roles={'subscriber'})
+
+        task_id = self._get_first_task_id()
+        self.patch(
+            '/api/flamenco/tasks/%s' % task_id,
+            json={'op': 'set-task-status',
+                  'status': 'completed'},
+            auth_token='subscriber-token',
+            expected_status=204,
+        )
+
+        # Check that the status in the database didn't change too.
+        self.assert_task_status(task_id, 'completed')

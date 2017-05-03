@@ -224,6 +224,8 @@ def view_job_depsgraph_data(project, job_id, focus_task_id=None):
 
 @blueprint.route('/<job_id>/recreate', methods=['POST'])
 def recreate_job(job_id):
+    # FIXME Sybren: add permission check.
+
     # Job list is public, job details are not.
     if not current_flamenco.current_user_is_flamenco_admin():
         raise wz_exceptions.Forbidden()
@@ -242,6 +244,8 @@ def recreate_job(job_id):
 @blueprint.route('/<job_id>/set-status', methods=['POST'])
 def set_job_status(job_id):
     from flask_login import current_user
+
+    # FIXME Sybren: add permission check.
 
     new_status = request.form['status']
     if new_status not in ALLOWED_JOB_STATUSES_FROM_WEB:
@@ -266,6 +270,8 @@ def redir_job_id(job_id):
     from flask import redirect, url_for
     from .sdk import Job
     from pillarsdk import Project
+
+    # FIXME Sybren: add permission check.
 
     api = pillar_api()
     j = Job.find(job_id, {'projection': {'project': 1}}, api=api)

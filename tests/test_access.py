@@ -7,7 +7,10 @@ from abstract_flamenco_test import AbstractFlamencoTest
 
 
 class AccessTest(AbstractFlamencoTest):
-    """Creates a manager, job and tasks, to check access by different types of users."""
+    """Creates a manager, job and tasks, to check access by different types of users.
+
+    There are also separate access tests in other test cases.
+    """
 
     def _create_user_with_token(self, roles, token, user_id='cafef00df00df00df00df00d'):
         user_id = self.create_user(roles=roles, user_id=user_id)
@@ -165,3 +168,54 @@ class AccessTest(AbstractFlamencoTest):
         self.get('/api/flamenco/tasks/%s' % self.tasks_for_job[0]['_id'],
                  expected_status=200,
                  auth_token=self.mngr_token)
+
+    def test_manager_list_as_outside_subscriber(self):
+        """Subscriber not member of any Flamenco project should get an empty list of managers."""
+
+        self.create_user(24 * 'e', roles={'subscriber'}, token='subscriber-token')
+
+        resp = self.get('/api/flamenco/managers/',
+                        expected_status=200,
+                        auth_token='subscriber-token').json()
+
+        self.assertEqual([], resp['_items'])
+        self.assertEqual(1, resp['_meta']['page'])
+        self.assertEqual(0, resp['_meta']['total'])
+
+    def test_manager_list_as_fladmin(self):
+        """Flamenco admin should get complete list of managers."""
+
+        self.create_user(24 * 'e', roles={'subscriber'}, token='subscriber-token')
+
+        resp = self.get('/api/flamenco/managers/',
+                        expected_status=200,
+                        auth_token='subscriber-token').json()
+
+        expected_manager1 = self.get('/api/flamenco/managers/%s' % self.mngr_id,
+                                     expected_status=200,
+                                     auth_token=self.mngr_token).json()
+        expected_manager2 = self.get('/api/flamenco/managers/%s' % self.mngr2_id,
+                                     expected_status=200,
+                                     auth_token=self.mngr2_token).json()
+
+        self.assertEqual(expected_manager1, resp['_items'][0])
+        self.assertEqual(expected_manager2, resp['_items'][1])
+        self.assertEqual(1, resp['_meta']['page'])
+        self.assertEqual(2, resp['_meta']['total'])
+
+    def test_manager_list_as_projmember_subscriber(self):
+        """Subscriber member of a Flamenco project should get the list project-specific managers."""
+
+        self.create_project_member(24 * 'e', roles={'subscriber'}, token='subscriber-token')
+
+        resp = self.get('/api/flamenco/managers/',
+                        expected_status=200,
+                        auth_token='subscriber-token').json()
+
+        expected_manager = self.get('/api/flamenco/managers/%s' % self.mngr_id,
+                                    expected_status=200,
+                                    auth_token=self.mngr_token).json()
+
+        self.assertEqual(expected_manager, resp['_items'][0])
+        self.assertEqual(1, resp['_meta']['page'])
+        self.assertEqual(1, resp['_meta']['total'])

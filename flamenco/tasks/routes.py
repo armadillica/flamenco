@@ -38,6 +38,8 @@ def redirect_to_task(task_id):
     task = Task.find(task_id, {'projection': {'project': 1}}, api=api)
     project = Project.find(task['project'], {'projection': {'url': 1}}, api=api)
 
+    # FIXME Sybren: add permission check.
+
     url = url_for('flamenco.jobs.perproject.for_project_with_task',
                   project_url=project['url'], task_id=task_id)
     return redirect(url, code=301)

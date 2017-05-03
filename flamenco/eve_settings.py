@@ -77,6 +77,16 @@ managers_schema = {
         },
     },
 
+    # The group defining ownership of this manager.
+    # Access semantics are defined in https://developer.blender.org/T51039
+    'owner': {
+        'type': 'objectid',
+        'data_relation': {
+            'resource': 'groups',
+            'field': '_id',
+        }
+    },
+
     # Received from the manager itself at startup.
     'variables': {
         'type': 'dict',

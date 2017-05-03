@@ -61,6 +61,8 @@ def patch_set_task_status(task_id, patch):
     new_status = patch['status']
     task_id = str2id(task_id)
 
+    # FIXME Sybren: add permission check.
+
     try:
         current_flamenco.update_status('tasks', task_id, new_status)
     except ValueError:

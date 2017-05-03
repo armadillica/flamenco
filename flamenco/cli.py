@@ -5,7 +5,7 @@ import logging
 from flask import current_app
 from flask_script import Manager
 
-from pillar.cli import manager, create_service_account
+from pillar.cli import manager
 from pillar.api.utils import authentication
 
 import flamenco

@@ -4,6 +4,8 @@ import pillarsdk
 import pillar.tests
 import pillar.auth
 
+from bson import ObjectId
+
 from pillar.tests import PillarTestServer, AbstractPillarTest
 from pillar.tests import common_test_data as ctd
 
@@ -31,6 +33,10 @@ class AbstractFlamencoTest(AbstractPillarTest):
         self.proj_id, self.project = self.ensure_project_exists()
 
         self.sdk_project = pillarsdk.Project(pillar.tests.mongo_to_sdk(self.project))
+
+        # Set these in a subclass.
+        self.task_ids = []
+        self.job_id = None
 
     def tearDown(self):
         self.unload_modules('flamenco')
@@ -72,6 +78,15 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
         return mngr_doc, account, token
 
+    def create_project_member(self, user_id: str, *,
+                              token: str,
+                              roles: set=frozenset({'subscriber'})):
+        """Creates a subscriber who is member of the project."""
+
+        self.create_user(user_id=user_id, roles=set(roles),
+                         groups=[self.project['permissions']['groups'][0]['group']],
+                         token=token)
+
     def assert_job_status(self, expected_status):
         with self.app.test_request_context():
             jobs_coll = self.flamenco.db('jobs')
@@ -111,12 +126,22 @@ class AbstractFlamencoTest(AbstractPillarTest):
                              task_id, task['status'], expected_status))
         return task
 
-    def force_task_status(self, task_idx, new_status):
+    def force_task_status(self, task_idx_or_id, new_status):
         """Sets the task status directly in MongoDB.
 
         This should only be used to set up a certain scenario.
         """
         from flamenco import current_flamenco
 
+        if isinstance(task_idx_or_id, ObjectId):
+            task_id = task_idx_or_id
+        elif isinstance(task_idx_or_id, str):
+            task_id = ObjectId(task_idx_or_id)
+        elif isinstance(task_idx_or_id, int):
+            task_id = self.task_ids[task_idx_or_id]
+        else:
+            raise TypeError('task_idx_or_id can be ObjectID, str or int, not %s'
+                            % type(task_idx_or_id))
+
         with self.app.test_request_context():
-            current_flamenco.update_status('tasks', self.task_ids[task_idx], new_status)
+            current_flamenco.update_status('tasks', task_id, new_status)

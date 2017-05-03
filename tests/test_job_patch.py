@@ -80,3 +80,41 @@ class JobPatchingTest(AbstractFlamencoTest):
 
         mock_handle_job_status_change.assert_called_with(
             self.job_id, 'queued', 'completed')
+
+    @mock.patch('flamenco.jobs.JobManager.handle_job_status_change')
+    def test_set_job_valid_status_as_outside_subscriber(self, mock_handle_job_status_change):
+        """Subscribers not member of the project should not be allowed to do this."""
+
+        self.create_user(user_id=24 * 'e', roles={'subscriber'})
+        self.create_valid_auth_token(24 * 'e', 'subscriber-token')
+
+        self.assert_job_status('queued')
+        self.patch(
+            '/api/flamenco/jobs/%s' % self.job_id,
+            json={'op': 'set-job-status',
+                  'status': 'completed'},
+            auth_token='subscriber-token',
+            expected_status=403,
+        )
+
+        mock_handle_job_status_change.assert_not_called()
+        self.assert_job_status('queued')
+
+    @mock.patch('flamenco.jobs.JobManager.handle_job_status_change')
+    def test_set_job_valid_status_as_projmember_subscriber(self, mock_handle_job_status_change):
+        """Subscribers not member of the project should not be allowed to do this."""
+
+        self.create_user(user_id=24 * 'e', roles={'subscriber'})
+        self.create_valid_auth_token(24 * 'e', 'subscriber-token')
+
+        self.assert_job_status('queued')
+        self.patch(
+            '/api/flamenco/jobs/%s' % self.job_id,
+            json={'op': 'set-job-status',
+                  'status': 'completed'},
+            auth_token='subscriber-token',
+            expected_status=403,
+        )
+
+        mock_handle_job_status_change.assert_not_called()
+        self.assert_job_status('queued')

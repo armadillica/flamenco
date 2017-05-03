@@ -89,12 +89,9 @@ def create_manager(email, name, description, url=None):
     from pillar.cli import create_service_account
     from flamenco import current_flamenco
 
-    def update_existing(service):
-        pass
     account, token = create_service_account(email,
                                             ['flamenco_manager'],
-                                            {'flamenco_manager': {}},
-                                            update_existing=update_existing)
+                                            {'flamenco_manager': {}})
 
     mngr_doc = current_flamenco.manager_manager.create_manager(
         account['_id'], name, description, url)

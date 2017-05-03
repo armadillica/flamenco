@@ -30,8 +30,27 @@ class ManagerManager(object):
 
         from eve.methods.post import post_internal
         from pillar.api.utils import str2id
+        import bson
 
+        # Determine the Object IDs beforehand, so that the manager can refer to the
+        # group (by actual ID) and the group can mention the manager ID in the name.
+        manager_id = bson.ObjectId()
+        group_id = bson.ObjectId()
+
+        # Create an owner group for this manager.
+        group_doc = {
+            '_id': group_id,
+            'name': f'Owners of Flamenco Manager {manager_id}'
+        }
+        r, _, _, status = post_internal('groups', group_doc)
+        if status != 201:
+            self._log.error('Error creating manager owner group; status should be 201, not %i: %s',
+                            status, r)
+            raise ValueError(f'Unable to create Flamenco manager, status code {status}')
+
+        # Create the manager.
         mngr_doc = {
+            '_id': manager_id,
             'name': name,
             'description': description,
             'job_types': {
@@ -40,6 +59,7 @@ class ManagerManager(object):
                 }
             },
             'service_account': str2id(service_account_id),
+            'owner': group_id,
         }
         if url:
             mngr_doc['url'] = url
