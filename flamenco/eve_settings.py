@@ -329,7 +329,7 @@ task_logs_schema = {
 
 _managers = {
     'schema': managers_schema,
-    'item_methods': ['GET', 'PUT', 'PATCH'],
+    'item_methods': ['GET', 'PUT'],
     'public_methods': [],
     'public_item_methods': [],
 }

@@ -196,12 +196,19 @@ class FlamencoExtension(PillarExtension):
             return False
         return True
 
-    def current_user_is_flamenco_admin(self):
+    def current_user_is_flamenco_admin(self) -> bool:
         """Returns True iff the user is a Flamenco admin or regular admin."""
 
         from pillar.api.utils.authorization import user_matches_roles
 
         return user_matches_roles({'admin', 'flamenco-admin'})
+
+    def current_user_is_flamenco_manager(self) -> bool:
+        """Returns True iff the user is a Flamenco Manager."""
+
+        from pillar.api.utils.authorization import user_matches_roles
+
+        return user_matches_roles({'service', 'flamenco_manager'})
 
     def sidebar_links(self, project):
 

@@ -12,6 +12,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
         mngr_doc, account, token = self.create_manager_service_account()
         self.mngr_id = mngr_doc['_id']
+        self.mngr_doc = mngr_doc
         self.mngr_token = token['token']
 
         self.create_user(user_id=24 * 'f', roles={'flamenco-admin'}, token='fladmin-token')
@@ -33,8 +34,13 @@ class ManagerAccessTest(AbstractFlamencoTest):
             )
             self.job_id = job['_id']
 
-    def test_assign_manager_to_project(self, mock_handle_job_status_change):
+    def test_assign_manager_to_project(self):
         """The owner of a manager should be able to assign it to any project she's a member of."""
+
+        self.create_user(24 * 'd',
+                         roles={'subscriber'},
+                         groups=[self.mngr_doc['owner']],
+                         token='owner-token')
 
         self.create_project_member(user_id=24 * 'e',
                                    roles={'subscriber'},
@@ -44,6 +50,6 @@ class ManagerAccessTest(AbstractFlamencoTest):
             '/api/flamenco/managers/%s' % self.mngr_id,
             json={'op': 'assign-to-project',
                   'project': self.proj_id},
-            auth_token='subscriber-token',
+            auth_token='owner-token',
             expected_status=200,
         )

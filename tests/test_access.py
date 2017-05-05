@@ -12,11 +12,6 @@ class AccessTest(AbstractFlamencoTest):
     There are also separate access tests in other test cases.
     """
 
-    def _create_user_with_token(self, roles, token, user_id='cafef00df00df00df00df00d'):
-        user_id = self.create_user(roles=roles, user_id=user_id)
-        self.create_valid_auth_token(user_id, token)
-        return user_id
-
     def _create_project(self, project_name, token):
         resp = self.post('/api/p/create',
                          headers={'Authorization': self.make_header(token)},
@@ -26,7 +21,7 @@ class AccessTest(AbstractFlamencoTest):
 
     def _create_user_and_project(self, roles, user_id='cafef00df00df00df00df00d', token='token',
                                  project_name='Prøject El Niño'):
-        self._create_user_with_token(roles, token, user_id=user_id)
+        self.create_user(user_id, roles, token=token)
         return self._create_project(project_name, token)
 
     def setUp(self, **kwargs):
@@ -38,6 +33,7 @@ class AccessTest(AbstractFlamencoTest):
         mngr_doc, _, token = self.create_manager_service_account()
 
         self.mngr_id = mngr_doc['_id']
+        self.mngr_doc = mngr_doc
         self.mngr_token = token['token']
 
         with self.app.test_request_context():
@@ -72,6 +68,7 @@ class AccessTest(AbstractFlamencoTest):
             email='manager2@example.com', name='manager 2'
         )
         self.mngr2_id = mngr_doc['_id']
+        self.mngr2_doc = mngr_doc
         self.mngr2_token = token['token']
 
         with self.app.test_request_context():
@@ -104,7 +101,7 @@ class AccessTest(AbstractFlamencoTest):
                            auth_token=self.mngr_token).json()
         other_url = '/api/flamenco/managers/%s' % self.mngr2_id
         self.get(other_url,
-                 expected_status=403,
+                 expected_status=404,
                  auth_token=self.mngr_token)
 
         # Managers may not create new managers.
@@ -185,11 +182,11 @@ class AccessTest(AbstractFlamencoTest):
     def test_manager_list_as_fladmin(self):
         """Flamenco admin should get complete list of managers."""
 
-        self.create_user(24 * 'e', roles={'subscriber'}, token='subscriber-token')
+        self.create_user(24 * 'f', roles={'flamenco-admin'}, token='fladmin-token')
 
         resp = self.get('/api/flamenco/managers/',
                         expected_status=200,
-                        auth_token='subscriber-token').json()
+                        auth_token='fladmin-token').json()
 
         expected_manager1 = self.get('/api/flamenco/managers/%s' % self.mngr_id,
                                      expected_status=200,
@@ -198,10 +195,29 @@ class AccessTest(AbstractFlamencoTest):
                                      expected_status=200,
                                      auth_token=self.mngr2_token).json()
 
+        self.assertEqual(2, resp['_meta']['total'])
         self.assertEqual(expected_manager1, resp['_items'][0])
         self.assertEqual(expected_manager2, resp['_items'][1])
-        self.assertEqual(1, resp['_meta']['page'])
-        self.assertEqual(2, resp['_meta']['total'])
+
+    def test_manager_list_as_owner(self):
+        self.create_user(24 * 'd',
+                         roles={'subscriber'},
+                         groups=[self.mngr_doc['owner']],
+                         token='owner1-token')
+        self.create_user(24 * 'e',
+                         roles={'demo'},
+                         groups=[self.mngr2_doc['owner']],
+                         token='owner2-token')
+        resp1 = self.get('/api/flamenco/managers/',
+                         expected_status=200,
+                         auth_token='owner1-token').json()
+        resp2 = self.get('/api/flamenco/managers/',
+                         expected_status=200,
+                         auth_token='owner2-token').json()
+        self.assertEqual(1, resp1['_meta']['total'])
+        self.assertEqual(1, resp2['_meta']['total'])
+        self.assertEqual(str(self.mngr_id), resp1['_items'][0]['_id'])
+        self.assertEqual(str(self.mngr2_id), resp2['_items'][0]['_id'])
 
     def test_manager_list_as_projmember_subscriber(self):
         """Subscriber member of a Flamenco project should get the list project-specific managers."""
