@@ -89,6 +89,15 @@ class AccessTest(AbstractFlamencoTest):
             )
             self.job2_id = job['_id']
 
+    def assign_manager_to_project(self):
+        from flamenco import current_flamenco
+
+        with self.app.test_request_context():
+            ok = current_flamenco.manager_manager.api_assign_to_project(
+                self.mngr_id, self.proj_id, 'assign')
+
+        self.assertTrue(ok)
+
     def test_manager_account_access(self):
         """Should have access to own job and tasks, but not project or other managers."""
 
@@ -220,18 +229,29 @@ class AccessTest(AbstractFlamencoTest):
         self.assertEqual(str(self.mngr2_id), resp2['_items'][0]['_id'])
 
     def test_manager_list_as_projmember_subscriber(self):
-        """Subscriber member of a Flamenco project should get the list project-specific managers."""
+        """Subscriber member of a Flamenco project should not get a list of managers.
+
+        The user can access specific managers assigned to her projects, but listing
+        only returns owned managers.
+        """
 
         self.create_project_member(24 * 'e', roles={'subscriber'}, token='subscriber-token')
+        self.assign_manager_to_project()
 
         resp = self.get('/api/flamenco/managers/',
                         expected_status=200,
                         auth_token='subscriber-token').json()
 
-        expected_manager = self.get('/api/flamenco/managers/%s' % self.mngr_id,
-                                    expected_status=200,
-                                    auth_token=self.mngr_token).json()
-
-        self.assertEqual(expected_manager, resp['_items'][0])
         self.assertEqual(1, resp['_meta']['page'])
-        self.assertEqual(1, resp['_meta']['total'])
+        self.assertEqual(0, resp['_meta']['total'])
+        self.assertEqual([], resp['_items'])
+
+        # Project-assigned manager
+        self.get('/api/flamenco/managers/%s' % self.mngr_id,
+                 expected_status=200,
+                 auth_token='subscriber-token')
+
+        # Not project-assigned manager
+        self.get('/api/flamenco/managers/%s' % self.mngr2_id,
+                 expected_status=403,
+                 auth_token='subscriber-token')

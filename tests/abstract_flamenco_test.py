@@ -80,11 +80,13 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
     def create_project_member(self, user_id: str, *,
                               token: str,
-                              roles: set=frozenset({'subscriber'})):
+                              roles: set=frozenset({'subscriber'}),
+                              groups: list=None):
         """Creates a subscriber who is member of the project."""
 
+        user_groups = (groups or []) + [self.project['permissions']['groups'][0]['group']]
         self.create_user(user_id=user_id, roles=set(roles),
-                         groups=[self.project['permissions']['groups'][0]['group']],
+                         groups=user_groups,
                          token=token)
 
     def assert_job_status(self, expected_status):

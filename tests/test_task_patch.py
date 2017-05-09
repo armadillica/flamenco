@@ -144,20 +144,22 @@ class TaskPatchingTest(AbstractFlamencoTest):
         self.assert_task_status(task_id, 'claimed-by-manager')
 
     def test_projmember_subscriber_permissions(self):
-        """Check that a project member subscriber can PATCH."""
+        """Check that a project member subscriber can PATCH a task to requeue it."""
 
         self.create_project_member(user_id=24 * 'e',
                                    token='subscriber-token',
                                    roles={'subscriber'})
 
         task_id = self._get_first_task_id()
+        self.force_task_status(task_id, 'failed')
+
         self.patch(
             '/api/flamenco/tasks/%s' % task_id,
             json={'op': 'set-task-status',
-                  'status': 'completed'},
+                  'status': 'queued'},
             auth_token='subscriber-token',
             expected_status=204,
         )
 
-        # Check that the status in the database didn't change too.
-        self.assert_task_status(task_id, 'completed')
+        # Check that the status in the database changed.
+        self.assert_task_status(task_id, 'queued')
