@@ -31,7 +31,7 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
 
         project_id = str2id(patch['project'])
 
-        if not current_flamenco.manager_manager.user_is_owner(manager_id):
+        if not current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_id):
             log.warning('User %s uses PATCH to %s manager %s to/from project %s, '
                         'but user is not owner of that Manager. Request denied.',
                         current_user_id(), action, manager_id, project_id)

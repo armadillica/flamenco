@@ -87,6 +87,19 @@ managers_schema = {
         }
     },
 
+    # List of groups of users who can use this manager.
+    # Should be kept in sync with the 'projects' list.
+    'user_groups': {
+        'type': 'list',
+        'schema': {
+            'type': 'objectid',
+            'data_relation': {
+                'resource': 'groups',
+                'field': '_id',
+            }
+        }
+    },
+
     # Received from the manager itself at startup.
     'variables': {
         'type': 'dict',

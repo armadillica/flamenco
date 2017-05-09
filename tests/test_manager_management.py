@@ -96,34 +96,66 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
         self.assertManagerIsNotAssignedToProject(self.mngr_id, self.proj_id)
 
-    def assertManagerIsAssignedToProject(self, mngr_id: bson.ObjectId, proj_id: bson.ObjectId):
-        projects = self._get_mngr_projects(mngr_id)
+    def assertManagerIsAssignedToProject(self,
+                                         manager_id: bson.ObjectId,
+                                         project_id: bson.ObjectId):
+        manager = self._get_manager_from_db(manager_id)
+        projects = manager.get('projects', [])
+
         if not projects:
-            self.fail(f'Manager {mngr_id} is not assigned to any project')
+            self.fail(f'Manager {manager_id} is not assigned to any project')
 
-        if proj_id not in projects:
+        if project_id not in projects:
             projs = ', '.join(f"'{pid}'" for pid in projects)
-            self.fail(f'Manager {mngr_id} is not assigned to project {proj_id}, only to {projs}')
+            self.fail(
+                f'Manager {manager_id} is not assigned to project {project_id}, only to {projs}')
 
-    def assertManagerIsNotAssignedToProject(self, mngr_id: bson.ObjectId, proj_id: bson.ObjectId):
-        projects = self._get_mngr_projects(mngr_id)
+        # Check that the admin group of the project is contained in the manager's group.
+        with self.app.test_request_context():
+            proj_coll = self.app.db().projects
+            project = proj_coll.find_one({'_id': project_id}, {'permissions': 1})
 
-        if proj_id not in projects:
-            return
+        if not project:
+            self.fail(f'Project {project_id} does not exist.')
 
-        if len(projects) > 1:
-            projs = ', '.join(f"'{pid}'" for pid in projects
-                              if pid != proj_id)
-            self.fail(f'Manager {mngr_id} unexpectedly assigned to project {proj_id} '
-                      f'(as well as {projs})')
-        else:
-            self.fail(f'Manager {mngr_id} unexpectedly assigned to project {proj_id}')
+        admin_group_id = project['permissions']['groups'][0]['group']
+        user_groups = manager.get('user_groups', [])
+        if admin_group_id not in user_groups:
+            self.fail(f"Admin group {admin_group_id} is not contained in "
+                      f"{manager_id}'s user_groups {user_groups}")
 
-    def _get_mngr_projects(self, mngr_id: bson.ObjectId) -> list:
+    def assertManagerIsNotAssignedToProject(self,
+                                            manager_id: bson.ObjectId,
+                                            project_id: bson.ObjectId):
+        manager = self._get_manager_from_db(manager_id)
+        projects = manager.get('projects', [])
+
+        if project_id in projects:
+            if len(projects) > 1:
+                projs = ', '.join(f"'{pid}'" for pid in projects
+                                  if pid != project_id)
+                self.fail(f'Manager {manager_id} unexpectedly assigned to project {project_id} '
+                          f'(as well as {projs})')
+            else:
+                self.fail(f'Manager {manager_id} unexpectedly assigned to project {project_id}')
+
+        # Check that the admin group of the project is not contained in the manager's group.
+        with self.app.test_request_context():
+            proj_coll = self.app.db().projects
+            project = proj_coll.find_one({'_id': project_id}, {'permissions': 1})
+
+        if not project:
+            self.fail(f'Project {project_id} does not exist.')
+
+        admin_group_id = project['permissions']['groups'][0]['group']
+        user_groups = manager.get('user_groups', [])
+        if admin_group_id in user_groups:
+            self.fail(f"Admin group {admin_group_id} is contained in "
+                      f"{manager_id}'s user_groups {user_groups}")
+
+    def _get_manager_from_db(self, mngr_id: bson.ObjectId) -> dict:
         from flamenco import current_flamenco
 
         with self.app.test_request_context():
             mngr_coll = current_flamenco.db('managers')
-            mngr = mngr_coll.find_one(mngr_id)
-
-        return mngr.get('projects', [])
+            return mngr_coll.find_one(mngr_id)

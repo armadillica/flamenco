@@ -1,6 +1,7 @@
 """Manager management."""
 
 import logging
+import typing
 
 import attr
 import bson
@@ -92,15 +93,34 @@ class ManagerManager(object):
         return user_matches_roles(require_roles={'service', 'flamenco_manager'},
                                   require_all=True)
 
-    def user_is_owner(self, mngr_doc_id: bson.ObjectId = None, mngr_doc: dict = None) -> bool:
-        """Returns True iff the current user is an owner of the given Flamenco Manager."""
+    def _get_manager(self,
+                     mngr_doc_id: bson.ObjectId = None,
+                     mngr_doc: dict = None,
+                     projection: dict=None) -> typing.Tuple[bson.ObjectId, dict]:
 
         assert (mngr_doc_id is None) != (mngr_doc is None), \
             'Either one or the other parameter must be given.'
 
+        from pillar.api.utils.authentication import current_user_id
+        from flamenco import current_flamenco
+
+        if mngr_doc is None:
+            mngr_coll = current_flamenco.db('managers')
+            mngr_doc = mngr_coll.find_one({'_id': mngr_doc_id}, projection)
+            if not mngr_doc:
+                self._log.warning('user_manages(%s): no such document (user=%s)',
+                                  mngr_doc_id, current_user_id())
+                raise ValueError(f'Manager {mngr_doc_id} does not exist.')
+        else:
+            mngr_doc_id = mngr_doc['_id']
+
+        return mngr_doc_id, mngr_doc
+
+    def user_is_owner(self, *, mngr_doc_id: bson.ObjectId = None, mngr_doc: dict = None) -> bool:
+        """Returns True iff the current user is an owner of the given Flamenco Manager."""
+
         import flask
         from pillar.api.utils.authorization import user_has_role
-        from flamenco import current_flamenco
 
         current_user = flask.g.get('current_user') or {}
         user_id = current_user.get('user_id')
@@ -109,15 +129,7 @@ class ManagerManager(object):
             self._log.debug('user_is_owner(...): user %s is not a subscriber', user_id)
             return False
 
-        if mngr_doc is None:
-            mngr_coll = current_flamenco.db('managers')
-            mngr_doc = mngr_coll.find_one({'_id': mngr_doc_id},
-                                          {'owner': 1})
-            if not mngr_doc:
-                self._log.warning('user_is_owner(%s): no such document', mngr_doc_id)
-                return False
-        else:
-            mngr_doc_id = mngr_doc['_id']
+        mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'owner': 1})
 
         owner_group = mngr_doc.get('owner')
         if not owner_group:
@@ -127,32 +139,19 @@ class ManagerManager(object):
         user_groups = current_user.get('groups', set())
         return owner_group in user_groups
 
-    def user_manages(self, mngr_doc_id: bson.ObjectId = None, mngr_doc: dict = None) -> bool:
+    def user_manages(self, *, mngr_doc_id: bson.ObjectId = None, mngr_doc: dict = None) -> bool:
         """
         Returns True iff the current user is the Flamenco manager service account for this doc.
         """
 
-        assert (mngr_doc_id is None) != (mngr_doc is None), \
-            'Either one or the other parameter must be given.'
-
         from pillar.api.utils.authentication import current_user_id
-        from flamenco import current_flamenco
 
         if not self.user_is_manager():
             self._log.debug('user_manages(...): user %s is not a Flamenco manager service account',
                             current_user_id())
             return False
 
-        if mngr_doc is None:
-            mngr_coll = current_flamenco.db('managers')
-            mngr_doc = mngr_coll.find_one({'_id': mngr_doc_id},
-                                          {'service_account': 1})
-            if not mngr_doc:
-                self._log.warning('user_manages(%s): no such document (user=%s)',
-                                  mngr_doc_id, current_user_id())
-                return False
-        else:
-            mngr_doc_id = mngr_doc['_id']
+        mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'service_account': 1})
 
         service_account = mngr_doc.get('service_account')
         user_id = current_user_id()
@@ -162,6 +161,27 @@ class ManagerManager(object):
             return False
 
         return True
+
+    def user_may_use(self, *, mngr_doc_id: bson.ObjectId = None, mngr_doc: dict = None) -> bool:
+        """Returns True iff this user may use this Flamenco Manager.
+
+        Usage implies things like requeuing tasks and jobs, creating new jobs, etc.
+        """
+
+        import flask
+        from flamenco import current_flamenco
+
+        # Flamenco Admins always have access.
+        if current_flamenco.current_user_is_flamenco_admin():
+            return True
+
+        mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'user_groups': 1})
+
+        current_user = flask.g.get('current_user', {})
+        user_groups = set(current_user.get('groups', []))
+        manager_groups = set(mngr_doc.get('user_groups', []))
+
+        return bool(user_groups.intersection(manager_groups))
 
     def api_assign_to_project(self,
                               manager_id: bson.ObjectId,
@@ -175,16 +195,19 @@ class ManagerManager(object):
         :returns: True iff the action was successful.
         """
 
+        from collections import defaultdict
         from pymongo.results import UpdateResult
         from flamenco import current_flamenco
         from pillar.api.utils.authentication import current_user_id
+        from pillar.api.projects import utils as project_utils
 
         if action not in {'assign', 'remove'}:
             raise ValueError("Action must be either 'assign' or 'remove'")
 
         mngr_coll = current_flamenco.db('managers')
         manager_doc = mngr_coll.find_one({'_id': manager_id},
-                                         {'projects': 1})
+                                         {'projects': 1,
+                                          'user_groups': 1})
 
         if not manager_doc:
             self._log.warning('api_assign_to_project(%s): no such document (user=%s)',
@@ -192,28 +215,40 @@ class ManagerManager(object):
             return False
 
         mngr_projects = set(manager_doc.get('projects', []))
-        is_assigned = project_id in mngr_projects
-        if is_assigned == (action == 'assign'):
-            self._log.debug('api_assign_to_project(%s, %s, %s): this is a no-op.',
-                            manager_id, project_id, action)
-            return True
+        mngr_user_groups = set(manager_doc.get('user_groups', []))
+
+        admin_group_id = project_utils.get_admin_group_id(project_id)
 
         if action == 'assign':
             mngr_projects.add(project_id)
+            mngr_user_groups.add(admin_group_id)
         else:
             mngr_projects.discard(project_id)
+            mngr_user_groups.discard(admin_group_id)
 
         # Convert to list because JSON/BSON doesn't do sets, and sort to get predictable output.
         projects = sorted(mngr_projects)
+        user_groups = sorted(mngr_user_groups)
 
         if self._log.isEnabledFor(logging.INFO):
-            self._log.info('Updating Manager %s projects to [%s]', manager_id,
-                           ', '.join(f"'{pid}'" for pid in projects))
+            self._log.info(
+                'Updating Manager %s projects to [%s] and user_groups to [%s]',
+                manager_id,
+                ', '.join(f"'{pid}'" for pid in projects),
+                ', '.join(f"'{gid}'" for gid in user_groups),
+            )
 
+        update = defaultdict(dict)
         if projects:
-            update = {'$set': {'projects': projects}}
+            update['$set']['projects'] = projects
         else:
-            update = {'$unset': {'projects': 1}}
+            update['$unset']['projects'] = 1
+
+        if user_groups:
+            update['$set']['user_groups'] = user_groups
+        else:
+            update['$unset']['user_groups'] = 1
+
         res: UpdateResult = mngr_coll.update_one({'_id': manager_id}, update)
 
         if res.matched_count < 1:

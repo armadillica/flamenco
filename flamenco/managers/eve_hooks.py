@@ -10,17 +10,25 @@ log = logging.getLogger(__name__)
 
 
 def check_manager_permissions(mngr_doc):
-    if current_flamenco.current_user_is_flamenco_admin():
+    if current_flamenco.manager_manager.user_manages(mngr_doc=mngr_doc):
+        log.debug('Allowing manager access to own document.')
         return
 
-    if not current_flamenco.manager_manager.user_manages(mngr_doc=mngr_doc):
-        raise wz_exceptions.Forbidden()
+    if current_flamenco.manager_manager.user_may_use(mngr_doc=mngr_doc):
+        return
 
-    log.debug('Allowing manager access to own document.')
+    from pillar.api.utils.authentication import current_user_id
+
+    log.info('Denying access to Manager %s to user %s',
+             mngr_doc.get('_id'), current_user_id())
+    raise wz_exceptions.Forbidden()
 
 
 def check_manager_permissions_modify(mngr_doc, original_doc=None):
-    """For now, only admins are allowed to create, edit, and delete managers."""
+    """For now, only admins are allowed to create, edit, and delete managers.
+
+    Other operations (assigning to projects, etc.) should use a PATCH call.
+    """
 
     if not current_flamenco.current_user_is_flamenco_admin():
         raise wz_exceptions.Forbidden()
@@ -47,8 +55,11 @@ def pre_get_flamenco_managers(request, lookup):
         lookup['service_account'] = user_id
     else:
         # Regular user, filter on by both project and owner group membership.
-        # TODO Sybren: filter on project membership
-        lookup['owner'] = {'$in': current_user['groups']}
+        # TODO: filter on user groups.
+        querying_single = bool(lookup.get('_id'))
+        if not querying_single:
+            # Querying for a list of managers; limit that to Owned managers.
+            lookup['owner'] = {'$in': current_user['groups']}
 
     log.debug('Filtering on %s', lookup)
 
