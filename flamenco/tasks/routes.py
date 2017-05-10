@@ -8,7 +8,8 @@ import werkzeug.exceptions as wz_exceptions
 from pillar.web.system_util import pillar_api
 
 from flamenco.routes import flamenco_project_view
-from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS
+from flamenco import current_flamenco
+from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS
 
 TASK_LOG_PAGE_SIZE = 10
 
@@ -98,7 +99,7 @@ def view_task(project, flamenco_props, task_id):
     task = Task.find(task_id, api=api)
 
     from . import REQUEABLE_TASK_STATES
-    write_access = current_flamenco.current_user_is_flamenco_admin()
+    write_access = current_flamenco.auth.current_user_is_flamenco_admin()
     can_requeue_task = write_access and task['status'] in REQUEABLE_TASK_STATES
 
     return render_template('flamenco/tasks/view_task_embed.html',

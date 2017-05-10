@@ -5,14 +5,15 @@ import logging
 import werkzeug.exceptions as wz_exceptions
 from pillar.api.utils.authorization import user_matches_roles
 
-from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS
+from flamenco import current_flamenco
+from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS
 
 log = logging.getLogger(__name__)
 
 
 def check_task_permission_fetch(task_doc):
 
-    if current_flamenco.current_user_is_flamenco_admin():
+    if current_flamenco.auth.current_user_is_flamenco_admin():
         return
 
     if not current_flamenco.manager_manager.user_is_manager():
@@ -51,7 +52,7 @@ def task_log_remove_fields(task_log):
 
 
 def check_task_permission_fetch_resource(response):
-    if current_flamenco.current_user_is_flamenco_admin():
+    if current_flamenco.auth.current_user_is_flamenco_admin():
         return
 
     if not current_flamenco.manager_manager.user_is_manager():
@@ -65,7 +66,7 @@ def check_task_permission_fetch_resource(response):
 def check_task_permissions_create_delete(task_doc, original_doc=None):
     """For now, only admins are allowed to create and delete tasks."""
 
-    if not current_flamenco.current_user_is_flamenco_admin():
+    if not current_flamenco.auth.current_user_is_flamenco_admin():
         raise wz_exceptions.Forbidden()
 
     # FIXME: check user access to the project.
@@ -74,7 +75,7 @@ def check_task_permissions_create_delete(task_doc, original_doc=None):
 def check_task_permissions_edit(task_doc, original_doc=None):
     """For now, only admins and owning managers are allowed to edit."""
 
-    if not current_flamenco.current_user_is_flamenco_admin():
+    if not current_flamenco.auth.current_user_is_flamenco_admin():
         raise wz_exceptions.Forbidden()
 
     # FIXME: check user access to the project.

@@ -172,7 +172,7 @@ class ManagerManager(object):
         from flamenco import current_flamenco
 
         # Flamenco Admins always have access.
-        if current_flamenco.current_user_is_flamenco_admin():
+        if current_flamenco.auth.current_user_is_flamenco_admin():
             return True
 
         mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'user_groups': 1})

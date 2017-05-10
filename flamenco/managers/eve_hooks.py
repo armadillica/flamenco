@@ -30,7 +30,7 @@ def check_manager_permissions_modify(mngr_doc, original_doc=None):
     Other operations (assigning to projects, etc.) should use a PATCH call.
     """
 
-    if not current_flamenco.current_user_is_flamenco_admin():
+    if not current_flamenco.auth.current_user_is_flamenco_admin():
         raise wz_exceptions.Forbidden()
 
 
@@ -45,12 +45,12 @@ def pre_get_flamenco_managers(request, lookup):
         raise wz_exceptions.Forbidden()
 
     # Flamenco Admins can see everything
-    if current_flamenco.current_user_is_flamenco_admin():
+    if current_flamenco.auth.current_user_is_flamenco_admin():
         return
 
     user_id = current_user['user_id']
 
-    if current_flamenco.current_user_is_flamenco_manager():
+    if current_flamenco.auth.current_user_is_flamenco_manager():
         # If this user is a Flamenco Manager, just return its own document.
         lookup['service_account'] = user_id
     else:

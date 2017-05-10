@@ -9,7 +9,8 @@ import werkzeug.exceptions as wz_exceptions
 from pillar.web.system_util import pillar_api
 
 from flamenco.routes import flamenco_project_view
-from flamenco import current_flamenco, ROLES_REQUIRED_TO_VIEW_ITEMS
+from flamenco import current_flamenco
+from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS
 
 blueprint = Blueprint('flamenco.jobs', __name__, url_prefix='/jobs')
 perproject_blueprint = Blueprint('flamenco.jobs.perproject', __name__,
@@ -59,7 +60,7 @@ def view_job(project, flamenco_props, job_id):
 
     from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES
 
-    write_access = current_flamenco.current_user_is_flamenco_admin()
+    write_access = current_flamenco.auth.current_user_is_flamenco_admin()
 
     return render_template(
         'flamenco/jobs/view_job_embed.html',
@@ -227,7 +228,7 @@ def recreate_job(job_id):
     # FIXME Sybren: add permission check.
 
     # Job list is public, job details are not.
-    if not current_flamenco.current_user_is_flamenco_admin():
+    if not current_flamenco.auth.current_user_is_flamenco_admin():
         raise wz_exceptions.Forbidden()
 
     from pillar.api.utils import str2id
