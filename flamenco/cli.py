@@ -87,7 +87,7 @@ def make_admin(user_email):
 
     from pillar.api.service import do_badger
 
-    _, status = do_badger('grant', user_email, 'flamenco-admin')
+    _, status = do_badger('grant', role='flamenco-admin', user_email=user_email)
     if status != 204:
         log.error('Unable to find user %s', user_email)
         return 1
@@ -102,7 +102,7 @@ def revoke_admin(user_email):
 
     from pillar.api.service import do_badger
 
-    _, status = do_badger('revoke', user_email, 'flamenco-admin')
+    _, status = do_badger('revoke', role='flamenco-admin', user_email=user_email)
     if status != 204:
         log.error('Unable to find user %s', user_email)
         return 1
