@@ -41,7 +41,7 @@ def error_project_not_setup_for_flamenco():
     return render_template('flamenco/errors/project_not_setup.html')
 
 
-def flamenco_project_view(extra_project_projections=None, extension_props=False):
+def flamenco_project_view(extra_project_projections: dict=None, extension_props=False):
     """Decorator, replaces the first parameter project_url with the actual project.
 
     Assumes the first parameter to the decorated function is 'project_url'. It then
@@ -53,10 +53,8 @@ def flamenco_project_view(extra_project_projections=None, extension_props=False)
 
     :param extra_project_projections: extra projections to use on top of the ones already
         used by this decorator.
-    :type extra_project_projections: dict
-    :param extension_props: whether extension properties should be included. Includes them
-        in the projections, and verifies that they are there.
-    :type extension_props: bool
+    :param extension_props: when True, passes (project, extension_props) as first parameters
+        to the decorated function. When False, just passes (project, ).
     """
 
     from . import EXTENSION_NAME
@@ -67,14 +65,14 @@ def flamenco_project_view(extra_project_projections=None, extension_props=False)
     projections = {
         '_id': 1,
         'name': 1,
+        'permissions': 1,
+        'extension_props.%s' % EXTENSION_NAME: 1,
         # We don't need this here, but this way the wrapped function has access
         # to the orignal URL passed to it.
         'url': 1,
     }
     if extra_project_projections:
         projections.update(extra_project_projections)
-    if extension_props:
-        projections['extension_props.%s' % EXTENSION_NAME] = 1
 
     def decorator(wrapped):
         @functools.wraps(wrapped)
@@ -94,8 +92,7 @@ def flamenco_project_view(extra_project_projections=None, extension_props=False)
                 {'projection': projections},
                 api=api)
 
-            is_flamenco = current_flamenco.is_flamenco_project(
-                project, test_extension_props=extension_props)
+            is_flamenco = current_flamenco.is_flamenco_project(project)
             if not is_flamenco:
                 return error_project_not_setup_for_flamenco()
 
