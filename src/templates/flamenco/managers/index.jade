@@ -1,0 +1,46 @@
+| {% extends 'flamenco/layout.html' %}
+| {% block bodyattrs %}{{ super() }} data-context='managers'{% endblock %}
+| {% block page_title %}Flamenco Managers{% endblock %}
+
+| {% block body %}
+#col_main
+	#col_main-content
+		.col_header.item-list-header
+			i.pi-flamenco
+			| Your Flamenco Managers
+
+		.item-list.col-scrollable
+			.table
+				.table-head
+					.table-row
+						.table-cell.item-name
+							span.collapser(title="Collapse name column") Name
+						.table-cell.item-priority
+							span.collapser(title="Collapse priority column") Projects
+
+				.table-body
+					| {% for manager in managers['_items'] %}
+					| {% set link_url = url_for('flamenco.managers.view_embed', manager_id=manager._id) %}
+					.table-row(id="manager-{{ manager._id }}")
+						.table-cell.item-name
+							a(data-manager-id="{{ manager._id }}",
+								href="{{ link_url }}",
+								class="manager-link")
+								span(class="manager-name-{{ manager._id }}") {{ manager.name }}
+						.table-cell.item-projects
+							a(data-manager-id="{{ manager._id }}",
+								href="{{ link_url }}",
+								class="manager-link")
+								span(class="manager-projects-{{ manager._id }}") {{ manager.projects|hide_none|count }}
+					| {% endfor %}
+#col_right
+	#item-details.col-scrollable
+		.item-details-empty
+			| Select a Manager
+| {% endblock %}
+| {% block footer_scripts %}
+script.
+	{% if open_manager_id %}
+		$(function() { item_open('{{ open_manager_id }}', 'manager', false); });
+	{% endif %}
+| {% endblock %}

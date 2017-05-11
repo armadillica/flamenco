@@ -8,7 +8,8 @@ function item_open(item_id, item_type, pushState, project_url)
         throw new ReferenceError("item_open(" + item_id + ", " + item_type + ") called.");
     }
 
-    if (typeof project_url === 'undefined') {
+    var is_task_or_job = (item_type == 'task' || item_type == 'job');
+    if (is_task_or_job && typeof project_url === 'undefined') {
         project_url = ProjectUtils.projectUrl();
         if (typeof project_url === 'undefined') {
             throw new ReferenceError("ProjectUtils.projectUrl() undefined");
@@ -20,11 +21,22 @@ function item_open(item_id, item_type, pushState, project_url)
     var current_item = $('#' + item_type + '-' + item_id);
     current_item.addClass('processing');
 
-    var item_url = '/flamenco/' + project_url + '/' + item_type + 's/' + item_id;
-    var push_url = item_url;
-    if (ProjectUtils.context() == 'job' && item_type == 'task'){
-        push_url = '/flamenco/' + project_url + '/jobs/with-task/' + item_id;
+    var item_url;
+    var push_url;
+
+    switch(item_type) {
+        case 'task':
+        case 'job':
+            item_url = '/flamenco/' + project_url + '/' + item_type + 's/' + item_id;
+            if (ProjectUtils.context() == 'job' && item_type == 'task'){
+                push_url = '/flamenco/' + project_url + '/jobs/with-task/' + item_id;
+            }
+            break;
+        case 'manager':
+            item_url = '/flamenco/managers/' + item_id;
+            break;
     }
+    if (typeof push_url == 'undefined') push_url = item_url;
     item_url += '?context=' + ProjectUtils.context();
 
     statusBarSet('default', 'Loading ' + item_type + '…');
@@ -85,6 +97,10 @@ function job_open(job_id, project_url)
 function task_open(task_id, project_url)
 {
     item_open(task_id, 'task', true, project_url);
+}
+function manager_open(manager_id)
+{
+    item_open(manager_id, 'manager', true);
 }
 
 
@@ -159,9 +175,22 @@ function setupJsJobLinkClickHandlers() {
     });
 }
 
+function setupJsManagerLinkClickHandlers() {
+    $("a.manager-link[data-manager-id]")
+    .off('click')  // clean up previous click handlers, before adding another one.
+    .click(function(e) {
+        e.preventDefault();
+        // delegateTarget is the thing the event hander was attached to,
+        // rather than the thing we clicked on.
+        var manager_id = e.delegateTarget.dataset.managerId;
+        manager_open(manager_id);
+    });
+}
+
 $(function() {
-    setupJsJobLinkClickHandlers()
-    setupJsTaskLinkClickHandlers()
+    setupJsJobLinkClickHandlers();
+    setupJsTaskLinkClickHandlers();
+    setupJsManagerLinkClickHandlers();
 });
 
 /**

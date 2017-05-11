@@ -6,6 +6,7 @@ from flask import Blueprint, render_template, request
 import flask_login
 import werkzeug.exceptions as wz_exceptions
 
+import pillar.flask_extra
 from pillar.web.system_util import pillar_api
 
 from flamenco.routes import flamenco_project_view
@@ -44,6 +45,7 @@ def for_project_with_task(project, task_id):
 
 
 @perproject_blueprint.route('/<job_id>')
+@pillar.flask_extra.vary_xhr()
 @flamenco_project_view(extension_props=True)
 def view_job(project, flamenco_props, job_id):
     if not request.is_xhr:

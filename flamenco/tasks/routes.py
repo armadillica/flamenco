@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, request
 import flask_login
 import werkzeug.exceptions as wz_exceptions
 
+import pillar.flask_extra
 from pillar.web.system_util import pillar_api
 
 from flamenco.routes import flamenco_project_view
@@ -79,6 +80,7 @@ def list_for_job(project, job_id, task_id=None):
 
 @perproject_blueprint.route('/<task_id>')
 @flask_login.login_required
+@pillar.flask_extra.vary_xhr()
 @flamenco_project_view(extension_props=True)
 def view_task(project, flamenco_props, task_id):
     from flamenco.tasks.sdk import Task

@@ -1,0 +1,12 @@
+| {% extends "flamenco/errors/layout.html" %}
+| {% block body %}
+#error_container.standalone
+	#error_box
+		.error-top-container
+			.error-title Project not available on Flamenco.
+		.error-lead
+			p
+				| This project is not available on Flamenco. This means that either you do not have
+				| access to the project, or there is to Flamenco Manager assigned to this project
+				| yet.
+| {% endblock %}

@@ -65,6 +65,7 @@ class FlamencoExtension(PillarExtension):
         from . import routes
         import flamenco.jobs.routes
         import flamenco.tasks.routes
+        import flamenco.managers.routes
 
         return [
             routes.blueprint,
@@ -73,6 +74,7 @@ class FlamencoExtension(PillarExtension):
             flamenco.tasks.routes.global_blueprint,
             flamenco.tasks.routes.perjob_blueprint,
             flamenco.tasks.routes.perproject_blueprint,
+            flamenco.managers.routes.blueprint,
         ]
 
     @property
@@ -145,7 +147,7 @@ class FlamencoExtension(PillarExtension):
             sparse=False,
         )
 
-    def flamenco_projects(self):
+    def flamenco_projects(self, *, projection: dict=None):
         """Returns projects set up for Flamenco.
 
         :returns: {'_items': [proj, proj, ...], '_meta': Eve metadata}
@@ -157,11 +159,11 @@ class FlamencoExtension(PillarExtension):
         api = pillar_api()
 
         # Find projects that are set up for Flamenco.
-        projects = pillarsdk.Project.all({
-            'where': {
-                'extension_props.flamenco': {'$exists': 1},
-            }}, api=api)
+        params = {'where': {'extension_props.flamenco': {'$exists': 1}}}
+        if projection:
+            params['projection'] = projection
 
+        projects = pillarsdk.Project.all(params, api=api)
         return projects
 
     def is_flamenco_project(self, project):

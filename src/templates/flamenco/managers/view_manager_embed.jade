@@ -1,0 +1,121 @@
+.flamenco-box.manager
+	p.item-name {{ manager.name | hide_none }}
+	| {% if manager.description %}
+	p.item-description {{ manager.description | hide_none }}
+	| {% endif %}
+
+	.table.item-properties
+		.table-body
+			.table-row.properties-url
+				.table-cell URL
+				.table-cell
+					| {% if manager.url %}
+					a(href="{{ manager.url }}") {{ manager.url }}
+					| {% else %}
+					| -none-
+					| {% endif %}
+			| {% if manager.variables %}
+			| {% for var_key, var_values in manager.variables.to_dict().items()  %}
+			.table-row.properties-variables
+				.table-cell
+					| {{ var_key | undertitle }}
+				.table-cell
+					pre.
+						{{ var_values | pprint}}
+			| {% endfor %}
+			| {% endif %}
+
+.flamenco-box#manager-projects-list
+	h4 Projects linked to this Manager
+	
+	.table.item-properties
+		.table-body
+			| {% for project in linked_projects %}
+			.table-row.properties-url
+				.table-cell
+					i.pi-blender-cloud
+				.table-cell {{ project._id }} {{ project.name }}
+				.table-cell
+					a(href='javascript:unlinkProject("{{ project._id }}")')
+						i.pi-trash
+			| {% endfor %}
+
+	.pull-right
+		| {% if available_projects %}
+		select#link_project_select
+			| {% for project in available_projects %}
+			option(value="{{ project._id }}") {{ project.name }}
+			| {% endfor %}
+		button.btn.btn-success(onclick="linkProject()")
+			i.pi-link
+			| Link project
+		| {% elif linked_projects %}
+		button.btn.btn-default(disabled)
+			| All available projects are linked already.
+		| {% else %}
+		button.btn.btn-default(disabled)
+			| You have no projects set up for Flamenco.
+		| {% endif %}
+	.clearfix
+	.action-result-panel
+
+#item-view-feed
+	| {% if config.DEBUG %}
+	.debug-info
+		a.debug-info-toggle(role='button',
+			data-toggle='collapse',
+			href='#debug-content-manager',
+			aria-expanded='false',
+			aria-controls='debug-content-manager')
+			i.pi-info
+			| Debug Info
+		#debug-content-manager.collapse
+			pre.
+				{{ manager.to_dict() | pprint }}
+	| {% endif %}
+
+| {% block footer_scripts %}
+script.
+	function unlinkProject(project_id) {
+		console.log("Unlinking project ", project_id, " from Manager ", "{{ manager._id }}")
+		patchManager({
+			op: 'remove-from-project',
+			project: project_id,
+		})
+		.fail(function(err) {
+			$('.action-result-panel').text('Error unlinking project: ' + err.responseJSON._error.message);
+		})
+		;
+	}
+	
+	function linkProject() {
+		var project_id = $('#link_project_select').val();
+		patchManager({
+			op: 'assign-to-project',
+			project: project_id,
+		})
+		.fail(function(err) {
+			$('.action-result-panel').text('Error linking project: ' + err.responseJSON._error.message);
+		})
+		;
+	}
+	
+	function patchManager(patch) {
+		var promise = $.ajax({
+			url: '/api/flamenco/managers/{{ manager._id }}',
+			method: 'PATCH',
+			contentType: 'application/json',
+			data: JSON.stringify(patch),
+		})
+		.done(function() {
+			item_open('{{ manager._id }}', 'manager', false);
+		})
+		.fail(function(err) {
+			console.log('Error patching: ', err);
+		})
+		;
+		
+		return promise;
+	}
+	
+| {% endblock %}

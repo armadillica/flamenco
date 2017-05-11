@@ -15,12 +15,15 @@ body
 	&[data-context="job"]
 		nav.sidebar .navbar-item.jobs
 			+sidebar-button-active
+	&[data-context="managers"]
+		nav.sidebar .navbar-item.managers
+			+sidebar-button-active
 		#col_main .col_header
 			box-shadow: none
 
 nav.sidebar
 	a.navbar-item
-		&.tasks, &.jobs
+		&.tasks, &.jobs, &.managers
 			text-transform: initial
 			font-size: .85em
 
