@@ -120,13 +120,13 @@ class ManagerManager(object):
         """Returns True iff the current user is an owner of the given Flamenco Manager."""
 
         import flask
-        from pillar.api.utils.authorization import user_has_role
+        from pillar.api.utils.authorization import user_matches_roles
 
         current_user = flask.g.get('current_user') or {}
         user_id = current_user.get('user_id')
 
-        if not user_id or not user_has_role('subscriber', current_user):
-            self._log.debug('user_is_owner(...): user %s is not a subscriber', user_id)
+        if not user_id or not user_matches_roles({'subscriber', 'demo'}):
+            self._log.debug('user_is_owner(...): user %s is not a subscriber/demo', user_id)
             return False
 
         mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'owner': 1})
@@ -179,8 +179,12 @@ class ManagerManager(object):
 
         current_user = flask.g.get('current_user', {})
         user_groups = set(current_user.get('groups', []))
-        manager_groups = set(mngr_doc.get('user_groups', []))
 
+        owner_group = mngr_doc.get('owner')
+        if owner_group and owner_group in user_groups:
+            return True
+
+        manager_groups = set(mngr_doc.get('user_groups', []))
         return bool(user_groups.intersection(manager_groups))
 
     def api_assign_to_project(self,
@@ -204,14 +208,17 @@ class ManagerManager(object):
         if action not in {'assign', 'remove'}:
             raise ValueError("Action must be either 'assign' or 'remove'")
 
+        assert isinstance(manager_id, bson.ObjectId)
+        assert isinstance(project_id, bson.ObjectId)
+
         mngr_coll = current_flamenco.db('managers')
         manager_doc = mngr_coll.find_one({'_id': manager_id},
                                          {'projects': 1,
                                           'user_groups': 1})
 
         if not manager_doc:
-            self._log.warning('api_assign_to_project(%s): no such document (user=%s)',
-                              manager_id, current_user_id())
+            self._log.warning('api_assign_to_project(%s, %s): no manager with id=%s (user=%s)',
+                              manager_id, project_id, manager_id, current_user_id())
             return False
 
         mngr_projects = set(manager_doc.get('projects', []))

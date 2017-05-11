@@ -3,10 +3,7 @@ import logging
 
 from flask import Blueprint, render_template, redirect, url_for
 
-import flask_login
-
 from pillar.web.utils import attach_project_pictures
-import pillar.web.subquery
 from pillar.web.system_util import pillar_api
 import pillarsdk
 
@@ -41,7 +38,21 @@ def error_project_not_setup_for_flamenco():
     return render_template('flamenco/errors/project_not_setup.html')
 
 
-def flamenco_project_view(extra_project_projections: dict=None, extension_props=False):
+def error_project_not_available():
+    import flask
+
+    if flask.request.is_xhr:
+        resp = flask.jsonify({'_error': 'project not available on Flamenco'})
+        resp.status_code = 403
+        return resp
+
+    return render_template('flamenco/errors/project_not_available.html')
+
+
+def flamenco_project_view(extra_project_projections: dict=None,
+                          *,
+                          extension_props=False,
+                          require_usage_rights=True):
     """Decorator, replaces the first parameter project_url with the actual project.
 
     Assumes the first parameter to the decorated function is 'project_url'. It then
@@ -55,7 +66,12 @@ def flamenco_project_view(extra_project_projections: dict=None, extension_props=
         used by this decorator.
     :param extension_props: when True, passes (project, extension_props) as first parameters
         to the decorated function. When False, just passes (project, ).
+    :param require_usage_rights: when True, requires that a Flamenco Manager is assigned
+        to the project, and that the user has access to this manager (i.e. is part of this
+        project).
     """
+
+    import flask_login
 
     from . import EXTENSION_NAME
 
@@ -77,8 +93,6 @@ def flamenco_project_view(extra_project_projections: dict=None, extension_props=
     def decorator(wrapped):
         @functools.wraps(wrapped)
         def wrapper(project_url, *args, **kwargs):
-            # FIXME Sybren: add permission check.
-
             if isinstance(project_url, pillarsdk.Resource):
                 # This is already a resource, so this call probably is from one
                 # view to another. Assume the caller knows what he's doing and
@@ -95,6 +109,13 @@ def flamenco_project_view(extra_project_projections: dict=None, extension_props=
             is_flamenco = current_flamenco.is_flamenco_project(project)
             if not is_flamenco:
                 return error_project_not_setup_for_flamenco()
+
+            if require_usage_rights:
+                project_id = project['_id']
+                if not current_flamenco.auth.web_current_user_may_use_project(project):
+                    log.info('Denying user %s access to Flamenco on project %s',
+                             flask_login.current_user, project_id)
+                    return error_project_not_available()
 
             if extension_props:
                 pprops = project.extension_props.flamenco

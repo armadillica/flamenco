@@ -24,6 +24,11 @@ def check_manager_permissions(mngr_doc):
     raise wz_exceptions.Forbidden()
 
 
+def check_manager_resource_permissions(response):
+    for manager_doc in response['_items']:
+        check_manager_permissions(manager_doc)
+
+
 def check_manager_permissions_modify(mngr_doc, original_doc=None):
     """For now, only admins are allowed to create, edit, and delete managers.
 
@@ -54,9 +59,7 @@ def pre_get_flamenco_managers(request, lookup):
         # If this user is a Flamenco Manager, just return its own document.
         lookup['service_account'] = user_id
     else:
-        # Regular user, filter on by both project and owner group membership.
-        # TODO: filter on user groups.
-        querying_single = bool(lookup.get('_id'))
+        querying_single = bool(lookup.get('_id') or request.args.get('_id'))
         if not querying_single:
             # Querying for a list of managers; limit that to Owned managers.
             lookup['owner'] = {'$in': current_user['groups']}
@@ -67,6 +70,7 @@ def pre_get_flamenco_managers(request, lookup):
 def setup_app(app):
     app.on_pre_GET_flamenco_managers += pre_get_flamenco_managers
     app.on_fetched_item_flamenco_managers += check_manager_permissions
+    app.on_fetched_resource_flamenco_managers += check_manager_resource_permissions
     app.on_insert_flamenco_managers += check_manager_permissions_modify
     app.on_update_flamenco_managers += check_manager_permissions_modify
     app.on_replace_flamenco_managers += check_manager_permissions_modify

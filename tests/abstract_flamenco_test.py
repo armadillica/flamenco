@@ -44,7 +44,10 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
     @property
     def flamenco(self):
-        return self.app.pillar_extensions['flamenco']
+        from flamenco import FlamencoExtension
+
+        flamenco: FlamencoExtension = self.app.pillar_extensions['flamenco']
+        return flamenco
 
     def ensure_project_exists(self, project_overrides=None):
         from flamenco.setup import setup_for_flamenco
@@ -81,10 +84,14 @@ class AbstractFlamencoTest(AbstractPillarTest):
     def create_project_member(self, user_id: str, *,
                               token: str,
                               roles: set=frozenset({'subscriber'}),
-                              groups: list=None):
+                              groups: list=None,
+                              project: dict=None):
         """Creates a subscriber who is member of the project."""
 
-        user_groups = (groups or []) + [self.project['permissions']['groups'][0]['group']]
+        if project is None:
+            project = self.project
+
+        user_groups = (groups or []) + [project['permissions']['groups'][0]['group']]
         self.create_user(user_id=user_id, roles=set(roles),
                          groups=user_groups,
                          token=token)
@@ -147,3 +154,14 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
         with self.app.test_request_context():
             current_flamenco.update_status('tasks', task_id, new_status)
+
+    def assign_manager_to_project(self,
+                                  manager_id: ObjectId = None,
+                                  project_id: ObjectId = None):
+        from flamenco import current_flamenco
+
+        with self.app.test_request_context():
+            ok = current_flamenco.manager_manager.api_assign_to_project(
+                manager_id, project_id, 'assign')
+
+        self.assertTrue(ok)

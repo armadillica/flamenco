@@ -1,18 +1,15 @@
 # -*- encoding: utf-8 -*-
 
+import bson
+
 from pillar.tests import common_test_data as ctd
 from pillar.api.utils.authentication import force_cli_user
 
 from abstract_flamenco_test import AbstractFlamencoTest
 
 
-class AccessTest(AbstractFlamencoTest):
-    """Creates a manager, job and tasks, to check access by different types of users.
-
-    There are also separate access tests in other test cases.
-    """
-
-    def _create_project(self, project_name, token):
+class AbstractAccessTest(AbstractFlamencoTest):
+    def _create_project(self, project_name, token) -> dict:
         resp = self.post('/api/p/create',
                          headers={'Authorization': self.make_header(token)},
                          expected_status=201,
@@ -20,9 +17,16 @@ class AccessTest(AbstractFlamencoTest):
         return resp.json()
 
     def _create_user_and_project(self, roles, user_id='cafef00df00df00df00df00d', token='token',
-                                 project_name='Prøject El Niño'):
+                                 project_name='Prøject El Niño') -> dict:
         self.create_user(user_id, roles, token=token)
         return self._create_project(project_name, token)
+
+
+class AccessTest(AbstractAccessTest):
+    """Creates a manager, job and tasks, to check access by different types of users.
+
+    There are also separate access tests in other test cases.
+    """
 
     def setUp(self, **kwargs):
         AbstractFlamencoTest.setUp(self, **kwargs)
@@ -88,15 +92,6 @@ class AccessTest(AbstractFlamencoTest):
                 self.mngr2_id,
             )
             self.job2_id = job['_id']
-
-    def assign_manager_to_project(self):
-        from flamenco import current_flamenco
-
-        with self.app.test_request_context():
-            ok = current_flamenco.manager_manager.api_assign_to_project(
-                self.mngr_id, self.proj_id, 'assign')
-
-        self.assertTrue(ok)
 
     def test_manager_account_access(self):
         """Should have access to own job and tasks, but not project or other managers."""
@@ -236,7 +231,7 @@ class AccessTest(AbstractFlamencoTest):
         """
 
         self.create_project_member(24 * 'e', roles={'subscriber'}, token='subscriber-token')
-        self.assign_manager_to_project()
+        self.assign_manager_to_project(self.mngr_id, self.proj_id)
 
         resp = self.get('/api/flamenco/managers/',
                         expected_status=200,
@@ -255,3 +250,97 @@ class AccessTest(AbstractFlamencoTest):
         self.get('/api/flamenco/managers/%s' % self.mngr2_id,
                  expected_status=403,
                  auth_token='subscriber-token')
+
+
+class UserAccessTest(AbstractAccessTest):
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+
+        # Create multiple projects:
+        # 1) user is member, both non-owned and owned manager assigned to it.
+        # 2) user is member, no manager assigned to it.
+        # 3) user is not member, both non-owned and owned manager assigned to it.
+        # 4) user is not member, only non-owned manager assigned to it.
+
+        from pillar.api.projects.utils import get_admin_group_id
+
+        # Create the projects
+        self.project1 = self._create_user_and_project(user_id=24 * '1',
+                                                      roles={'subscriber'},
+                                                      project_name='Prøject 1',
+                                                      token='token-proj1-owner')
+        self.project2 = self._create_user_and_project(user_id=24 * '2',
+                                                      roles={'subscriber'},
+                                                      project_name='Prøject 2',
+                                                      token='token-proj1-owner')
+        self.project3 = self._create_user_and_project(user_id=24 * '3',
+                                                      roles={'subscriber'},
+                                                      project_name='Prøject 3',
+                                                      token='token-proj3-owner')
+        self.project4 = self._create_user_and_project(user_id=24 * '4',
+                                                      roles={'subscriber'},
+                                                      project_name='Prøject 4',
+                                                      token='token-proj4-owner')
+        self.prid1 = bson.ObjectId(self.project1['_id'])
+        self.prid2 = bson.ObjectId(self.project2['_id'])
+        self.prid3 = bson.ObjectId(self.project3['_id'])
+        self.prid4 = bson.ObjectId(self.project4['_id'])
+
+        # Create the managers
+        self.owned_mngr, _, self.owned_mngr_token = self.create_manager_service_account()
+        self.owned_mngr_id = bson.ObjectId(self.owned_mngr['_id'])
+        self.nonowned_mngr, _, self.nonowned_mngr_token = self.create_manager_service_account()
+        self.nonowned_mngr_id = bson.ObjectId(self.nonowned_mngr['_id'])
+
+        self.assign_manager_to_project(self.owned_mngr_id, self.prid1)
+        self.assign_manager_to_project(self.nonowned_mngr_id, self.prid1)
+        self.assign_manager_to_project(self.owned_mngr_id, self.prid3)
+        self.assign_manager_to_project(self.nonowned_mngr_id, self.prid3)
+        self.assign_manager_to_project(self.nonowned_mngr_id, self.prid4)
+
+        # Create the test user.
+        with self.app.test_request_context():
+            self.admin_gid1 = get_admin_group_id(self.prid1)
+            self.admin_gid2 = get_admin_group_id(self.prid2)
+        self.create_user(groups=[
+            self.admin_gid1,
+            self.admin_gid2,
+            self.owned_mngr['owner'],
+        ], token='user-token')
+
+    def test_web_current_user_may_use_project(self):
+        # Test the user's access to Flamenco on the different projects.
+
+        # 1) user is member, both non-owned and owned manager assigned to it.
+        # 2) user is member, no manager assigned to it.
+        # 3) user is not member, both non-owned and owned manager assigned to it.
+        # 4) user is not member, only non-owned manager assigned to it.
+
+        import pillar.auth
+
+        auth = self.flamenco.auth
+
+        with self.app.test_request_context():
+            pillar.auth.login_user('user-token', load_from_db=True)
+            self.assertTrue(auth.web_current_user_may_use_project(self.project1))
+            self.assertFalse(auth.web_current_user_may_use_project(self.project2))
+            self.assertFalse(auth.web_current_user_may_use_project(self.project3))
+            self.assertFalse(auth.web_current_user_may_use_project(self.project4))
+
+    def test_web_current_user_may_use_project_flamenco_admin(self):
+        # Flamenco admins have access to all of Flamenco, but only on projects they are part of.
+        import pillar.auth
+
+        auth = self.flamenco.auth
+
+        self.create_user(user_id=24 * 'f',
+                         roles={'flamenco-admin'},
+                         groups=[self.admin_gid1, self.admin_gid2],
+                         token='fladmin-token')
+
+        with self.app.test_request_context():
+            pillar.auth.login_user('fladmin-token', load_from_db=True)
+            self.assertTrue(auth.web_current_user_may_use_project(self.project1))
+            self.assertTrue(auth.web_current_user_may_use_project(self.project2))
+            self.assertFalse(auth.web_current_user_may_use_project(self.project3))
+            self.assertFalse(auth.web_current_user_may_use_project(self.project4))

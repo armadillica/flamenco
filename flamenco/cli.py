@@ -44,6 +44,41 @@ def create_manager(email, name, description):
 
 
 @manager_flamenco.command
+def assign_manager_project(manager_id, project_url):
+    """Assigns a Flamenco Manager to a project."""
+
+    _manager_project(manager_id, project_url, 'assign')
+
+
+@manager_flamenco.command
+def remove_manager_project(manager_id, project_url):
+    """Removes a Flamenco Manager from a project."""
+
+    _manager_project(manager_id, project_url, 'remove')
+
+
+def _manager_project(manager_id, project_url, action):
+    from pillar.api.utils import str2id
+    from flamenco import current_flamenco
+
+    authentication.force_cli_user()
+    manager_id = str2id(manager_id)
+
+    # Find project
+    projs_coll = current_app.db()['projects']
+    proj = projs_coll.find_one({'url': project_url}, projection={'_id': 1})
+    if not proj:
+        log.error('Unable to find project url=%s', project_url)
+        return 1
+
+    project_id = proj['_id']
+    ok = current_flamenco.manager_manager.api_assign_to_project(manager_id, project_id, action)
+    if not ok:
+        log.error('Unable to assign manager %s to project %s', manager_id, project_id)
+        return 1
+
+
+@manager_flamenco.command
 def create_test_job(manager_id, user_email, project_url):
     """Creates a test job for a given manager."""
 
@@ -109,5 +144,6 @@ def revoke_admin(user_email):
 
     log.info('Done.')
     return 0
+
 
 manager.add_command("flamenco", manager_flamenco)

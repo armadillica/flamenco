@@ -5,7 +5,7 @@ import werkzeug.exceptions as wz_exceptions
 
 from pillar.api.utils import authorization, authentication
 
-api_blueprint = Blueprint('flamenco.managers', __name__)
+api_blueprint = Blueprint('flamenco.managers.api', __name__)
 log = logging.getLogger(__name__)
 
 # Task statuses that are acceptable after a task has been set to 'cancel-requested'

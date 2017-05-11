@@ -29,7 +29,14 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
 
         from flamenco import current_flamenco
 
-        project_id = str2id(patch['project'])
+        try:
+            project_strid = patch['project']
+        except KeyError:
+            log.warning('User %s sent invalid PATCH %r for manager %s.',
+                        current_user_id(), patch, manager_id)
+            raise wz_exceptions.BadRequest('Missing key "project"')
+
+        project_id = str2id(project_strid)
 
         if not current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_id):
             log.warning('User %s uses PATCH to %s manager %s to/from project %s, '
