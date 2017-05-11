@@ -38,9 +38,15 @@ def view_embed(manager_id: str):
     manager = Manager.find(manager_id, api=api)
 
     if manager.projects:
-        fetched = pillarsdk.Project.all(
-            {'where': {'_id': {'$in': manager.projects}},
-             'projection': {'_id': 1, 'name': 1, }},
+        fetched = pillarsdk.Project.all({
+            'where': {
+                '_id': {'$in': manager.projects}
+            },
+            'projection': {
+                '_id': 1,
+                'name': 1,
+                'url': 1,
+            }},
             api=api)
         linked_projects = fetched._items
         linked_project_ids = set(manager.projects)

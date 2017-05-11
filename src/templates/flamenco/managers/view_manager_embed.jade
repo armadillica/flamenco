@@ -34,7 +34,9 @@
 			.table-row.properties-url
 				.table-cell
 					i.pi-blender-cloud
-				.table-cell {{ project._id }} {{ project.name }}
+				.table-cell
+					a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}")
+						| {{ project.name }}
 				.table-cell
 					a(href='javascript:unlinkProject("{{ project._id }}")')
 						i.pi-trash
