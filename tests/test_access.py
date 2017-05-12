@@ -69,7 +69,7 @@ class AccessTest(AbstractAccessTest):
         self.proj2_id = self.proj2['_id']
 
         mngr_doc, _, token = self.create_manager_service_account(
-            email='manager2@example.com', name='manager 2'
+            owner_email='manager2@example.com', name='manager 2'
         )
         self.mngr2_id = mngr_doc['_id']
         self.mngr2_doc = mngr_doc

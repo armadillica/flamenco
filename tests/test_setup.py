@@ -6,6 +6,9 @@ class CreateManagerTest(AbstractFlamencoTest):
         from pillar.api.utils.authentication import force_cli_user
         from flamenco.setup import create_manager
 
+        # Make sure the owner of the manager exists.
+        owner_id = self.create_user(email='jemoeder@jevader.nl')
+
         with self.app.test_request_context():
             force_cli_user()
             mngr_doc, account, token = create_manager(
@@ -30,25 +33,30 @@ class CreateManagerTest(AbstractFlamencoTest):
 
         self.assertAllowsAccess(token, account['_id'])
 
-    def test_manager_without_email_address(self):
+        # Check that the owner is now member of the owner group.
+        owner = self.fetch_user_from_db(owner_id)
+        self.assertIn(mngr_doc['owner'], owner['groups'])
+
+    def test_manager_without_owner_email_address(self):
         from pillar.api.utils.authentication import force_cli_user
         from flamenco.setup import create_manager
 
         with self.app.test_request_context():
             force_cli_user()
-            mngr_doc, account, token = create_manager('', 'Unit test mānāgèr', '¡Awesome in Space!')
-            self.assertNotIn('email', account)
 
-        self.assertAllowsAccess(token, account['_id'])
+            with self.assertRaises(ValueError):
+                create_manager('', 'Unit test mānāgèr', '¡Awesome in Space!')
 
-    def test_two_managers_without_email_address(self):
+    def test_two_managers_with_same_owner(self):
         from pillar.api.utils.authentication import force_cli_user
         from flamenco.setup import create_manager
 
+        self.create_user(email='jemoeder@jevader.nl')
+
         with self.app.test_request_context():
             force_cli_user()
-            mngr_doc1, account1, token1 = create_manager('', 'Unit test mānāgèr 1', '¡Awesome!')
-            mngr_doc2, account2, token2 = create_manager('', 'Unit test mānāgèr 2', '¡Awesome!')
+            mngr_doc1, account1, token1 = create_manager('jemoeder@jevader.nl', 'mānāgèr 1', 'Awe!')
+            mngr_doc2, account2, token2 = create_manager('jemoeder@jevader.nl', 'mānāgèr 2', 'som!')
 
         self.assertAllowsAccess(token1, account1['_id'])
         self.assertAllowsAccess(token2, account2['_id'])

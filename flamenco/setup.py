@@ -80,20 +80,39 @@ def setup_for_flamenco(project_url, replace=False):
     return project
 
 
-def create_manager(email, name, description, url=None):
+def create_manager(owner_email, name, description, url=None):
     """Creates a Flamenco manager with service account.
 
     :returns: tuple (mngr_doc, account, token)
     """
 
     from pillar.cli import create_service_account
+    from pillar.api.users import add_user_to_group
     from flamenco import current_flamenco
+    from pymongo.cursor import Cursor
 
-    account, token = create_service_account(email,
+    # Find the owner, to add it to the owner group afterward.
+    possible_owners: Cursor = current_app.db('users').find(
+        {'email': owner_email},
+        {'_id': 1, 'full_name': 1})
+    owner_count = possible_owners.count()
+    if owner_count == 0:
+        raise ValueError(f'No user found with email address {owner_email}; '
+                         'cannot assign ownership of Manager')
+    if owner_count > 1:
+        raise ValueError(f'Multiple users ({owner_count}) found with email address {owner_email}; '
+                         'cannot assign ownership of Manager')
+
+    # Create the service account and the Manager.
+    account, token = create_service_account('',
                                             ['flamenco_manager'],
                                             {'flamenco_manager': {}})
 
     mngr_doc = current_flamenco.manager_manager.create_manager(
         account['_id'], name, description, url)
+
+    # Assign the owner to the owner group.
+    owner = possible_owners[0]
+    add_user_to_group(owner['_id'], mngr_doc['owner'])
 
     return mngr_doc, account, token

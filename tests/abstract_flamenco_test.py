@@ -9,6 +9,8 @@ from bson import ObjectId
 from pillar.tests import PillarTestServer, AbstractPillarTest
 from pillar.tests import common_test_data as ctd
 
+DEFAULT_OWNER_EMAIL = 'owner@example.com'
+
 
 class FlamencoTestServer(PillarTestServer):
     def __init__(self, *args, **kwargs):
@@ -68,7 +70,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
     def create_manager_service_account(
             self,
-            email='testmanager@example.com',
+            owner_email=ctd.EXAMPLE_USER['email'],
             name='tēst mānēgūr',
             url='https://username:password@[fe80::42:99ff:fe66:91bd]:5123/path/to/'):
         from flamenco.setup import create_manager
@@ -77,15 +79,24 @@ class AbstractFlamencoTest(AbstractPillarTest):
         # Main project will have a manager, job, and tasks.
         with self.app.test_request_context():
             force_cli_user()
-            mngr_doc, account, token = create_manager(email, name, 'descr', url)
+
+            # Make sure there is an owner for this manager.
+            users_coll = self.app.db('users')
+            count = users_coll.find({'email': owner_email}).count()
+            if count == 0:
+                self.create_user(user_id=ObjectId(), email=owner_email)
+            elif count > 1:
+                self.fail(f'Found {count} users with email address {owner_email}')
+
+            mngr_doc, account, token = create_manager(owner_email, name, 'descr', url)
 
         return mngr_doc, account, token
 
     def create_project_member(self, user_id: str, *,
                               token: str,
-                              roles: set=frozenset({'subscriber'}),
-                              groups: list=None,
-                              project: dict=None):
+                              roles: set = frozenset({'subscriber'}),
+                              groups: list = None,
+                              project: dict = None):
         """Creates a subscriber who is member of the project."""
 
         if project is None:
