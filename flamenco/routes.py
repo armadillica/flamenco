@@ -1,6 +1,7 @@
 import functools
 import logging
 
+import bson
 from flask import Blueprint, render_template, redirect, url_for
 
 from pillar.web.utils import attach_project_pictures
@@ -111,8 +112,8 @@ def flamenco_project_view(extra_project_projections: dict=None,
                 return error_project_not_setup_for_flamenco()
 
             if require_usage_rights:
-                project_id = project['_id']
-                if not current_flamenco.auth.web_current_user_may_use_project(project):
+                project_id = bson.ObjectId(project['_id'])
+                if not current_flamenco.auth.web_current_user_may_use_project(project_id):
                     log.info('Denying user %s access to Flamenco on project %s',
                              flask_login.current_user, project_id)
                     return error_project_not_available()

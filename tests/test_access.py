@@ -322,10 +322,10 @@ class UserAccessTest(AbstractAccessTest):
 
         with self.app.test_request_context():
             pillar.auth.login_user('user-token', load_from_db=True)
-            self.assertTrue(auth.web_current_user_may_use_project(self.project1))
-            self.assertFalse(auth.web_current_user_may_use_project(self.project2))
-            self.assertFalse(auth.web_current_user_may_use_project(self.project3))
-            self.assertFalse(auth.web_current_user_may_use_project(self.project4))
+            self.assertTrue(auth.web_current_user_may_use_project(self.prid1))
+            self.assertFalse(auth.web_current_user_may_use_project(self.prid2))
+            self.assertFalse(auth.web_current_user_may_use_project(self.prid3))
+            self.assertFalse(auth.web_current_user_may_use_project(self.prid4))
 
     def test_web_current_user_may_use_project_flamenco_admin(self):
         # Flamenco admins have access to all of Flamenco, but only on projects they are part of.
@@ -340,7 +340,7 @@ class UserAccessTest(AbstractAccessTest):
 
         with self.app.test_request_context():
             pillar.auth.login_user('fladmin-token', load_from_db=True)
-            self.assertTrue(auth.web_current_user_may_use_project(self.project1))
-            self.assertTrue(auth.web_current_user_may_use_project(self.project2))
-            self.assertFalse(auth.web_current_user_may_use_project(self.project3))
-            self.assertFalse(auth.web_current_user_may_use_project(self.project4))
+            self.assertTrue(auth.web_current_user_may_use_project(self.prid1))
+            self.assertTrue(auth.web_current_user_may_use_project(self.prid2))
+            self.assertFalse(auth.web_current_user_may_use_project(self.prid3))
+            self.assertFalse(auth.web_current_user_may_use_project(self.prid4))

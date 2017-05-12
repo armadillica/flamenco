@@ -13,6 +13,10 @@ from pillar import attrs_extra
 ROLES_REQUIRED_TO_VIEW_ITEMS = {'demo', 'subscriber', 'admin', 'flamenco-admin'}
 ROLES_REQUIRED_TO_VIEW_LOGS = {'admin', 'flamenco-admin'}
 
+# Having any of these methods on a project means you can use Flamenco.
+# Prerequisite: the project is set up for Flamenco and has a Manager assigned to it.
+PROJECT_METHODS_TO_USE_FLAMENCO = {'GET', 'PUT'}
+
 
 @attr.s
 class Auth(object):
@@ -34,8 +38,7 @@ class Auth(object):
 
         return user_matches_roles({'service', 'flamenco_manager'})
 
-    def web_current_user_may_use_project(self,
-                                         project: typing.Union[pillarsdk.Resource, dict]) -> bool:
+    def web_current_user_may_use_project(self, project_id: bson.ObjectId) -> bool:
         """Returns True iff the user is authorised to use Flamenco on the given project.
 
         This is linked to the Managers assigned to this project. As a result, you cannot
@@ -43,6 +46,7 @@ class Auth(object):
         """
 
         import pillar.auth
+        from pillar.api.projects.utils import user_rights_in_project
         from flamenco import current_flamenco
 
         user = pillar.auth.current_web_user
@@ -51,12 +55,10 @@ class Auth(object):
             return False
 
         # TODO Sybren: possibly split this up into a manager-fetching func + authorisation func.
-        project_oid = bson.ObjectId(project['_id'])
-        project_group_id = bson.ObjectId(project['permissions']['groups'][0]['group'])
-
-        if str(project_group_id) not in user.groups:
-            self._log.debug('User %s has no access to project %s.',
-                            user.objectid, project_group_id)
+        # TODO: possibly store the user rights on the current project in the current_user object?
+        allowed_on_proj = user_rights_in_project(project_id)
+        if not allowed_on_proj.intersection(PROJECT_METHODS_TO_USE_FLAMENCO):
+            self._log.debug('User %s has no access to project %s.', user.objectid, project_id)
             return False
 
         if 'flamenco-admin' in user.roles:
@@ -64,7 +66,7 @@ class Auth(object):
             return True
 
         managers_coll = current_flamenco.db('managers')
-        managers = managers_coll.find({'projects': project_oid})
+        managers = managers_coll.find({'projects': project_id})
 
         if self._log.isEnabledFor(logging.DEBUG):
             self._log.debug('User has access to the following managers for this project: %s',
