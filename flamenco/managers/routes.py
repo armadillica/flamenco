@@ -35,25 +35,11 @@ def view_embed(manager_id: str):
 
     api = pillar_api()
 
-    manager = Manager.find(manager_id, api=api)
+    manager: Manager = Manager.find(manager_id, api=api)
+    linked_projects = manager.linked_projects(api=api)
+    linked_project_ids = set(manager.projects or [])
 
-    if manager.projects:
-        fetched = pillarsdk.Project.all({
-            'where': {
-                '_id': {'$in': manager.projects}
-            },
-            'projection': {
-                '_id': 1,
-                'name': 1,
-                'url': 1,
-            }},
-            api=api)
-        linked_projects = fetched._items
-        linked_project_ids = set(manager.projects)
-    else:
-        linked_projects = []
-        linked_project_ids = set()
-
+    # TODO: support pagination
     fetched = current_flamenco.flamenco_projects(
         projection={
             '_id': 1,
