@@ -6,6 +6,10 @@
 
 	.table.item-properties
 		.table-body
+			.table-row.properties-last-updated
+				.table-cell Last Updated
+				.table-cell(title='Unable to edit, set by Manager')
+					| {{ manager._updated | hide_none | pretty_date_time }}
 			.table-row.properties-url
 				.table-cell URL
 				.table-cell

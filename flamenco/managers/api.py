@@ -45,6 +45,8 @@ def manager_api_call(wrapped):
 @manager_api_call
 def startup(manager_id, notification):
     from flamenco import current_flamenco
+    import uuid
+    import datetime
 
     log.info('Received startup notification from manager %s %s', manager_id, notification)
 
@@ -52,6 +54,8 @@ def startup(manager_id, notification):
     update_res = mngr_coll.update_one(
         {'_id': manager_id},
         {'$set': {
+            '_updated': datetime.datetime.utcnow(),
+            '_etag': uuid.uuid4().hex,
             'url': notification['manager_url'],
             'variables': notification['variables'],
             'stats.nr_of_workers': notification['nr_of_workers'],
