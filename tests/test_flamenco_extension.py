@@ -82,7 +82,6 @@ class JobRecreationTest(AbstractFlamencoTest):
         self._post_test(old_task_ids)
 
     def test_recreate_job_as_project_member(self):
-        import pillarsdk
         from pillar.api.projects.utils import get_admin_group_id
         import pillar.auth
         from flamenco.jobs import routes
@@ -92,7 +91,7 @@ class JobRecreationTest(AbstractFlamencoTest):
             admin_gid = get_admin_group_id(self.proj_id)
 
         self.create_user(24 * 'd',
-                         roles={'subscriber'},
+                         roles={'subscriber', 'flamenco-user'},
                          groups=[groups['subscriber'], admin_gid],
                          token='user-token')
 

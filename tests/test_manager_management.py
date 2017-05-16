@@ -40,7 +40,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
         """The owner of a manager should be able to assign it to any project she's a member of."""
 
         self.create_project_member(user_id=24 * 'd',
-                                   roles={'subscriber'},
+                                   roles={'subscriber', 'flamenco-user'},
                                    groups=[self.mngr_doc['owner']],
                                    token='owner-projmember-token')
 
@@ -68,13 +68,18 @@ class ManagerAccessTest(AbstractFlamencoTest):
         """Non-project members and non-owners should not be able to assign."""
 
         self.create_user(24 * 'c',
-                         roles={'subscriber'},
+                         roles={'subscriber', 'flamenco-user'},
                          groups=[self.mngr_doc['owner']],
                          token='owner-nonprojmember-token')
 
         self.create_project_member(user_id=24 * 'e',
-                                   roles={'subscriber'},
+                                   roles={'subscriber', 'flamenco-user'},
                                    token='projmember-token')
+
+        self.create_project_member(user_id=24 * 'd',
+                                   roles={'subscriber'},
+                                   groups=[self.mngr_doc['owner']],
+                                   token='nonfluser-token')
 
         # Owner-only user cannot assign to project.
         self.patch(
@@ -91,6 +96,15 @@ class ManagerAccessTest(AbstractFlamencoTest):
             json={'op': 'assign-to-project',
                   'project': self.proj_id},
             auth_token='projmember-token',
+            expected_status=403,
+        )
+
+        # Owner who is project member but not flamenco-user Manager cannot assign.
+        self.patch(
+            f'/api/flamenco/managers/{self.mngr_id}',
+            json={'op': 'assign-to-project',
+                  'project': self.proj_id},
+            auth_token='nonfluser-token',
             expected_status=403,
         )
 

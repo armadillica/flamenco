@@ -14,14 +14,12 @@ log = logging.getLogger(__name__)
 
 def check_task_permission_fetch(task_doc):
 
-    if current_flamenco.auth.current_user_is_flamenco_admin():
+    auth = current_flamenco.auth
+    if auth.current_user_is_flamenco_admin():
         return
 
-    if not current_flamenco.manager_manager.user_is_manager():
-        # Subscribers can read Flamenco tasks.
-        if user_matches_roles(ROLES_REQUIRED_TO_VIEW_ITEMS):
-            return
-        raise wz_exceptions.Forbidden()
+    if auth.current_user_may(task_doc.get('project_id'), auth.Actions.VIEW):
+        return
 
     if not current_flamenco.manager_manager.user_manages(mngr_doc_id=task_doc.get('manager')):
         # FIXME: Regular user or not task-owning manager, undefined behaviour as of yet.
@@ -81,7 +79,8 @@ def check_task_permissions(task_doc: typing.Union[list, dict], *, action: str):
                  current_user_id(), action)
         raise wz_exceptions.BadRequest()
 
-    if not current_flamenco.auth.current_user_may_use_project(project_id):
+    auth = current_flamenco.auth
+    if not auth.current_user_may(project_id, auth.Actions.USE):
         log.info('User %s tried to %s a task on project %s, but has no access to Flamenco there;'
                  ' denied', current_user_id(), action, project_id)
         raise wz_exceptions.Forbidden()

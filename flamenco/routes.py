@@ -9,6 +9,7 @@ from pillar.web.system_util import pillar_api
 import pillarsdk
 
 from flamenco import current_flamenco
+import flamenco.auth
 
 
 blueprint = Blueprint('flamenco', __name__)
@@ -53,7 +54,7 @@ def error_project_not_available():
 def flamenco_project_view(extra_project_projections: dict=None,
                           *,
                           extension_props=False,
-                          require_usage_rights=True):
+                          action=flamenco.auth.Actions.USE):
     """Decorator, replaces the first parameter project_url with the actual project.
 
     Assumes the first parameter to the decorated function is 'project_url'. It then
@@ -67,7 +68,7 @@ def flamenco_project_view(extra_project_projections: dict=None,
         used by this decorator.
     :param extension_props: when True, passes (project, extension_props) as first parameters
         to the decorated function. When False, just passes (project, ).
-    :param require_usage_rights: when True, requires that a Flamenco Manager is assigned
+    :param action: when USE, requires that a Flamenco Manager is assigned
         to the project, and that the user has access to this manager (i.e. is part of this
         project).
     """
@@ -111,12 +112,12 @@ def flamenco_project_view(extra_project_projections: dict=None,
             if not is_flamenco:
                 return error_project_not_setup_for_flamenco()
 
-            if require_usage_rights:
-                project_id = bson.ObjectId(project['_id'])
-                if not current_flamenco.auth.current_user_may_use_project(project_id):
-                    log.info('Denying user %s access to Flamenco on project %s',
-                             flask_login.current_user, project_id)
-                    return error_project_not_available()
+            project_id = bson.ObjectId(project['_id'])
+            auth = current_flamenco.auth
+            if not auth.current_user_may(project_id, action):
+                log.info('Denying user %s access %s to Flamenco on project %s',
+                         flask_login.current_user, action, project_id)
+                return error_project_not_available()
 
             if extension_props:
                 pprops = project.extension_props.flamenco

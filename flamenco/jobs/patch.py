@@ -25,7 +25,8 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
 
         # TODO: possibly store job and project into flask.g to reduce the nr of Mongo queries.
         job = current_flamenco.db('jobs').find_one({'_id': job_id}, {'project': 1})
-        if not current_flamenco.auth.current_user_may_use_project(job['project']):
+        auth = current_flamenco.auth
+        if not auth.current_user_may(job['project'], auth.Actions.USE):
             log.info('User %s wants to PATCH job %s, but has no right to use Flamenco on project %s',
                      current_user_id(), job_id, job['project'])
             raise wz_exceptions.Forbidden('Denied Flamenco use on this project')

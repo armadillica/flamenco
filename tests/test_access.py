@@ -205,7 +205,7 @@ class AccessTest(AbstractAccessTest):
         self.assertEqual(expected_manager1, resp['_items'][0])
         self.assertEqual(expected_manager2, resp['_items'][1])
 
-    def test_manager_list_as_owner(self):
+    def test_manager_list_as_nonfluser_owner(self):
         self.create_user(24 * 'd',
                          roles={'subscriber'},
                          groups=[self.mngr_doc['owner']],
@@ -225,11 +225,80 @@ class AccessTest(AbstractAccessTest):
         self.assertEqual(str(self.mngr_id), resp1['_items'][0]['_id'])
         self.assertEqual(str(self.mngr2_id), resp2['_items'][0]['_id'])
 
-    def test_manager_list_as_projmember_subscriber(self):
-        """Subscriber member of a Flamenco project should not get a list of managers.
+    def test_manager_list_as_nonprojmember_flamuser(self):
+        self.create_user(24 * 'd',
+                         roles={'subscriber', 'flamenco-user'},
+                         groups=[self.mngr_doc['owner']],
+                         token='owner1-token')
+        self.create_user(24 * 'e',
+                         roles={'demo', 'flamenco-user'},
+                         groups=[self.mngr2_doc['owner']],
+                         token='owner2-token')
+        resp1 = self.get('/api/flamenco/managers/',
+                         expected_status=200,
+                         auth_token='owner1-token').json()
+        resp2 = self.get('/api/flamenco/managers/',
+                         expected_status=200,
+                         auth_token='owner2-token').json()
+        self.assertEqual(1, resp1['_meta']['total'])
+        self.assertEqual(1, resp2['_meta']['total'])
+        self.assertEqual(str(self.mngr_id), resp1['_items'][0]['_id'])
+        self.assertEqual(str(self.mngr2_id), resp2['_items'][0]['_id'])
+
+    def test_manager_list_as_nonprojmember_subscriber(self):
+        self.create_user(24 * 'd',
+                         roles={'subscriber'},
+                         groups=[self.mngr_doc['owner']],
+                         token='owner1-token')
+        self.create_user(24 * 'e',
+                         roles={'demo'},
+                         groups=[self.mngr2_doc['owner']],
+                         token='owner2-token')
+        resp1 = self.get('/api/flamenco/managers/',
+                         expected_status=200,
+                         auth_token='owner1-token').json()
+        resp2 = self.get('/api/flamenco/managers/',
+                         expected_status=200,
+                         auth_token='owner2-token').json()
+        self.assertEqual(1, resp1['_meta']['total'])
+        self.assertEqual(1, resp2['_meta']['total'])
+        self.assertEqual(str(self.mngr_id), resp1['_items'][0]['_id'])
+        self.assertEqual(str(self.mngr2_id), resp2['_items'][0]['_id'])
+
+    def test_manager_as_flamenco_user(self):
+        """Subscriber/Flamenco-user member of a Flamenco project should not get a list of managers.
 
         The user can access specific managers assigned to her projects, but listing
         only returns owned managers.
+        """
+
+        self.create_project_member(24 * 'e',
+                                   roles={'subscriber', 'flamenco-user'},
+                                   token='flamuser-token')
+        self.assign_manager_to_project(self.mngr_id, self.proj_id)
+
+        resp = self.get('/api/flamenco/managers/',
+                        expected_status=200,
+                        auth_token='flamuser-token').json()
+
+        self.assertEqual(1, resp['_meta']['page'])
+        self.assertEqual(0, resp['_meta']['total'])
+        self.assertEqual([], resp['_items'])
+
+        # Project-assigned manager
+        self.get('/api/flamenco/managers/%s' % self.mngr_id,
+                 expected_status=200,
+                 auth_token='flamuser-token')
+
+        # Not project-assigned manager
+        self.get('/api/flamenco/managers/%s' % self.mngr2_id,
+                 expected_status=403,
+                 auth_token='flamuser-token')
+
+    def test_manager_as_subscriber(self):
+        """Subscriber member of a Flamenco project should not get a list of managers.
+
+        The user can NOT access specific managers assigned to her projects.
         """
 
         self.create_project_member(24 * 'e', roles={'subscriber'}, token='subscriber-token')
@@ -245,7 +314,7 @@ class AccessTest(AbstractAccessTest):
 
         # Project-assigned manager
         self.get('/api/flamenco/managers/%s' % self.mngr_id,
-                 expected_status=200,
+                 expected_status=403,
                  auth_token='subscriber-token')
 
         # Not project-assigned manager
@@ -313,14 +382,16 @@ class UserAccessTest(AbstractAccessTest):
         with self.app.test_request_context():
             for idx, prid in self.prid.items():
                 self.admin_gid[idx] = get_admin_group_id(prid)
-        self.create_user(groups=[
-            self.admin_gid[1],
-            self.admin_gid[2],
-            self.admin_gid[3],
-            self.owned_mngr['owner'],
-            self.group_map['get-only-6'],
-            self.group_map['get-only-7'],
-        ], token='user-token')
+        self.create_user(
+            roles={'subscriber', 'flamenco-user'},
+            groups=[
+                self.admin_gid[1],
+                self.admin_gid[2],
+                self.admin_gid[3],
+                self.owned_mngr['owner'],
+                self.group_map['get-only-6'],
+                self.group_map['get-only-7'],
+            ], token='user-token')
 
         # Make some assertions about the access rights on the projects.
         for idx in (1, 2, 3):
@@ -352,13 +423,13 @@ class UserAccessTest(AbstractAccessTest):
 
         with self.app.test_request_context():
             pillar.auth.login_user('user-token', load_from_db=True)
-            self.assertTrue(auth.current_user_may_use_project(self.prid[1]))
-            self.assertTrue(auth.current_user_may_use_project(self.prid[2]))
-            self.assertFalse(auth.current_user_may_use_project(self.prid[3]))
-            self.assertFalse(auth.current_user_may_use_project(self.prid[4]))
-            self.assertFalse(auth.current_user_may_use_project(self.prid[5]))
-            self.assertFalse(auth.current_user_may_use_project(self.prid[6]))
-            self.assertFalse(auth.current_user_may_use_project(self.prid[7]))
+            self.assertTrue(auth.current_user_may(self.prid[1], auth.Actions.USE))
+            self.assertTrue(auth.current_user_may(self.prid[2], auth.Actions.USE))
+            self.assertFalse(auth.current_user_may(self.prid[3], auth.Actions.USE))
+            self.assertFalse(auth.current_user_may(self.prid[4], auth.Actions.USE))
+            self.assertFalse(auth.current_user_may(self.prid[5], auth.Actions.USE))
+            self.assertFalse(auth.current_user_may(self.prid[6], auth.Actions.USE))
+            self.assertFalse(auth.current_user_may(self.prid[7], auth.Actions.USE))
 
     def test_current_user_may_use_project_flamenco_admin(self):
         # Flamenco admins have access to all of Flamenco, but only on projects they are part of.
@@ -373,10 +444,10 @@ class UserAccessTest(AbstractAccessTest):
 
         with self.app.test_request_context():
             pillar.auth.login_user('fladmin-token', load_from_db=True)
-            self.assertTrue(auth.current_user_may_use_project(self.prid[1]))
-            self.assertTrue(auth.current_user_may_use_project(self.prid[2]))
-            self.assertTrue(auth.current_user_may_use_project(self.prid[3]))
-            self.assertFalse(auth.current_user_may_use_project(self.prid[4]))
-            self.assertFalse(auth.current_user_may_use_project(self.prid[5]))
-            self.assertFalse(auth.current_user_may_use_project(self.prid[6]))
-            self.assertFalse(auth.current_user_may_use_project(self.prid[7]))
+            self.assertTrue(auth.current_user_may(self.prid[1], auth.Actions.USE))
+            self.assertTrue(auth.current_user_may(self.prid[2], auth.Actions.USE))
+            self.assertTrue(auth.current_user_may(self.prid[3], auth.Actions.USE))
+            self.assertFalse(auth.current_user_may(self.prid[4], auth.Actions.USE))
+            self.assertFalse(auth.current_user_may(self.prid[5], auth.Actions.USE))
+            self.assertFalse(auth.current_user_may(self.prid[6], auth.Actions.USE))
+            self.assertFalse(auth.current_user_may(self.prid[7], auth.Actions.USE))

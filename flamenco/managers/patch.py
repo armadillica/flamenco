@@ -62,7 +62,7 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
             # Manager Manager will have already logged the cause.
             raise wz_exceptions.InternalServerError()
 
-    @authorization.require_login()
+    @authorization.require_login(require_roles={'flamenco-admin', 'flamenco-user'})
     def patch_assign_to_project(self, manager_id: bson.ObjectId, patch: dict):
         """Assigns a manager to a project.
 
@@ -71,7 +71,7 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
 
         return self._assign_or_remove_project(manager_id, patch, 'assign')
 
-    @authorization.require_login()
+    @authorization.require_login(require_roles={'flamenco-admin', 'flamenco-user'})
     def patch_remove_from_project(self, manager_id: bson.ObjectId, patch: dict):
         """Unassigns a manager from a project.
 

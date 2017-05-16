@@ -169,7 +169,9 @@ class ManagerManager(object):
         """
 
         import flask
+        from pillar.api.utils.authorization import user_matches_roles
         from flamenco import current_flamenco
+        from ..auth import ROLES_REQUIRED_TO_USE_FLAMENCO
 
         # Flamenco Admins always have access.
         if current_flamenco.auth.current_user_is_flamenco_admin():
@@ -183,6 +185,9 @@ class ManagerManager(object):
         owner_group = mngr_doc.get('owner')
         if owner_group and owner_group in user_groups:
             return True
+
+        if not user_matches_roles(ROLES_REQUIRED_TO_USE_FLAMENCO):
+            return False
 
         manager_groups = set(mngr_doc.get('user_groups', []))
         return bool(user_groups.intersection(manager_groups))

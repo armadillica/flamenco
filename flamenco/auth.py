@@ -1,5 +1,5 @@
 """Authorization management."""
-
+import enum
 import logging
 import typing
 
@@ -10,17 +10,30 @@ import pillarsdk
 from pillar import attrs_extra
 
 # Roles required to view job, manager or task details.
-ROLES_REQUIRED_TO_VIEW_ITEMS = {'demo', 'subscriber', 'admin', 'flamenco-admin'}
+ROLES_REQUIRED_TO_VIEW_ITEMS = {'demo', 'subscriber', 'admin', 'flamenco-admin', 'flamenco-user'}
 
 # TODO: deal with log viewing through permissions too.
 ROLES_REQUIRED_TO_VIEW_LOGS = {'admin', 'flamenco-admin'}
 
 # Having either of these roles is minimum requirement for using Flamenco.
-ROLES_REQUIRED_TO_USE_FLAMENCO = {'demo', 'subscriber', 'flamenco-admin', 'admin'}
+ROLES_REQUIRED_TO_USE_FLAMENCO = {'flamenco-user', 'flamenco-admin', 'admin'}
+ROLES_REQUIRED_TO_VIEW_FLAMENCO = {'subscriber', 'demo'}
 
 # Having any of these methods on a project means you can use Flamenco.
 # Prerequisite: the project is set up for Flamenco and has a Manager assigned to it.
 PROJECT_METHODS_TO_USE_FLAMENCO = {'PUT'}
+
+
+class Actions(enum.Enum):
+    VIEW = 'view'
+    USE = 'use'
+
+
+# Required roles for a given action.
+req_roles = {
+    Actions.VIEW: ROLES_REQUIRED_TO_VIEW_FLAMENCO,
+    Actions.USE: ROLES_REQUIRED_TO_USE_FLAMENCO
+}
 
 
 @attr.s
@@ -28,6 +41,7 @@ class Auth(object):
     """Handles authorization for Flamenco."""
 
     _log = attrs_extra.log('%s.Auth' % __name__)
+    Actions = Actions  # this allows using current_flamenco.auth.Actions
 
     def current_user_is_flamenco_admin(self) -> bool:
         """Returns True iff the user is a Flamenco admin or regular admin."""
@@ -43,7 +57,7 @@ class Auth(object):
 
         return user_matches_roles({'service', 'flamenco_manager'}, require_all=True)
 
-    def current_user_may_use_project(self, project_id: bson.ObjectId) -> bool:
+    def current_user_may(self, project_id: bson.ObjectId, action: Actions) -> bool:
         """Returns True iff the user is authorised to use Flamenco on the given project.
 
         This is linked to the Managers assigned to this project. As a result, you cannot
@@ -60,9 +74,10 @@ class Auth(object):
             self._log.debug('Anonymous user never has access to Flamenco.')
             return False
 
-        if not user_matches_roles(ROLES_REQUIRED_TO_USE_FLAMENCO):
-            self._log.debug('User %s does not have either of roles %s; denying access to Flamenco',
-                            user_id, ROLES_REQUIRED_TO_USE_FLAMENCO)
+        roles = req_roles[action]
+        if not user_matches_roles(roles):
+            self._log.debug('User %s does not have either of roles %s required for action %s; '
+                            'denying access to Flamenco', user_id, roles, action)
             return False
 
         # TODO Sybren: possibly split this up into a manager-fetching func + authorisation func.

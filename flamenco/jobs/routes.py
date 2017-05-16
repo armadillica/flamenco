@@ -13,7 +13,7 @@ from pillar.web.system_util import pillar_api
 
 from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco
-from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS
+from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, Actions
 
 blueprint = Blueprint('flamenco.jobs', __name__, url_prefix='/jobs')
 perproject_blueprint = Blueprint('flamenco.jobs.perproject', __name__,
@@ -25,7 +25,7 @@ ALLOWED_JOB_STATUSES_FROM_WEB = {'cancel-requested', 'queued'}
 
 
 @perproject_blueprint.route('/', endpoint='index')
-@flamenco_project_view(extension_props=False)
+@flamenco_project_view(extension_props=False, action=Actions.VIEW)
 def for_project(project, job_id=None, task_id=None):
     jobs = current_flamenco.job_manager.jobs_for_project(project['_id'])
     return render_template('flamenco/jobs/list_for_project.html',
@@ -37,7 +37,7 @@ def for_project(project, job_id=None, task_id=None):
 
 
 @perproject_blueprint.route('/with-task/<task_id>')
-@flamenco_project_view()
+@flamenco_project_view(action=Actions.VIEW)
 def for_project_with_task(project, task_id):
     from flamenco.tasks.sdk import Task
 
@@ -48,7 +48,7 @@ def for_project_with_task(project, task_id):
 
 @perproject_blueprint.route('/<job_id>')
 @pillar.flask_extra.vary_xhr()
-@flamenco_project_view(extension_props=True)
+@flamenco_project_view(extension_props=True, action=Actions.VIEW)
 def view_job(project, flamenco_props, job_id):
     if not request.is_xhr:
         return for_project(project, job_id=job_id)
@@ -66,8 +66,8 @@ def view_job(project, flamenco_props, job_id):
 
     from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES
 
-    write_access = current_flamenco.auth.current_user_may_use_project(
-        bson.ObjectId(project['_id']))
+    auth = current_flamenco.auth
+    write_access = auth.current_user_may(bson.ObjectId(project['_id']), auth.Actions.USE)
 
     return render_template(
         'flamenco/jobs/view_job_embed.html',
@@ -82,7 +82,7 @@ def view_job(project, flamenco_props, job_id):
 
 
 @perproject_blueprint.route('/<job_id>/depsgraph')
-@flamenco_project_view(extension_props=False)
+@flamenco_project_view(extension_props=False, action=Actions.VIEW)
 def view_job_depsgraph(project, job_id):
     # Job list is public, job details are not.
     if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
@@ -97,7 +97,7 @@ def view_job_depsgraph(project, job_id):
 
 @perproject_blueprint.route('/<job_id>/depsgraph-data')
 @perproject_blueprint.route('/<job_id>/depsgraph-data/<focus_task_id>')
-@flamenco_project_view(extension_props=False)
+@flamenco_project_view(extension_props=False, action=Actions.VIEW)
 def view_job_depsgraph_data(project, job_id, focus_task_id=None):
     # Job list is public, job details are not.
     if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
@@ -232,7 +232,7 @@ def view_job_depsgraph_data(project, job_id, focus_task_id=None):
 
 
 @perproject_blueprint.route('/<job_id>/recreate', methods=['POST'])
-@flamenco_project_view(extension_props=False, require_usage_rights=True)
+@flamenco_project_view(extension_props=False)
 def recreate_job(project: pillarsdk.Project, job_id):
     from pillar.api.utils.authentication import current_user_id
     from pillar.api.utils import str2id
