@@ -237,7 +237,12 @@ function setJobStatus(job_id, new_status) {
         return;
     }
 
-    return $.post('/flamenco/jobs/' + job_id + '/recreate')
+    project_url = ProjectUtils.projectUrl();
+    if (typeof project_url === 'undefined') {
+        throw new ReferenceError("ProjectUtils.projectUrl() undefined");
+    }
+
+    return $.post('/flamenco/' + project_url + '/jobs/' + job_id + '/recreate')
     .done(function(data) {
         if(console) console.log('Job recreate request OK');
         // Reload the entire page, since both the view-embed and the job list need refreshing.

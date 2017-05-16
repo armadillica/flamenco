@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 import logging
+import typing
 
 import werkzeug.exceptions as wz_exceptions
 from pillar.api.utils.authorization import user_matches_roles
@@ -63,13 +64,27 @@ def check_task_permission_fetch_resource(response):
     raise wz_exceptions.Forbidden()
 
 
-def check_task_permissions_create_delete(task_doc, original_doc=None):
+def check_task_permissions(task_doc: typing.Union[list, dict], *, action: str):
     """For now, only admins are allowed to create and delete tasks."""
 
-    if not current_flamenco.auth.current_user_is_flamenco_admin():
-        raise wz_exceptions.Forbidden()
+    from pillar.api.utils.authentication import current_user_id
 
-    # FIXME: check user access to the project.
+    if isinstance(task_doc, list):
+        assert action == 'create'
+        for task in task_doc:
+            check_task_permissions(task, action=action)
+        return
+
+    project_id = task_doc.get('project')
+    if not project_id:
+        log.info('User %s tried to %s a task without project ID; denied',
+                 current_user_id(), action)
+        raise wz_exceptions.BadRequest()
+
+    if not current_flamenco.auth.current_user_may_use_project(project_id):
+        log.info('User %s tried to %s a task on project %s, but has no access to Flamenco there;'
+                 ' denied', current_user_id(), action, project_id)
+        raise wz_exceptions.Forbidden()
 
 
 def check_task_permissions_edit(task_doc, original_doc=None):
@@ -101,6 +116,8 @@ def update_job_status(task_doc, original_doc):
 
 
 def setup_app(app):
+    from functools import partial
+
     app.on_fetched_resource_flamenco_task_logs += check_task_log_permission_fetch
     app.on_fetched_resource_flamenco_task_logs += task_logs_remove_fields
     app.on_fetched_item_flamenco_task_logs += task_log_remove_fields
@@ -108,8 +125,8 @@ def setup_app(app):
     app.on_fetched_item_flamenco_tasks += check_task_permission_fetch
     app.on_fetched_resource_flamenco_tasks += check_task_permission_fetch_resource
 
-    app.on_insert_flamenco_tasks += check_task_permissions_create_delete
-    app.on_delete_flamenco_tasks += check_task_permissions_create_delete
-    app.on_update_flamenco_tasks += check_task_permissions_edit
+    app.on_insert_flamenco_tasks += partial(check_task_permissions, action='create')
+    app.on_delete_flamenco_tasks += partial(check_task_permissions, action='delete')
+    app.on_update_flamenco_tasks += partial(check_task_permissions, action='edit')
     app.on_replace_flamenco_tasks += check_task_permissions_edit
     app.on_replaced_flamenco_tasks += update_job_status

@@ -227,16 +227,11 @@ def view_job_depsgraph_data(project, job_id, focus_task_id=None):
     return jsonify(elements=graph_items, roots=roots)
 
 
-@blueprint.route('/<job_id>/recreate', methods=['POST'])
-def recreate_job(job_id):
-    # FIXME Sybren: add permission check.
-
-    # Job list is public, job details are not.
-    if not current_flamenco.auth.current_user_is_flamenco_admin():
-        raise wz_exceptions.Forbidden()
-
-    from pillar.api.utils import str2id
+@perproject_blueprint.route('/<job_id>/recreate', methods=['POST'])
+@flamenco_project_view(extension_props=False, require_usage_rights=True)
+def recreate_job(project: pillarsdk.Project, job_id):
     from pillar.api.utils.authentication import current_user_id
+    from pillar.api.utils import str2id
 
     log.info('Recreating job %s on behalf of user %s', job_id, current_user_id())
 
