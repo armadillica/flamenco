@@ -30,6 +30,11 @@
 				.table-cell Priority
 				.table-cell(title="Higher number means higher priority")
 					| {{ job.priority }}
+			.table-row
+				.table-cell Manager
+				.table-cell
+					a(href="{{ url_for('flamenco.managers.view_embed', manager_id=manager._id) }}")
+						| {{ manager.name }}
 
 	.table.item-properties.item-job-settings
 		.table-body

@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, request
 import flask_login
 import werkzeug.exceptions as wz_exceptions
 
+import pillarsdk
 import pillar.flask_extra
 from pillar.web.system_util import pillar_api
 
@@ -57,9 +58,11 @@ def view_job(project, flamenco_props, job_id):
         raise wz_exceptions.Forbidden()
 
     from .sdk import Job
+    from ..managers.sdk import Manager
 
     api = pillar_api()
     job = Job.find(job_id, api=api)
+    manager = Manager.find(job.manager, api=api)
 
     from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES
 
@@ -69,6 +72,7 @@ def view_job(project, flamenco_props, job_id):
     return render_template(
         'flamenco/jobs/view_job_embed.html',
         job=job,
+        manager=manager,
         project=project,
         flamenco_props=flamenco_props.to_dict(),
         flamenco_context=request.args.get('context'),
