@@ -1,4 +1,5 @@
 # -*- encoding: utf-8 -*-
+import typing
 
 import bson
 
@@ -13,7 +14,8 @@ class AbstractAccessTest(AbstractFlamencoTest):
         resp = self.post('/api/p/create',
                          headers={'Authorization': self.make_header(token)},
                          expected_status=201,
-                         data={'project_name': project_name})
+                         data={'project_name': project_name,
+                               'is_private': True})
         return resp.json()
 
     def _create_user_and_project(self, roles, user_id='cafef00df00df00df00df00d', token='token',
@@ -257,34 +259,41 @@ class UserAccessTest(AbstractAccessTest):
         super().setUp(**kwargs)
 
         # Create multiple projects:
-        # 1) user is member, both non-owned and owned manager assigned to it.
-        # 2) user is member, no manager assigned to it.
-        # 3) user is not member, both non-owned and owned manager assigned to it.
-        # 4) user is not member, only non-owned manager assigned to it.
+        # 1) user is member, owned manager assigned to it.
+        # 2) user is member, non-owned manager assigned to it.
+        # 3) user is member, no manager assigned to it.
+        # 4) user is not member, both non-owned and owned manager assigned to it.
+        # 5) user is not member, only non-owned manager assigned to it.
+        # 6) user is GET-only member, owned manager assigned to it.
+        # 7) user is GET-only member, non-owned manager assigned to it.
 
         from pillar.api.projects.utils import get_admin_group_id
+        from pillar.api.utils import remove_private_keys
 
         # Create the projects
-        self.project1 = self._create_user_and_project(user_id=24 * '1',
-                                                      roles={'subscriber'},
-                                                      project_name='Prøject 1',
-                                                      token='token-proj1-owner')
-        self.project2 = self._create_user_and_project(user_id=24 * '2',
-                                                      roles={'subscriber'},
-                                                      project_name='Prøject 2',
-                                                      token='token-proj1-owner')
-        self.project3 = self._create_user_and_project(user_id=24 * '3',
-                                                      roles={'subscriber'},
-                                                      project_name='Prøject 3',
-                                                      token='token-proj3-owner')
-        self.project4 = self._create_user_and_project(user_id=24 * '4',
-                                                      roles={'subscriber'},
-                                                      project_name='Prøject 4',
-                                                      token='token-proj4-owner')
-        self.prid1 = bson.ObjectId(self.project1['_id'])
-        self.prid2 = bson.ObjectId(self.project2['_id'])
-        self.prid3 = bson.ObjectId(self.project3['_id'])
-        self.prid4 = bson.ObjectId(self.project4['_id'])
+        self.project: typing.MutableMapping[int, dict] = {}
+        self.prid: typing.MutableMapping[int, bson.ObjectId] = {}
+
+        for idx in range(1, 8):
+            admin_id = 24 * str(idx)
+            proj = self._create_user_and_project(user_id=admin_id,
+                                                 roles={'subscriber'},
+                                                 project_name=f'Prøject {idx}',
+                                                 token=f'token-proj{idx}-admin')
+            self.project[idx] = proj
+            self.prid[idx] = bson.ObjectId(proj['_id'])
+
+        # For projects 6 and 7, add GET access group
+        self.group_map = self.create_standard_groups(additional_groups=['get-only-6', 'get-only-7'])
+        for idx in (6, 7):
+            self.project[idx]['permissions']['groups'].append({
+                'group': self.group_map[f'get-only-{idx}'],
+                'methods': ['GET'],
+            })
+            self.put(f'/api/projects/{self.prid[idx]}',
+                     json=remove_private_keys(self.project[idx]),
+                     etag=self.project[idx]['_etag'],
+                     auth_token=f'token-proj{idx}-admin')
 
         # Create the managers
         self.owned_mngr, _, self.owned_mngr_token = self.create_manager_service_account()
@@ -292,29 +301,50 @@ class UserAccessTest(AbstractAccessTest):
         self.nonowned_mngr, _, self.nonowned_mngr_token = self.create_manager_service_account()
         self.nonowned_mngr_id = bson.ObjectId(self.nonowned_mngr['_id'])
 
-        self.assign_manager_to_project(self.owned_mngr_id, self.prid1)
-        self.assign_manager_to_project(self.nonowned_mngr_id, self.prid1)
-        self.assign_manager_to_project(self.owned_mngr_id, self.prid3)
-        self.assign_manager_to_project(self.nonowned_mngr_id, self.prid3)
-        self.assign_manager_to_project(self.nonowned_mngr_id, self.prid4)
+        self.assign_manager_to_project(self.owned_mngr_id, self.prid[1])
+        self.assign_manager_to_project(self.nonowned_mngr_id, self.prid[2])
+        self.assign_manager_to_project(self.owned_mngr_id, self.prid[4])
+        self.assign_manager_to_project(self.nonowned_mngr_id, self.prid[5])
+        self.assign_manager_to_project(self.owned_mngr_id, self.prid[6])
+        self.assign_manager_to_project(self.nonowned_mngr_id, self.prid[7])
 
         # Create the test user.
+        self.admin_gid: typing.MutableMapping[int, bson.ObjectId] = {}
         with self.app.test_request_context():
-            self.admin_gid1 = get_admin_group_id(self.prid1)
-            self.admin_gid2 = get_admin_group_id(self.prid2)
+            for idx, prid in self.prid.items():
+                self.admin_gid[idx] = get_admin_group_id(prid)
         self.create_user(groups=[
-            self.admin_gid1,
-            self.admin_gid2,
+            self.admin_gid[1],
+            self.admin_gid[2],
+            self.admin_gid[3],
             self.owned_mngr['owner'],
+            self.group_map['get-only-6'],
+            self.group_map['get-only-7'],
         ], token='user-token')
 
-    def test_web_current_user_may_use_project(self):
+        # Make some assertions about the access rights on the projects.
+        for idx in (1, 2, 3):
+            p = self.get(f'/api/projects/{self.prid[idx]}', auth_token='user-token').json()
+            self.assertEqual({'GET', 'PUT', 'DELETE', 'POST'}, set(p['allowed_methods']),
+                             f'Unexpected methods {p["allowed_methods"]} in project nr {idx}')
+        for idx in (4, 5):
+            self.get(f'/api/projects/{self.prid[idx]}', auth_token='user-token',
+                     expected_status=403)
+        for idx in (6, 7):
+            p = self.get(f'/api/projects/{self.prid[idx]}', auth_token='user-token').json()
+            self.assertEqual({'GET'}, set(p['allowed_methods']),
+                             f'Unexpected methods {p["allowed_methods"]} in project nr {idx}')
+
+    def test_current_user_may_use_project(self):
         # Test the user's access to Flamenco on the different projects.
 
-        # 1) user is member, both non-owned and owned manager assigned to it.
-        # 2) user is member, no manager assigned to it.
-        # 3) user is not member, both non-owned and owned manager assigned to it.
-        # 4) user is not member, only non-owned manager assigned to it.
+        # 1) user is member, owned manager assigned to it.
+        # 2) user is member, non-owned manager assigned to it.
+        # 3) user is member, no manager assigned to it.
+        # 4) user is not member, both non-owned and owned manager assigned to it.
+        # 5) user is not member, only non-owned manager assigned to it.
+        # 6) user is GET-only member, owned manager assigned to it.
+        # 7) user is GET-only member, non-owned manager assigned to it.
 
         import pillar.auth
 
@@ -322,12 +352,15 @@ class UserAccessTest(AbstractAccessTest):
 
         with self.app.test_request_context():
             pillar.auth.login_user('user-token', load_from_db=True)
-            self.assertTrue(auth.web_current_user_may_use_project(self.prid1))
-            self.assertFalse(auth.web_current_user_may_use_project(self.prid2))
-            self.assertFalse(auth.web_current_user_may_use_project(self.prid3))
-            self.assertFalse(auth.web_current_user_may_use_project(self.prid4))
+            self.assertTrue(auth.current_user_may_use_project(self.prid[1]))
+            self.assertTrue(auth.current_user_may_use_project(self.prid[2]))
+            self.assertFalse(auth.current_user_may_use_project(self.prid[3]))
+            self.assertFalse(auth.current_user_may_use_project(self.prid[4]))
+            self.assertFalse(auth.current_user_may_use_project(self.prid[5]))
+            self.assertFalse(auth.current_user_may_use_project(self.prid[6]))
+            self.assertFalse(auth.current_user_may_use_project(self.prid[7]))
 
-    def test_web_current_user_may_use_project_flamenco_admin(self):
+    def test_current_user_may_use_project_flamenco_admin(self):
         # Flamenco admins have access to all of Flamenco, but only on projects they are part of.
         import pillar.auth
 
@@ -335,12 +368,15 @@ class UserAccessTest(AbstractAccessTest):
 
         self.create_user(user_id=24 * 'f',
                          roles={'flamenco-admin'},
-                         groups=[self.admin_gid1, self.admin_gid2],
+                         groups=[self.admin_gid[1], self.admin_gid[2], self.admin_gid[3]],
                          token='fladmin-token')
 
         with self.app.test_request_context():
             pillar.auth.login_user('fladmin-token', load_from_db=True)
-            self.assertTrue(auth.web_current_user_may_use_project(self.prid1))
-            self.assertTrue(auth.web_current_user_may_use_project(self.prid2))
-            self.assertFalse(auth.web_current_user_may_use_project(self.prid3))
-            self.assertFalse(auth.web_current_user_may_use_project(self.prid4))
+            self.assertTrue(auth.current_user_may_use_project(self.prid[1]))
+            self.assertTrue(auth.current_user_may_use_project(self.prid[2]))
+            self.assertTrue(auth.current_user_may_use_project(self.prid[3]))
+            self.assertFalse(auth.current_user_may_use_project(self.prid[4]))
+            self.assertFalse(auth.current_user_may_use_project(self.prid[5]))
+            self.assertFalse(auth.current_user_may_use_project(self.prid[6]))
+            self.assertFalse(auth.current_user_may_use_project(self.prid[7]))

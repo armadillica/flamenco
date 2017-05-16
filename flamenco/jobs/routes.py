@@ -2,6 +2,7 @@
 
 import logging
 
+import bson
 from flask import Blueprint, render_template, request
 import flask_login
 import werkzeug.exceptions as wz_exceptions
@@ -62,7 +63,8 @@ def view_job(project, flamenco_props, job_id):
 
     from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES
 
-    write_access = current_flamenco.auth.current_user_is_flamenco_admin()
+    write_access = current_flamenco.auth.current_user_may_use_project(
+        bson.ObjectId(project['_id']))
 
     return render_template(
         'flamenco/jobs/view_job_embed.html',

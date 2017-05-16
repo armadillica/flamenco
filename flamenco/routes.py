@@ -113,7 +113,7 @@ def flamenco_project_view(extra_project_projections: dict=None,
 
             if require_usage_rights:
                 project_id = bson.ObjectId(project['_id'])
-                if not current_flamenco.auth.web_current_user_may_use_project(project_id):
+                if not current_flamenco.auth.current_user_may_use_project(project_id):
                     log.info('Denying user %s access to Flamenco on project %s',
                              flask_login.current_user, project_id)
                     return error_project_not_available()

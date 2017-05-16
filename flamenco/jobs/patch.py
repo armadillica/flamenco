@@ -16,12 +16,19 @@ patch_api_blueprint = Blueprint('flamenco.jobs.patch', __name__)
 class JobPatchHandler(patch_handler.AbstractPatchHandler):
     item_name = 'job'
 
-    @authorization.require_login(require_roles={'flamenco-admin'})
+    @authorization.require_login(require_roles={'subscriber', 'demo', 'flamenco-admin'})
     def patch_set_job_status(self, job_id: bson.ObjectId, patch: dict):
         """Updates a job's status in the database."""
 
         from flamenco import current_flamenco
         from pillar.api.utils.authentication import current_user_id
+
+        # TODO: possibly store job and project into flask.g to reduce the nr of Mongo queries.
+        job = current_flamenco.db('jobs').find_one({'_id': job_id}, {'project': 1})
+        if not current_flamenco.auth.current_user_may_use_project(job['project']):
+            log.info('User %s wants to PATCH job %s, but has no right to use Flamenco on project %s',
+                     current_user_id(), job_id, job['project'])
+            raise wz_exceptions.Forbidden('Denied Flamenco use on this project')
 
         new_status = patch['status']
 
