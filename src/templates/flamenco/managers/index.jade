@@ -33,6 +33,15 @@
 								class="manager-link")
 								span(class="manager-projects-{{ manager._id }}") {{ manager.projects|hide_none|count }}
 					| {% endfor %}
+
+		| {% if can_create_manager %}
+		button.btn(onclick='createNewManager(this)') Create new Manager (max {{max_managers}})
+		#create_manager_result_panel
+		| {% endif %}
+		| {% if has_flamenco_role and not can_create_manager %}
+		button.btn(disabled) Create new Manager (max {{max_managers}})
+		| {% endif %}
+
 #col_right
 	#item-details.col-scrollable
 		.item-details-empty
@@ -42,5 +51,42 @@
 script.
 	{% if open_manager_id %}
 		$(function() { item_open('{{ open_manager_id }}', 'manager', false); });
+	{% endif %}
+	{% if can_create_manager %}
+	function createNewManager(button) {
+		$(button)
+			.attr('disabled', 'disabled')
+			.fadeTo(200, 0.1);
+		$('#create_manager_result_panel').html('');
+
+		// TODO: create a form to get the name and description from the user.
+		$.post(
+			'{{ url_for('flamenco.managers.create_new') }}',
+			{
+				name: 'Manager',
+				description: '',
+			}
+		)
+		.done(function() {
+			var $p = $('<p>').text('Manager created, reloading list.')
+			$('#create_manager_result_panel').html($p);
+
+			window.location.reload();
+		})
+		.fail(function(err) {
+			var $p = xhrErrorResponseElement(err, 'Error creating Manager: ');
+			$('#create_manager_result_panel').html($p);
+
+			$(button)
+				.fadeTo(1000, 1.0)
+				.queue(function() {
+					$(this)
+						.removeAttr('disabled')
+						.dequeue()
+					;
+				})
+		})
+		;
+	}
 	{% endif %}
 | {% endblock %}

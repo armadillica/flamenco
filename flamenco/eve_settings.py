@@ -5,10 +5,12 @@ managers_schema = {
     'name': {
         'type': 'string',
         'required': True,
+        'maxlength': 128,
     },
     # Short description of the manager
     'description': {
         'type': 'string',
+        'maxlength': 1024,
     },
     # Used in the interface, should be a web address for a picture or logo
     # representing the manager

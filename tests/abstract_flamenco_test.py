@@ -72,7 +72,6 @@ class AbstractFlamencoTest(AbstractPillarTest):
             self,
             owner_email=ctd.EXAMPLE_USER['email'],
             name='tēst mānēgūr',
-            url='https://username:password@[fe80::42:99ff:fe66:91bd]:5123/path/to/',
             *,
             assign_to_project_id: ObjectId=None):
         from flamenco.setup import create_manager
@@ -90,7 +89,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
             elif count > 1:
                 self.fail(f'Found {count} users with email address {owner_email}')
 
-            mngr_doc, account, token = create_manager(owner_email, name, 'descr', url)
+            mngr_doc, account, token = create_manager(owner_email, name, 'descr')
 
             if assign_to_project_id:
                 self.assign_manager_to_project(mngr_doc['_id'], assign_to_project_id)

@@ -4,7 +4,11 @@ import logging
 
 import werkzeug.exceptions as wz_exceptions
 
+from pillar.api.utils.authentication import current_user_id
+from pillar.api.utils.authorization import user_matches_roles
+
 from flamenco import current_flamenco
+import flamenco.auth
 
 log = logging.getLogger(__name__)
 
@@ -17,8 +21,6 @@ def check_manager_permissions(mngr_doc):
     if current_flamenco.manager_manager.user_may_use(mngr_doc=mngr_doc):
         return
 
-    from pillar.api.utils.authentication import current_user_id
-
     log.info('Denying access to Manager %s to user %s',
              mngr_doc.get('_id'), current_user_id())
     raise wz_exceptions.Forbidden()
@@ -29,14 +31,25 @@ def check_manager_resource_permissions(response):
         check_manager_permissions(manager_doc)
 
 
+def check_manager_permissions_create(mngr_doc):
+    if not user_matches_roles(flamenco.auth.ROLES_REQUIRED_TO_USE_FLAMENCO):
+        log.info('Denying access to create Manager to user %s',
+                 current_user_id())
+        raise wz_exceptions.Forbidden()
+
+
 def check_manager_permissions_modify(mngr_doc, original_doc=None):
     """For now, only admins are allowed to create, edit, and delete managers.
 
     Other operations (assigning to projects, etc.) should use a PATCH call.
     """
 
-    if not current_flamenco.auth.current_user_is_flamenco_admin():
-        raise wz_exceptions.Forbidden()
+    if current_flamenco.manager_manager.user_may_use(mngr_doc=mngr_doc):
+        return
+
+    log.info('Denying access to edit Manager %s to user %s',
+             mngr_doc.get('_id'), current_user_id())
+    raise wz_exceptions.Forbidden()
 
 
 def pre_get_flamenco_managers(request, lookup):
@@ -71,7 +84,7 @@ def setup_app(app):
     app.on_pre_GET_flamenco_managers += pre_get_flamenco_managers
     app.on_fetched_item_flamenco_managers += check_manager_permissions
     app.on_fetched_resource_flamenco_managers += check_manager_resource_permissions
-    app.on_insert_flamenco_managers += check_manager_permissions_modify
+    app.on_insert_flamenco_managers += check_manager_permissions_create
     app.on_update_flamenco_managers += check_manager_permissions_modify
     app.on_replace_flamenco_managers += check_manager_permissions_modify
     app.on_delete_flamenco_managers += check_manager_permissions_modify

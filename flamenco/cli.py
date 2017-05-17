@@ -39,6 +39,12 @@ def create_manager(email, name, description):
     authentication.force_cli_user()
     mngr_doc, account, token = flamenco.setup.create_manager(email, name, description)
 
+    print('Service account information:')
+    print(dumps(account, indent=4, sort_keys=True))
+    print()
+    print('Access token: %s' % token['token'])
+    print('  expires on: %s' % token['expire_time'])
+    print()
     print('Created a new manager:')
     print(dumps(mngr_doc, indent=4))
 

@@ -1,12 +1,10 @@
 """Authorization management."""
 import enum
 import logging
-import typing
 
 import attr
 import bson
 
-import pillarsdk
 from pillar import attrs_extra
 
 # Roles required to view job, manager or task details.
@@ -22,6 +20,8 @@ ROLES_REQUIRED_TO_VIEW_FLAMENCO = {'admin', 'subscriber', 'demo'}
 # Having any of these methods on a project means you can use Flamenco.
 # Prerequisite: the project is set up for Flamenco and has a Manager assigned to it.
 PROJECT_METHODS_TO_USE_FLAMENCO = {'PUT'}
+
+MAX_MANAGERS_PER_USER = 3
 
 
 class Actions(enum.Enum):

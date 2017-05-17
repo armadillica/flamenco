@@ -32,8 +32,30 @@ class ManagerManager(object):
 
     _log = attrs_extra.log('%s.ManagerManager' % __name__)
 
-    def create_manager(self, service_account_id, name, description, url=None):
-        """Creates a new Flamenco manager.
+    def create_new_manager(self, name: str, description: str, owner_id: bson.ObjectId) \
+            -> typing.Tuple[dict, dict, dict]:
+        """Creates a new Manager, including its system account."""
+
+        assert isinstance(owner_id, bson.ObjectId)
+
+        from pillar.api import service
+        from pillar.api.users import add_user_to_group
+
+        # Create the service account and the Manager.
+        account, token_data = service.create_service_account(
+            '',
+            ['flamenco_manager'],
+            {'flamenco_manager': {}}
+        )
+        mngr_doc = self.create_manager_doc(account['_id'], name, description)
+
+        # Assign the owner to the owner group.
+        add_user_to_group(owner_id, mngr_doc['owner'])
+
+        return account, mngr_doc, token_data
+
+    def create_manager_doc(self, service_account_id, name, description, url=None):
+        """Creates a new Flamenco manager and its owner group.
 
         Returns the MongoDB document.
         """
@@ -96,7 +118,7 @@ class ManagerManager(object):
     def _get_manager(self,
                      mngr_doc_id: bson.ObjectId = None,
                      mngr_doc: dict = None,
-                     projection: dict=None) -> typing.Tuple[bson.ObjectId, dict]:
+                     projection: dict = None) -> typing.Tuple[bson.ObjectId, dict]:
 
         assert (mngr_doc_id is None) != (mngr_doc is None), \
             'Either one or the other parameter must be given.'
