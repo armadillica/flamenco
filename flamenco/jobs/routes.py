@@ -62,7 +62,12 @@ def view_job(project, flamenco_props, job_id):
 
     api = pillar_api()
     job = Job.find(job_id, api=api)
-    manager = Manager.find(job.manager, api=api)
+
+    try:
+        manager = Manager.find(job.manager, api=api)
+    except pillarsdk.ForbiddenAccess:
+        # It's very possible that the user doesn't have access to this Manager.
+        manager = None
 
     from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES
 

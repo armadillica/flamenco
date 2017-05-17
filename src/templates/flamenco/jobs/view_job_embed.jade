@@ -30,11 +30,14 @@
 				.table-cell Priority
 				.table-cell(title="Higher number means higher priority")
 					| {{ job.priority }}
+			| {% if manager %}
+			// manager can be None if the user doesn't have GET rights on it.
 			.table-row
 				.table-cell Manager
 				.table-cell
 					a(href="{{ url_for('flamenco.managers.view_embed', manager_id=manager._id) }}")
 						| {{ manager.name }}
+			| {% endif %}
 
 	.table.item-properties.item-job-settings
 		.table-body
