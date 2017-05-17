@@ -234,24 +234,24 @@ class JobStatusChangeTest(AbstractFlamencoTest):
 
         self.assert_job_status('canceled')
 
-
     @mock.patch('flamenco.jobs.JobManager.handle_job_status_change')
     def test_put_job(self, handle_job_status_change):
         """Test that flamenco.jobs.JobManager.handle_job_status_change is called when we PUT."""
 
         from pillar.api.utils import remove_private_keys
 
-        self.create_user(24 * 'a', roles=('admin',))
-        self.create_valid_auth_token(24 * 'a', token='admin-token')
+        self.create_user(24 * 'a',
+                         roles={'admin', 'flamenco-admin'},
+                         token='fladmin-token')
 
         json_job = self.get('/api/flamenco/jobs/%s' % self.job_id,
-                            auth_token='admin-token').json()
+                            auth_token='fladmin-token').json()
 
         json_job['status'] = 'canceled'
 
         self.put('/api/flamenco/jobs/%s' % self.job_id,
                  json=remove_private_keys(json_job),
                  headers={'If-Match': json_job['_etag']},
-                 auth_token='admin-token')
+                 auth_token='fladmin-token')
 
         handle_job_status_change.assert_called_once_with(self.job_id, 'queued', 'canceled')

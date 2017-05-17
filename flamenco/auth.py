@@ -17,7 +17,7 @@ ROLES_REQUIRED_TO_VIEW_LOGS = {'admin', 'flamenco-admin'}
 
 # Having either of these roles is minimum requirement for using Flamenco.
 ROLES_REQUIRED_TO_USE_FLAMENCO = {'flamenco-user', 'flamenco-admin', 'admin'}
-ROLES_REQUIRED_TO_VIEW_FLAMENCO = {'subscriber', 'demo'}
+ROLES_REQUIRED_TO_VIEW_FLAMENCO = {'admin', 'subscriber', 'demo'}
 
 # Having any of these methods on a project means you can use Flamenco.
 # Prerequisite: the project is set up for Flamenco and has a Manager assigned to it.
