@@ -57,8 +57,8 @@ class Auth(object):
 
         return user_matches_roles({'service', 'flamenco_manager'}, require_all=True)
 
-    def current_user_may(self, project_id: bson.ObjectId, action: Actions) -> bool:
-        """Returns True iff the user is authorised to use Flamenco on the given project.
+    def current_user_may(self, action: Actions, project_id: bson.ObjectId) -> bool:
+        """Returns True iff the user is authorised to use/view Flamenco on the given project.
 
         This is linked to the Managers assigned to this project. As a result, you cannot
         use Flamenco until one or more Managers is assigned.
@@ -76,16 +76,16 @@ class Auth(object):
 
         roles = req_roles[action]
         if not user_matches_roles(roles):
-            self._log.debug('User %s does not have either of roles %s required for action %s; '
-                            'denying access to Flamenco', user_id, roles, action)
+            self._log.info('User %s does not have either of roles %s required for action %s; '
+                           'denying access to Flamenco', user_id, roles, action)
             return False
 
         # TODO Sybren: possibly split this up into a manager-fetching func + authorisation func.
         # TODO: possibly store the user rights on the current project in the current_user object?
         allowed_on_proj = user_rights_in_project(project_id)
         if not allowed_on_proj.intersection(PROJECT_METHODS_TO_USE_FLAMENCO):
-            self._log.debug('User %s has no %s access to project %s.',
-                            user_id, PROJECT_METHODS_TO_USE_FLAMENCO, project_id)
+            self._log.info('User %s has no %s access to project %s.',
+                           user_id, PROJECT_METHODS_TO_USE_FLAMENCO, project_id)
             return False
 
         if self.current_user_is_flamenco_admin():

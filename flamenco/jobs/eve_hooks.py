@@ -5,6 +5,7 @@ import logging
 import werkzeug.exceptions as wz_exceptions
 from pillar.api.utils.authorization import user_matches_roles
 
+import flamenco.eve_hooks
 from flamenco import current_flamenco
 from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS
 
@@ -38,19 +39,7 @@ def after_inserting_jobs(jobs):
 
 
 def check_job_permission_fetch(job_doc):
-
-    if current_flamenco.auth.current_user_is_flamenco_admin():
-        return
-
-    if not current_flamenco.manager_manager.user_is_manager():
-        # Subscribers can read Flamenco jobs.
-        if user_matches_roles(ROLES_REQUIRED_TO_VIEW_ITEMS):
-            return
-        raise wz_exceptions.Forbidden()
-
-    mngr_doc_id = job_doc.get('manager')
-    if not current_flamenco.manager_manager.user_manages(mngr_doc_id=mngr_doc_id):
-        raise wz_exceptions.Forbidden()
+    flamenco.eve_hooks.check_permission_fetch(job_doc, doc_name='job')
 
 
 def check_job_permission_fetch_resource(response):

@@ -6,29 +6,15 @@ import typing
 import werkzeug.exceptions as wz_exceptions
 from pillar.api.utils.authorization import user_matches_roles
 
+import flamenco.eve_hooks
 from flamenco import current_flamenco
 from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS
 
 log = logging.getLogger(__name__)
 
 
-def check_task_permission_fetch(task_doc):
-
-    auth = current_flamenco.auth
-    if auth.current_user_is_flamenco_admin():
-        return
-
-    if auth.current_user_may(task_doc.get('project_id'), auth.Actions.VIEW):
-        return
-
-    if not current_flamenco.manager_manager.user_manages(mngr_doc_id=task_doc.get('manager')):
-        # FIXME: Regular user or not task-owning manager, undefined behaviour as of yet.
-        # # Run validation process, since GET on nodes entry point is public
-        # check_permissions('flamenco_tasks', task_doc, 'GET',
-        #                   append_allowed_methods=True)
-        raise wz_exceptions.Forbidden()
-
-    # Managers can re-fetch their own tasks to validate their local task cache.
+def check_task_permission_fetch(task_doc: dict):
+    flamenco.eve_hooks.check_permission_fetch(task_doc, doc_name='task')
 
 
 def check_task_log_permission_fetch(task_log_docs):
@@ -51,6 +37,7 @@ def task_log_remove_fields(task_log):
 
 
 def check_task_permission_fetch_resource(response):
+    # TODO: proper permission checking on project level.
     if current_flamenco.auth.current_user_is_flamenco_admin():
         return
 
@@ -62,7 +49,7 @@ def check_task_permission_fetch_resource(response):
     raise wz_exceptions.Forbidden()
 
 
-def check_task_permissions(task_doc: typing.Union[list, dict], *, action: str):
+def check_task_edit_permissions(task_doc: typing.Union[list, dict], *, action: str):
     """For now, only admins are allowed to create and delete tasks."""
 
     from pillar.api.utils.authentication import current_user_id
@@ -70,7 +57,7 @@ def check_task_permissions(task_doc: typing.Union[list, dict], *, action: str):
     if isinstance(task_doc, list):
         assert action == 'create'
         for task in task_doc:
-            check_task_permissions(task, action=action)
+            check_task_edit_permissions(task, action=action)
         return
 
     project_id = task_doc.get('project')
@@ -80,7 +67,7 @@ def check_task_permissions(task_doc: typing.Union[list, dict], *, action: str):
         raise wz_exceptions.BadRequest()
 
     auth = current_flamenco.auth
-    if not auth.current_user_may(project_id, auth.Actions.USE):
+    if not auth.current_user_may(auth.Actions.USE, project_id):
         log.info('User %s tried to %s a task on project %s, but has no access to Flamenco there;'
                  ' denied', current_user_id(), action, project_id)
         raise wz_exceptions.Forbidden()
@@ -92,7 +79,7 @@ def check_task_permissions_edit(task_doc, original_doc=None):
     if not current_flamenco.auth.current_user_is_flamenco_admin():
         raise wz_exceptions.Forbidden()
 
-    # FIXME: check user access to the project.
+        # FIXME: check user access to the project.
 
 
 def update_job_status(task_doc, original_doc):
@@ -124,8 +111,8 @@ def setup_app(app):
     app.on_fetched_item_flamenco_tasks += check_task_permission_fetch
     app.on_fetched_resource_flamenco_tasks += check_task_permission_fetch_resource
 
-    app.on_insert_flamenco_tasks += partial(check_task_permissions, action='create')
-    app.on_delete_flamenco_tasks += partial(check_task_permissions, action='delete')
-    app.on_update_flamenco_tasks += partial(check_task_permissions, action='edit')
+    app.on_insert_flamenco_tasks += partial(check_task_edit_permissions, action='create')
+    app.on_delete_flamenco_tasks += partial(check_task_edit_permissions, action='delete')
+    app.on_update_flamenco_tasks += partial(check_task_edit_permissions, action='edit')
     app.on_replace_flamenco_tasks += check_task_permissions_edit
     app.on_replaced_flamenco_tasks += update_job_status

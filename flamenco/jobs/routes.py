@@ -67,7 +67,7 @@ def view_job(project, flamenco_props, job_id):
     from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES
 
     auth = current_flamenco.auth
-    write_access = auth.current_user_may(bson.ObjectId(project['_id']), auth.Actions.USE)
+    write_access = auth.current_user_may(auth.Actions.USE, bson.ObjectId(project['_id']))
 
     return render_template(
         'flamenco/jobs/view_job_embed.html',

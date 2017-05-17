@@ -423,13 +423,13 @@ class UserAccessTest(AbstractAccessTest):
 
         with self.app.test_request_context():
             pillar.auth.login_user('user-token', load_from_db=True)
-            self.assertTrue(auth.current_user_may(self.prid[1], auth.Actions.USE))
-            self.assertTrue(auth.current_user_may(self.prid[2], auth.Actions.USE))
-            self.assertFalse(auth.current_user_may(self.prid[3], auth.Actions.USE))
-            self.assertFalse(auth.current_user_may(self.prid[4], auth.Actions.USE))
-            self.assertFalse(auth.current_user_may(self.prid[5], auth.Actions.USE))
-            self.assertFalse(auth.current_user_may(self.prid[6], auth.Actions.USE))
-            self.assertFalse(auth.current_user_may(self.prid[7], auth.Actions.USE))
+            self.assertTrue(auth.current_user_may(auth.Actions.USE, self.prid[1]))
+            self.assertTrue(auth.current_user_may(auth.Actions.USE, self.prid[2]))
+            self.assertFalse(auth.current_user_may(auth.Actions.USE, self.prid[3]))
+            self.assertFalse(auth.current_user_may(auth.Actions.USE, self.prid[4]))
+            self.assertFalse(auth.current_user_may(auth.Actions.USE, self.prid[5]))
+            self.assertFalse(auth.current_user_may(auth.Actions.USE, self.prid[6]))
+            self.assertFalse(auth.current_user_may(auth.Actions.USE, self.prid[7]))
 
     def test_current_user_may_use_project_flamenco_admin(self):
         # Flamenco admins have access to all of Flamenco, but only on projects they are part of.
@@ -444,10 +444,10 @@ class UserAccessTest(AbstractAccessTest):
 
         with self.app.test_request_context():
             pillar.auth.login_user('fladmin-token', load_from_db=True)
-            self.assertTrue(auth.current_user_may(self.prid[1], auth.Actions.USE))
-            self.assertTrue(auth.current_user_may(self.prid[2], auth.Actions.USE))
-            self.assertTrue(auth.current_user_may(self.prid[3], auth.Actions.USE))
-            self.assertFalse(auth.current_user_may(self.prid[4], auth.Actions.USE))
-            self.assertFalse(auth.current_user_may(self.prid[5], auth.Actions.USE))
-            self.assertFalse(auth.current_user_may(self.prid[6], auth.Actions.USE))
-            self.assertFalse(auth.current_user_may(self.prid[7], auth.Actions.USE))
+            self.assertTrue(auth.current_user_may(auth.Actions.USE, self.prid[1]))
+            self.assertTrue(auth.current_user_may(auth.Actions.USE, self.prid[2]))
+            self.assertTrue(auth.current_user_may(auth.Actions.USE, self.prid[3]))
+            self.assertFalse(auth.current_user_may(auth.Actions.USE, self.prid[4]))
+            self.assertFalse(auth.current_user_may(auth.Actions.USE, self.prid[5]))
+            self.assertFalse(auth.current_user_may(auth.Actions.USE, self.prid[6]))
+            self.assertFalse(auth.current_user_may(auth.Actions.USE, self.prid[7]))
