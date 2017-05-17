@@ -1,6 +1,7 @@
 # coding=utf-8
 import logging
 
+import bson
 from flask import Blueprint, render_template, request
 import flask_login
 import werkzeug.exceptions as wz_exceptions
@@ -10,7 +11,7 @@ from pillar.web.system_util import pillar_api
 
 from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco
-from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS
+from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS, Actions
 
 TASK_LOG_PAGE_SIZE = 10
 
@@ -48,7 +49,7 @@ def redirect_to_task(task_id):
 
 
 @perproject_blueprint.route('/', endpoint='index')
-@flamenco_project_view()
+@flamenco_project_view(action=Actions.VIEW)
 def list_for_project(project, task_id=None):
     tasks = current_flamenco.task_manager.tasks_for_project(project['_id'])
     return render_template('flamenco/tasks/list_for_project.html',
@@ -58,7 +59,7 @@ def list_for_project(project, task_id=None):
 
 
 @perjob_blueprint.route('/tasks')
-@flamenco_project_view()
+@flamenco_project_view(action=Actions.VIEW)
 def list_for_job(project, job_id, task_id=None):
     from pillar.web.utils import last_page_index
 
@@ -81,7 +82,7 @@ def list_for_job(project, job_id, task_id=None):
 @perproject_blueprint.route('/<task_id>')
 @flask_login.login_required
 @pillar.flask_extra.vary_xhr()
-@flamenco_project_view(extension_props=True)
+@flamenco_project_view(extension_props=True, action=Actions.VIEW)
 def view_task(project, flamenco_props, task_id):
     from flamenco.tasks.sdk import Task
 
@@ -101,7 +102,9 @@ def view_task(project, flamenco_props, task_id):
     task = Task.find(task_id, api=api)
 
     from . import REQUEABLE_TASK_STATES
-    write_access = current_flamenco.auth.current_user_is_flamenco_admin()
+    project_id = bson.ObjectId(project['_id'])
+
+    write_access = current_flamenco.auth.current_user_may(Actions.USE, project_id)
     can_requeue_task = write_access and task['status'] in REQUEABLE_TASK_STATES
 
     return render_template('flamenco/tasks/view_task_embed.html',
@@ -109,6 +112,7 @@ def view_task(project, flamenco_props, task_id):
                            project=project,
                            flamenco_props=flamenco_props.to_dict(),
                            flamenco_context=request.args.get('context'),
+                           can_view_log=write_access,
                            can_requeue_task=can_requeue_task)
 
 

@@ -66,10 +66,12 @@
 					.table-cell {{ task.worker }}
 
 #item-action-panel
+	| {% if can_view_log %}
 	button.btn.item-log-load.js-log-load(
 		data-url="{{ url_for('flamenco.tasks.perproject.view_task_log', project_url=project.url, task_id=task._id) }}")
 		i.pi-list
 		| View Log
+	| {% endif %}
 
 	.pull-right
 		| {% if can_requeue_task %}
@@ -79,7 +81,9 @@
 		| {% endif %}
 		.action-result-panel
 
+| {% if can_view_log %}
 #item-log.task
+| {% endif %}
 
 | {% if config.DEBUG %}
 .debug-info
