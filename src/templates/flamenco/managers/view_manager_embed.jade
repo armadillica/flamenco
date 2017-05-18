@@ -1,9 +1,39 @@
 .flamenco-box.manager
-	p.item-name {{ manager.name | hide_none }}
-	| {% if manager.description %}
-	p.item-description {{ manager.description | hide_none }}
-	| {% endif %}
+	form#item_form(onsubmit="return editManager()")
+		| {% if can_edit %}
+		.input-group
+			textarea.item-name.input-transparent(
+				name="name",
+				type="text",
+				rows=1,
+				placeholder="Manager's name") {{ manager.name | hide_none }}
+			button.copy-to-clipboard.btn.item-id(
+				style="margin-left: auto",
+				name="Copy to Clipboard",
+				type="button",
+				data-clipboard-text="{{ manager._id }}",
+				title="Copy ID to clipboard")
+				| ID
+		.input-group
+			textarea.item-description.input-transparent(
+				name="description",
+				type="text",
+				rows=1,
+				placeholder="Manager's description") {{ manager.description | hide_none }}
 
+		.input-group
+			button#item-save.btn.btn-default.btn-block(type='submit')
+				i.pi-check
+				| Save Manager
+		| {% else %}
+		p.item-name {{ manager.name | hide_none }}
+		| {% if manager.description %}
+		p.item-description {{ manager.description | hide_none }}
+		| {% endif %}
+		| {% endif %}
+
+.flamenco-box.manager
+	h4 Properties
 	.table.item-properties
 		.table-body
 			.table-row.properties-last-updated
@@ -33,9 +63,9 @@
 			| {% endfor %}
 	| {% endif %}
 
-.flamenco-box#manager-projects-list
+.flamenco-box.manager#manager-projects-list
 	h4 Projects linked to this Manager
-	
+
 	.table.item-properties
 		.table-body
 			| {% for project in linked_projects._items %}
@@ -86,6 +116,12 @@
 
 | {% block footer_scripts %}
 script.
+	var clipboard = new Clipboard('.copy-to-clipboard');
+
+	clipboard.on('success', function(e) {
+		statusBarSet('info', 'Copied manager ID to clipboard', 'pi-check');
+	});
+
 	function unlinkProject(project_id) {
 		console.log("Unlinking project ", project_id, " from Manager ", "{{ manager._id }}")
 		patchManager({
@@ -98,7 +134,7 @@ script.
 		})
 		;
 	}
-	
+
 	function linkProject() {
 		var project_id = $('#link_project_select').val();
 		patchManager({
@@ -110,6 +146,22 @@ script.
 			$('.action-result-panel').html($p);
 		})
 		;
+	}
+
+	function editManager() {
+		var $form = $('#item_form');
+		patchManager({
+			op: 'edit-from-web',
+			name: $form.find('*[name="name"]').val(),
+			description: $form.find('*[name="description"]').val(),
+		})
+		.fail(function(err) {
+			var $p = xhrErrorResponseElement(err, 'Error editing Manager: ');
+			$('.action-result-panel').html($p);
+		})
+		;
+
+		return false;
 	}
 	
 	function patchManager(patch) {

@@ -1,9 +1,9 @@
 import logging
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify
 
 import pillar.flask_extra
-from pillar.api.utils import authorization
+from pillar.api.utils import authorization, str2id
 from pillar.web.system_util import pillar_api
 from pillar.api.utils.authentication import current_user_id
 from pillar.api.utils.authorization import user_matches_roles
@@ -62,8 +62,12 @@ def view_embed(manager_id: str):
                           for project in fetched._items
                           if project['_id'] not in linked_project_ids]
 
+    manager_oid = str2id(manager_id)
+    can_edit = current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_oid)
+
     return render_template('flamenco/managers/view_manager_embed.html',
                            manager=manager,
+                           can_edit=can_edit,
                            available_projects=available_projects,
                            linked_projects=linked_projects)
 
@@ -89,3 +93,14 @@ def create_new():
         return 'Error creating service account', 500
 
     return '', 204
+
+
+@blueprint.route('/<manager_id>/auth-token', methods=['POST'])
+@authorization.require_login(require_roles=flamenco.auth.ROLES_REQUIRED_TO_USE_FLAMENCO)
+def manager_auth_token(manager_id):
+    """Returns the Manager's authentication token.
+
+    Only allowed by owners of the Manager.
+    """
+
+    return jsonify({'auth_token': '1234'})

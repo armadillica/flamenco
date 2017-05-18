@@ -3,9 +3,10 @@
 import logging
 
 import bson
-from flask import Blueprint
+from flask import Blueprint, jsonify
 import werkzeug.exceptions as wz_exceptions
 
+from pillar.api.utils.authentication import current_user_id
 from pillar.api.utils import authorization
 from pillar.api import patch_handler
 
@@ -23,7 +24,6 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
         and member of the project (if assigning).
         """
 
-        from pillar.api.utils.authentication import current_user_id
         from pillar.api.utils import str2id
         from pillar.api.projects.utils import user_rights_in_project
 
@@ -79,6 +79,33 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
         """
 
         return self._assign_or_remove_project(manager_id, patch, 'remove')
+
+    @authorization.require_login(require_roles={'flamenco-admin', 'flamenco-user'})
+    def patch_edit_from_web(self, manager_id: bson.ObjectId, patch: dict):
+        """Updates Manager fields from the web."""
+
+        from eve.methods.patch import patch_internal
+
+        self.log.info('User %s edits Manager %s: %s', current_user_id(), manager_id, patch)
+
+        # Relay the patching to Eve, which patches like an idiot.
+        try:
+            manager_strid = str(manager_id)
+            r, _, _, s = patch_internal('flamenco_managers',
+                                        {'_id': manager_strid,
+                                         'name': patch['name'],
+                                         'description': patch['description']},
+                                        _id=manager_strid,
+                                        concurrency_check=False)
+        except wz_exceptions.HTTPException as ex:
+            self.log.error('Eve raised %s', ex)
+            raise
+
+        self.log.info('Response from Eve is %s with code %s', r, s)
+        resp = jsonify(r)
+        resp.status_code = s
+        return resp
+        # return jsonify({'_message': 'hey F!'}), 408
 
 
 def setup_app(app):
