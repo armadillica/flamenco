@@ -1,5 +1,6 @@
 """Manager management."""
 
+import datetime
 import logging
 import typing
 
@@ -11,6 +12,10 @@ from flask import current_app
 from pillar import attrs_extra
 
 
+@attr.s
+class AuthTokenInfo:
+    token = attr.ib(validator=attr.validators.instance_of(str))
+    expire_time = attr.ib(validator=attr.validators.instance_of(datetime.datetime))
 
 
 @attr.s
@@ -282,6 +287,37 @@ class ManagerManager(object):
                             res)
             return False
         return True
+
+    def auth_token(self, manager_id: bson.ObjectId) -> typing.Optional[AuthTokenInfo]:
+        """Returns the authentication token info of the given Manager."""
+
+        _, manager = self._get_manager(mngr_doc_id=manager_id,
+                                       projection={'service_account': 1})
+        users_coll = current_app.db('users')
+        service_account_id = manager['service_account']
+        service_account = users_coll.find_one({'_id': service_account_id,
+                                               'service.flamenco_manager': {'$exists': True}})
+        if not service_account:
+            self._log.error('Unable to find service account %s for manager %s',
+                            service_account_id, manager_id)
+            return None
+
+        tokens_coll = current_app.db('tokens')
+        tokens = tokens_coll.find({'user': service_account_id})
+        if tokens.count() == 0:
+            self._log.warning('Manager %s with service account %s has no authentication token',
+                              manager_id, service_account_id)
+            return None
+
+        if tokens.count() > 1:
+            self._log.warning('Manager %s with service account %s has %i authentication tokens',
+                              manager_id, service_account_id, tokens.count())
+
+        token = tokens.next()
+        return AuthTokenInfo(
+            token=token['token'],
+            expire_time=token['expire_time'],
+        )
 
 
 def setup_app(app):

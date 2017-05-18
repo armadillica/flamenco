@@ -1,6 +1,9 @@
 import logging
 
+import attr
 from flask import Blueprint, render_template, request, jsonify
+import flask_wtf.csrf
+import werkzeug.exceptions as wz_exceptions
 
 import pillar.flask_extra
 from pillar.api.utils import authorization, str2id
@@ -65,11 +68,14 @@ def view_embed(manager_id: str):
     manager_oid = str2id(manager_id)
     can_edit = current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_oid)
 
+    csrf = flask_wtf.csrf.generate_csrf()
+
     return render_template('flamenco/managers/view_manager_embed.html',
                            manager=manager,
                            can_edit=can_edit,
                            available_projects=available_projects,
-                           linked_projects=linked_projects)
+                           linked_projects=linked_projects,
+                           csrf=csrf)
 
 
 @blueprint.route('/create-new', methods=['POST'])
@@ -103,4 +109,22 @@ def manager_auth_token(manager_id):
     Only allowed by owners of the Manager.
     """
 
-    return jsonify({'auth_token': '1234'})
+    manager_oid = str2id(manager_id)
+
+    csrf = request.form.get('csrf', '')
+    if not flask_wtf.csrf.validate_csrf(csrf):
+        log.warning('User %s tried to get authentication token for Manager %s without '
+                    'valid CSRF token!', current_user_id(), manager_oid)
+        raise wz_exceptions.PreconditionFailed()
+
+    if not current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_oid):
+        log.warning('User %s wants to get authentication token of manager %s, '
+                    'but user is not owner of that Manager. Request denied.',
+                    current_user_id(), manager_oid)
+        raise wz_exceptions.Forbidden()
+
+    auth_token_info = current_flamenco.manager_manager.auth_token(manager_oid)
+    if not auth_token_info:
+        raise wz_exceptions.NotFound()
+
+    return jsonify(attr.asdict(auth_token_info))

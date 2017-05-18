@@ -62,6 +62,7 @@
 						{{ var_values | pprint}}
 			| {% endfor %}
 	| {% endif %}
+	.action-result-panel
 
 .flamenco-box.manager#manager-projects-list
 	h4 Projects linked to this Manager
@@ -97,7 +98,21 @@
 			| You have no projects set up for Flamenco.
 		| {% endif %}
 	.clearfix
-	.action-result-panel
+
+| {% if can_edit %}
+.flamenco-box.manager#manager-projects-list
+	h4 Authentication token
+
+	p
+		i.pi-lock
+		a#show_auth_token(href='javascript:void(0);')
+			| click to show authentication token
+
+	button.btn.btn-block(onclick="generateNewAuthToken()")
+		i.pi-link
+		| Generate new token
+
+| {% endif %}
 
 #item-view-feed
 	| {% if config.DEBUG %}
@@ -116,11 +131,20 @@
 
 | {% block footer_scripts %}
 script.
-	var clipboard = new Clipboard('.copy-to-clipboard');
+	var clipboard = null;
+	function createClipboard() {
+		if (clipboard != null) {
+			clipboard.destroy();
+		}
 
-	clipboard.on('success', function(e) {
-		statusBarSet('info', 'Copied manager ID to clipboard', 'pi-check');
-	});
+		clipboard = new Clipboard('.copy-to-clipboard');
+
+		clipboard.on('success', function(e) {
+			$(e.trigger).flashOnce();
+			statusBarSet('info', 'Copied to clipboard', 'pi-check');
+		});
+	}
+	createClipboard();
 
 	function unlinkProject(project_id) {
 		console.log("Unlinking project ", project_id, " from Manager ", "{{ manager._id }}")
@@ -168,8 +192,10 @@ script.
 
 		return false;
 	}
-	
+
 	function patchManager(patch) {
+		$('.action-result-panel').html('');
+
 		var promise = $.ajax({
 			url: '/api/flamenco/managers/{{ manager._id }}',
 			method: 'PATCH',
@@ -186,5 +212,38 @@ script.
 		
 		return promise;
 	}
-	
+
+	var auth_token_link = $('#show_auth_token');
+	function showAuthToken() {
+		$('.action-result-panel').html('');
+
+		$.post(
+			'{{ url_for("flamenco.managers.manager_auth_token", manager_id=manager._id) }}',
+			{csrf: '{{ csrf }}'}
+		)
+		.done(function(data) {
+			console.log(data);
+			auth_token_link
+				.text(data.token)
+				.addClass('copy-to-clipboard')
+				.attr('title', 'Click to copy to clipboard')
+				.attr('data-clipboard-text', data.token)
+				.off('click')
+			;
+			$('<p>')
+				.text('Click the token to copy to your clipboard')
+				.addClass('hint')
+				.insertAfter(auth_token_link.parent())
+			;
+			createClipboard();
+		})
+		.fail(function(err) {
+			var $p = xhrErrorResponseElement(err, 'Error fetching auth token: ');
+			$('.action-result-panel').html($p);
+		})
+		;
+	}
+	auth_token_link.click(showAuthToken);
+
+
 | {% endblock %}
