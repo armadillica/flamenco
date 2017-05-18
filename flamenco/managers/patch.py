@@ -89,6 +89,12 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
 
         from pymongo.results import UpdateResult
 
+        if not current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_id):
+            log.warning('User %s uses PATCH to edit manager %s, '
+                        'but user is not owner of that Manager. Request denied.',
+                        current_user_id(), manager_id)
+            raise wz_exceptions.Forbidden()
+
         # Only take known fields from the patch, don't just copy everything.
         update = {'name': patch['name'],
                   'description': patch['description']}

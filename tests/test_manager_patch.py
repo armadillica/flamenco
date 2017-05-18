@@ -17,6 +17,10 @@ class ManagerEditTest(AbstractFlamencoTest):
                          groups=[self.mngr_doc['owner']],
                          token='owner-token')
 
+        self.create_user(user_id=24 * 'a',
+                         roles={'subscriber', 'flamenco-user'},
+                         token='other-flamuser-token')
+
     def test_patch_edit_from_web(self):
         patch = {'op': 'edit-from-web',
                  'name': 'Новое имя менеджера',
@@ -42,6 +46,21 @@ class ManagerEditTest(AbstractFlamencoTest):
                           expected_status=422).json()
         self.assertIn('name', resp['_errors'])
         self.assertIn('description', resp['_errors'])
+
+        db_mngr = self.fetch_manager_from_db(self.mngr_id)
+        self.assertIsNotNone(db_mngr)
+
+        self.assertEqual(self.mngr_doc['name'], db_mngr['name'])
+        self.assertEqual(self.mngr_doc['description'], db_mngr['description'])
+
+    def test_patch_edit_from_web_other_user(self):
+        patch = {'op': 'edit-from-web',
+                 'name': 'Новое имя менеджера',
+                 'description': '"New manager name" in Russian', }
+        self.patch(f'/api/flamenco/managers/{self.mngr_id}',
+                   auth_token='other-flamuser-token',
+                   json=patch,
+                   expected_status=403)
 
         db_mngr = self.fetch_manager_from_db(self.mngr_id)
         self.assertIsNotNone(db_mngr)
