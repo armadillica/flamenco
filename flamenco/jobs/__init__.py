@@ -6,6 +6,7 @@ import datetime
 
 import attr
 import bson
+from flask import current_app
 
 import pillarsdk
 from pillar import attrs_extra
@@ -59,8 +60,6 @@ class JobManager(object):
                        project_id, user_id, manager_id, priority=50):
         """Creates a job, returning a dict with its generated fields."""
 
-        from eve.methods.post import post_internal
-
         job = {
             'name': job_name,
             'description': job_desc,
@@ -76,7 +75,7 @@ class JobManager(object):
         self._log.info('Creating job %r for user %s and manager %s',
                        job_name, user_id, manager_id)
 
-        r, _, _, status = post_internal('flamenco_jobs', job)
+        r, _, _, status = current_app.post_internal('flamenco_jobs', job)
         if status != 201:
             self._log.error('Status should be 201, not %i: %s' % (status, r))
             raise ValueError('Unable to create Flamenco job, status code %i' % status)

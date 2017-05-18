@@ -7,7 +7,6 @@ for live/production situations.
 import logging
 
 from bson import ObjectId
-from eve.methods.put import put_internal
 from flask import current_app
 
 from . import EXTENSION_NAME, current_flamenco
@@ -47,7 +46,7 @@ def _update_project(project):
 
     project_id = ObjectId(project['_id'])
     project = remove_private_keys(project)
-    result, _, _, status_code = put_internal('projects', project, _id=project_id)
+    result, _, _, status_code = current_app.put_internal('projects', project, _id=project_id)
 
     if status_code != 200:
         raise RuntimeError("Can't update project %s, issues: %s", project_id, result)

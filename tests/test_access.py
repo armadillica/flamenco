@@ -118,17 +118,20 @@ class AccessTest(AbstractAccessTest):
 
         # Manager docs should not be modified.
         self.put(own_url, json=remove_private_keys(own_doc),
-                 headers={'If-Match': own_doc['_etag']},
+                 etag=own_doc['_etag'],
                  expected_status=403,
                  auth_token=self.mngr_token)
         self.delete(own_url,
                     expected_status=405,
+                    etag=own_doc['_etag'],
                     auth_token=self.mngr_token)
         self.put(other_url, json=remove_private_keys(own_doc),
                  expected_status=403,
+                 etag=self.mngr2_doc['_etag'],
                  auth_token=self.mngr_token)
         self.delete(other_url,
                     expected_status=405,
+                    etag=self.mngr2_doc['_etag'],
                     auth_token=self.mngr_token)
 
         # Own job should be GETtable.
@@ -145,10 +148,15 @@ class AccessTest(AbstractAccessTest):
         self.assertEqual(str(self.job_id), jobs[0]['_id'])
 
         # Own job should not be modifyable.
-        self.put(own_job_url, json=own_job,
+        self.put(own_job_url, json=remove_private_keys(own_job),
+                 etag=own_job['_etag'],
                  expected_status=403,
                  auth_token=self.mngr_token)
         self.delete(own_job_url,
+                    etag=own_job['_etag'],
+                    expected_status=403,
+                    auth_token=self.mngr_token)
+        self.delete('/api/flamenco/jobs',
                     expected_status=403,
                     auth_token=self.mngr_token)
 

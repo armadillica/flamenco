@@ -6,6 +6,8 @@ import typing
 import attr
 import bson
 
+from flask import current_app
+
 from pillar import attrs_extra
 
 from pillarsdk.resource import List
@@ -60,7 +62,6 @@ class ManagerManager(object):
         Returns the MongoDB document.
         """
 
-        from eve.methods.post import post_internal
         from pillar.api.utils import str2id
         import bson
 
@@ -74,7 +75,7 @@ class ManagerManager(object):
             '_id': group_id,
             'name': f'Owners of Flamenco Manager {manager_id}'
         }
-        r, _, _, status = post_internal('groups', group_doc)
+        r, _, _, status = current_app.post_internal('groups', group_doc)
         if status != 201:
             self._log.error('Error creating manager owner group; status should be 201, not %i: %s',
                             status, r)
@@ -99,7 +100,7 @@ class ManagerManager(object):
         else:
             self._log.info('Creating manager %r', name)
 
-        r, _, _, status = post_internal('flamenco_managers', mngr_doc)
+        r, _, _, status = current_app.post_internal('flamenco_managers', mngr_doc)
         if status != 201:
             self._log.error('Status should be 201, not %i: %s' % (status, r))
             raise ValueError('Unable to create Flamenco manager, status code %i' % status)

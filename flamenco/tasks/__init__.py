@@ -2,9 +2,9 @@
 
 import attr
 import datetime
-import typing
 
 import bson
+from flask import current_app
 import pymongo.collection
 import werkzeug.exceptions as wz_exceptions
 
@@ -44,8 +44,6 @@ class TaskManager(object):
         Returns the ObjectId of the created task.
         """
 
-        from eve.methods.post import post_internal
-
         task = {
             'job': job['_id'],
             'manager': job['manager'],
@@ -66,7 +64,7 @@ class TaskManager(object):
         self._log.info('Creating task %s for manager %s, user %s',
                        name, job['manager'], job['user'])
 
-        r, _, _, status = post_internal('flamenco_tasks', task)
+        r, _, _, status = current_app.post_internal('flamenco_tasks', task)
         if status != 201:
             self._log.error('Error %i creating task %s: %s',
                             status, task, r)

@@ -53,6 +53,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
     def ensure_project_exists(self, project_overrides=None):
         from flamenco.setup import setup_for_flamenco
+        from pillar.api.utils.authentication import force_cli_user
 
         project_overrides = dict(
             picture_header=None,
@@ -63,6 +64,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
             self, project_overrides)
 
         with self.app.test_request_context():
+            force_cli_user()
             flamenco_project = setup_for_flamenco(
                 project['url'], replace=True)
 

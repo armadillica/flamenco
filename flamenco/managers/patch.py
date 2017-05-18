@@ -3,7 +3,7 @@
 import logging
 
 import bson
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, current_app
 import werkzeug.exceptions as wz_exceptions
 
 from pillar.api.utils.authentication import current_user_id
@@ -84,19 +84,18 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
     def patch_edit_from_web(self, manager_id: bson.ObjectId, patch: dict):
         """Updates Manager fields from the web."""
 
-        from eve.methods.patch import patch_internal
-
         self.log.info('User %s edits Manager %s: %s', current_user_id(), manager_id, patch)
 
         # Relay the patching to Eve, which patches like an idiot.
         try:
             manager_strid = str(manager_id)
-            r, _, _, s = patch_internal('flamenco_managers',
-                                        {'_id': manager_strid,
-                                         'name': patch['name'],
-                                         'description': patch['description']},
-                                        _id=manager_strid,
-                                        concurrency_check=False)
+            r, _, _, s = current_app.patch_internal(
+                'flamenco_managers',
+                {'_id': manager_strid,
+                 'name': patch['name'],
+                 'description': patch['description']},
+                _id=manager_strid,
+                concurrency_check=False)
         except wz_exceptions.HTTPException as ex:
             self.log.error('Eve raised %s', ex)
             raise

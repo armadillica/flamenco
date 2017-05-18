@@ -112,6 +112,11 @@ def handle_job_status_update(job_doc, original_doc):
     current_flamenco.job_manager.handle_job_status_change(job_id, old_status, new_status)
 
 
+def reject_resource_deletion(*args):
+    log.warning("Rejecting DELETE on jobs resource")
+    raise wz_exceptions.Forbidden()
+
+
 def setup_app(app):
     app.on_insert_flamenco_jobs += before_inserting_jobs
     app.on_inserted_flamenco_jobs += after_inserting_jobs
@@ -121,4 +126,5 @@ def setup_app(app):
     app.on_insert_flamenco_jobs += check_job_permissions_modify
     app.on_update_flamenco_jobs += check_job_permissions_modify
     app.on_replace_flamenco_jobs += check_job_permissions_modify
-    app.on_delete_flamenco_jobs += check_job_permissions_modify
+    app.on_delete_item_flamenco_jobs += check_job_permissions_modify
+    app.on_delete_resource_flamenco_jobs += reject_resource_deletion
