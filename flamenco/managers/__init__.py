@@ -10,18 +10,7 @@ from flask import current_app
 
 from pillar import attrs_extra
 
-from pillarsdk.resource import List
-from pillarsdk.resource import Find
-from pillarsdk.resource import Create
-from pillarsdk.resource import Post
-from pillarsdk.resource import Update
-from pillarsdk.resource import Delete
-from pillarsdk.resource import Replace
 
-
-class Manager(List, Find, Create, Post, Update, Delete, Replace):
-    """Manager class wrapping the REST nodes endpoint"""
-    path = 'flamenco/managers'
 
 
 @attr.s
