@@ -3,12 +3,15 @@
 import logging
 
 import bson
-from flask import Blueprint, jsonify, current_app
+from flask import Blueprint, jsonify
 import werkzeug.exceptions as wz_exceptions
 
 from pillar.api.utils.authentication import current_user_id
 from pillar.api.utils import authorization
 from pillar.api import patch_handler
+from pillar import current_app
+
+from .. import current_flamenco
 
 log = logging.getLogger(__name__)
 patch_api_blueprint = Blueprint('flamenco.managers.patch', __name__)
@@ -84,27 +87,35 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
     def patch_edit_from_web(self, manager_id: bson.ObjectId, patch: dict):
         """Updates Manager fields from the web."""
 
-        self.log.info('User %s edits Manager %s: %s', current_user_id(), manager_id, patch)
+        from pymongo.results import UpdateResult
 
-        # Relay the patching to Eve, which patches like an idiot.
-        try:
-            manager_strid = str(manager_id)
-            r, _, _, s = current_app.patch_internal(
-                'flamenco_managers',
-                {'_id': manager_strid,
-                 'name': patch['name'],
-                 'description': patch['description']},
-                _id=manager_strid,
-                concurrency_check=False)
-        except wz_exceptions.HTTPException as ex:
-            self.log.error('Eve raised %s', ex)
-            raise
+        # Only take known fields from the patch, don't just copy everything.
+        update = {'name': patch['name'],
+                  'description': patch['description']}
+        self.log.info('User %s edits Manager %s: %s', current_user_id(), manager_id, update)
 
-        self.log.info('Response from Eve is %s with code %s', r, s)
-        resp = jsonify(r)
-        resp.status_code = s
-        return resp
-        # return jsonify({'_message': 'hey F!'}), 408
+        validator = current_app.validator_for_resource('flamenco_managers')
+        if not validator.validate_update(update, manager_id):
+            resp = jsonify({
+                '_errors': validator.errors,
+                '_message': ', '.join(f'{field}: {error}'
+                                      for field, error in validator.errors.items()),
+            })
+            resp.status_code = 422
+            return resp
+
+        managers_coll = current_flamenco.db('managers')
+        result: UpdateResult = managers_coll.update_one(
+            {'_id': manager_id},
+            {'$set': update}
+        )
+
+        if result.matched_count != 1:
+            self.log.warning('User %s edits Manager %s but update matched %i items',
+                             current_user_id(), manager_id, result.matched_count)
+            raise wz_exceptions.BadRequest()
+
+        return '', 204
 
 
 def setup_app(app):

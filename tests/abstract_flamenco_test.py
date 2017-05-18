@@ -182,3 +182,10 @@ class AbstractFlamencoTest(AbstractPillarTest):
                 manager_id, project_id, 'assign')
 
         self.assertTrue(ok)
+
+    def fetch_manager_from_db(self, manager_id: ObjectId) -> dict:
+        self.assertIsInstance(manager_id, ObjectId)
+
+        with self.app.app_context():
+            managers_coll = self.app.db('flamenco_managers')
+            return managers_coll.find_one(manager_id)

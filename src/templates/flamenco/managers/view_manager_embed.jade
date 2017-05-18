@@ -2,11 +2,11 @@
 	form#item_form(onsubmit="return editManager()")
 		| {% if can_edit %}
 		.input-group
-			textarea.item-name.input-transparent(
+			input.item-name.input-transparent(
 				name="name",
 				type="text",
-				rows=1,
-				placeholder="Manager's name") {{ manager.name | hide_none }}
+				placeholder="Manager's name",
+				value="{{ manager.name | hide_none }}")
 			button.copy-to-clipboard.btn.item-id(
 				style="margin-left: auto",
 				name="Copy to Clipboard",
@@ -150,10 +150,15 @@ script.
 
 	function editManager() {
 		var $form = $('#item_form');
+		var new_name = $form.find('*[name="name"]').val();
+
 		patchManager({
 			op: 'edit-from-web',
-			name: $form.find('*[name="name"]').val(),
+			name: new_name,
 			description: $form.find('*[name="description"]').val(),
+		})
+		.done(function() {
+			$('span.manager-name-{{ manager._id }}').text(new_name);
 		})
 		.fail(function(err) {
 			var $p = xhrErrorResponseElement(err, 'Error editing Manager: ');
