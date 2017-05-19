@@ -1,6 +1,14 @@
 Flamenco Server Changelog
 =========================
 
+## Version 2.1.0 (in development)
+
+- Users are now required to have the `flamenco-user` role in order to use Flamenco.
+- Users can create their own Managers (max 3).
+- Managers can be linked to projects.
+- The authentication token for a Manager can be retrieved and reset by owners.
+
+
 ## Version 2.0.2 (released 2017-04-26)
 
 - Re-queueing a task on a completed job now re-queues the job too.
