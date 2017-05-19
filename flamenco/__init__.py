@@ -194,14 +194,16 @@ class FlamencoExtension(PillarExtension):
         return True
 
     def sidebar_links(self, project):
+        from pillar.api.utils import str2id
 
         if not self.is_flamenco_project(project):
             return ''
 
-        # Temporarily disabled until Flamenco is nicer to look at.
-        return ''
-        # return flask.render_template('flamenco/sidebar.html',
-        #                              project=project)
+        project_id = str2id(project['_id'])
+        if not self.auth.current_user_may(self.auth.Actions.VIEW, project_id):
+            return ''
+
+        return flask.render_template('flamenco/sidebar.html', project=project)
 
     def db(self, collection_name):
         """Returns a Flamenco-specific MongoDB collection."""
