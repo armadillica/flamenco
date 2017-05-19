@@ -235,6 +235,7 @@ script.
 			.attr('data-clipboard-text', json_data.token)
 			.off('click')
 		;
+		$('#click_token_text').remove();
 		$('<p>')
 			.attr('id', 'click_token_text')
 			.text(
