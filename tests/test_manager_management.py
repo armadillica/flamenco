@@ -206,3 +206,30 @@ class ManagerAccessTest(AbstractFlamencoTest):
             token = self.flamenco.manager_manager.auth_token(self.mngr_id)
 
         self.assertIsNone(token)
+
+    def test_gen_new_auth_token(self):
+        import datetime
+        from bson.tz_util import utc
+        from pillar.api import service
+
+        with self.app.test_request_context():
+            tokens_coll = self.app.db('tokens')
+            service_account_id = self.flamenco.manager_manager.find_service_account_id(self.mngr_id)
+
+            # Create a new more tokens
+            service.generate_auth_token(service_account_id)
+            service.generate_auth_token(service_account_id)
+            service.generate_auth_token(service_account_id)
+
+            all_tokens = tokens_coll.find({'user': service_account_id})
+            self.assertEqual(all_tokens.count(), 4)
+
+            token = self.flamenco.manager_manager.gen_new_auth_token(self.mngr_id)
+
+            # There can be only one, rest should have been deleted.
+            all_tokens = tokens_coll.find({'user': service_account_id})
+            self.assertEqual(all_tokens.count(), 1)
+
+        self.assertNotEqual(token.token, self.mngr_token)
+        self.assertTrue(token.token.startswith('SRV'))
+        self.assertTrue(token.expire_time > datetime.datetime.now(tz=utc))

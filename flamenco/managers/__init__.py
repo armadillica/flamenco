@@ -324,6 +324,32 @@ class ManagerManager(object):
             expire_time=token['expire_time'],
         )
 
+    def gen_new_auth_token(self, manager_id: bson.ObjectId) -> typing.Optional[AuthTokenInfo]:
+        """Generates a new authentication token for the given Manager.
+
+        Deletes all pre-existing authentication tokens of the Manager.
+        """
+
+        from pillar.api.utils.authentication import current_user_id
+        from pillar.api import service
+        import pymongo.results
+
+        self._log.info('Generating new authentication token for Manager %s on behalf of user %s',
+                       manager_id, current_user_id())
+
+        service_account_id = self.find_service_account_id(manager_id)
+
+        tokens_coll = current_app.db('tokens')
+        result: pymongo.results.DeleteResult = tokens_coll.delete_many({'user': service_account_id})
+        self._log.debug('Deleted %i authentication tokens of Manager %s',
+                        result.deleted_count, manager_id)
+
+        token = service.generate_auth_token(service_account_id)
+        return AuthTokenInfo(
+            token=token['token'],
+            expire_time=token['expire_time'],
+        )
+
 
 def setup_app(app):
     from . import eve_hooks, api, patch

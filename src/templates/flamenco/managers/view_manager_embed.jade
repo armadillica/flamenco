@@ -106,10 +106,12 @@
 	p
 		i.pi-lock
 		a#show_auth_token(href='javascript:void(0);')
+			// When changing the button text, also update _displayAuthToken().
 			| click to show authentication token
 
-	button.btn.btn-block(onclick="generateNewAuthToken()")
+	button.btn.btn-block#gen-auth-token(onclick="generateNewAuthToken()")
 		i.pi-link
+		// When changing the button text, also update generateNewAuthToken().
 		| Generate new token
 
 | {% endif %}
@@ -214,6 +216,37 @@ script.
 	}
 
 	var auth_token_link = $('#show_auth_token');
+	function _displayAuthToken(json_data) {
+		function _hideAuthToken() {
+			auth_token_link
+				.text('click to show authentication token')
+				.removeClass('copy-to-clipboard')
+				.removeAttr('title')
+				.removeAttr('data-clipboard-text')
+				.click(showAuthToken)
+			;
+			$('#click_token_text').remove();
+		}
+
+		auth_token_link
+			.text(json_data.token)
+			.addClass('copy-to-clipboard')
+			.attr('title', 'Click to copy to clipboard')
+			.attr('data-clipboard-text', json_data.token)
+			.off('click')
+		;
+		$('<p>')
+			.attr('id', 'click_token_text')
+			.text(
+				'Click the token to copy to your clipboard, ' +
+				'then paste it into your flamenco-manager.yml file.')
+			.addClass('hint')
+			.insertAfter(auth_token_link.parent())
+		;
+		createClipboard();
+		window.setTimeout(_hideAuthToken, 20000);
+	}
+
 	function showAuthToken() {
 		$('.action-result-panel').html('');
 
@@ -221,22 +254,7 @@ script.
 			'{{ url_for("flamenco.managers.manager_auth_token", manager_id=manager._id) }}',
 			{csrf: '{{ csrf }}'}
 		)
-		.done(function(data) {
-			console.log(data);
-			auth_token_link
-				.text(data.token)
-				.addClass('copy-to-clipboard')
-				.attr('title', 'Click to copy to clipboard')
-				.attr('data-clipboard-text', data.token)
-				.off('click')
-			;
-			$('<p>')
-				.text('Click the token to copy to your clipboard')
-				.addClass('hint')
-				.insertAfter(auth_token_link.parent())
-			;
-			createClipboard();
-		})
+		.done(_displayAuthToken)
 		.fail(function(err) {
 			var $p = xhrErrorResponseElement(err, 'Error fetching auth token: ');
 			$('.action-result-panel').html($p);
@@ -244,6 +262,42 @@ script.
 		;
 	}
 	auth_token_link.click(showAuthToken);
+
+	function generateNewAuthToken() {
+		$('.action-result-panel').html('');
+		var $btn = $('#gen-auth-token');
+
+		function restoreButtonText() {
+			window.setTimeout(function() {
+				$btn.text('Generate new token');
+			}, 3000);
+		}
+
+		if (!confirm('Are you sure you want to generate a new authentication token? ' +
+				'This will invalidate any previously existing token.')) {
+			$btn.text('Cancelled');
+			restoreButtonText();
+			return;
+		}
+
+		$btn.attr('disabled', 'disabled').text('Generating');
+
+		$.post(
+			'{{ url_for("flamenco.managers.generate_auth_token", manager_id=manager._id) }}',
+			{csrf: '{{ csrf }}'}
+		)
+		.done(function(data) {
+			$btn.removeAttr('disabled').text('Token generated');
+			_displayAuthToken(data);
+			restoreButtonText();
+		})
+		.fail(function(err) {
+			var $p = xhrErrorResponseElement(err, 'Error generating auth token: ');
+			$('.action-result-panel').html($p);
+			restoreButtonText();
+		})
+		;
+	}
 
 
 | {% endblock %}

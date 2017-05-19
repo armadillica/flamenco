@@ -128,3 +128,32 @@ def manager_auth_token(manager_id):
         raise wz_exceptions.NotFound()
 
     return jsonify(attr.asdict(auth_token_info))
+
+
+@blueprint.route('/<manager_id>/generate-auth-token', methods=['POST'])
+@authorization.require_login(require_roles=flamenco.auth.ROLES_REQUIRED_TO_USE_FLAMENCO)
+def generate_auth_token(manager_id):
+    """Revokes the Manager's existing authentication tokens and generates a new one.
+
+    Only allowed by owners of the Manager.
+    """
+
+    manager_oid = str2id(manager_id)
+
+    csrf = request.form.get('csrf', '')
+    if not flask_wtf.csrf.validate_csrf(csrf):
+        log.warning('User %s tried to generate authentication token for Manager %s without '
+                    'valid CSRF token!', current_user_id(), manager_oid)
+        raise wz_exceptions.PreconditionFailed()
+
+    if not current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_oid):
+        log.warning('User %s wants to generate authentication token of manager %s, '
+                    'but user is not owner of that Manager. Request denied.',
+                    current_user_id(), manager_oid)
+        raise wz_exceptions.Forbidden()
+
+    auth_token_info = current_flamenco.manager_manager.gen_new_auth_token(manager_oid)
+    if not auth_token_info:
+        raise wz_exceptions.NotFound()
+
+    return jsonify(attr.asdict(auth_token_info))
