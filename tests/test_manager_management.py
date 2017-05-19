@@ -173,3 +173,36 @@ class ManagerAccessTest(AbstractFlamencoTest):
         with self.app.test_request_context():
             mngr_coll = current_flamenco.db('managers')
             return mngr_coll.find_one(mngr_id)
+
+    def test_auth_token__one_token(self):
+        import datetime
+        from bson.tz_util import utc
+
+        with self.app.test_request_context():
+            token = self.flamenco.manager_manager.auth_token(self.mngr_id)
+
+        self.assertEqual(token.token, self.mngr_token)
+        self.assertTrue(token.expire_time > datetime.datetime.now(tz=utc))
+
+    def test_auth_token__two_tokens(self):
+        from pillar.api import service
+
+        with self.app.test_request_context():
+            service_account_id = self.flamenco.manager_manager.find_service_account_id(self.mngr_id)
+            service.generate_auth_token(service_account_id)
+
+            token = self.flamenco.manager_manager.auth_token(self.mngr_id)
+
+        # Should find the first one.
+        self.assertEqual(token.token, self.mngr_token)
+
+    def test_auth_token__zero_tokens(self):
+        with self.app.test_request_context():
+            tokens_coll = self.app.db('tokens')
+            service_account_id = self.flamenco.manager_manager.find_service_account_id(self.mngr_id)
+            result = tokens_coll.delete_many({'user': service_account_id})
+            self.assertEqual(result.deleted_count, 1)
+
+            token = self.flamenco.manager_manager.auth_token(self.mngr_id)
+
+        self.assertIsNone(token)

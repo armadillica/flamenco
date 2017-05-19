@@ -8,6 +8,7 @@ import attr
 import bson
 
 from flask import current_app
+import werkzeug.exceptions as wz_exceptions
 
 from pillar import attrs_extra
 
@@ -288,9 +289,7 @@ class ManagerManager(object):
             return False
         return True
 
-    def auth_token(self, manager_id: bson.ObjectId) -> typing.Optional[AuthTokenInfo]:
-        """Returns the authentication token info of the given Manager."""
-
+    def find_service_account_id(self, manager_id: bson.ObjectId) -> bson.ObjectId:
         _, manager = self._get_manager(mngr_doc_id=manager_id,
                                        projection={'service_account': 1})
         users_coll = current_app.db('users')
@@ -300,7 +299,13 @@ class ManagerManager(object):
         if not service_account:
             self._log.error('Unable to find service account %s for manager %s',
                             service_account_id, manager_id)
-            return None
+            raise wz_exceptions.NotFound()
+        return service_account_id
+
+    def auth_token(self, manager_id: bson.ObjectId) -> typing.Optional[AuthTokenInfo]:
+        """Returns the authentication token info of the given Manager."""
+
+        service_account_id = self.find_service_account_id(manager_id)
 
         tokens_coll = current_app.db('tokens')
         tokens = tokens_coll.find({'user': service_account_id})
