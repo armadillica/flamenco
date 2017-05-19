@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify
 import werkzeug.exceptions as wz_exceptions
 
 from pillar.api.utils.authentication import current_user_id
-from pillar.api.utils import authorization
+from pillar.api.utils import authorization, str2id
 from pillar.api import patch_handler
 from pillar import current_app
 
@@ -27,7 +27,6 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
         and member of the project (if assigning).
         """
 
-        from pillar.api.utils import str2id
         from pillar.api.projects.utils import user_rights_in_project
 
         from flamenco import current_flamenco
@@ -122,6 +121,38 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
             raise wz_exceptions.BadRequest()
 
         return '', 204
+
+    @authorization.require_login(require_roles={'flamenco-admin', 'flamenco-user'})
+    def patch_change_ownership(self, manager_id: bson.ObjectId, patch: dict):
+        """Shares or un-shares the Manager with a user."""
+
+        man_man = current_flamenco.manager_manager
+        if not man_man.user_is_owner(mngr_doc_id=manager_id):
+            log.warning('User %s uses PATCH to (un)share manager %s, '
+                        'but user is not owner of that Manager. Request denied.',
+                        current_user_id(), manager_id)
+            raise wz_exceptions.Forbidden()
+
+        action = patch.get('action', '')
+        try:
+            action = man_man.ShareAction[action]
+        except KeyError:
+            raise wz_exceptions.BadRequest(f'Unknown action {action!r}')
+
+        subject_uid = str2id(patch.get('user', ''))
+        if subject_uid == current_user_id():
+            log.warning('%s tries to %s Manager %s with itself',
+                        current_user_id(), action, manager_id)
+            raise wz_exceptions.BadRequest(f'Cannot share/unshare a Manager with yourself')
+
+        if action == man_man.ShareAction.share and \
+                not current_flamenco.auth.user_is_flamenco_user(subject_uid):
+            log.warning('%s Manager %s on behalf of user %s, but subject user %s '
+                        'is not Flamenco user', action, manager_id, current_user_id(),
+                        subject_uid)
+            raise wz_exceptions.Forbidden(f'User {subject_uid} is not allowed to use Flamenco')
+
+        man_man.share_unshare_manager(manager_id, action, subject_uid)
 
 
 def setup_app(app):

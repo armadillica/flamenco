@@ -1,22 +1,30 @@
 """Manager management."""
 
 import datetime
+import enum
 import logging
 import typing
 
 import attr
 import bson
 
-from flask import current_app
 import werkzeug.exceptions as wz_exceptions
 
-from pillar import attrs_extra
+from pillar import attrs_extra, current_app
+from pillar.api.utils.authentication import current_user_id
+
+from flamenco import current_flamenco
 
 
 @attr.s
 class AuthTokenInfo:
     token = attr.ib(validator=attr.validators.instance_of(str))
     expire_time = attr.ib(validator=attr.validators.instance_of(datetime.datetime))
+
+
+class ShareAction(enum.Enum):
+    share = 'share'
+    unshare = 'unshare'
 
 
 @attr.s
@@ -28,6 +36,7 @@ class ManagerManager(object):
     """
 
     _log = attrs_extra.log('%s.ManagerManager' % __name__)
+    ShareAction = ShareAction  # so you can use current_flamenco.manager_manager.ShareAction
 
     def create_new_manager(self, name: str, description: str, owner_id: bson.ObjectId) \
             -> typing.Tuple[dict, dict, dict]:
@@ -119,9 +128,6 @@ class ManagerManager(object):
         assert (mngr_doc_id is None) != (mngr_doc is None), \
             'Either one or the other parameter must be given.'
 
-        from pillar.api.utils.authentication import current_user_id
-        from flamenco import current_flamenco
-
         if mngr_doc is None:
             mngr_coll = current_flamenco.db('managers')
             mngr_doc = mngr_coll.find_one({'_id': mngr_doc_id}, projection)
@@ -161,8 +167,6 @@ class ManagerManager(object):
         """
         Returns True iff the current user is the Flamenco manager service account for this doc.
         """
-
-        from pillar.api.utils.authentication import current_user_id
 
         if not self.user_is_manager():
             self._log.debug('user_manages(...): user %s is not a Flamenco manager service account',
@@ -225,7 +229,6 @@ class ManagerManager(object):
         from collections import defaultdict
         from pymongo.results import UpdateResult
         from flamenco import current_flamenco
-        from pillar.api.utils.authentication import current_user_id
         from pillar.api.projects import utils as project_utils
 
         if action not in {'assign', 'remove'}:
@@ -330,7 +333,6 @@ class ManagerManager(object):
         Deletes all pre-existing authentication tokens of the Manager.
         """
 
-        from pillar.api.utils.authentication import current_user_id
         from pillar.api import service
         import pymongo.results
 
@@ -349,6 +351,23 @@ class ManagerManager(object):
             token=token['token'],
             expire_time=token['expire_time'],
         )
+
+    def share_unshare_manager(self, manager_id: bson.ObjectId, share_action: ShareAction,
+                              subject_uid: bson.ObjectId):
+        self._log.info('%s Manager %s on behalf of user %s, subject user is %s',
+                       share_action, manager_id, current_user_id(), subject_uid)
+
+        from pillar.api import users
+
+        _, manager = self._get_manager(mngr_doc_id=manager_id)
+        owner_gid = manager['owner']
+
+        group_action = {
+            ShareAction.share: '$addToSet',
+            ShareAction.unshare: '$pull',
+        }[share_action]
+
+        users.user_group_action(subject_uid, owner_gid, group_action)
 
 
 def setup_app(app):

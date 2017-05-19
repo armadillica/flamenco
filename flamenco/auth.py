@@ -57,6 +57,26 @@ class Auth(object):
 
         return user_matches_roles({'service', 'flamenco_manager'}, require_all=True)
 
+    def user_is_flamenco_user(self, user_id: bson.ObjectId) -> bool:
+        """Returns True iff the user has Flamenco User role."""
+
+        from pillar import current_app
+
+        assert isinstance(user_id, bson.ObjectId)
+
+        # TODO: move role checking code to Pillar.
+        users_coll = current_app.db('users')
+        user = users_coll.find_one({'_id': user_id}, {'roles': 1})
+        if not user:
+            self._log.debug('user_is_flamenco_user: User %s not found', user_id)
+            return False
+
+        user_roles = set(user.get('roles', []))
+        require_roles = set(ROLES_REQUIRED_TO_USE_FLAMENCO)
+
+        intersection = require_roles.intersection(user_roles)
+        return bool(intersection)
+
     def current_user_may(self, action: Actions, project_id: bson.ObjectId) -> bool:
         """Returns True iff the user is authorised to use/view Flamenco on the given project.
 
