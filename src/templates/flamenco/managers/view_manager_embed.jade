@@ -32,7 +32,6 @@
 		| {% endif %}
 		| {% endif %}
 
-.flamenco-box.manager
 	h4 Properties
 	.table.item-properties
 		.table-body
@@ -51,22 +50,22 @@
 
 	| {% if manager.variables %}
 	h4 Variables
+	| {% for var_key, var_values in manager.variables.to_dict().items()  %}
 	.table.item-properties
 		.table-body(title='Unable to edit, set by Manager')
-			| {% for var_key, var_values in manager.variables.to_dict().items()  %}
+			| {% for v in var_values %}
 			.table-row.properties-variables
-				.table-cell
-					| {{ var_key }}
-				.table-cell
-					pre.
-						{{ var_values | pprint}}
+				.table-cell.variable-name {% if loop.first %}{{ var_key }}{% endif %}
+				.table-cell.variable-key {{ v }}
+				.table-cell.variable-value {{ var_values[v] }}
 			| {% endfor %}
+	| {% endfor %}
 	| {% endif %}
-	.action-result-panel
 
 .flamenco-box.manager#manager-projects-list
 	h4 Projects linked to this Manager
 
+	| {% if linked_projects._items %}
 	.table.item-properties
 		.table-body
 			| {% for project in linked_projects._items %}
@@ -77,11 +76,15 @@
 					a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}")
 						| {{ project.name }}
 				.table-cell
-					a(href='javascript:unlinkProject("{{ project._id }}")')
+					a(href='javascript:unlinkProject("{{ project._id }}")', title="Unlink project")
 						i.pi-trash
 			| {% endfor %}
+	| {% else %}
+	.projects-list-empty No projects linked yet.
+	| {% endif %}
 
-	.pull-right
+	| {% if can_edit %}
+	#item-action-panel
 		| {% if available_projects %}
 		select#link_project_select
 			| {% for project in available_projects %}
@@ -97,7 +100,9 @@
 		button.btn.btn-default(disabled)
 			| You have no projects set up for Flamenco.
 		| {% endif %}
-	.clearfix
+	| {% endif %}
+
+	.action-result-panel
 
 | {% if can_edit %}
 .flamenco-box.manager#manager-projects-list
@@ -211,7 +216,7 @@ script.
 			console.log('Error patching: ', err);
 		})
 		;
-		
+
 		return promise;
 	}
 
