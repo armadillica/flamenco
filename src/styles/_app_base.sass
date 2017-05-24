@@ -61,6 +61,10 @@ nav.sidebar
 	+button($color-success, 3px, false)
 
 /* Flamenco specific table tweaks */
+#col_main
+	&.manager-index
+		width: 33%
+
 #col_main-overlay
 	position: absolute
 	z-index: 2
@@ -184,6 +188,7 @@ nav.sidebar
 					margin-left: 3px
 					background-color: $color-text-dark-secondary // fallback, gets overriden by individual status
 
+
 .item-list-header
 	a
 		color: $color-text-dark
@@ -192,68 +197,17 @@ nav.sidebar
 		color: $color-text-dark-secondary
 		margin: 0 10px
 
-/* General style for activities in all places */
-.d-activity
-	font-size: .9em
-
-	$activity-highlight-color: #00cc9f
-	ul
-		cursor: default
-		padding: 5px
-		color: $color-text-dark-primary
-		list-style: none
-
-		li
-			padding: 0 10px 7px 10px
-			position: relative
-
-			span.date
-				color: darken($activity-highlight-color, 5%)
-
-			/* Left Dot */
-			&:after
-				content: ''
-				display: block
-				position: absolute
-				top: 6px
-				left: -3px
-				width: 5px
-				height: 5px
-				border-radius: 50%
-				background-color: $color-background-light
-				border: thin solid $activity-highlight-color
-				transition: all 250ms ease-in-out
-
-			/* Left Line */
-			&:before
-				content: ''
-				display: block
-				position: absolute
-				top: 10px
-				left: -1px
-				width: 1px
-				height: 100%
-				background-color: $activity-highlight-color
-				transition: all 250ms ease-in-out
-
-			&:last-child
-				&:before
-					background-color: transparent
-
-		span.actor
-			padding: 0 5px
-			color: $color-text-dark
-
-		img.actor-avatar
-			width: 16px
-			height: 16px
-			border-radius: 50%
-			margin-right: 5px
-			position: relative
-			top: -2px
-
+.progress-bar
+	@include status-color-property(background-color, '', 'dark')
 
 .flamenco-box
+	.table-body
+		.table-row
+			&.properties-variables
+				.table-cell
+					&.variable-key
+						white-space: nowrap
+
 	.item-id
 		padding: 8px
 		margin-left: 10px
@@ -267,6 +221,9 @@ nav.sidebar
 		&:hover
 			color: $color-text-dark-primary
 			border-color: $color-text-dark-primary
+
+	.projects-list-empty
+		color: $color-text-dark-secondary
 
 
 #item-details
@@ -298,13 +255,15 @@ nav.sidebar
 		width: 100%
 
 #item-action-panel
-	padding: 0 10px 10px 10px
+	padding: 0 10px
+	margin: 10px auto
 	width: 100%
 	display: flex
 	justify-content: flex-end
 
 	.btn
 		font-size: .8em
+		margin-left: 10px
 
 	.item-log-load
 		margin-right: auto
