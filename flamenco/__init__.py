@@ -1,16 +1,21 @@
 import datetime
 import logging
 import os.path
+import typing
 
 import bson
 import flask
 from werkzeug.local import LocalProxy
+
+import pillarsdk
 from pillar.extension import PillarExtension
 
 EXTENSION_NAME = 'flamenco'
 
 
 class FlamencoExtension(PillarExtension):
+    has_project_settings = True
+
     def __init__(self):
         self._log = logging.getLogger('%s.FlamencoExtension' % __name__)
 
@@ -204,6 +209,35 @@ class FlamencoExtension(PillarExtension):
             return ''
 
         return flask.render_template('flamenco/sidebar.html', project=project)
+
+    def project_settings(self, project: pillarsdk.Project) -> flask.Response:
+        """Renders the project settings page for this extension.
+
+        :returns: a Flask HTTP response, or None if there is no project settings page.
+        """
+        import werkzeug.exceptions as wz_exceptions
+
+        from pillar.api.utils import str2id
+        from pillar.api.utils.authentication import current_user_id
+        from pillar.web.system_util import pillar_api
+        from .managers.sdk import Manager
+
+        # Based on the project state, we can render a different template.
+        if not self.is_flamenco_project(project):
+            return flask.render_template('flamenco/project_settings/offer_setup.html',
+                                         project=project)
+
+        project_id = str2id(project['_id'])
+        if not self.auth.current_user_may(self.auth.Actions.USE, project_id):
+            self._log.warning('User %s can edit project %s but is not allowed to use Flamenco.',
+                              current_user_id(), project_id)
+            raise wz_exceptions.Forbidden()
+
+        api = pillar_api()
+        managers = Manager.all(api=api)
+        return flask.render_template('flamenco/project_settings/settings.html',
+                                     project=project,
+                                     managers=managers)
 
     def db(self, collection_name):
         """Returns a Flamenco-specific MongoDB collection."""
