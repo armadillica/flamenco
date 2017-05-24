@@ -95,9 +95,18 @@
 			padding: 10px
 
 			.progress
-				margin-bottom: 0
+				margin-bottom: 10px
+				height: 4px
 			h4
 				margin-top: 0
+
+		.d-stats-card-legend
+			display: flex
+			justify-content: space-between
+			font-size: .95em
+
+			.d-stats-card-item
+				@include status-color-property(color, '', 'dark')
 
 	.d-activity
 		margin: 0 20px 15px

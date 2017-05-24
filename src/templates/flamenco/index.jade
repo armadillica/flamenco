@@ -6,7 +6,7 @@
 #col_main
 	.dashboard
 		.d-stats
-			h3
+			h4
 				i.pi-flamenco
 				|  Flamenco
 
@@ -24,9 +24,15 @@
 						title="{{ status | undertitle }} ({{percentage}}%)",
 						role="progressbar",
 						style="width:{{percentage}}%")
-						| {{ status | undertitle }}
+					| {% endfor %}
+
+				.d-stats-card-legend
+					| {% for status, percentage in summary.percentages() %}
+					label.d-stats-card-item(
+						class="status-{{status}}",
+						title="{{ status | undertitle }} ({{percentage}}%)")
+						| {{percentage}}% {{ status | undertitle }}
 					| {% endfor %}
 			| {% endfor %}
 
-#col_right
 | {% endblock %}
