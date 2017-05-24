@@ -30,12 +30,16 @@ def index(manager_id: str = None):
         manager_id = managers['_items'][0]._id
 
     manager_limit_reached = managers['_meta']['total'] >= flamenco.auth.MAX_MANAGERS_PER_USER
+
+    # TODO Sybren: move this to a utility function + check on endpoint to create manager
     has_flamenco_role = user_matches_roles(flamenco.auth.ROLES_REQUIRED_TO_USE_FLAMENCO)
-    can_create_manager = has_flamenco_role and not manager_limit_reached
+    has_flamenco_view_role = user_matches_roles(flamenco.auth.ROLES_REQUIRED_TO_VIEW_FLAMENCO)
+    can_create_manager = has_flamenco_role and has_flamenco_view_role and not manager_limit_reached
 
     return render_template('flamenco/managers/index.html',
                            manager_limit_reached=manager_limit_reached,
                            has_flamenco_role=has_flamenco_role,
+                           has_flamenco_view_role=has_flamenco_view_role,
                            can_create_manager=can_create_manager,
                            max_managers=flamenco.auth.MAX_MANAGERS_PER_USER,
                            managers=managers,
