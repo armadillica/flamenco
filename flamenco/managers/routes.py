@@ -5,8 +5,10 @@ from flask import Blueprint, render_template, request, jsonify
 import flask_wtf.csrf
 import werkzeug.exceptions as wz_exceptions
 
+from pillarsdk import User
+
 import pillar.flask_extra
-from pillar.api.utils import authorization, str2id
+from pillar.api.utils import authorization, str2id, gravatar
 from pillar.web.system_util import pillar_api
 from pillar.api.utils.authentication import current_user_id
 from pillar.api.utils.authorization import user_matches_roles
@@ -69,6 +71,11 @@ def view_embed(manager_id: str):
                           for project in fetched._items
                           if project['_id'] not in linked_project_ids]
 
+    owners = User.all({ 'groups': {'$in': [manager['owner']]} }, api=api)
+
+    for owner in owners['_items']:
+        owner['avatar'] = gravatar(owner['email'])
+
     manager_oid = str2id(manager_id)
     can_edit = current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_oid)
 
@@ -79,6 +86,7 @@ def view_embed(manager_id: str):
                            can_edit=can_edit,
                            available_projects=available_projects,
                            linked_projects=linked_projects,
+                           owners=owners['_items'],
                            csrf=csrf)
 
 

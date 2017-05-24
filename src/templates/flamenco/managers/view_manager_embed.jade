@@ -102,22 +102,81 @@
 		| {% endif %}
 	| {% endif %}
 
-	.action-result-panel
+
+// USER SHARING
+| {% if can_edit %}
+.flamenco-box.manager#manager-projects-list
+	h4 Users linked to this Manager
+
+	#item-action-panel
+		.row
+			.col-md-6
+				.sharing-users-search
+					.form-group
+						input#user-select.form-control(
+							name='contacts',
+							type='text',
+							placeholder='Add team members by name')
+
+				ul.sharing-users-list
+					| {% for user in owners %}
+					li.sharing-users-item(
+						user-id="{{ user['_id'] }}",
+						class="{% if current_user.objectid == user['_id'] %}self{% endif %}")
+						.sharing-users-avatar
+							img(src="{{ user['avatar'] }}")
+						.sharing-users-details
+							span.sharing-users-name
+								| {{user['full_name']}}
+								| {% if current_user.objectid == user['_id'] %}
+								small (You)
+								| {% else %}
+								small (Owner)
+								| {% endif %}
+							span.sharing-users-extra {{user['username']}}
+						.sharing-users-action
+							| {# Only allow deletion if we are: admin, project owners, or current_user in the team #}
+							| {# TODO: Only allow user removal if owners > 1 #}
+
+							| {% if current_user.objectid == user['_id'] %}
+							button.user-remove(title="Leave this project") Leave
+							| {% else %}
+							button.user-remove(title="Remove this user from your project")
+								i.pi-trash
+							| {% endif %}
+
+					| {% endfor %}
+
+			.col-md-6
+				.sharing-users-info
+					h4 What can team members do?
+					p.
+						Team members are able to upload new content to the project,
+						as well as view, edit, delete, and comment on the content
+						previously created.
+
+
+| {% endif %}
+
+.action-result-panel
 
 | {% if can_edit %}
 .flamenco-box.manager#manager-projects-list
-	h4 Authentication token
+	h4 Authentication Token
 
-	p
-		i.pi-lock
-		a#show_auth_token(href='javascript:void(0);')
-			// When changing the button text, also update _displayAuthToken().
-			| click to show authentication token
+	.row
+		.col-md-8
+			p
+				i.pi-lock
+				a#show_auth_token(href='javascript:void(0);')
+					// When changing the button text, also update _displayAuthToken().
+					| click to show authentication token
 
-	button.btn.btn-block#gen-auth-token(onclick="generateNewAuthToken()")
-		i.pi-link
-		// When changing the button text, also update generateNewAuthToken().
-		| Generate new token
+		.col-md-4
+			button.btn.btn-block#gen-auth-token(onclick="generateNewAuthToken()")
+				i.pi-link
+				// When changing the button text, also update generateNewAuthToken().
+				| Generate new token
 
 | {% endif %}
 
