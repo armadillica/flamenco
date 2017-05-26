@@ -323,19 +323,21 @@ script.
 	$(document).ready(function() {
 		$('body').on('click', '.user-remove', function(e) {
 			var userId = $(this).parent().parent().attr('user-id');
-			removeUser(userId);
+			removeUser('{{ manager["_id"] }}', userId);
 		});
 
-		function removeUser(userId){
-			$.post("/",
-							{user_id: userId, action: 'remove'})
-				.done(function (data) {
-					$("ul.sharing-users-list").find("[user-id='" + userId + "']").remove();
-					statusBarSet('success', 'User removed from this project', 'pi-trash');
-				})
-				.fail(function (data){
-					statusBarSet('error', 'Could not remove user (' + data._status + ')', 'pi-warning');
-				});
+		function removeUser(managerId, userId){
+			patchManager({
+				op: 'change-ownership',
+				action: 'unshare',
+				manager_id: managerId,
+				user: userId
+			}).done(function() {
+				$("ul.sharing-users-list").find("[user-id='" + userId + "']").remove();
+				statusBarSet('success', 'User removed from this project', 'pi-trash');
+			}).fail(function (data) {
+				statusBarSet('error', 'Could not remove user (' + data._status + ')', 'pi-warning');
+			});
 		}
 	});
 

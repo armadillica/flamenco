@@ -12,7 +12,9 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
         from pillar.api.utils.authentication import force_cli_user
 
-        mngr_doc, account, token = self.create_manager_service_account()
+        owner_email = "jemoeder"
+        self.mngr_owner = self.create_user(user_id=bson.ObjectId(), email=owner_email)
+        mngr_doc, account, token = self.create_manager_service_account(owner_email)
         self.mngr_id = mngr_doc['_id']
         self.mngr_doc = mngr_doc
         self.mngr_token = token['token']
@@ -365,3 +367,26 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
         user = self.get('/api/users/me', auth_token='owner-token').json()
         self.assertIn(str(owner_gid), user['groups'])
+
+    def test_owning_users(self):
+        owner_gid = self.mngr_doc['owner']
+        self.create_user(24 * 'a', roles={'subscriber', 'flamenco-user'}, groups=[owner_gid])
+        self.create_user(24 * 'b', roles={'subscriber', 'flamenco-user'})
+        self.create_user(24 * 'c', roles=[], groups=[owner_gid])
+
+        with self.app.test_request_context():
+            owners = self.flamenco.manager_manager.owning_users(owner_gid)
+
+        owner_ids = {o['_id'] for o in owners}
+
+        self.assertEquals(
+            owner_ids, {self.mngr_owner, bson.ObjectId(24 * 'a'), bson.ObjectId(24 * 'c')})
+
+        # Try with a non existing group
+        faux_owner_gid = bson.ObjectId()
+
+        with self.app.test_request_context():
+            owners = self.flamenco.manager_manager.owning_users(faux_owner_gid)
+
+        owner_ids = {o['_id'] for o in owners}
+        self.assertEquals(owner_ids, set())

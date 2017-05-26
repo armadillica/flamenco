@@ -369,6 +369,13 @@ class ManagerManager(object):
 
         users.user_group_action(subject_uid, owner_gid, group_action)
 
+    def owning_users(self, owner_gid: bson.ObjectId) -> typing.List[dict]:
+        assert isinstance(owner_gid, bson.ObjectId)
+
+        users_coll = current_app.db('users')
+        users = users_coll.find({'groups': owner_gid})
+        return list(users)
+
 
 def setup_app(app):
     from . import eve_hooks, api, patch

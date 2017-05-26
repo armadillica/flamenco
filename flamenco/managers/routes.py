@@ -71,10 +71,11 @@ def view_embed(manager_id: str):
                           for project in fetched._items
                           if project['_id'] not in linked_project_ids]
 
-    owners = User.all({'groups': manager['owner']}, api=api)
+    owner_gid = str2id(manager['owner'])
+    owners = current_flamenco.manager_manager.owning_users(owner_gid)
 
-    for owner in owners['_items']:
-        owner['avatar'] = gravatar(owner['email'])
+    for owner in owners:
+        owner['avatar'] = gravatar(owner.get('email'))
 
     manager_oid = str2id(manager_id)
     can_edit = current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_oid)
@@ -86,7 +87,7 @@ def view_embed(manager_id: str):
                            can_edit=can_edit,
                            available_projects=available_projects,
                            linked_projects=linked_projects,
-                           owners=owners['_items'],
+                           owners=owners,
                            csrf=csrf)
 
 
