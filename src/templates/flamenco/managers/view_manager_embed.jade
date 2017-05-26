@@ -119,26 +119,26 @@
 							placeholder='Add team members by name')
 
 				ul.sharing-users-list
-					| {% for user in owners %}
+					| {% for owner in owners %}
 					li.sharing-users-item(
-						user-id="{{ user['_id'] }}",
-						class="{% if current_user.objectid == user['_id'] %}self{% endif %}")
+						user-id="{{ owner['_id'] }}",
+						class="{% if current_user.objectid == owner['_id'] %}self{% endif %}")
 						.sharing-users-avatar
-							img(src="{{ user['avatar'] }}")
+							img(src="{{ owner['avatar'] }}")
 						.sharing-users-details
 							span.sharing-users-name
-								| {{user['full_name']}}
-								| {% if current_user.objectid == user['_id'] %}
+								| {{ owner['full_name'] }}
+								| {% if current_user.objectid == owner['_id'] %}
 								small (You)
 								| {% else %}
 								small (Owner)
 								| {% endif %}
-							span.sharing-users-extra {{user['username']}}
+							span.sharing-users-extra {{ owner['username'] }}
 						.sharing-users-action
 							| {# Only allow deletion if we are: admin, project owners, or current_user in the team #}
 							| {# TODO: Only allow user removal if owners > 1 #}
 
-							| {% if current_user.objectid == user['_id'] %}
+							| {% if current_user.objectid == owner['_id'] %}
 							button.user-remove(title="Leave this project") Leave
 							| {% else %}
 							button.user-remove(title="Remove this user from your project")
@@ -196,6 +196,151 @@
 	| {% endif %}
 
 | {% block footer_scripts %}
+
+| {% if can_edit %}
+script.
+	$(document).ready(function() {
+		var APPLICATION_ID = '{{config.ALGOLIA_USER}}'
+		var SEARCH_ONLY_API_KEY = '{{config.ALGOLIA_PUBLIC_KEY}}';
+		var INDEX_NAME = '{{config.ALGOLIA_INDEX_USERS}}';
+		var client = algoliasearch(APPLICATION_ID, SEARCH_ONLY_API_KEY);
+		var index = client.initIndex(INDEX_NAME);
+
+		$('#user-select').autocomplete({hint: false}, [
+			{
+				source: function (q, cb) {
+					index.search(q, {hitsPerPage: 5}, function (error, content) {
+						if (error) {
+							cb([]);
+							return;
+						}
+						cb(content.hits, content);
+					});
+				},
+				displayKey: 'full_name',
+				minLength: 2,
+				limit: 10,
+				templates: {
+					suggestion: function (hit) {
+						return hit._highlightResult.full_name.value + ' (' + hit._highlightResult.username.value + ')';
+					}
+				}
+			}
+		]).on('autocomplete:selected', function (event, hit, dataset) {
+
+			var lis = document.getElementsByClassName('sharing-users-item');
+			var has_match = false;
+
+			for (var i = 0; i < lis.length; ++i) {
+
+				// Check if the user already is in the list
+				if ($(lis[i]).attr('user-id') == hit.objectID){
+
+					$(lis[i]).addClass('active');
+					setTimeout(function(){ $('.sharing-users-item').removeClass('active');}, 350);
+					statusBarSet('info', 'User is already part of the project', 'pi-info');
+
+					has_match = false;
+					break;
+				} else {
+					has_match = true;
+					continue;
+				}
+			};
+
+			if (has_match){
+				addUser('{{ manager["_id"] }}', hit.objectID);
+			}
+
+		});
+
+
+		function addUser(managerId, userId){
+
+			if (!userId || userId.length == 0) {
+				statusBarSet('error', 'Please select a user from the list', 'pi-warning');
+				return;
+			}
+
+			patchManager({
+				op: 'change-ownership',
+				action: 'share',
+				manager_id: managerId,
+				user: userId
+			});
+			//- .done(function (data) {
+			//- 	console.log(data);
+
+			//- 	var $ul = $("ul.sharing-users-list");
+			//- 	var $li = $('<li>')
+			//- 		.addClass('sharing-users-item added')
+			//- 		.attr('user-id', data.id)
+			//- 		.appendTo($ul);
+			//- 	var $div = $('<div>')
+			//- 		.addClass('sharing-users-avatar')
+			//- 		.appendTo($li);
+			//- 	$('<img>')
+			//- 		.attr('src', data.avatar)
+			//- 		.attr('alt', 'Avatar')
+			//- 		.appendTo($div);
+
+			//- 	$div = $('<div>')
+			//- 		.addClass('sharing-users-details')
+			//- 		.appendTo($li);
+			//- 	$('<span>')
+			//- 		.addClass('sharing-users-name')
+			//- 		.text(data.full_name)
+			//- 		.appendTo($div);
+			//- 	$('<span>')
+			//- 		.addClass('sharing-users-extra')
+			//- 		.text(data.username)
+			//- 		.appendTo($div);
+
+			//- 	$div = $('<div>')
+			//- 		.addClass('sharing-users-action')
+			//- 		.appendTo($li);
+			//- 	var $button = $('<button>')
+			//- 		.addClass('user-remove')
+			//- 		.attr('title', 'Remove this user from your project')
+			//- 		.appendTo($div);
+			//- 	$('<i>').addClass('pi-trash').appendTo($button);
+
+			//- 	setTimeout(function(){ $('.sharing-users-item').removeClass('added');}, 350);
+			//- 	statusBarSet('success', 'User added to this project!', 'pi-grin');
+			//- })
+			//- .fail(function (jsxhr){
+			//- 	data = jsxhr.responseJSON;
+			//- 	statusBarSet('error', 'Could not add user (' + data.message + ')', 'pi-warning');
+
+			//- 	$('.action-result-panel').text(data.message);
+			//- });
+		};
+
+	});
+
+| {% endif %}
+script.
+	$(document).ready(function() {
+		$('body').on('click', '.user-remove', function(e) {
+			var userId = $(this).parent().parent().attr('user-id');
+			removeUser(userId);
+		});
+
+		function removeUser(userId){
+			$.post("/",
+							{user_id: userId, action: 'remove'})
+				.done(function (data) {
+					$("ul.sharing-users-list").find("[user-id='" + userId + "']").remove();
+					statusBarSet('success', 'User removed from this project', 'pi-trash');
+				})
+				.fail(function (data){
+					statusBarSet('error', 'Could not remove user (' + data._status + ')', 'pi-warning');
+				});
+		}
+	});
+
+
+
 script.
 	var clipboard = null;
 	function createClipboard() {

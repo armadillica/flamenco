@@ -71,7 +71,7 @@ def view_embed(manager_id: str):
                           for project in fetched._items
                           if project['_id'] not in linked_project_ids]
 
-    owners = User.all({ 'groups': {'$in': [manager['owner']]} }, api=api)
+    owners = User.all({'groups': manager['owner']}, api=api)
 
     for owner in owners['_items']:
         owner['avatar'] = gravatar(owner['email'])
