@@ -69,9 +69,7 @@ def setup_for_flamenco(project_url, replace=False):
     # Set default extension properties. Be careful not to overwrite any
     # properties that are already there.
     eprops = project.setdefault('extension_props', {})
-    eprops.setdefault(EXTENSION_NAME, {
-        'managers': [],  # List of Flamenco manager IDs that have access to this project.
-    })
+    eprops.setdefault(EXTENSION_NAME, {})
 
     _update_project(project)
 
