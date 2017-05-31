@@ -1,0 +1,6 @@
+| {% extends 'flamenco/project_settings/flamenco_layout.html'  %}
+
+| {% block flamenco_container %}
+p Heyyyyyyyyyyyyyyyy this is a Flamenco project.
+p You have {{ managers._meta.total }} Manager{{ managers._meta.total|pluralize }} available to you.
+| {% endblock flamenco_container %}

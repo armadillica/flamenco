@@ -57,6 +57,13 @@ class Auth(object):
 
         return user_matches_roles({'service', 'flamenco_manager'}, require_all=True)
 
+    def current_user_is_flamenco_user(self) -> bool:
+        """Returns True iff the current user has Flamenco User role."""
+
+        from pillar.api.utils.authentication import current_user_id
+
+        return self.user_is_flamenco_user(current_user_id())
+
     def user_is_flamenco_user(self, user_id: bson.ObjectId) -> bool:
         """Returns True iff the user has Flamenco User role."""
 

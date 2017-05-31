@@ -210,11 +210,16 @@ class FlamencoExtension(PillarExtension):
 
         return flask.render_template('flamenco/sidebar.html', project=project)
 
-    def project_settings(self, project: pillarsdk.Project) -> flask.Response:
+    def project_settings(self, project: pillarsdk.Project, **template_args: dict) -> flask.Response:
         """Renders the project settings page for this extension.
 
-        :returns: a Flask HTTP response, or None if there is no project settings page.
+        Set YourExtension.has_project_settings = True and Pillar will call this function.
+
+        :param project: the project for which to render the settings.
+        :param template_args: additional template arguments.
+        :returns: a Flask HTTP response
         """
+
         import werkzeug.exceptions as wz_exceptions
 
         from pillar.api.utils import str2id
@@ -225,19 +230,18 @@ class FlamencoExtension(PillarExtension):
         # Based on the project state, we can render a different template.
         if not self.is_flamenco_project(project):
             return flask.render_template('flamenco/project_settings/offer_setup.html',
-                                         project=project)
+                                         project=project, **template_args)
 
         project_id = str2id(project['_id'])
-        if not self.auth.current_user_may(self.auth.Actions.USE, project_id):
-            self._log.warning('User %s can edit project %s but is not allowed to use Flamenco.',
-                              current_user_id(), project_id)
-            raise wz_exceptions.Forbidden()
+        may_use = self.auth.current_user_may(self.auth.Actions.USE, project_id)
 
         api = pillar_api()
         managers = Manager.all(api=api)
         return flask.render_template('flamenco/project_settings/settings.html',
                                      project=project,
-                                     managers=managers)
+                                     managers=managers,
+                                     may_use_flamenco=may_use,
+                                     **template_args)
 
     def db(self, collection_name):
         """Returns a Flamenco-specific MongoDB collection."""

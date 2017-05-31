@@ -3,9 +3,12 @@ import logging
 
 import bson
 from flask import Blueprint, render_template, redirect, url_for
+from flask_login import login_required, current_user
+import werkzeug.exceptions as wz_exceptions
 
 from pillar.web.utils import attach_project_pictures
 from pillar.web.system_util import pillar_api
+from pillar.web.projects.routes import project_view
 import pillarsdk
 
 from flamenco import current_flamenco
@@ -139,3 +142,27 @@ def project_index(project):
 @flamenco_project_view(extension_props=False)
 def help(project):
     return render_template('flamenco/help.html', statuses=[])
+
+
+@blueprint.route('/<project_url>/setup-for-flamenco', methods=['POST'])
+@login_required
+@project_view()
+def setup_for_flamenco(project: pillarsdk.Project):
+    import flamenco.setup
+
+    project_id = project._id
+
+    if not project.has_method('PUT'):
+        log.warning('User %s tries to set up project %s for Flamenco, but has no PUT rights.',
+                    current_user, project_id)
+        raise wz_exceptions.Forbidden()
+
+    if not current_flamenco.auth.current_user_is_flamenco_user():
+        log.warning('User %s tries to set up project %s for Flamenco, but is not flamenco-user.',
+                    current_user, project_id)
+        raise wz_exceptions.Forbidden()
+
+    log.info('User %s sets up project %s for Flamenco', current_user, project_id)
+    flamenco.setup.setup_for_flamenco(project.url)
+
+    return '', 204
