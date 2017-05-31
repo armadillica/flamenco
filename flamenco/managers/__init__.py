@@ -222,7 +222,7 @@ class ManagerManager(object):
 
         Does NOT check whether the project actually exists or not.
 
-        :param action: either 'assign' or 'unassign'
+        :param action: either 'assign' or 'remove'
         :returns: True iff the action was successful.
         """
 
