@@ -14,7 +14,6 @@ import pillarsdk
 from flamenco import current_flamenco
 import flamenco.auth
 
-
 blueprint = Blueprint('flamenco', __name__)
 log = logging.getLogger(__name__)
 
@@ -33,7 +32,7 @@ def index():
     projs_with_summaries = [
         (proj, current_flamenco.job_manager.job_status_summary(proj['_id']))
         for proj in projects['_items']
-        ]
+    ]
 
     return render_template('flamenco/index.html',
                            projs_with_summaries=projs_with_summaries)
@@ -54,7 +53,7 @@ def error_project_not_available():
     return render_template('flamenco/errors/project_not_available.html')
 
 
-def flamenco_project_view(extra_project_projections: dict=None,
+def flamenco_project_view(extra_project_projections: dict = None,
                           *,
                           extension_props=False,
                           action=flamenco.auth.Actions.USE):

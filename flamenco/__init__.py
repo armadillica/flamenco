@@ -152,7 +152,7 @@ class FlamencoExtension(PillarExtension):
             sparse=False,
         )
 
-    def flamenco_projects(self, *, projection: dict=None):
+    def flamenco_projects(self, *, projection: dict = None):
         """Returns projects set up for Flamenco.
 
         :returns: {'_items': [proj, proj, ...], '_meta': Eve metadata}
