@@ -223,7 +223,6 @@ class FlamencoExtension(PillarExtension):
         import werkzeug.exceptions as wz_exceptions
 
         from pillar.api.utils import str2id
-        from pillar.api.utils.authentication import current_user_id
         from pillar.web.system_util import pillar_api
         from .managers.sdk import Manager
 
