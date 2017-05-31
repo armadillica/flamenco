@@ -49,7 +49,8 @@ def _update_project(project):
     result, _, _, status_code = current_app.put_internal('projects', project, _id=project_id)
 
     if status_code != 200:
-        raise RuntimeError("Can't update project %s, issues: %s", project_id, result)
+        raise RuntimeError(f"Can't update project {project_id}, "
+                           f"status {status_code} with issues: {result}")
 
 
 def setup_for_flamenco(project_url, replace=False):
