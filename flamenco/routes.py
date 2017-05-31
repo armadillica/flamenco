@@ -3,9 +3,11 @@ import logging
 
 import bson
 from flask import Blueprint, render_template, redirect, url_for
-from flask_login import login_required, current_user
+from flask_login import login_required
 import werkzeug.exceptions as wz_exceptions
 
+from pillar.auth import current_web_user as current_user
+from pillar.api.utils.authentication import current_user_id
 from pillar.web.utils import attach_project_pictures
 from pillar.web.system_util import pillar_api
 from pillar.web.projects.routes import project_view
@@ -147,7 +149,9 @@ def help(project):
 @login_required
 @project_view()
 def setup_for_flamenco(project: pillarsdk.Project):
+    from pillar.api.utils import str2id
     import flamenco.setup
+    from flamenco.managers.sdk import Manager
 
     project_id = project._id
 
@@ -163,5 +167,27 @@ def setup_for_flamenco(project: pillarsdk.Project):
 
     log.info('User %s sets up project %s for Flamenco', current_user, project_id)
     flamenco.setup.setup_for_flamenco(project.url)
+
+    # Find the Managers available to this user, so we can auto-assign if there is exactly one.
+    man_man = current_flamenco.manager_manager
+    managers = man_man.owned_managers([bson.ObjectId(gid) for gid in current_user.groups])
+    manager_count = managers.count()
+
+    project_oid = str2id(project_id)
+    user_id = current_user_id()
+
+    if manager_count == 0:
+        _, mngr_doc, _ = man_man.create_new_manager('My Manager', '', user_id)
+        assign_man_oid = mngr_doc['_id']
+        log.info('Created and auto-assigning Manager %s to project %s upon setup for Flamenco.',
+                 assign_man_oid, project_oid)
+        man_man.api_assign_to_project(assign_man_oid, project_oid, 'assign')
+
+    elif manager_count == 1:
+        assign_manager = managers.next()
+        assign_man_oid = str2id(assign_manager['_id'])
+        log.info('Auto-assigning Manager %s to project %s upon setup for Flamenco.',
+                 assign_man_oid, project_oid)
+        man_man.api_assign_to_project(assign_man_oid, project_oid, 'assign')
 
     return '', 204

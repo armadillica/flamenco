@@ -171,7 +171,7 @@ class FlamencoExtension(PillarExtension):
         projects = pillarsdk.Project.all(params, api=api)
         return projects
 
-    def is_flamenco_project(self, project):
+    def is_flamenco_project(self, project: pillarsdk.Project):
         """Returns whether the project is set up for Flamenco.
 
         Requires Flamenco extension properties.

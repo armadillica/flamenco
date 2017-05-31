@@ -7,6 +7,7 @@ import typing
 
 import attr
 import bson
+import pymongo.cursor
 
 import werkzeug.exceptions as wz_exceptions
 
@@ -375,6 +376,22 @@ class ManagerManager(object):
         users_coll = current_app.db('users')
         users = users_coll.find({'groups': owner_gid})
         return list(users)
+
+    def managers_for_project(self, project_id: bson.ObjectId) -> typing.List[bson.ObjectId]:
+        """Returns a list of Manager object IDs assigned to the given project."""
+
+        assert isinstance(project_id, bson.ObjectId)
+
+        managers_coll = current_flamenco.db('managers')
+        managers = managers_coll.find({'projects': project_id}, {'_id': 1})
+        return [m['_id'] for m in managers]
+
+    def owned_managers(self, user_group_ids: typing.List[bson.ObjectId]) -> pymongo.cursor.Cursor:
+        """Returns a Mongo cursor of Manager object IDs owned by the given user."""
+
+        managers_coll = current_flamenco.db('managers')
+        managers = managers_coll.find({'owner': {'$in': user_group_ids}}, {'_id': 1})
+        return managers
 
 
 def setup_app(app):
