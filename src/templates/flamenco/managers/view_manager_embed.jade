@@ -173,8 +173,10 @@
 					| click to show authentication token
 
 		.col-md-4
-			button.btn.btn-block#gen-auth-token(onclick="generateNewAuthToken()")
-				i.pi-link
+			button.btn.btn-block#gen-auth-token(
+				title="Generate New Token",
+				name="Generate New Token",
+				onclick="generateNewAuthToken()")
 				// When changing the button text, also update generateNewAuthToken().
 				| Generate new token
 
