@@ -220,27 +220,9 @@ class FlamencoExtension(PillarExtension):
         :returns: a Flask HTTP response
         """
 
-        import werkzeug.exceptions as wz_exceptions
+        from flamenco.routes import project_settings
 
-        from pillar.api.utils import str2id
-        from pillar.web.system_util import pillar_api
-        from .managers.sdk import Manager
-
-        # Based on the project state, we can render a different template.
-        if not self.is_flamenco_project(project):
-            return flask.render_template('flamenco/project_settings/offer_setup.html',
-                                         project=project, **template_args)
-
-        project_id = str2id(project['_id'])
-        may_use = self.auth.current_user_may(self.auth.Actions.USE, project_id)
-
-        api = pillar_api()
-        managers = Manager.all(api=api)
-        return flask.render_template('flamenco/project_settings/settings.html',
-                                     project=project,
-                                     managers=managers,
-                                     may_use_flamenco=may_use,
-                                     **template_args)
+        return project_settings(project, **template_args)
 
     def db(self, collection_name):
         """Returns a Flamenco-specific MongoDB collection."""

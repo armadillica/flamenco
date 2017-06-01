@@ -191,3 +191,47 @@ def setup_for_flamenco(project: pillarsdk.Project):
         man_man.api_assign_to_project(assign_man_oid, project_oid, 'assign')
 
     return '', 204
+
+
+def project_settings(project: pillarsdk.Project, **template_args: dict):
+    """Renders the project settings page for Flamenco projects."""
+
+    from pillar.api.utils import str2id
+    from pillar.web.system_util import pillar_api
+    from .managers.sdk import Manager
+
+    # Based on the project state, we can render a different template.
+    if not current_flamenco.is_flamenco_project(project):
+        return render_template('flamenco/project_settings/offer_setup.html',
+                               project=project, **template_args)
+
+    project_id = str2id(project['_id'])
+    flauth = current_flamenco.auth
+    may_use = flauth.current_user_may(flauth.Actions.USE, project_id)
+
+    # Use the API for querying for Managers, because it implements access control.
+    api = pillar_api()
+    managers = Manager.all(api=api)
+    linked_managers = Manager.all({
+        'where': {
+            'projects': project['_id'],
+        },
+    }, api=api)
+
+    try:
+        first_manager = managers['_items'][0]
+    except (KeyError, IndexError):
+        first_manager = None
+    try:
+        first_linked_manager = linked_managers['_items'][0]
+    except (KeyError, IndexError):
+        first_linked_manager = None
+
+    return render_template('flamenco/project_settings/settings.html',
+                           project=project,
+                           managers=managers,
+                           first_manager=first_manager,
+                           linked_managers=linked_managers,
+                           first_linked_manager=first_linked_manager,
+                           may_use_flamenco=may_use,
+                           **template_args)

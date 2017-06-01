@@ -2,5 +2,65 @@
 
 | {% block flamenco_container %}
 p Heyyyyyyyyyyyyyyyy this is a Flamenco project.
-p You have {{ managers._meta.total }} Manager{{ managers._meta.total|pluralize }} available to you.
+
+.flamenco-box.manager
+	h4 Flamenco Managers for this Project
+
+	| {% if linked_managers._meta.total > 0 %}
+	p Manager{{ linked_managers._meta.total|pluralize }} linked to this project:
+	ul
+		|   {% for manager in linked_managers._items %}
+		li
+			a(
+				href="{{ url_for ('flamenco.managers.view_embed', manager_id=manager._id ) }}",
+				title="Click to view this Manager") {{ manager.name }}
+			a.pi-unlink(
+				href="javascript:clickUnlinkProject('{{ manager._id }}')",
+				title="Unlink Manager from this project")
+		|   {% endfor %}
+	| {% else %}
+	|   {% if managers._meta.total == 0 %}
+	p You have no Flamenco Manager.
+	|   {% elif managers._meta.total == 1 %}
+	p You have one Manager "{{ first_manager.name }}" available to you.
+		button.btn.btn-default(onclick="clickLinkProject('{{ first_manager._id }}')") Use it for this project
+
+	|   {% else %}
+	p
+		| You have {{ managers._meta.total }} Manager{{ managers._meta.total|pluralize }}
+		| available to you. Please choose which to use for this project:
+
+	ul
+		| {% for manager in managers._items %}
+		li
+			a.pi-link(
+				href="javascript:clickLinkProject('{{ manager._id }}')",
+				title="Link Manager from this project")
+				| {{ manager.name }}
+		|   {% endfor %}
+
+	|   {% endif %}
+	| {% endif %}
+
+	p
+		a(href="{{ url_for ('flamenco.managers.index' ) }}") Flamenco Managers Management
+
+.action-result-panel
+
+
 | {% endblock flamenco_container %}
+| {% block footer_scripts %}
+script.
+	function clickUnlinkProject(manager_id) {
+		var project_id = '{{ project._id }}';
+		unlinkProject(manager_id, project_id)
+		.done(function() { window.location.reload(); });
+	}
+
+	function clickLinkProject(manager_id) {
+		var project_id = '{{ project._id }}';
+		linkProject(manager_id, project_id)
+		.done(function() { window.location.reload(); });
+	}
+
+| {% endblock %}

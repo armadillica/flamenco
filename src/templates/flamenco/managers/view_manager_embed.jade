@@ -76,7 +76,7 @@
 					a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}")
 						| {{ project.name }}
 				.table-cell
-					a(href='javascript:unlinkProject("{{ project._id }}")', title="Unlink project")
+					a(href='javascript:clickUnlinkProject("{{ project._id }}")', title="Unlink project")
 						i.pi-trash
 			| {% endfor %}
 	| {% else %}
@@ -90,7 +90,7 @@
 			| {% for project in available_projects %}
 			option(value="{{ project._id }}") {{ project.name }}
 			| {% endfor %}
-		button.btn.btn-success(onclick="linkProject()")
+		button.btn.btn-success(onclick="clickLinkProject()")
 			i.pi-link
 			| Link project
 		| {% elif linked_projects %}
@@ -359,37 +359,28 @@ script.
 	}
 	createClipboard();
 
-	function unlinkProject(project_id) {
-		console.log("Unlinking project ", project_id, " from Manager ", "{{ manager._id }}")
-		patchManager({
-			op: 'remove-from-project',
-			project: project_id,
-		})
-		.fail(function(err) {
-			var $p = xhrErrorResponseElement(err, 'Error unlinking project: ');
-			$('.action-result-panel').html($p);
-		})
-		;
+	function clickUnlinkProject(project_id) {
+		var manager_id = '{{ manager._id }}';
+		unlinkProject(manager_id, project_id)
+		.done(function() {
+			item_open(manager_id, 'manager', false);
+		});
 	}
 
-	function linkProject() {
+	function clickLinkProject() {
+		var manager_id = '{{ manager._id }}';
 		var project_id = $('#link_project_select').val();
-		patchManager({
-			op: 'assign-to-project',
-			project: project_id,
-		})
-		.fail(function(err) {
-			var $p = xhrErrorResponseElement(err, 'Error linking project: ');
-			$('.action-result-panel').html($p);
-		})
-		;
+		linkProject(manager_id, project_id)
+		.done(function() {
+			item_open(manager_id, 'manager', false);
+		});
 	}
 
 	function editManager() {
 		var $form = $('#item_form');
 		var new_name = $form.find('*[name="name"]').val();
 
-		patchManager({
+		patchManager('{{ manager._id }}', {
 			op: 'edit-from-web',
 			name: new_name,
 			description: $form.find('*[name="description"]').val(),
@@ -404,26 +395,6 @@ script.
 		;
 
 		return false;
-	}
-
-	function patchManager(patch) {
-		$('.action-result-panel').html('');
-
-		var promise = $.ajax({
-			url: '/api/flamenco/managers/{{ manager._id }}',
-			method: 'PATCH',
-			contentType: 'application/json',
-			data: JSON.stringify(patch),
-		})
-		.done(function() {
-			item_open('{{ manager._id }}', 'manager', false);
-		})
-		.fail(function(err) {
-			console.log('Error patching: ', err);
-		})
-		;
-
-		return promise;
 	}
 
 	var auth_token_link = $('#show_auth_token');
