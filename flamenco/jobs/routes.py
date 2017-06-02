@@ -68,6 +68,9 @@ def view_job(project, flamenco_props, job_id):
     except pillarsdk.ForbiddenAccess:
         # It's very possible that the user doesn't have access to this Manager.
         manager = None
+    except pillarsdk.ResourceNotFound:
+        log.warning('Flamenco job %s has a non-existant manager %s', job_id, job.manager)
+        manager = None
 
     from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES
 
