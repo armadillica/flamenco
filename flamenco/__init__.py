@@ -15,6 +15,9 @@ EXTENSION_NAME = 'flamenco'
 
 class FlamencoExtension(PillarExtension):
     has_project_settings = True
+    celery_task_modules = [
+        'flamenco.celery.job_archival',
+    ]
 
     def __init__(self):
         self._log = logging.getLogger('%s.FlamencoExtension' % __name__)

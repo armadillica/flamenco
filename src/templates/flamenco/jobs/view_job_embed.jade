@@ -66,6 +66,11 @@
 			i.pi-refresh
 			| Recreate Job
 		| {% endif %}
+		| {% if can_archive_job %}
+		button.btn.btn-success.archive-job(onclick="archiveJob('{{ job._id }}')")
+			i.pi-file-archive
+			| Archive Job
+		| {% endif %}
 		.action-result-panel
 
 #item-view-feed

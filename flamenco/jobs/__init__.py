@@ -7,6 +7,8 @@ import datetime
 import attr
 import bson
 from flask import current_app
+import pymongo.results
+import werkzeug.exceptions as wz_exceptions
 
 import pillarsdk
 from pillar import attrs_extra
@@ -17,6 +19,7 @@ from flamenco import current_flamenco
 CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
 REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed'}
 RECREATABLE_JOB_STATES = {'canceled'}
+ARCHIVE_JOB_STATES = {'archiving', 'archived'}
 TASK_FAIL_JOB_PERCENTAGE = 10  # integer from 0 to 100
 
 
@@ -218,7 +221,7 @@ class JobManager(object):
                    'status': new_status}, api=api)
 
     def api_set_job_status(self, job_id, new_status,
-                           *, now: datetime.datetime = None):
+                           *, now: datetime.datetime = None) -> pymongo.results.UpdateResult:
         """API-level call to updates the job status."""
 
         self._log.info('Setting job %s status to "%s"', job_id, new_status)
@@ -227,8 +230,10 @@ class JobManager(object):
         curr_job = jobs_coll.find_one({'_id': job_id}, projection={'status': 1})
         old_status = curr_job['status']
 
-        current_flamenco.update_status('jobs', job_id, new_status, now=now)
+        result = current_flamenco.update_status('jobs', job_id, new_status, now=now)
         self.handle_job_status_change(job_id, old_status, new_status)
+
+        return result
 
     def handle_job_status_change(self, job_id, old_status, new_status):
         """Updates task statuses based on this job status transition."""
@@ -305,6 +310,28 @@ class JobManager(object):
         query['job'] = job_id
 
         current_flamenco.update_status_q('tasks', query, to_status)
+
+    def archive_job(self, job: dict):
+        """Initiates job archival by creating a Celery task for it."""
+
+        from flamenco.celery import job_archival
+
+        job_id = job['_id']
+        job_status = job['status']
+
+        if job_status in ARCHIVE_JOB_STATES:
+            msg = f'Job {job_id} cannot be archived, it has status {job_status}'
+            self._log.info(msg)
+            raise wz_exceptions.UnprocessableEntity(msg)
+
+        # TODO: store current job status in a special key 'pre-archive-status'
+
+        # Immediately set job status to 'archiving', as this should be reflected ASAP in the
+        # database + web interface, rather than waiting for a Celery Worker to pick it up.
+        self.api_set_job_status(job_id, 'archiving')
+
+        self._log.info('Creating Celery background task for archival of job %s', job_id)
+        job_archival.archive_job.delay(str(job_id))
 
 
 def setup_app(app):

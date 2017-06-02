@@ -72,11 +72,13 @@ def view_job(project, flamenco_props, job_id):
         log.warning('Flamenco job %s has a non-existant manager %s', job_id, job.manager)
         manager = None
 
-    from . import CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES
+    from . import (CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES,
+                   ARCHIVE_JOB_STATES)
 
     auth = current_flamenco.auth
     write_access = auth.current_user_may(auth.Actions.USE, bson.ObjectId(project['_id']))
 
+    status = job['status']
     return render_template(
         'flamenco/jobs/view_job_embed.html',
         job=job,
@@ -84,9 +86,11 @@ def view_job(project, flamenco_props, job_id):
         project=project,
         flamenco_props=flamenco_props.to_dict(),
         flamenco_context=request.args.get('context'),
-        can_cancel_job=write_access and job['status'] in CANCELABLE_JOB_STATES,
-        can_requeue_job=write_access and job['status'] in REQUEABLE_JOB_STATES,
-        can_recreate_job=write_access and job['status'] in RECREATABLE_JOB_STATES)
+        can_cancel_job=write_access and status in CANCELABLE_JOB_STATES,
+        can_requeue_job=write_access and status in REQUEABLE_JOB_STATES,
+        can_recreate_job=write_access and status in RECREATABLE_JOB_STATES,
+        can_archive_job=write_access and status not in ARCHIVE_JOB_STATES,
+    )
 
 
 @perproject_blueprint.route('/<job_id>/depsgraph')

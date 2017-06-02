@@ -169,7 +169,10 @@ jobs_schema = {
             'canceled',
             'cancel-requested',
             'queued',
-            'failed'],
+            'failed',
+            'archiving',
+            'archived',
+        ],
         'default': 'queued'
     },
     # This number could be also be a float between 0 and 1.

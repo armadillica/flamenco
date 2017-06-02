@@ -341,3 +341,44 @@ function getTaskLog(url, container){
                 }
         });
 }
+
+
+/**
+ * Request archival of the given job ID.
+ */
+ function archiveJob(job_id) {
+    if (typeof job_id === 'undefined') {
+        if (console) console.log("archiveJob(" + job_id + ") called");
+        return;
+    }
+
+    return $.ajax({
+        method: 'PATCH',
+        url: '/api/flamenco/jobs/' + job_id,
+        contentType: 'application/json',
+        data: JSON.stringify({'op': 'archive-job'}),
+    })
+    .done(function(data) {
+        if(console) console.log('Job archive request OK');
+        // Reload the entire page, since both the view-embed and the job list need refreshing.
+        location.reload(true);
+    })
+    .fail(function(xhr) {
+        if (console) {
+            console.log('Error requesting archival of job');
+            console.log('XHR:', xhr);
+        }
+
+        statusBarSet('error', 'Error requesting job archival', 'pi-error');
+
+        var show_html;
+        if (xhr.status) {
+            show_html = xhrErrorResponseElement(xhr, 'Job archival request failed: ');
+        } else {
+            show_html = $('<p>').addClass('text-danger').text(
+              'Job archival request failed. There possibly was an error connecting to the server. ' +
+              'Please check your network connection and try again.');
+        }
+        $('#item-action-panel .action-result-panel').html(show_html);
+    });
+ }

@@ -23,13 +23,7 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
         from flamenco import current_flamenco
         from pillar.api.utils.authentication import current_user_id
 
-        # TODO: possibly store job and project into flask.g to reduce the nr of Mongo queries.
-        job = current_flamenco.db('jobs').find_one({'_id': job_id}, {'project': 1})
-        auth = current_flamenco.auth
-        if not auth.current_user_may(auth.Actions.USE, job['project']):
-            log.info('User %s wants to PATCH job %s, but has no right to use Flamenco on project %s',
-                     current_user_id(), job_id, job['project'])
-            raise wz_exceptions.Forbidden('Denied Flamenco use on this project')
+        self.assert_job_access(job_id)
 
         new_status = patch['status']
 
@@ -39,6 +33,36 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
             current_flamenco.job_manager.api_set_job_status(job_id, new_status)
         except ValueError:
             raise wz_exceptions.UnprocessableEntity(f'Status {new_status} is invalid')
+
+    @authorization.require_login(require_roles={'subscriber', 'demo', 'flamenco-admin'})
+    def patch_archive_job(self, job_id: bson.ObjectId, patch: dict):
+        """Archives the given job in a background task."""
+
+        from flamenco import current_flamenco
+        from pillar.api.utils.authentication import current_user_id
+
+        job = self.assert_job_access(job_id)
+
+        log.info('User %s uses PATCH to start archival of job %s', current_user_id(), job_id)
+        current_flamenco.job_manager.archive_job(job)
+
+    def assert_job_access(self, job_id: bson.ObjectId) -> dict:
+        from flamenco import current_flamenco
+        from pillar.api.utils.authentication import current_user_id
+
+        # TODO: possibly store job and project into flask.g to reduce the nr of Mongo queries.
+        job = current_flamenco.db('jobs').find_one({'_id': job_id},
+                                                   {'project': 1,
+                                                    'status': 1})
+        auth = current_flamenco.auth
+
+        if not auth.current_user_may(auth.Actions.USE, job['project']):
+            log.info(
+                'User %s wants to PATCH job %s, but has no right to use Flamenco on project %s',
+                current_user_id(), job_id, job['project'])
+            raise wz_exceptions.Forbidden('Denied Flamenco use on this project')
+
+        return job
 
 
 def setup_app(app):
