@@ -19,7 +19,8 @@ from flamenco import current_flamenco
 CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
 REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed'}
 RECREATABLE_JOB_STATES = {'canceled'}
-ARCHIVE_JOB_STATES = {'archiving', 'archived'}
+ARCHIVE_JOB_STATES = {'archiving', 'archived'}  # states that represent more-or-less archived jobs.
+ARCHIVEABLE_JOB_STATES = REQUEABLE_JOB_STATES  # states from which a job can be archived.
 TASK_FAIL_JOB_PERCENTAGE = 10  # integer from 0 to 100
 
 
