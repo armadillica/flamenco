@@ -40,16 +40,16 @@ html(lang="en")
 						li
 							a.navbar-item.managers(href="{{ url_for('flamenco.managers.index') }}",
 							title='Your Flamenco Managers') Mngrs
-						| {% if project %}
+						| {% if session.get('flamenco_last_project') %}
+						| {% set flamenco_last_project = session.get('flamenco_last_project') %}
 						li
-							a.navbar-item.jobs(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}",
-							title='Jobs for project {{ project.name }}') Jobs
+							a.navbar-item.jobs(href="{{ url_for('flamenco.jobs.perproject.index', project_url=flamenco_last_project.url) }}",
+							title='Jobs for project {{ flamenco_last_project.name }}') Jobs
 						// Task list is disabled until it is extended with filtering etc. (T51532)
 						//- li
-						//- 	a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.perproject.index', project_url=project.url) }}",
-						//- 		title='Tasks for project {{ project.name }}') Tasks
+						//- 	a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.perproject.index', project_url=flamenco_last_project.url) }}",
+						//- 		title='Tasks for project {{ flamenco_last_project.name }}') Tasks
 						| {% endif %}
-
 					ul.bottom
 						| {% if project %}
 						li

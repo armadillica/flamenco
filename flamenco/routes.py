@@ -77,6 +77,7 @@ def flamenco_project_view(extra_project_projections: dict = None,
         project).
     """
 
+    from flask import session
     import flask_login
 
     from . import EXTENSION_NAME
@@ -115,6 +116,8 @@ def flamenco_project_view(extra_project_projections: dict = None,
             is_flamenco = current_flamenco.is_flamenco_project(project)
             if not is_flamenco:
                 return error_project_not_setup_for_flamenco()
+
+            session['flamenco_last_project'] = project.to_dict()
 
             project_id = bson.ObjectId(project['_id'])
             auth = current_flamenco.auth
