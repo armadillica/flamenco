@@ -117,6 +117,8 @@ def create_upload_zip(job_id: str, project_id: str, storage_path: str, zip_path:
 
     import itertools
     import zipfile
+    import secrets
+    import datetime
 
     from pillar.api.file_storage_backends import default_storage_backend
 
@@ -131,6 +133,12 @@ def create_upload_zip(job_id: str, project_id: str, storage_path: str, zip_path:
 
     bucket = default_storage_backend(project_id)
     blob = bucket.blob(f'flamenco-jobs/{zpath.name}')
+    while blob.exists():
+        log.warning('Blob %s already exists, changing filename to something more unique.', blob)
+        today = datetime.date.today()
+        uniquifier = f'{today:%Y-%m-%d}-{secrets.token_hex(4)}'
+        new_zipname = f'{zpath.stem}-{uniquifier}{zpath.suffix}'
+        blob = bucket.blob(f'flamenco-jobs/{new_zipname}')
 
     log.info('Uploading ZIP %s to %s', zpath, blob)
 
