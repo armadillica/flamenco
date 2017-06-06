@@ -92,6 +92,7 @@
 	#comments-embed
 script.
 
-	$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
-
 	loadTasks("{{url_for('flamenco.tasks.perjob.list_for_job', job_id=job._id, project_url=project.url)}}");
+
+	if (typeof openModalUrl == 'function')
+		$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
