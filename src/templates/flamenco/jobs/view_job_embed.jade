@@ -49,6 +49,7 @@
 					| {{ set_val }}
 			| {% endfor %}
 
+| {% if not is_archived %}
 #item-action-panel
 	.pull-right
 		| {% if can_cancel_job %}
@@ -90,6 +91,9 @@
 
 	#tasks
 	#comments-embed
+
+| {% endif %}
+
 script.
 
 	loadTasks("{{url_for('flamenco.tasks.perjob.list_for_job', job_id=job._id, project_url=project.url)}}");
