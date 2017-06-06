@@ -75,9 +75,11 @@
 			| Re-queue Job
 		| {%     endif %}
 		| {%     if can_recreate_job %}
-		button.btn.btn-success.requeue-job(onclick="recreateJob('{{ job._id }}')")
-			i.pi-refresh
-			| Recreate Job
+		button.btn.btn-success.requeue-job(
+			onclick="recreateJob('{{ job._id }}')",
+			title="Delete all tasks and logs, and create new tasks for this job")
+			i.pi-fire
+			| Re-create Job
 		| {%     endif %}
 		| {%     if can_archive_job %}
 		button.btn.btn-success.archive-job(onclick="archiveJob('{{ job._id }}')")
