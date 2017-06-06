@@ -6,7 +6,7 @@ from flask import current_app
 from flask_script import Manager
 
 from pillar.cli import manager
-from pillar.api.utils import authentication
+from pillar.api.utils import authentication, str2id
 
 import flamenco
 import flamenco.setup
@@ -150,6 +150,26 @@ def revoke_admin(user_email):
 
     log.info('Done.')
     return 0
+
+
+@manager_flamenco.command
+def archive_job(job_id):
+    """Archives a single job.
+
+    Can also be used to recreate the Celery task to start job archival,
+    in case a job got stuck in the "archiving" state.
+
+    WARNING: this is a dangerous operation, as it may re-archive an already
+    archived job. As a result, the archive will not contain any tasks, since
+    those tasks would have been deleted by the previous archival task. Use
+    with extreme care.
+    """
+
+    from flamenco.celery import job_archival
+
+    log.info('Creating Celery background task for archival of job %s', job_id)
+    celery_task = job_archival.archive_job.delay(job_id)
+    log.info('Created Celery task %s', celery_task)
 
 
 manager.add_command("flamenco", manager_flamenco)
