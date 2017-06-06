@@ -137,7 +137,6 @@ def archive(project, job_id):
     return redirect(archive_url, code=303)
 
 
-
 @perproject_blueprint.route('/<job_id>/depsgraph')
 @flamenco_project_view(extension_props=False, action=Actions.VIEW)
 def view_job_depsgraph(project, job_id):
