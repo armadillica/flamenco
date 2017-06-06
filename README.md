@@ -11,14 +11,14 @@ In order to get Flamenco up and running, we need to follow these steps:
 - give a user 'admin' rights for Flamenco (this is temporary)
 - give setup a project to use Flamenco
 
-Add Flamenco to your Pillar application as an extension (docs will be available in the Pillar 
+Add Flamenco to your Pillar application as an extension (docs will be available in the Pillar
 documentaiton). At this point we can proceed with the setup of our first manager.
 
 ```
 python manage.py flamenco create_manager flm-manager@example.com local-manager 'Local manager'
 ```
 
-The required params are: 
+The required params are:
 - `flm-manager@example.com` is a new Pillar service account that gets associated with the
 new manager created
 - `local-manager` is the name of the manager
