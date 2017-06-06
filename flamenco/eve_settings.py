@@ -202,9 +202,9 @@ jobs_schema = {
     },
 
     # Blob in the project's storage, containing the archived job.
-    'archive_blob_name': {
-        'type': 'string'
-    }
+    'archive_blob_name': {'type': 'string'},
+    # Status the job had before it became 'archiving'.
+    'pre_archive_status': {'type': 'string'},
 }
 
 tasks_schema = {

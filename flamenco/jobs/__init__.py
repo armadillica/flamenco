@@ -325,7 +325,11 @@ class JobManager(object):
             self._log.info(msg)
             raise wz_exceptions.UnprocessableEntity(msg)
 
-        # TODO: store current job status in a special key 'pre-archive-status'
+        # Store current job status in a special key so that it can be restored before
+        # writing to the archive ZIP file as JSON.
+        jobs_coll = current_flamenco.db('jobs')
+        jobs_coll.update_one({'_id': job_id},
+                             {'$set': {'pre_archive_status': job_status}})
 
         # Immediately set job status to 'archiving', as this should be reflected ASAP in the
         # database + web interface, rather than waiting for a Celery Worker to pick it up.

@@ -43,7 +43,12 @@ def archive_job(job_id: str):
     # Write the job to JSON.
     jobs_coll = current_flamenco.db('jobs')
     job = jobs_coll.find_one({'_id': job_oid})
-    # TODO: move original job status from 'pre-archive-status' to 'status'
+
+    pre_archive_status = job.get('pre_archive_status')
+    if pre_archive_status:
+        job['status'] = pre_archive_status
+        del job['pre_archive_status']
+
     job_json_path = pathlib.Path(storage_path) / f'job-{job_id}.json'
     with job_json_path.open(mode='w', encoding='utf8') as outfile:
         outfile.write(dumps(job, indent=4, sort_keys=True))
@@ -60,7 +65,7 @@ def archive_job(job_id: str):
     # The chain of everything except downloading tasks & logs. Celery can't handle empty
     # groups, so we have to be careful in constructing the download_tasks group.
     chain = (
-        create_upload_zip.si(job_id, str(job['project']), storage_path, str(zip_path)) |
+        create_upload_zip.si(str(job['project']), storage_path, str(zip_path)) |
         update_mongo.s(job_id) |
         cleanup.si(storage_path)
     )
@@ -109,7 +114,7 @@ def download_task_and_log(storage_path: str, task_id: str):
 
 
 @current_app.celery.task(ignore_result=True)
-def create_upload_zip(job_id: str, project_id: str, storage_path: str, zip_path: str) -> str:
+def create_upload_zip(project_id: str, storage_path: str, zip_path: str) -> str:
     """Uploads the ZIP file to the storage backend.
 
     Also stores the link to the ZIP in the job document.

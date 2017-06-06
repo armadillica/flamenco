@@ -3,6 +3,7 @@ import gzip
 import json
 import pathlib
 import tempfile
+from unittest import mock
 
 import pillar.tests.common_test_data as ctd
 
@@ -84,3 +85,33 @@ class JobArchivalTest(AbstractTaskBatchUpdateTest):
                 read_task = json.load(infile)
                 self.assertEqual(set(expected_task.keys()), set(read_task.keys()))
                 self.assertEqual(expected_task, read_task)
+
+    @mock.patch('celery.group')
+    def test_write_job_as_json(self, mocked_group):
+        import tempfile
+
+        self.force_job_status('completed')
+        jobs_coll = self.flamenco.db('jobs')
+        job = jobs_coll.find_one(self.job_id)
+
+        # Make sure we can predict where the JSON file will be written to.
+        tempdir = tempfile.mkdtemp(prefix='unittests-')
+        with mock.patch('tempfile.mkdtemp') as mock_mkdtemp:
+            mock_mkdtemp.return_value = tempdir
+            self.jmngr.archive_job(job)
+
+        mocked_group.assert_called()
+
+        json_path = pathlib.Path(tempdir) / f'job-{self.job_id}.json'
+        self.assertTrue(json_path.exists())
+
+        # Job status in JSON should be 'completed'.
+        with json_path.open() as infile:
+            json_job = json.load(infile)
+        self.assertEqual('completed', json_job['status'])
+        self.assertNotIn('pre_archive_status', json_job)
+
+        # …but in the database should be 'archiving'.
+        db_job = jobs_coll.find_one(self.job_id)
+        self.assertEqual('archiving', db_job['status'])
+        self.assertEqual('completed', db_job['pre_archive_status'])
