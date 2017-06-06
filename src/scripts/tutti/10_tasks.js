@@ -356,6 +356,10 @@ function getTaskLog(url, container){
         return;
     }
 
+    if (!confirm("Archiving a job is irreversible, are you sure you want to do this?")) {
+        return;
+    }
+
     return $.ajax({
         method: 'PATCH',
         url: '/api/flamenco/jobs/' + job_id,
