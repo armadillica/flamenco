@@ -54,7 +54,9 @@
 		| {% if is_archived %}
 		|     {% if write_access %}
 		|         {% if archive_available %}
-		a.btn.btn-default(href="{{ url_for('flamenco.jobs.perproject.archive', project_url=project.url, job_id=job._id) }}") Download job archive
+		a.btn.btn-default(href="{{ url_for('flamenco.jobs.perproject.archive', project_url=project.url, job_id=job._id) }}")
+			i.pi-download
+			| Download job archive
 		|         {% elif job.status == 'archiving' %}
 		button.btn(disabled) Job is being archived
 		|         {% else %}
@@ -104,7 +106,6 @@
 	#tasks
 	#comments-embed
 	| {% endif %}
-
 
 script.
 
