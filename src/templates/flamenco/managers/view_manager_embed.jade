@@ -103,10 +103,10 @@
 	| {% endif %}
 
 
-// USER SHARING
+// OWNERSHIP
 | {% if can_edit %}
 .flamenco-box.manager#manager-projects-list
-	h4 Users linked to this Manager
+	h4 Owners of this Manager
 
 	#item-action-panel
 		.row
@@ -116,7 +116,7 @@
 						input#user-select.form-control(
 							name='contacts',
 							type='text',
-							placeholder='Add team members by name')
+							placeholder='Add owner by name')
 
 				ul.sharing-users-list
 					| {% for owner in owners %}
@@ -131,7 +131,7 @@
 								| {% if current_user.objectid == owner['_id'] %}
 								small (You)
 								| {% else %}
-								small (Owner)
+								small (Co-owner)
 								| {% endif %}
 							span.sharing-users-extra {{ owner['username'] }}
 						.sharing-users-action
@@ -139,9 +139,12 @@
 							| {# TODO: Only allow user removal if owners > 1 #}
 
 							| {% if current_user.objectid == owner['_id'] %}
-							button.user-remove(title="Leave this project") Leave
+							|     {% if can_abandon_manager %}
+							button.user-remove(title="Abandon ownership of this Manager") Abandon
+								i.pi-trash
+							|     {% endif %}
 							| {% else %}
-							button.user-remove(title="Remove this user from your project")
+							button.user-remove(title="Revoke ownership from this user")
 								i.pi-trash
 							| {% endif %}
 
@@ -149,12 +152,12 @@
 
 			.col-md-6
 				.sharing-users-info
-					h4 What can team members do?
+					h4 What can owners do?
 					p.
-						Team members are able to upload new content to the project,
-						as well as view, edit, delete, and comment on the content
-						previously created.
-
+						Owners of a Manager can (un)link projects, appoint or remove other owners,
+						and generally can use the Manager. Note that all owners are equal; there are
+						no special rights or abilities for the person who created this Manager.
+					p A Manager cannot be without owner.
 
 | {% endif %}
 

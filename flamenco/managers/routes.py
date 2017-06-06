@@ -76,6 +76,7 @@ def view_embed(manager_id: str):
 
     for owner in owners:
         owner['avatar'] = gravatar(owner.get('email'))
+        owner['_id'] = str(owner['_id'])
 
     manager_oid = str2id(manager_id)
     can_edit = current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_oid)
@@ -88,6 +89,7 @@ def view_embed(manager_id: str):
                            available_projects=available_projects,
                            linked_projects=linked_projects,
                            owners=owners,
+                           can_abandon_manager=len(owners) > 1,
                            csrf=csrf)
 
 
