@@ -17,9 +17,13 @@ function item_open(item_id, item_type, pushState, project_url)
     }
 
     // Style elements starting with item_type and dash, e.g. "#job-uuid"
-    $('[id^="' + item_type + '-"]').removeClass('active');
+    var clean_classes = 'active processing';
     var current_item = $('#' + item_type + '-' + item_id);
-    current_item.addClass('processing');
+
+    $('[id^="' + item_type + '-"]').removeClass(clean_classes);
+    current_item
+        .removeClass(clean_classes)
+        .addClass('processing');
 
     var item_url;
     var push_url;
@@ -54,7 +58,7 @@ function item_open(item_id, item_type, pushState, project_url)
         }
 
         current_item
-            .removeClass('processing')
+            .removeClass(clean_classes)
             .addClass('active');
 
     }).fail(function(xhr) {
@@ -63,7 +67,7 @@ function item_open(item_id, item_type, pushState, project_url)
             console.log('XHR:', xhr);
         }
 
-        current_item.removeClass('processing');
+        current_item.removeClass(clean_classes);
         statusBarSet('error', 'Failed to open ' + item_type, 'pi-warning');
 
         if (xhr.status) {
