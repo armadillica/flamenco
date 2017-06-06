@@ -57,17 +57,20 @@ def archive_job(job_id: str):
     tasks_coll = current_flamenco.db('tasks')
     tasks = tasks_coll.find({'job': job_oid}, {'_id': 1})
 
-    task_group = celery.group(*(
-        download_task_and_log.si(storage_path, str(task['_id']))
-        for task in tasks
-    ))
-
+    # The chain of everything except downloading tasks & logs. Celery can't handle empty
+    # groups, so we have to be careful in constructing the download_tasks group.
     chain = (
-        task_group |
         create_upload_zip.si(job_id, str(job['project']), storage_path, str(zip_path)) |
         update_mongo.si(job_id) |
         cleanup.si(storage_path)
     )
+
+    if tasks.count():
+        download_tasks = celery.group(*(
+            download_task_and_log.si(storage_path, str(task['_id']))
+            for task in tasks))
+        chain = download_tasks | chain
+
     chain()
 
 
