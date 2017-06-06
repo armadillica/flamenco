@@ -1,5 +1,6 @@
 # -*- encoding: utf-8 -*-
 
+import collections
 import logging
 
 import bson
@@ -80,6 +81,11 @@ def view_job(project, flamenco_props, job_id):
 
     status = job['status']
     is_archived = status in ARCHIVE_JOB_STATES
+
+    # Sort job settings so we can iterate over them in a deterministic way.
+    job_settings = collections.OrderedDict((key, job.settings[key])
+                                           for key in sorted(job.settings.to_dict().keys()))
+
     return render_template(
         'flamenco/jobs/view_job_embed.html',
         job=job,
@@ -92,6 +98,7 @@ def view_job(project, flamenco_props, job_id):
         can_recreate_job=write_access and status in RECREATABLE_JOB_STATES,
         can_archive_job=write_access and not is_archived,
         is_archived=is_archived,
+        job_settings=job_settings,
     )
 
 
