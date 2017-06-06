@@ -200,6 +200,11 @@ jobs_schema = {
         # TODO: introduce dynamic validator, based on job_type/task_type
         'allow_unknown': True,
     },
+
+    # Blob in the project's storage, containing the archived job.
+    'archive_blob_name': {
+        'type': 'string'
+    }
 }
 
 tasks_schema = {

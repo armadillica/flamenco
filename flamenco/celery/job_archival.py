@@ -61,7 +61,7 @@ def archive_job(job_id: str):
     # groups, so we have to be careful in constructing the download_tasks group.
     chain = (
         create_upload_zip.si(job_id, str(job['project']), storage_path, str(zip_path)) |
-        update_mongo.si(job_id) |
+        update_mongo.s(job_id) |
         cleanup.si(storage_path)
     )
 
@@ -109,10 +109,12 @@ def download_task_and_log(storage_path: str, task_id: str):
 
 
 @current_app.celery.task(ignore_result=True)
-def create_upload_zip(job_id: str, project_id: str, storage_path: str, zip_path: str):
+def create_upload_zip(job_id: str, project_id: str, storage_path: str, zip_path: str) -> str:
     """Uploads the ZIP file to the storage backend.
 
     Also stores the link to the ZIP in the job document.
+
+    Returns the name of the storage blob the ZIP is stored in.
     """
 
     import itertools
@@ -148,14 +150,17 @@ def create_upload_zip(job_id: str, project_id: str, storage_path: str, zip_path:
                               file_size=file_size,
                               content_type='application/zip')
 
+    return blob.name
+
 
 @current_app.celery.task(ignore_result=True)
-def update_mongo(job_id: str):
+def update_mongo(archive_blob_name: str, job_id: str):
     """Updates MongoDB by removing tasks and logs, and setting the job status."""
 
     job_oid = bson.ObjectId(job_id)
     tasks_coll = current_flamenco.db('tasks')
     logs_coll = current_flamenco.db('task_logs')
+    jobs_coll = current_flamenco.db('jobs')
 
     log.info('Purging Flamenco tasks and task logs for job %s', job_id)
 
@@ -166,6 +171,14 @@ def update_mongo(job_id: str):
     ]
     logs_coll.delete_many({'task_id': {'$in': task_ids}})
     tasks_coll.delete_many({'job': job_oid})
+
+    # Update the job's archive blob name
+    res = jobs_coll.update_one({'_id': job_oid},
+                               {'$set': {'archive_blob_name': archive_blob_name}})
+    if res.matched_count != 1:
+        raise ArchivalError(
+            f"Unable to update job {job_oid} to set archive_blob_name={archive_blob_name!r}, "
+            f"matched count={res.matched_count}")
 
     # Update the job status to 'archived'
     res = current_flamenco.job_manager.api_set_job_status(job_oid, 'archived')
