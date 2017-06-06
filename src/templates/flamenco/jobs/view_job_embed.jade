@@ -62,26 +62,26 @@
 		|         {% endif %}
 		|     {% endif %}
 		| {% else %}
-		| {% if can_cancel_job %}
+		| {%     if can_cancel_job %}
 		button.btn.btn-danger(onclick="setJobStatus('{{ job._id }}', 'cancel-requested')")
 			i.pi-cancel
 			| Cancel Job
-		| {% endif %}
-		| {% if can_requeue_job %}
+		| {%     endif %}
+		| {%     if can_requeue_job %}
 		button.btn.btn-success.requeue-job(onclick="setJobStatus('{{ job._id }}', 'queued')")
 			i.pi-refresh
 			| Re-queue Job
-		| {% endif %}
-		| {% if can_recreate_job %}
+		| {%     endif %}
+		| {%     if can_recreate_job %}
 		button.btn.btn-success.requeue-job(onclick="recreateJob('{{ job._id }}')")
 			i.pi-refresh
 			| Recreate Job
-		| {% endif %}
-		| {% if can_archive_job %}
+		| {%     endif %}
+		| {%     if can_archive_job %}
 		button.btn.btn-success.archive-job(onclick="archiveJob('{{ job._id }}')")
 			i.pi-file-archive
 			| Archive Job
-		| {% endif %}
+		| {%     endif %}
 		| {% endif %}
 		.action-result-panel
 
