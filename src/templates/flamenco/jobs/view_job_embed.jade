@@ -49,9 +49,19 @@
 					| {{ set_val }}
 			| {% endfor %}
 
-| {% if not is_archived %}
 #item-action-panel
 	.pull-right
+		| {% if is_archived %}
+		|     {% if write_access %}
+		|         {% if archive_available %}
+		a.btn.btn-default(href="{{ url_for('flamenco.jobs.perproject.archive', project_url=project.url, job_id=job._id) }}") Download job archive
+		|         {% elif job.status == 'archiving' %}
+		button.btn(disabled) Job is being archived
+		|         {% else %}
+		button.btn(disabled) Job archive not (yet) available
+		|         {% endif %}
+		|     {% endif %}
+		| {% else %}
 		| {% if can_cancel_job %}
 		button.btn.btn-danger(onclick="setJobStatus('{{ job._id }}', 'cancel-requested')")
 			i.pi-cancel
@@ -72,6 +82,7 @@
 			i.pi-file-archive
 			| Archive Job
 		| {% endif %}
+		| {% endif %}
 		.action-result-panel
 
 #item-view-feed
@@ -88,11 +99,12 @@
 			pre.
 				{{ job.to_dict() | pprint }}
 	| {% endif %}
-
+	
+	| {% if not is_archived %}
 	#tasks
 	#comments-embed
+	| {% endif %}
 
-| {% endif %}
 
 script.
 

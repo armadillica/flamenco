@@ -4,7 +4,7 @@ import collections
 import logging
 
 import bson
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, redirect
 import flask_login
 import werkzeug.exceptions as wz_exceptions
 
@@ -81,6 +81,7 @@ def view_job(project, flamenco_props, job_id):
 
     status = job['status']
     is_archived = status in ARCHIVE_JOB_STATES
+    archive_available = is_archived and job.archive_blob_name
 
     # Sort job settings so we can iterate over them in a deterministic way.
     job_settings = collections.OrderedDict((key, job.settings[key])
@@ -98,8 +99,43 @@ def view_job(project, flamenco_props, job_id):
         can_recreate_job=write_access and status in RECREATABLE_JOB_STATES,
         can_archive_job=write_access and not is_archived,
         is_archived=is_archived,
+        write_access=write_access,
+        archive_available=archive_available,
         job_settings=job_settings,
     )
+
+
+@perproject_blueprint.route('/<job_id>/archive')
+@flamenco_project_view(extension_props=False, action=Actions.USE)
+def archive(project, job_id):
+    """Redirects to the actual job archive.
+
+    This is done via a redirect, so that templates that offer a download link do not
+    need to know the eventual storage backend link. This makes them render faster,
+    and only requires communication with the storage backend when needed.
+    """
+
+    from pillar.api.file_storage_backends import default_storage_backend
+
+    from . import ARCHIVE_JOB_STATES
+    from .sdk import Job
+
+    api = pillar_api()
+    job = Job.find(job_id, api=api)
+
+    if job['status'] not in ARCHIVE_JOB_STATES:
+        raise wz_exceptions.PreconditionFailed('Job is not archived')
+
+    archive_blob_name = job.archive_blob_name
+    if not archive_blob_name:
+        raise wz_exceptions.NotFound('Job has no archive')
+
+    bucket = default_storage_backend(project._id)
+    blob = bucket.get_blob(archive_blob_name)
+    archive_url = blob.get_url(is_public=False)
+
+    return redirect(archive_url, code=303)
+
 
 
 @perproject_blueprint.route('/<job_id>/depsgraph')
