@@ -346,7 +346,7 @@ script.
 				var msg = xhrErrorResponseMessage(data);
 				var $p = xhrErrorResponseElement(data, 'Error linking project: ');
 				$('.action-result-panel').html($p);
-				
+
 				statusBarSet('error', 'Could not remove user (' + msg + ')', 'pi-warning');
 			});
 		}
@@ -473,7 +473,7 @@ script.
 			return;
 		}
 
-		$btn.attr('disabled', 'disabled').text('Generating');
+		$btn.attr('disabled', 'disabled').text('Generating...');
 
 		$.post(
 			'{{ url_for("flamenco.managers.generate_auth_token", manager_id=manager._id) }}',
@@ -483,6 +483,7 @@ script.
 			$btn.removeAttr('disabled').text('Token generated');
 			_displayAuthToken(data);
 			restoreButtonText();
+			statusBarSet('success', 'New token generated', 'pi-check');
 		})
 		.fail(function(err) {
 			var $p = xhrErrorResponseElement(err, 'Error generating auth token: ');
