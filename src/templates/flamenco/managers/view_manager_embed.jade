@@ -136,14 +136,14 @@
 							span.sharing-users-extra {{ owner['username'] }}
 						.sharing-users-action
 							| {# Only allow deletion if we are: admin, project owners, or current_user in the team #}
-							| {# TODO: Only allow user removal if owners > 1 #}
-
-							| {% if current_user.objectid == owner['_id'] %}
+							| {% if can_abandon_manager %}
+							| {%     if current_user.objectid == owner['_id'] %}
 							button.user-remove(title="Abandon ownership of this Manager")
 								i.pi-trash
-							| {% else %}
+							| {%     else %}
 							button.user-remove(title="Revoke ownership from this user")
 								i.pi-trash
+							| {%     endif %}
 							| {% endif %}
 
 					| {% endfor %}
