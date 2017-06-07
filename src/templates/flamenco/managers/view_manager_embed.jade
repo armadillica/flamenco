@@ -62,7 +62,7 @@
 	| {% endfor %}
 	| {% endif %}
 
-.flamenco-box.manager#manager-projects-list
+.flamenco-box.manager
 	h4 Projects linked to this Manager
 
 	| {% if linked_projects._items %}
@@ -105,7 +105,7 @@
 
 // OWNERSHIP
 | {% if can_edit %}
-.flamenco-box.manager#manager-projects-list
+.flamenco-box.manager
 	h4 Owners of this Manager
 
 	#item-action-panel
@@ -162,7 +162,7 @@
 .action-result-panel
 
 | {% if can_edit %}
-.flamenco-box.manager#manager-projects-list
+.flamenco-box.manager
 	h4 Authentication Token
 
 	.row
