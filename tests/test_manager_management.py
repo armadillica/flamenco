@@ -350,11 +350,79 @@ class ManagerAccessTest(AbstractFlamencoTest):
         self.assertNotIn(str(owner_gid), old_owner['groups'])
         self.assertIn(str(owner_gid), new_owner['groups'])
 
+    def test_hand_over_manager_abandon(self):
+        owner_gid = self.mngr_doc['owner']
+        self.create_user(24 * 'a', roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+                         token='owner-token')
+        subject_uid = 24 * 'b'
+        self.create_user(subject_uid, roles={'subscriber', 'flamenco-user'},
+                         token='subject-token')
+
+        # Share with subject-user by owner
+        self.patch(f'/api/flamenco/managers/{self.mngr_id}',
+                   json={
+                       'op': 'change-ownership',
+                       'action': 'share',
+                       'user': subject_uid,
+                   },
+                   auth_token='owner-token',
+                   expected_status=204)
+
+        # Abandon by owner
+        self.patch(f'/api/flamenco/managers/{self.mngr_id}',
+                   json={
+                       'op': 'change-ownership',
+                       'action': 'unshare',
+                       'user': 24 * 'a',
+                   },
+                   auth_token='owner-token',
+                   expected_status=204)
+
+        old_owner = self.get('/api/users/me', auth_token='owner-token').json()
+        new_owner = self.get('/api/users/me', auth_token='subject-token').json()
+
+        self.assertNotIn(str(owner_gid), old_owner['groups'])
+        self.assertIn(str(owner_gid), new_owner['groups'])
+
     def test_unshare_self(self):
         owner_gid = self.mngr_doc['owner']
         owner_uid = 24 * 'a'
         self.create_user(owner_uid, roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
                          token='owner-token')
+        subject_uid = 24 * 'b'
+        self.create_user(subject_uid, roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+                         token='other-token')
+
+        self.patch(f'/api/flamenco/managers/{self.mngr_id}',
+                   json={
+                       'op': 'change-ownership',
+                       'action': 'unshare',
+                       'user': owner_uid,
+                   },
+                   auth_token='owner-token',
+                   expected_status=204)
+
+        user = self.get('/api/users/me', auth_token='owner-token').json()
+        self.assertNotIn(str(owner_gid), user['groups'])
+
+    def test_unshare_last_user(self):
+        owner_gid = self.mngr_doc['owner']
+        owner_uid = 24 * 'a'
+        self.create_user(owner_uid, roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+                         token='owner-token')
+        other_uid = 24 * 'b'
+        self.create_user(other_uid, roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+                         token='other-token')
+
+        for uid in (self.mngr_owner, other_uid):
+            self.patch(f'/api/flamenco/managers/{self.mngr_id}',
+                       json={
+                           'op': 'change-ownership',
+                           'action': 'unshare',
+                           'user': uid,
+                       },
+                       auth_token='owner-token',
+                       expected_status=204)
 
         self.patch(f'/api/flamenco/managers/{self.mngr_id}',
                    json={

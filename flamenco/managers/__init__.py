@@ -363,6 +363,14 @@ class ManagerManager(object):
         _, manager = self._get_manager(mngr_doc_id=manager_id)
         owner_gid = manager['owner']
 
+        # Check that there is at least one user left in the group.
+        users_coll = current_app.db('users')
+        owners = users_coll.find({'groups': owner_gid})
+        if share_action == ShareAction.unshare and owners.count() < 2:
+            self._log.warning('User %s tried to make Manager %s ownerless',
+                              current_user_id(), manager_id)
+            raise ValueError('Manager cannot become ownerless.')
+
         group_action = {
             ShareAction.share: '$addToSet',
             ShareAction.unshare: '$pull',

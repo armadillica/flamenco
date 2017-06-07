@@ -140,10 +140,10 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
             raise wz_exceptions.BadRequest(f'Unknown action {action!r}')
 
         subject_uid = str2id(patch.get('user', ''))
-        if subject_uid == current_user_id():
+        if action == man_man.ShareAction.share and subject_uid == current_user_id():
             log.warning('%s tries to %s Manager %s with itself',
                         current_user_id(), action, manager_id)
-            raise wz_exceptions.BadRequest(f'Cannot share/unshare a Manager with yourself')
+            raise wz_exceptions.BadRequest(f'Cannot share a Manager with yourself')
 
         if action == man_man.ShareAction.share and \
                 not current_flamenco.auth.user_is_flamenco_user(subject_uid):
@@ -152,7 +152,10 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
                         subject_uid)
             raise wz_exceptions.Forbidden(f'User {subject_uid} is not allowed to use Flamenco')
 
-        man_man.share_unshare_manager(manager_id, action, subject_uid)
+        try:
+            man_man.share_unshare_manager(manager_id, action, subject_uid)
+        except ValueError as ex:
+            raise wz_exceptions.BadRequest(str(ex))
 
 
 def setup_app(app):
