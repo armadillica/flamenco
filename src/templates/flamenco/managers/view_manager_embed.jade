@@ -241,7 +241,7 @@ script.
 
 					$(lis[i]).addClass('active');
 					setTimeout(function(){ $('.sharing-users-item').removeClass('active');}, 350);
-					statusBarSet('info', 'User is already part of the project', 'pi-info');
+					statusBarSet('info', 'User is already co-owner of this Manager', 'pi-info');
 
 					has_match = false;
 					break;
@@ -265,58 +265,26 @@ script.
 				return;
 			}
 
-			patchManager({
+			patchManager(managerId, {
 				op: 'change-ownership',
 				action: 'share',
 				manager_id: managerId,
 				user: userId
+			})
+			.done(function (data) {
+				setTimeout(function(){ $('.sharing-users-item').removeClass('added');}, 350);
+				statusBarSet('success', 'User added to this project!', 'pi-grin');
+
+				// TODO fsiddi: avoid the reloading of the entire page?
+				window.location.reload();
+			})
+			.fail(function (err) {
+				var msg = xhrErrorResponseMessage(err);
+				statusBarSet('error', 'Could not add user (' + msg + ')', 'pi-warning');
+
+				var $p = xhrErrorResponseElement(data, 'Could not share with user: ');
+				$('.action-result-panel').html($p);
 			});
-			//- .done(function (data) {
-			//- 	console.log(data);
-
-			//- 	var $ul = $("ul.sharing-users-list");
-			//- 	var $li = $('<li>')
-			//- 		.addClass('sharing-users-item added')
-			//- 		.attr('data-user-id', data.id)
-			//- 		.appendTo($ul);
-			//- 	var $div = $('<div>')
-			//- 		.addClass('sharing-users-avatar')
-			//- 		.appendTo($li);
-			//- 	$('<img>')
-			//- 		.attr('src', data.avatar)
-			//- 		.attr('alt', 'Avatar')
-			//- 		.appendTo($div);
-
-			//- 	$div = $('<div>')
-			//- 		.addClass('sharing-users-details')
-			//- 		.appendTo($li);
-			//- 	$('<span>')
-			//- 		.addClass('sharing-users-name')
-			//- 		.text(data.full_name)
-			//- 		.appendTo($div);
-			//- 	$('<span>')
-			//- 		.addClass('sharing-users-extra')
-			//- 		.text(data.username)
-			//- 		.appendTo($div);
-
-			//- 	$div = $('<div>')
-			//- 		.addClass('sharing-users-action')
-			//- 		.appendTo($li);
-			//- 	var $button = $('<button>')
-			//- 		.addClass('user-remove')
-			//- 		.attr('title', 'Remove this user from your project')
-			//- 		.appendTo($div);
-			//- 	$('<i>').addClass('pi-trash').appendTo($button);
-
-			//- 	setTimeout(function(){ $('.sharing-users-item').removeClass('added');}, 350);
-			//- 	statusBarSet('success', 'User added to this project!', 'pi-grin');
-			//- })
-			//- .fail(function (jsxhr){
-			//- 	data = jsxhr.responseJSON;
-			//- 	statusBarSet('error', 'Could not add user (' + data.message + ')', 'pi-warning');
-
-			//- 	$('.action-result-panel').text(data.message);
-			//- });
 		};
 
 	});
@@ -339,9 +307,8 @@ script.
 				manager_id: managerId,
 				user: userId
 			}).done(function() {
-				$("ul.sharing-users-list").find("[user-id='" + userId + "']").remove();
+				$("ul.sharing-users-list").find("[data-user-id='" + userId + "']").remove();
 				statusBarSet('success', 'User removed from this project', 'pi-trash');
-				window.location.reload();
 			}).fail(function (data) {
 				var msg = xhrErrorResponseMessage(data);
 				var $p = xhrErrorResponseElement(data, 'Error linking project: ');
