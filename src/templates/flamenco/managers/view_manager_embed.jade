@@ -225,7 +225,9 @@ script.
 				limit: 10,
 				templates: {
 					suggestion: function (hit) {
-						return hit._highlightResult.full_name.value + ' (' + hit._highlightResult.username.value + ')';
+						var suggestion = hit.full_name + ' (' + hit.username + ')';
+						var $p = $('p').text(suggestion);
+						return $p.html();
 					}
 				}
 			}
