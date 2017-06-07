@@ -226,7 +226,7 @@ script.
 				templates: {
 					suggestion: function (hit) {
 						var suggestion = hit.full_name + ' (' + hit.username + ')';
-						var $p = $('p').text(suggestion);
+						var $p = $('<p>').text(suggestion);
 						return $p.html();
 					}
 				}
