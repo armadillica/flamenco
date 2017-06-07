@@ -121,7 +121,7 @@
 				ul.sharing-users-list
 					| {% for owner in owners %}
 					li.sharing-users-item(
-						user-id="{{ owner['_id'] }}",
+						data-user-id="{{ owner['_id'] }}",
 						class="{% if current_user.objectid == owner['_id'] %}self{% endif %}")
 						.sharing-users-avatar
 							img(src="{{ owner['avatar'] }}")
@@ -139,10 +139,8 @@
 							| {# TODO: Only allow user removal if owners > 1 #}
 
 							| {% if current_user.objectid == owner['_id'] %}
-							|     {% if can_abandon_manager %}
-							button.user-remove(title="Abandon ownership of this Manager") Abandon
+							button.user-remove(title="Abandon ownership of this Manager")
 								i.pi-trash
-							|     {% endif %}
 							| {% else %}
 							button.user-remove(title="Revoke ownership from this user")
 								i.pi-trash
@@ -239,7 +237,7 @@ script.
 			for (var i = 0; i < lis.length; ++i) {
 
 				// Check if the user already is in the list
-				if ($(lis[i]).attr('user-id') == hit.objectID){
+				if ($(lis[i]).attr('data-user-id') == hit.objectID){
 
 					$(lis[i]).addClass('active');
 					setTimeout(function(){ $('.sharing-users-item').removeClass('active');}, 350);
@@ -279,7 +277,7 @@ script.
 			//- 	var $ul = $("ul.sharing-users-list");
 			//- 	var $li = $('<li>')
 			//- 		.addClass('sharing-users-item added')
-			//- 		.attr('user-id', data.id)
+			//- 		.attr('data-user-id', data.id)
 			//- 		.appendTo($ul);
 			//- 	var $div = $('<div>')
 			//- 		.addClass('sharing-users-avatar')
@@ -327,12 +325,15 @@ script.
 script.
 	$(document).ready(function() {
 		$('body').on('click', '.user-remove', function(e) {
-			var userId = $(this).parent().parent().attr('user-id');
+			var userId = $(this).closest('*[data-user-id]').data('user-id');
 			removeUser('{{ manager["_id"] }}', userId);
 		});
 
-		function removeUser(managerId, userId){
-			patchManager({
+		function removeUser(managerId, userId) {
+			if (typeof userId == 'undefined') {
+				throw "removeUser(" + managerId +", undefined) called";
+			}
+			patchManager(managerId, {
 				op: 'change-ownership',
 				action: 'unshare',
 				manager_id: managerId,
@@ -340,12 +341,16 @@ script.
 			}).done(function() {
 				$("ul.sharing-users-list").find("[user-id='" + userId + "']").remove();
 				statusBarSet('success', 'User removed from this project', 'pi-trash');
+				window.location.reload();
 			}).fail(function (data) {
-				statusBarSet('error', 'Could not remove user (' + data._status + ')', 'pi-warning');
+				var msg = xhrErrorResponseMessage(data);
+				var $p = xhrErrorResponseElement(data, 'Error linking project: ');
+				$('.action-result-panel').html($p);
+				
+				statusBarSet('error', 'Could not remove user (' + msg + ')', 'pi-warning');
 			});
 		}
 	});
-
 
 
 script.
