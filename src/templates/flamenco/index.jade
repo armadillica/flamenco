@@ -31,7 +31,7 @@
 					label.d-stats-card-item(
 						class="status-{{status}}",
 						title="{{ status | undertitle }} ({{percentage}}%)")
-						| {{percentage}}% {{ status | undertitle }}
+						| {{percentage|default('<1', true)}}% {{ status | undertitle }}
 					| {% endfor %}
 			| {% endfor %}
 
