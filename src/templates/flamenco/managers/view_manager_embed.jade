@@ -274,7 +274,7 @@ script.
 				var msg = xhrErrorResponseMessage(err);
 				statusBarSet('error', 'Could not add user (' + msg + ')', 'pi-warning');
 
-				var $p = xhrErrorResponseElement(data, 'Could not share with user: ');
+				var $p = xhrErrorResponseElement(err, 'Could not share with user: ');
 				$('.action-result-panel').html($p);
 			});
 		};
