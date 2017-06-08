@@ -1,6 +1,6 @@
 # Flamenco Docs
 
-Welcome to the Flamenco Documentation pages! Here we collect both development and user docs.
+Welcome to the Flamenco Documentation pages! Here we collect both user and development docs.
 Flamenco is primarily a distributed render management solution, but it is designed to support any
 kind of job that can be split across multiple machines.
 
@@ -16,7 +16,6 @@ Blender jobs, but it is quite trivial to add more.
 
 ## Status of the documentation
 
-We are currently updating the documentation after a large rewrite of Flamenco, therefore the user
-manual is not available, and the developer docs are work in progress. We have removed any legacy
-content, though, so everything that can be found here is up to date, or has been highlighted as
-upcoming functionality.
+Documentation is an ongoing effort. We are currently focusing on user documentation, aimed at
+Blender Cloud subscribers. If you are interested in installing the entire Flamenco stack on your own
+infrastructure, consider checking out the sources and README.md files.
