@@ -17,6 +17,7 @@ pages:
   - Home: 'index.md'
   - User Manual:
     - 'user_manual/introduction.md'
+    - 'user_manual/terminology.md'
     - 'user_manual/installation.md'
     - 'user_manual/blender_render.md'
   - Developer Docs:
