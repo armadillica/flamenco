@@ -232,31 +232,21 @@ script.
 				}
 			}
 		]).on('autocomplete:selected', function (event, hit, dataset) {
-
-			var lis = document.getElementsByClassName('sharing-users-item');
-			var has_match = false;
-
-			for (var i = 0; i < lis.length; ++i) {
-
-				// Check if the user already is in the list
-				if ($(lis[i]).attr('data-user-id') == hit.objectID){
-
-					$(lis[i]).addClass('active');
-					setTimeout(function(){ $('.sharing-users-item').removeClass('active');}, 350);
-					statusBarSet('info', 'User is already co-owner of this Manager', 'pi-info');
-
-					has_match = false;
-					break;
-				} else {
-					has_match = true;
-					continue;
-				}
-			};
-
-			if (has_match){
+			var $existing = $('li.sharing-users-item[data-user-id="' + hit.objectID + '"]');
+			if ($existing.length) {
+				$existing
+					.addClass('active')
+					.delay(1000)
+					.queue(function() {
+						console.log('no');
+						$existing.removeClass('active');
+						$existing.dequeue();
+					});
+				statusBarSet('info', 'User is already co-owner of this Manager', 'pi-info');
+			}
+			else {
 				addUser('{{ manager["_id"] }}', hit.objectID);
 			}
-
 		});
 
 
