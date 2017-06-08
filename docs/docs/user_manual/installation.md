@@ -1,4 +1,4 @@
-# Installation
+# Installation & Configuration
 
 This guide focuses on installing Flamenco while relying on the
 [Blender Cloud](https://blender.cloud) service. If you are interested in setting up the entire
@@ -7,9 +7,9 @@ source code.
 
 We are going to assume that you have a Blender Cloud subscription, and that you already created a
 project. If you haven't, log in and create a [new project](https://blender.cloud/p/).
- 
+
 Here is an overview of the steps required to get Flamenco up an running.
- 
+
 - Enable your project for Flamenco
 - Download and configure your Manager
 - Download and configure your Worker
@@ -17,8 +17,8 @@ Here is an overview of the steps required to get Flamenco up an running.
 
 
 !!! note
-    This is meant as a step-by-step quick install guide. For more in-depth installation and 
-    configuration documents,check out the sources of each component.
+    This is meant as a step-by-step quick install guide. For more in-depth installation and
+    configuration documents, check out the sources of each component.
 
 
 ## Enable project for Flamenco
@@ -28,7 +28,7 @@ view (the homepage of a project), clicking on "Edit Project" and then "Flamenco"
 you can visit the url `https://blender.cloud/p/<your_project_url>/edit/flamenco`.
 Once in the Flamenco page, click on "Enable for Flamenco". After clicking, some things will happen:
 
-- you will be able to see your project in `https://blender.cloud/flamenco/`, where you will manage 
+- you will be able to see your project in `https://blender.cloud/flamenco/`, where you will manage
   jobs and tasks
 - a Flamenco Manager will be attached to the project (if you had no Manager, one will be created
   for you, otherwise the existing one will be used)
@@ -73,15 +73,13 @@ Worker and install it with the `pip3 install flamenco_worker-xxxx.whl` command.
 Create a `flamenco-worker.cfg` file in a directory where you are going to run the worker command
 (can be any directory on the system).
 
-All configuration keys should be placed in the `[flamenco-worker]` section of the config file. 
+All configuration keys should be placed in the `[flamenco-worker]` section of the config file.
 At least take a look at:
 
 - manager_url: Flamenco Manager URL.
 - task_types: Space-separated list of task types this worker may execute.
-- task_update_queue_db: filename of the SQLite3 database holding the queue of task updates to be 
+- task_update_queue_db: filename of the SQLite3 database holding the queue of task updates to be
   sent to the Master.
 
-Run the Worker with the `flamenco-worker` command. The Worker will automatically connect to the 
+Run the Worker with the `flamenco-worker` command. The Worker will automatically connect to the
 Manager and start querying for tasks.
-
-

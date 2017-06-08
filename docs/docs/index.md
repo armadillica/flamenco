@@ -9,16 +9,16 @@ Blender jobs, but it is quite trivial to add more.
 
 ## Main features
 
-* Every component runs on Linux, macOS and Windows
+* Every component runs on Linux, macOS, and Windows
 * Automatic detection of clients
 * Powerful user and project management tools
-* Dependency-graph-based priority system
-* Resilient design (every individual component can fail without consequences)
-* Extensible Jobs, Tasks and Commands
+* Dependency-graph based priority system
+* Resilient design (every individual component can fail without major disruptions)
+* Extensible Jobs, Tasks, and Commands
 
 ## Status of the documentation
 
 We are currently updating the documentation after a large rewrite of Flamenco, therefore the user
 manual is not available, and the developer docs are work in progress. We have removed any legacy
-content though, so everything that can be found here is up to date, or has been highlighted as
+content, though, so everything that can be found here is up to date, or has been highlighted as
 upcoming functionality.
