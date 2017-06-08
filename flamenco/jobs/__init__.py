@@ -87,17 +87,22 @@ class JobManager(object):
         job.update(r)
         return job
 
-    def jobs_for_project(self, project_id):
+    def jobs_for_project(self, project_id, *, archived=False):
         """Returns the jobs for the given project.
 
         :returns: {'_items': [job, job, ...], '_meta': {Eve metadata}}
         """
         from .sdk import Job
 
+        # Eve doesn't support '$eq' :(
+        status_q = 'archived' if archived else {'$ne': 'archived'}
+        where = {'project': project_id,
+                 'status': status_q}
+
         api = pillar_api()
         try:
             j = Job.all({
-                'where': {'project': project_id},
+                'where': where,
                 'sort': [('_updated', -1), ('_created', -1)],
             }, api=api)
         except pillarsdk.ResourceNotFound:

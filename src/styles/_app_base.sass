@@ -15,6 +15,9 @@ body
 	&[data-context="job"]
 		nav.sidebar .navbar-item.jobs
 			+sidebar-button-active
+	&[data-context="archive"]
+		nav.sidebar .navbar-item.archive
+			+sidebar-button-active
 	&[data-context="managers"]
 		nav.sidebar .navbar-item.managers
 			+sidebar-button-active
@@ -23,7 +26,7 @@ body
 
 nav.sidebar
 	a.navbar-item
-		&.tasks, &.jobs, &.managers
+		&.tasks, &.jobs, &.managers, &.archive
 			text-transform: initial
 			font-size: .85em
 

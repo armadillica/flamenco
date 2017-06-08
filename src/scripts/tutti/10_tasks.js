@@ -31,7 +31,10 @@ function item_open(item_id, item_type, pushState, project_url)
     switch(item_type) {
         case 'task':
         case 'job':
-            item_url = '/flamenco/' + project_url + '/' + item_type + 's/' + item_id;
+            var type_for_url = item_type + 's';
+            if (item_type == 'job' && ProjectUtils.context() == 'archive')
+                type_for_url = 'archive'
+            item_url = '/flamenco/' + project_url + '/' + type_for_url + '/' + item_id;
             if (ProjectUtils.context() == 'job' && item_type == 'task'){
                 push_url = '/flamenco/' + project_url + '/jobs/with-task/' + item_id;
             }

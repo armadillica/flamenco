@@ -45,6 +45,9 @@ html(lang="en")
 						li
 							a.navbar-item.jobs(href="{{ url_for('flamenco.jobs.perproject.index', project_url=flamenco_last_project.url) }}",
 							title='Jobs for project {{ flamenco_last_project.name }}') Jobs
+						li
+							a.navbar-item.archive(href="{{ url_for('flamenco.jobs.archive.perproject.index', project_url=flamenco_last_project.url) }}",
+							title='Jobs archive for project {{ flamenco_last_project.name }}') Archive
 						// Task list is disabled until it is extended with filtering etc. (T51532)
 						//- li
 						//- 	a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.perproject.index', project_url=flamenco_last_project.url) }}",

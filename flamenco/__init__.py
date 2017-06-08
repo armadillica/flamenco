@@ -78,6 +78,7 @@ class FlamencoExtension(PillarExtension):
         return [
             routes.blueprint,
             flamenco.jobs.routes.perproject_blueprint,
+            flamenco.jobs.routes.perproject_archive_blueprint,
             flamenco.jobs.routes.blueprint,
             flamenco.tasks.routes.global_blueprint,
             flamenco.tasks.routes.perjob_blueprint,

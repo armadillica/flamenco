@@ -4,7 +4,7 @@ import collections
 import logging
 
 import bson
-from flask import Blueprint, render_template, request, redirect
+from flask import Blueprint, render_template, request, redirect, url_for
 import flask_login
 import werkzeug.exceptions as wz_exceptions
 
@@ -19,6 +19,13 @@ from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, Actions
 blueprint = Blueprint('flamenco.jobs', __name__, url_prefix='/jobs')
 perproject_blueprint = Blueprint('flamenco.jobs.perproject', __name__,
                                  url_prefix='/<project_url>/jobs')
+perproject_archive_blueprint = Blueprint('flamenco.jobs.archive.perproject', __name__,
+                                         url_prefix='/<project_url>/archive')
+blueprint_for_archived = {
+    False: perproject_blueprint,
+    True: perproject_archive_blueprint,
+}
+
 log = logging.getLogger(__name__)
 
 # The job statuses that can be set from the web-interface.
@@ -26,18 +33,38 @@ ALLOWED_JOB_STATUSES_FROM_WEB = {'cancel-requested', 'queued'}
 
 
 @perproject_blueprint.route('/', endpoint='index')
+@perproject_archive_blueprint.route('/', endpoint='index')
 @flamenco_project_view(extension_props=False, action=Actions.VIEW)
 def for_project(project, job_id=None, task_id=None):
-    jobs = current_flamenco.job_manager.jobs_for_project(project['_id'])
+    is_archive = request.blueprint == perproject_archive_blueprint.name
+    jobs = current_flamenco.job_manager.jobs_for_project(project['_id'],
+                                                         archived=is_archive)
+
+    # See if we need to redirect between archive and non-archive view.
+    if job_id and not any(job['_id'] == job_id for job in jobs['_items']):
+        target_blueprint = blueprint_for_archived[not is_archive]
+        target_endpoint = request.endpoint.split('.')[-1]
+        new_url = url_for(f'{target_blueprint.name}.{target_endpoint}', **request.view_args)
+        return redirect(new_url, code=307)
+
+    # Find the link URL for each job.
+    for job in jobs['_items']:
+        target_blueprint = blueprint_for_archived[job.status == 'archived']
+        job.url = url_for(f'{target_blueprint.name}.view_job',
+                          project_url=project.url, job_id=job._id)
+
     return render_template('flamenco/jobs/list_for_project.html',
                            stats={'nr_of_jobs': '∞', 'nr_of_tasks': '∞'},
                            jobs=jobs['_items'],
                            open_job_id=job_id,
                            open_task_id=task_id,
-                           project=project)
+                           project=project,
+                           is_archive=is_archive,
+                           page_context='archive' if is_archive else 'job')
 
 
 @perproject_blueprint.route('/with-task/<task_id>')
+@perproject_archive_blueprint.route('/with-task/<task_id>')
 @flamenco_project_view(action=Actions.VIEW)
 def for_project_with_task(project, task_id):
     from flamenco.tasks.sdk import Task
@@ -48,6 +75,7 @@ def for_project_with_task(project, task_id):
 
 
 @perproject_blueprint.route('/<job_id>')
+@perproject_archive_blueprint.route('/<job_id>')
 @pillar.flask_extra.vary_xhr()
 @flamenco_project_view(extension_props=True, action=Actions.VIEW)
 def view_job(project, flamenco_props, job_id):
@@ -334,9 +362,9 @@ def redir_job_id(job_id):
     # FIXME Sybren: add permission check.
 
     api = pillar_api()
-    j = Job.find(job_id, {'projection': {'project': 1}}, api=api)
+    j = Job.find(job_id, {'projection': {'project': 1, 'status': 1}}, api=api)
     p = Project.find(j.project, {'projection': {'url': 1}}, api=api)
 
-    return redirect(url_for('flamenco.jobs.perproject.view_job',
-                            project_url=p.url,
-                            job_id=job_id))
+    target_blueprint = blueprint_for_archived[j.status == 'archived']
+    return redirect(url_for(f'{target_blueprint.name}.view_job',
+                            project_url=p.url, job_id=j._id))

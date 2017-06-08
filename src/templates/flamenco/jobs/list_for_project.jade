@@ -1,5 +1,5 @@
 | {% extends 'flamenco/layout.html' %}
-| {% block bodyattrs %}{{ super() }} data-context='job'{% endblock %}
+| {% block bodyattrs %}{{ super() }} data-context='{{ page_context }}'{% endblock %}
 | {% block page_title %}Jobs - {{ project.name }}{% endblock %}
 | {% block body %}
 #col_main
@@ -29,23 +29,22 @@
 
 				.table-body
 					| {% for job in jobs %}
-					| {% set link_url = url_for('flamenco.jobs.perproject.view_job', project_url=project.url, job_id=job._id) %}
 					.table-row(
 						id="job-{{ job._id }}",
 						class="status-{{ job.status }}{% if job._id == open_job_id %} active{% endif %}")
 						.table-cell.item-status
 							a(data-job-id="{{ job._id }}",
-								href="{{ link_url }}",
+								href="{{ job.url }}",
 								class="job-link")
 								| {{ job.status | undertitle }}
 						.table-cell.item-name
 							a(data-job-id="{{ job._id }}",
-								href="{{ link_url }}",
+								href="{{ job.url }}",
 								class="job-link")
 								span(class="job-name-{{ job._id }}") {{ job.name }}
 						.table-cell.item-priority
 							a(data-job-id="{{ job._id }}",
-								href="{{ link_url }}")
+								href="{{ job.url }}")
 								span(class="job-priority-{{ job._id }}") {{ job.priority }}
 					| {% endfor %}
 
