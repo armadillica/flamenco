@@ -21,8 +21,6 @@ body
 	&[data-context="managers"]
 		nav.sidebar .navbar-item.managers
 			+sidebar-button-active
-		#col_main .col_header
-			box-shadow: none
 
 nav.sidebar
 	a.navbar-item
@@ -74,6 +72,9 @@ nav.sidebar
 	z-index: 99
 
 /* Flamenco specific table tweaks */
+.col_header
+	box-shadow: inset -1px 0 $color-background
+
 #col_main
 	&.manager-index
 		width: 33%
