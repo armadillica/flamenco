@@ -10,10 +10,8 @@ Blender jobs, but it is quite trivial to add more.
 ## Main features
 
 * Every component runs on Linux, macOS, and Windows
-* Automatic detection of clients
-* Powerful user and project management tools
+* Resilient design (individual components can fail without immediate disruption)
 * Dependency-graph based priority system
-* Resilient design (every individual component can fail without major disruptions)
 * Extensible Jobs, Tasks, and Commands
 
 ## Status of the documentation
