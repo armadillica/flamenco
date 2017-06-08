@@ -13,6 +13,17 @@ copyright: 'Copyright &copy; 2016 Blender Institute - CC-BY-SA v4.0.'
 
 theme: 'material'
 
+pages:
+  - Home: 'index.md'
+  - User Manual:
+    - 'user_manual/introduction.md'
+    - 'user_manual/installation.md'
+    - 'user_manual/blender_render.md'
+  - Developer Docs:
+    - 'developer_docs/architecture.md'
+    - 'developer_docs/scheduling.md'
+    - 'developer_docs/roadmap.md'
+
 # Options
 extra:
   logo: 'img/logo_flamenco_white.svg'
@@ -29,3 +40,6 @@ extra:
 google_analytics:
   - 'UA-1418081-11'
   - 'auto'
+
+markdown_extensions:
+  - admonition
