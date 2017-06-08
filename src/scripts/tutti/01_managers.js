@@ -36,7 +36,7 @@ function patchManager(manager_id, patch) {
         throw 'patchManager(manager_id, undefined) called';
     }
     $('.action-result-panel').html('');
-    console.log('patchManager', manager_id, patch);
+    if (console) console.log('patchManager', manager_id, patch);
 
     var promise = $.ajax({
         url: '/api/flamenco/managers/' + manager_id,
@@ -45,10 +45,10 @@ function patchManager(manager_id, patch) {
         data: JSON.stringify(patch),
     })
     .done(function() {
-        console.log('patchManager', manager_id, patch, 'OK');
+        if (console) console.log('PATCH', manager_id, 'OK');
     })
     .fail(function(err) {
-        console.log('Error patching: ', err);
+        if (console) console.log('Error patching: ', err);
     })
     ;
 
