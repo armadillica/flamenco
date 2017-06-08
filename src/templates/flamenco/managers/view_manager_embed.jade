@@ -285,21 +285,22 @@ script.
 script.
 	$(document).ready(function() {
 		$('body').on('click', '.user-remove', function(e) {
-			var userId = $(this).closest('*[data-user-id]').data('user-id');
-			removeUser('{{ manager["_id"] }}', userId);
+			var user_id = $(this).closest('*[data-user-id]').data('user-id');
+			removeUser(user_id);
 		});
 
-		function removeUser(managerId, userId) {
-			if (typeof userId == 'undefined') {
-				throw "removeUser(" + managerId +", undefined) called";
+		function removeUser(user_id) {
+			if (typeof user_id == 'undefined') {
+				throw "removeUser(undefined) called";
 			}
-			patchManager(managerId, {
+			var manager_id = '{{ manager._id }}';
+			patchManager(manager_id, {
 				op: 'change-ownership',
 				action: 'unshare',
-				manager_id: managerId,
-				user: userId
+				manager_id: manager_id,
+				user: user_id
 			}).done(function() {
-				$("ul.sharing-users-list").find("[data-user-id='" + userId + "']").remove();
+				$("ul.sharing-users-list").find("[data-user-id='" + user_id + "']").remove();
 				statusBarSet('success', 'User removed from this project', 'pi-trash');
 			}).fail(function (data) {
 				var msg = xhrErrorResponseMessage(data);
