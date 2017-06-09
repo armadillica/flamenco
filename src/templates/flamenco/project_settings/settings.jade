@@ -1,22 +1,31 @@
 | {% extends 'flamenco/project_settings/flamenco_layout.html'  %}
 
 | {% block flamenco_container %}
-p Heyyyyyyyyyyyyyyyy this is a Flamenco project.
+#node-edit-form
 
-.flamenco-box.manager
-	h4 Flamenco Managers for this Project
+	h3 Flamenco Managers
+	p
+		a(href="{{ url_for ('flamenco.managers.index' ) }}") Manage Managers
+
+	hr
 
 	| {% if linked_managers._meta.total > 0 %}
 	p Manager{{ linked_managers._meta.total|pluralize }} linked to this project:
-	ul
+
+	ul.list-generic
 		|   {% for manager in linked_managers._items %}
 		li
+			.action
+				a.btn(
+					href="javascript:clickUnlinkProject('{{ manager._id }}')",
+					title="Un-link {{ manager.name }} from this project")
+					i.pi-unlink
+					| Un-link
 			a(
 				href="{{ url_for ('flamenco.managers.view_embed', manager_id=manager._id ) }}",
-				title="Click to view this Manager") {{ manager.name }}
-			a.pi-unlink(
-				href="javascript:clickUnlinkProject('{{ manager._id }}')",
-				title="Unlink Manager from this project")
+				title="Click to view {{ manager.name }}")
+				| {{ manager.name }}
+
 		|   {% endfor %}
 	| {% else %}
 	|   {% if managers._meta.total == 0 %}
@@ -26,25 +35,28 @@ p Heyyyyyyyyyyyyyyyy this is a Flamenco project.
 		button.btn.btn-default(onclick="clickLinkProject('{{ first_manager._id }}')") Use it for this project
 
 	|   {% else %}
-	p
-		| You have {{ managers._meta.total }} Manager{{ managers._meta.total|pluralize }}
-		| available to you. Please choose which to use for this project:
+	p.
+		There are <strong>{{ managers._meta.total }} manager{{ managers._meta.total|pluralize }}</strong>
+		available to you. Choose which one to use for this project:
 
-	ul
+	ul.list-generic
 		| {% for manager in managers._items %}
 		li
-			a.pi-link(
-				href="javascript:clickLinkProject('{{ manager._id }}')",
-				title="Link Manager from this project")
+			.action
+				a.btn.btn-success(
+					href="javascript:clickLinkProject('{{ manager._id }}')",
+					title="Link {{ manager.name }} to this project")
+					i.pi-link
+					| Link
+			a(
+				href="{{ url_for ('flamenco.managers.view_embed', manager_id=manager._id ) }}",
+				title="Click to view {{ manager.name }}")
 				| {{ manager.name }}
+
 		|   {% endfor %}
 
 	|   {% endif %}
 	| {% endif %}
-
-	p
-		a(href="{{ url_for ('flamenco.managers.index' ) }}") Flamenco Managers Management
-
 .action-result-panel
 
 

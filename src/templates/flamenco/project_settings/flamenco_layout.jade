@@ -4,11 +4,6 @@
 
 | {% block head %}
 script(src="{{ url_for('static_flamenco', filename='assets/js/generated/tutti.min.js') }}")
-
-style.
-	#flamenco-project-container {
-		padding: 1ex;
-	}
 | {% endblock %}
 
 | {% block project_context_header %}
@@ -17,7 +12,12 @@ span#project-edit-title
 | {% endblock %}
 
 | {% block project_context %}
-#flamenco-project-container
+#node-edit-container
 	| {% block flamenco_container %}
 	| {% endblock flamenco_container %}
+
+	.settings-footer
+		p
+			| New to Flamenco?
+			| <a href="https://www.flamenco.io/">Learn more at flamenco.io</a>
 | {% endblock project_context %}

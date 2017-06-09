@@ -1,19 +1,16 @@
 | {% extends 'flamenco/project_settings/flamenco_layout.html'  %}
 
 | {% block flamenco_container %}
-p Heyyyyy your project is not set up for Flamenco.
-p
-	button(onclick='setupForFlamenco()') Get to da choppah!
-
-.action-result-panel
+#node-edit-form
+	p This project is not setup for Flamenco (yet!)
+	p
+		button.btn.btn-success(onclick='setupForFlamenco()') Setup Project for Flamenco
 
 | {% endblock flamenco_container %}
 
 | {% block footer_scripts %}
 script.
 	function setupForFlamenco() {
-		$('.action-result-panel').html('');
-
 		$.ajax({
 			url: '{{ url_for( "flamenco.setup_for_flamenco", project_url=project.url) }}',
 			method: 'POST',
@@ -23,7 +20,7 @@ script.
 		})
 		.fail(function(err) {
 			var err_elt = xhrErrorResponseElement(err, 'Error setting up your project: ');
-			$('.action-result-panel').html(err_elt);
+			toastr.error(err_elt);
 		});
 	}
 | {% endblock %}
