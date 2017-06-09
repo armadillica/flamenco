@@ -22,6 +22,7 @@ pages:
     - 'user_manual/blender_render.md'
   - Developer Docs:
     - 'developer_docs/architecture.md'
+    - 'developer_docs/permissions_system.md'
     - 'developer_docs/scheduling.md'
     - 'developer_docs/roadmap.md'
 
