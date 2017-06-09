@@ -107,6 +107,10 @@ managers_schema = {
         'type': 'dict',
         'allow_unknown': True,
     },
+    'path_replacement': {
+        'type': 'dict',
+        'allow_unknown': True,
+    },
     'stats': {
         'type': 'dict',
         'schema': {

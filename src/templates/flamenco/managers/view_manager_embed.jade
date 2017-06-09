@@ -62,6 +62,20 @@
 	| {% endfor %}
 	| {% endif %}
 
+	| {% if manager.path_replacement %}
+	h4 Path Replacement Variables
+	| {% for pathrep_key, pathrep_values in manager.path_replacement.to_dict().items()  %}
+	.table.item-properties
+		.table-body(title='Unable to edit, set by Manager')
+			| {% for v in pathrep_values %}
+			.table-row.properties-path-replacement
+				.table-cell.variable-name {% if loop.first %}{{ pathrep_key }}{% endif %}
+				.table-cell.variable-key {{ v }}
+				.table-cell.variable-value {{ pathrep_values[v] }}
+			| {% endfor %}
+	| {% endfor %}
+	| {% endif %}
+
 .flamenco-box.manager
 	h4 Projects linked to this Manager
 

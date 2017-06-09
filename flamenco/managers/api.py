@@ -58,6 +58,7 @@ def startup(manager_id, notification):
             '_etag': uuid.uuid4().hex,
             'url': notification['manager_url'],
             'variables': notification['variables'],
+            'path_replacement': notification['path_replacement'],
             'stats.nr_of_workers': notification['nr_of_workers'],
         }}
     )
