@@ -5,6 +5,7 @@
 
 	h3 Flamenco Managers
 	p
+		= 'There are {{ managers._meta.total }} manager{{ managers._meta.total|pluralize }} available to you. '
 		a(href="{{ url_for ('flamenco.managers.index' ) }}") Manage Managers
 
 	hr
@@ -15,16 +16,18 @@
 	ul.list-generic
 		|   {% for manager in linked_managers._items %}
 		li
-			.action
+			.item
+				a(
+					href="{{ url_for ('flamenco.managers.view_embed', manager_id=manager._id ) }}",
+					title="Click to view {{ manager.name }}")
+					| {{ manager.name }}
+
+			.actions
 				a.btn(
 					href="javascript:clickUnlinkProject('{{ manager._id }}')",
 					title="Un-link {{ manager.name }} from this project")
 					i.pi-unlink
 					| Un-link
-			a(
-				href="{{ url_for ('flamenco.managers.view_embed', manager_id=manager._id ) }}",
-				title="Click to view {{ manager.name }}")
-				| {{ manager.name }}
 
 		|   {% endfor %}
 	| {% else %}
@@ -36,23 +39,23 @@
 
 	|   {% else %}
 	p.
-		There are <strong>{{ managers._meta.total }} manager{{ managers._meta.total|pluralize }}</strong>
-		available to you. Choose which one to use for this project:
+		Choose which one to use for this project:
 
 	ul.list-generic
 		| {% for manager in managers._items %}
 		li
-			.action
+			.item
+				a(
+					href="{{ url_for ('flamenco.managers.view_embed', manager_id=manager._id ) }}",
+					title="Click to view {{ manager.name }}")
+					| {{ manager.name }}
+
+			.actions
 				a.btn.btn-success(
 					href="javascript:clickLinkProject('{{ manager._id }}')",
 					title="Link {{ manager.name }} to this project")
 					i.pi-link
 					| Link
-			a(
-				href="{{ url_for ('flamenco.managers.view_embed', manager_id=manager._id ) }}",
-				title="Click to view {{ manager.name }}")
-				| {{ manager.name }}
-
 		|   {% endfor %}
 
 	|   {% endif %}
