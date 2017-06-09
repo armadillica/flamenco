@@ -2,6 +2,19 @@
 | {% block bodyattrs %}{{ super() }} data-context='dashboard'{% endblock %}
 | {% block page_title %}Dashboard{% endblock %}
 
+| {% block style %}
+style.
+	#col_right section {
+		margin: 2ex;
+	}
+
+	#col_right section p {
+		line-height: 180%;
+		hyphens: auto;
+		text-align: center;
+	}
+| {% endblock %}
+
 | {% block body %}
 #col_main
 	.dashboard
@@ -34,5 +47,21 @@
 						| {{percentage|default('<1', true)}}% {{ status | undertitle }}
 					| {% endfor %}
 			| {% endfor %}
+
+#col_right
+	.d-welcome
+		.welcome-logo
+			i.pi-flamenco
+		.welcome-title Welcome to Flamenco
+
+		.welcome-text
+			p Your Render Management Software
+
+	section
+		p
+			| For documentation, downloads, and everything you need for running your own
+			| Ren&shy;der Ma&shy;na&shy;ge&shy;ment Soft&shy;ware, visit the
+			=' '
+			a(href='https://www.flamenco.io/', target='_blank') Flamenco Website.
 
 | {% endblock %}
