@@ -7,6 +7,7 @@ Flamenco Server Changelog
 - Users can create their own Managers (max 3).
 - Managers can be linked to projects.
 - The authentication token for a Manager can be retrieved and reset by owners.
+- Managers can now push path replacement variables.
 
 
 ## Version 2.0.2 (released 2017-04-26)
