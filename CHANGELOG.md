@@ -1,7 +1,7 @@
 Flamenco Server Changelog
 =========================
 
-## Version 2.1.0 (in development)
+## Version 2.0.3 (released 2017-06-09)
 
 - Users are now required to have the `flamenco-user` role in order to use Flamenco.
 - Users can create their own Managers (max 3).
