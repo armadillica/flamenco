@@ -8,7 +8,7 @@ function unlinkProject(manager_id, project_id) {
     })
     .fail(function(err) {
         var $p = xhrErrorResponseElement(err, 'Error unlinking project: ');
-        $('.action-result-panel').html($p);
+        toastr.error('Error unlinking project', $p);
     })
     ;
 }
@@ -23,7 +23,7 @@ function linkProject(manager_id, project_id) {
     })
     .fail(function(err) {
         var $p = xhrErrorResponseElement(err, 'Error linking project: ');
-        $('.action-result-panel').html($p);
+        toastr.error('Error linking project', $p);
     })
     ;
 }
@@ -35,7 +35,7 @@ function patchManager(manager_id, patch) {
     if (typeof patch == 'undefined') {
         throw 'patchManager(manager_id, undefined) called';
     }
-    $('.action-result-panel').html('');
+
     if (console) console.log('patchManager', manager_id, patch);
 
     var promise = $.ajax({

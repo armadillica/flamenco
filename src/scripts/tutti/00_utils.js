@@ -167,7 +167,6 @@ function xhrErrorResponseMessage(err) {
 
 function xhrErrorResponseElement(err, prefix) {
     msg = xhrErrorResponseMessage(err);
-    return $('<p>')
-        .text(prefix + msg)
-        .addClass('text-danger');
+    return $('<span>')
+        .text(prefix + msg);
 }

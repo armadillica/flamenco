@@ -256,7 +256,7 @@ script.
 						$existing.removeClass('active');
 						$existing.dequeue();
 					});
-				statusBarSet('info', 'User is already co-owner of this Manager', 'pi-info');
+				toastr.info('User is already co-owner of this Manager');
 			}
 			else {
 				addUser('{{ manager["_id"] }}', hit.objectID);
@@ -267,7 +267,7 @@ script.
 		function addUser(managerId, userId){
 
 			if (!userId || userId.length == 0) {
-				statusBarSet('error', 'Please select a user from the list', 'pi-warning');
+				toastr.error('Please select a user from the list');
 				return;
 			}
 
@@ -285,11 +285,8 @@ script.
 				window.location.reload();
 			})
 			.fail(function (err) {
-				var msg = xhrErrorResponseMessage(err);
-				statusBarSet('error', 'Could not add user (' + msg + ')', 'pi-warning');
-
 				var $p = xhrErrorResponseElement(err, 'Could not share with user: ');
-				$('.action-result-panel').html($p);
+				toastr.error($p);
 			});
 		};
 
@@ -315,13 +312,11 @@ script.
 				user: user_id
 			}).done(function() {
 				$("ul.sharing-users-list").find("[data-user-id='" + user_id + "']").remove();
-				statusBarSet('success', 'User removed from this project', 'pi-trash');
-			}).fail(function (data) {
-				var msg = xhrErrorResponseMessage(data);
-				var $p = xhrErrorResponseElement(data, 'Error linking project: ');
-				$('.action-result-panel').html($p);
+				toastr.success('User removed from this project');
 
-				statusBarSet('error', 'Could not remove user (' + msg + ')', 'pi-warning');
+			}).fail(function (data) {
+				var $p = xhrErrorResponseElement(data, 'Error removing user: ');
+				toastr.error($p);
 			});
 		}
 	});
@@ -338,7 +333,7 @@ script.
 
 		clipboard.on('success', function(e) {
 			$(e.trigger).flashOnce();
-			statusBarSet('info', 'Copied to clipboard', 'pi-check');
+			toastr.success('Copied to clipboard');
 		});
 	}
 	createClipboard();
@@ -374,7 +369,7 @@ script.
 		})
 		.fail(function(err) {
 			var $p = xhrErrorResponseElement(err, 'Error editing Manager: ');
-			$('.action-result-panel').html($p);
+			toastr.error($p);
 		})
 		;
 
@@ -424,7 +419,7 @@ script.
 		.done(_displayAuthToken)
 		.fail(function(err) {
 			var $p = xhrErrorResponseElement(err, 'Error fetching auth token: ');
-			$('.action-result-panel').html($p);
+			toastr.error($p);
 		})
 		;
 	}
@@ -457,11 +452,11 @@ script.
 			$btn.removeAttr('disabled').text('Token generated');
 			_displayAuthToken(data);
 			restoreButtonText();
-			statusBarSet('success', 'New token generated', 'pi-check');
+			toastr.success('New token generated');
 		})
 		.fail(function(err) {
 			var $p = xhrErrorResponseElement(err, 'Error generating auth token: ');
-			$('.action-result-panel').html($p);
+			toastr.error($p);
 			restoreButtonText();
 		})
 		;
