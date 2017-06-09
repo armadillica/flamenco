@@ -79,47 +79,42 @@
 .flamenco-box.manager
 	h4 Projects linked to this Manager
 
-	.row
-		.col-md-6
-			| {% if linked_projects._items %}
-			ul.manager-projects-list
-				| {% for project in linked_projects._items %}
-				li
-					a.list-item-thumbnail(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}")
-						img(src="http://placehold.it/160x160")
-					.list-item-details
-						a.item-title(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}")
-							| {{ project.name }}
-						a.item-extra.delete(href='javascript:clickUnlinkProject("{{ project._id }}")', title="Unlink project")
-							| Unlink
-				| {% endfor %}
-			| {% else %}
-			.projects-list-empty No projects linked yet.
-			| {% endif %}
+	| {% if linked_projects._items %}
+	.table.item-properties
+		.table-body
+			| {% for project in linked_projects._items %}
+			.table-row.properties-url
+				.table-cell
+					i.pi-blender-cloud
+				.table-cell
+					a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=project.url) }}")
+						| {{ project.name }}
+				.table-cell
+					a(href='javascript:clickUnlinkProject("{{ project._id }}")', title="Unlink project")
+						i.pi-trash
+			| {% endfor %}
+	| {% else %}
+	.projects-list-empty No projects linked yet.
+	| {% endif %}
 
-		.col-md-6
-			.sharing-users-info.manager-projects-list-info
-				| {% if can_edit %}
-				#item-action-panel
-				| {% if available_projects %}
-				select#link_project_select
-					option
-					| {% for project in available_projects %}
-					option(value="{{ project._id }}") {{ project.name }}
-					| {% endfor %}
-				| {% elif linked_projects %}
-				span.info All available projects are linked already.
-				| {% else %}
-				span.info You have no projects set up for Flamenco.
-				| {% endif %}
-				| {% endif %}
-
-				h4 What can owners do?
-				p.
-					Owners of a Manager can (un)link projects, appoint or remove other owners,
-					and generally can use the Manager.
-				p A Manager cannot be without owner.
-
+	| {% if can_edit %}
+	#item-action-panel
+		| {% if available_projects %}
+		select#link_project_select
+			| {% for project in available_projects %}
+			option(value="{{ project._id }}") {{ project.name }}
+			| {% endfor %}
+		button.btn.btn-success(onclick="clickLinkProject()")
+			i.pi-link
+			| Link project
+		| {% elif linked_projects %}
+		button.btn.btn-default(disabled)
+			| All available projects are linked already.
+		| {% else %}
+		button.btn.btn-default(disabled)
+			| You have no projects set up for Flamenco.
+		| {% endif %}
+	| {% endif %}
 
 
 // OWNERSHIP
@@ -130,6 +125,13 @@
 	#ownership
 		.row
 			.col-md-6
+				.sharing-users-search
+					.form-group
+						input#user-select.form-control(
+							name='contacts',
+							type='text',
+							placeholder='Add owner by name')
+
 				ul.sharing-users-list
 					| {% for owner in owners %}
 					li.sharing-users-item(
@@ -162,20 +164,12 @@
 
 			.col-md-6
 				.sharing-users-info
-					.sharing-users-search
-						.form-group
-							input#user-select.form-control(
-								name='contacts',
-								type='text',
-								placeholder='Add owner by name')
-
 					h4 What can owners do?
 					p.
 						Owners of a Manager can (un)link projects, appoint or remove other owners,
 						and generally can use the Manager. Note that all owners are equal; there are
 						no special rights or abilities for the person who created this Manager.
 					p A Manager cannot be without owner.
-
 
 | {% endif %}
 
@@ -223,17 +217,6 @@
 | {% if can_edit %}
 script.
 	$(document).ready(function() {
-
-		var $projectSelect = $('#link_project_select');
-
-		$projectSelect
-			.select2({
-				placeholder: "Select a project"
-			})
-			.on("select2:select", function (e) {
-				clickLinkProject();
-		});
-
 		var APPLICATION_ID = '{{config.ALGOLIA_USER}}'
 		var SEARCH_ONLY_API_KEY = '{{config.ALGOLIA_PUBLIC_KEY}}';
 		var INDEX_NAME = '{{config.ALGOLIA_INDEX_USERS}}';
