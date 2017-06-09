@@ -146,12 +146,18 @@ class ManagerManager(object):
 
         import flask
         from pillar.api.utils.authorization import user_matches_roles
+        from flamenco.auth import ROLES_REQUIRED_TO_VIEW_FLAMENCO, ROLES_REQUIRED_TO_USE_FLAMENCO
 
         current_user = flask.g.get('current_user') or {}
         user_id = current_user.get('user_id')
 
-        if not user_id or not user_matches_roles({'subscriber', 'demo'}):
+        if not user_id or not user_matches_roles(ROLES_REQUIRED_TO_VIEW_FLAMENCO):
             self._log.debug('user_is_owner(...): user %s is not a subscriber/demo', user_id)
+            return False
+
+        if not user_matches_roles(ROLES_REQUIRED_TO_USE_FLAMENCO):
+            self._log.debug('user_is_owner(...): user %s is not in %s',
+                            user_id, ROLES_REQUIRED_TO_USE_FLAMENCO)
             return False
 
         mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'owner': 1})
