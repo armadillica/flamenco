@@ -154,7 +154,6 @@ def help(project):
 def setup_for_flamenco(project: pillarsdk.Project):
     from pillar.api.utils import str2id
     import flamenco.setup
-    from flamenco.managers.sdk import Manager
 
     project_id = project._id
 
