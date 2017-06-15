@@ -14,7 +14,6 @@ EXTENSION_NAME = 'flamenco'
 
 
 class FlamencoExtension(PillarExtension):
-    has_project_settings = True
     celery_task_modules = [
         'flamenco.celery.job_archival',
     ]
@@ -219,6 +218,10 @@ class FlamencoExtension(PillarExtension):
             return ''
 
         return flask.render_template('flamenco/sidebar.html', project=project)
+
+    @property
+    def has_project_settings(self) -> bool:
+        return self.auth.current_user_is_flamenco_user()
 
     def project_settings(self, project: pillarsdk.Project, **template_args: dict) -> flask.Response:
         """Renders the project settings page for this extension.
