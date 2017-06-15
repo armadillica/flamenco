@@ -23,6 +23,7 @@ class FlamencoExtension(PillarExtension):
         'flamenco-admin',
         'flamenco_manager',
     }
+    user_roles_indexable = {'flamenco-user'}
 
     def __init__(self):
         self._log = logging.getLogger('%s.FlamencoExtension' % __name__)
