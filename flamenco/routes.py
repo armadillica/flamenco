@@ -202,6 +202,9 @@ def project_settings(project: pillarsdk.Project, **template_args: dict):
     from pillar.web.system_util import pillar_api
     from .managers.sdk import Manager
 
+    if not current_flamenco.auth.current_user_is_flamenco_user():
+        raise wz_exceptions.Forbidden()
+
     # Based on the project state, we can render a different template.
     if not current_flamenco.is_flamenco_project(project):
         return render_template('flamenco/project_settings/offer_setup.html',
