@@ -18,6 +18,11 @@ class FlamencoExtension(PillarExtension):
     celery_task_modules = [
         'flamenco.celery.job_archival',
     ]
+    user_roles = {
+        'flamenco-user',
+        'flamenco-admin',
+        'flamenco_manager',
+    }
 
     def __init__(self):
         self._log = logging.getLogger('%s.FlamencoExtension' % __name__)
