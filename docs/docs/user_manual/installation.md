@@ -63,14 +63,16 @@ At this point, you can start the Manager by runnin the `./flamenco-manager` comm
 ## Flamenco Worker
 
 Flamenco Workers are in charge of executing tasks they fetch from the Manager. Workers are written
-in Python 3, so they will run on any system that supports Python 3.
+in Python 3.5, so they will run on any system that supports Python 3.5 or newer.
 
 
 ### Worker installation and configuration
 
-Make sure you have Python 3 installed on your system. [Download](https://www.flamenco.io/download/)
-and unzip the latest version of the Worker and install it with the 
-`pip3 install flamenco_worker-xxxx.whl` command.
+Make sure you have Python 3.5+ installed on your system. Download and unzip the [latest version of
+the Worker](https://www.flamenco.io/download/) and install it with the  `pip3 install
+flamenco_worker-xxxx.whl` command. We recommend performing this installation command in a
+[virtual environment](https://docs.python.org/3.5/library/venv.html), so that A) it doesn't require
+root rights, and B) dependencies can be installed without interaction with the rest of your system.
 
 Create a `flamenco-worker.cfg` file in a directory where you are going to run the worker command
 (can be any directory on the system).
@@ -78,10 +80,11 @@ Create a `flamenco-worker.cfg` file in a directory where you are going to run th
 All configuration keys should be placed in the `[flamenco-worker]` section of the config file.
 At least take a look at:
 
-- manager_url: Flamenco Manager URL.
-- task_types: Space-separated list of task types this worker may execute.
-- task_update_queue_db: filename of the SQLite3 database holding the queue of task updates to be
-  sent to the Master.
+- `manager_url`: Flamenco Manager URL.
+- `task_types`: Space-separated list of task types this worker may execute.
+- `task_update_queue_db`: filename of the SQLite3 database, holding the queue of task updates to be
+  sent to the Master. If this file does not exist yet, Flamenco Manager will create it.
 
 Run the Worker with the `flamenco-worker` command. The Worker will automatically connect to the
-Manager and start querying for tasks.
+Manager, negotiate a worker ID and password, and start querying for tasks. The worker ID and
+password will be stored in `$HOME/.flamenco-worker.cfg`
