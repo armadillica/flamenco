@@ -45,7 +45,7 @@ also run locally, and the Server, which runs on the [cloud.blender.org]() websit
 
 Install [MongoDB 3.2 or newer](https://docs.mongodb.com/manual/administration/install-community/),
 [download](https://www.flamenco.io/download/) the Flamenco Manager package for your platform and
-unzip. Copy `flamenco-manager-example.yaml` to `flamenco-manager.yaml` and edit the file to suit 
+unzip. Copy `flamenco-manager-example.yaml` to `flamenco-manager.yaml` and edit the file to suit
 your needs.
 These are the minimal changes you'll have to do to get Flamenco Manager running:
 
