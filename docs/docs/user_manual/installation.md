@@ -36,9 +36,10 @@ Once in the Flamenco page, click on "Enable for Flamenco". After clicking, some 
 
 ## Flamenco Manager
 
-Flamenco Manager is one of the components you are responsible of running on your infrastructure
-(or on your local machine). The Manager handles the communication between your Workers, which you
-also run locally, and the Server, which runs on the [cloud.blender.org]() website.
+Flamenco Manager is one of the components that you are responsible fur running on your 
+infrastructure (or on your local machine). The Manager handles the communication between your 
+Workers, which you also run locally, and the Server, which runs on the 
+[cloud.blender.org](https://cloud.blender.org) website.
 
 
 ### Manager installation and configuration
