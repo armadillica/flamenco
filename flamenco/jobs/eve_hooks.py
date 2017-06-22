@@ -70,13 +70,24 @@ def check_job_permission_fetch_resource(response):
     response['_meta']['total'] -= len(items)
 
 
+def check_jobs_permissions_modify(job_docs):
+    """Checks whether the current user is allowed to use Flamenco on this project."""
+
+    for job in job_docs:
+        check_job_permissions_modify(job)
+
+
 def check_job_permissions_modify(job_doc, original_doc=None):
-    """For now, only admins are allowed to create, edit, and delete jobs."""
+    """Checks whether the current user is allowed to use Flamenco on this project."""
 
-    if not current_flamenco.auth.current_user_is_flamenco_admin():
+    flauth = current_flamenco.auth
+    if not flauth.current_user_may(flauth.Actions.USE, job_doc.get('project')):
+        from pillar.api.utils.authentication import current_user_id
+        from flask import request
+
+        log.warning('Denying user %s %s of job %s',
+                    current_user_id(), request.method, job_doc.get('_id'))
         raise wz_exceptions.Forbidden()
-
-    # FIXME: check user access to the project.
 
     handle_job_status_update(job_doc, original_doc)
 
@@ -123,7 +134,7 @@ def setup_app(app):
     app.on_fetched_item_flamenco_jobs += check_job_permission_fetch
     app.on_fetched_resource_flamenco_jobs += check_job_permission_fetch_resource
 
-    app.on_insert_flamenco_jobs += check_job_permissions_modify
+    app.on_insert_flamenco_jobs += check_jobs_permissions_modify
     app.on_update_flamenco_jobs += check_job_permissions_modify
     app.on_replace_flamenco_jobs += check_job_permissions_modify
     app.on_delete_item_flamenco_jobs += check_job_permissions_modify
