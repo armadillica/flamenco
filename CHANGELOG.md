@@ -1,6 +1,13 @@
 Flamenco Server Changelog
 =========================
 
+## Version 2.0.4 (in development)
+
+- Task updates from the Manager, on tasks that do not exist, are now accepted but ignored by
+  the Server. This means that someone can archive a job, and task updates for that job will
+  no longer hang indefinitely in the Manager's outgoing queue.
+
+
 ## Version 2.0.3 (released 2017-06-09)
 
 - Users are now required to have the `flamenco-user` role in order to use Flamenco.

@@ -36,10 +36,11 @@ class AbstractTaskBatchUpdateTest(AbstractFlamencoTest):
         resp = self.post('/api/flamenco/managers/%s/task-update-batch' % self.mngr_id,
                          json=update_batch,
                          auth_token=self.mngr_token)
-        resp_json = resp.json()
+        resp_json = resp.get_json()
 
         self.assertEqual({item['_id'] for item in update_batch},
-                         set(resp_json['handled_update_ids']))
+                         set(resp_json['handled_update_ids']),
+                         'Expected all updates to be accepted by Flamenco 6Server')
         if expect_cancel_task_ids:
             self.assertEqual(set(expect_cancel_task_ids), set(resp_json['cancel_task_ids']))
         else:
@@ -260,6 +261,22 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
                   expected_status=403)
 
         self.assert_task_status(task_id, 'active')
+
+    def test_task_updates_for_archived_job(self):
+        """Archiving a job deletes tasks; we should accept task updates for them anyway."""
+
+        self.enter_app_context()
+        tasks = self.do_schedule_tasks()
+
+        # Fake job archival -- the real code is too complex to call with the Celery stuff and all.
+        self.force_job_status('archived')
+        del_result = self.flamenco.db('tasks').delete_many({'job': self.job_id})
+        self.assertEqual(len(tasks), del_result.deleted_count)
+
+        # Perform the update -- these should be accepted.
+        self.do_batch_update(tasks, [0, 1, 2], 3 * ['completed'])
+        self.assert_job_status('archived')
+
 
 
 class LargeTaskBatchUpdateTest(AbstractTaskBatchUpdateTest):

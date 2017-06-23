@@ -127,8 +127,9 @@ def handle_task_update_batch(manager_id, task_updates):
         # For now, we just ignore updates to non-existing tasks. Someone might have just deleted
         # one, for example. This is not a reason to reject the entire batch.
         if task_info is None:
-            log.warning('Manager %s sent update for non-existing task %s; ignoring',
+            log.warning('Manager %s sent update for non-existing task %s; accepting but ignoring',
                         manager_id, task_id)
+            handled_update_ids.append(update_id)
             continue
 
         if task_info['manager'] != manager_id:
