@@ -6,7 +6,7 @@ import setuptools
 
 setuptools.setup(
     name='flamenco',
-    version='2.0.3',
+    version='2.0.4',
     packages=setuptools.find_packages('.', exclude=['test']),
     install_requires=[],
     tests_require=[
