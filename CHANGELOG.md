@@ -6,6 +6,7 @@ Flamenco Server Changelog
 - Task updates from the Manager, on tasks that do not exist, are now accepted but ignored by
   the Server. This means that someone can archive a job, and task updates for that job will
   no longer hang indefinitely in the Manager's outgoing queue.
+- Fixed issue where the `flamenco-admin` role was needed to create a new job.
 
 
 ## Version 2.0.3 (released 2017-06-09)
