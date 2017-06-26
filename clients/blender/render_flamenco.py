@@ -118,9 +118,15 @@ class flamencoPreferences(AddonPreferences):
         default="http://127.0.0.1:9999",
         options={'HIDDEN', 'SKIP_SAVE'})
 
+    bam_binary = StringProperty(
+        name="BAM binary",
+        default="bam",
+        options={'HIDDEN','SKIP_SAVE'})
+
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "flamenco_server")
+        layout.prop(self, "bam_binary")
 
 class flamencoUpdate (bpy.types.Operator):
     """Update information about Flamenco Server"""
@@ -300,7 +306,7 @@ class bamToRenderfarm (bpy.types.Operator):
 
         try:
             print("Creating BAM archive at {0}".format(zippath))
-            command = ["bam", "pack", D.filepath, '-o', zippath]
+            command = [bam_binary, "pack", D.filepath, '-o', zippath]
 
             # If we do not want to pack large files
             exclude_pattern = []
