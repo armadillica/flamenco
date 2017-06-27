@@ -118,7 +118,7 @@ def view_task(project, flamenco_props, task_id):
 
 @perproject_blueprint.route('/<task_id>/set-status', methods=['POST'])
 @flask_login.login_required
-@flamenco_project_view(extension_props=False)
+@flamenco_project_view(action=Actions.USE)
 def set_task_status(project, task_id):
     from flask_login import current_user
 
@@ -136,7 +136,7 @@ def set_task_status(project, task_id):
 
 @perproject_blueprint.route('/<task_id>/log')
 @flask_login.login_required
-@flamenco_project_view()
+@flamenco_project_view(action=Actions.USE)
 def view_task_log(project, task_id):
     """Shows a limited number of task log entries.
 
@@ -149,10 +149,6 @@ def view_task_log(project, task_id):
 
     if not is_valid_id(task_id):
         raise wz_exceptions.UnprocessableEntity()
-
-    # Task list is public, task details are not.
-    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_LOGS):
-        raise wz_exceptions.Forbidden()
 
     page_idx = int(request.args.get('page', 1))
     api = pillar_api()
@@ -183,7 +179,7 @@ def view_task_log(project, task_id):
 
 @perproject_blueprint.route('/<task_id>/download-log')
 @flask_login.login_required
-@flamenco_project_view()
+@flamenco_project_view(action=Actions.USE)
 def download_task_log(project, task_id):
     """Shows the entire task log as text/plain"""
 
@@ -194,10 +190,6 @@ def download_task_log(project, task_id):
 
     if not is_valid_id(task_id):
         raise wz_exceptions.UnprocessableEntity()
-
-    # Task list is public, task details are not.
-    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_LOGS):
-        raise wz_exceptions.Forbidden()
 
     # Required because the stream_log() generator will run outside the app context.
     app = current_app._get_current_object()

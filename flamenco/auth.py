@@ -9,9 +9,7 @@ from pillar import attrs_extra
 
 # Roles required to view job, manager or task details.
 ROLES_REQUIRED_TO_VIEW_ITEMS = {'demo', 'subscriber', 'admin', 'flamenco-admin', 'flamenco-user'}
-
-# TODO: deal with log viewing through permissions too.
-ROLES_REQUIRED_TO_VIEW_LOGS = {'admin', 'flamenco-admin'}
+ROLES_REQUIRED_TO_VIEW_LOGS = {'admin', 'flamenco-admin', 'flamenco-user'}
 
 # Having either of these roles is minimum requirement for using Flamenco.
 ROLES_REQUIRED_TO_USE_FLAMENCO = {'flamenco-user', 'flamenco-admin', 'admin'}
