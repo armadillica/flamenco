@@ -56,7 +56,8 @@ These are the minimal changes you'll have to do to get Flamenco Manager running:
 - Either generate TLS certificates (TLS is the we-are-no-longer-living-in-the-90ies-name for SSL),
   or remove the `tlskey` and `tlscert` options from your `flamenco-manager.yaml` file.
 - Update the `variables` for your render farm. The `blender` variable should point to the Blender
-  executable where it can be found *on the workers*.
+  executable where it can be found *on the workers* and can contain extra CLI options. The
+  `--factory-startup` in the example file can be removed to enable GPU rendering.
 
 At this point, you can start the Manager by runnin the `./flamenco-manager` command.
 
