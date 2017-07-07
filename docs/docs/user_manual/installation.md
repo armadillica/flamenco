@@ -85,6 +85,7 @@ At least take a look at:
 - `task_types`: Space-separated list of task types this worker may execute.
 - `task_update_queue_db`: filename of the SQLite3 database, holding the queue of task updates to be
   sent to the Master. If this file does not exist yet, Flamenco Manager will create it.
+- `args` in the `[handler_file]` section, to configure where the logs are stored.
 
 Run the Worker with the `flamenco-worker` command. The Worker will automatically connect to the
 Manager, negotiate a worker ID and password, and start querying for tasks. The worker ID and
