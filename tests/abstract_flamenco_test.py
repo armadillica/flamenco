@@ -24,7 +24,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
     pillar_server_class = FlamencoTestServer
 
     def setUp(self, **kwargs):
-        AbstractPillarTest.setUp(self, **kwargs)
+        super().setUp(**kwargs)
 
         from flamenco.tasks import TaskManager
         from flamenco.jobs import JobManager
@@ -42,7 +42,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
     def tearDown(self):
         self.unload_modules('flamenco')
-        AbstractPillarTest.tearDown(self)
+        super().tearDown()
 
     @property
     def flamenco(self):

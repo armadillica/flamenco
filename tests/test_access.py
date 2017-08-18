@@ -4,7 +4,6 @@ import typing
 import bson
 
 from pillar.tests import common_test_data as ctd
-from pillar.api.utils.authentication import force_cli_user
 
 from abstract_flamenco_test import AbstractFlamencoTest
 
@@ -34,6 +33,7 @@ class AccessTest(AbstractAccessTest):
         AbstractFlamencoTest.setUp(self, **kwargs)
 
         from flamenco import current_flamenco
+        from pillar.api.utils.authentication import force_cli_user
 
         # Main project will have a manager, job, and tasks.
         mngr_doc, _, token = self.create_manager_service_account()
