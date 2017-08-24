@@ -3,11 +3,10 @@
 import logging
 
 import werkzeug.exceptions as wz_exceptions
-from pillar.api.utils.authorization import user_matches_roles
+from pillar.auth import current_user
 
 import flamenco.eve_hooks
 from flamenco import current_flamenco
-from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ def check_job_permission_fetch_resource(response):
 
     if not current_flamenco.manager_manager.user_is_manager():
         # Subscribers can read Flamenco jobs.
-        if user_matches_roles(ROLES_REQUIRED_TO_VIEW_ITEMS):
+        if current_user.has_cap('flamenco-view'):
             return
         raise wz_exceptions.Forbidden()
 

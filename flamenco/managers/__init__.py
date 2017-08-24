@@ -12,7 +12,7 @@ import pymongo.cursor
 import werkzeug.exceptions as wz_exceptions
 
 from pillar import attrs_extra, current_app
-from pillar.api.utils.authentication import current_user_id
+from pillar.auth import current_user
 
 from flamenco import current_flamenco
 
@@ -134,7 +134,7 @@ class ManagerManager(object):
             mngr_doc = mngr_coll.find_one({'_id': mngr_doc_id}, projection)
             if not mngr_doc:
                 self._log.warning('user_manages(%s): no such document (user=%s)',
-                                  mngr_doc_id, current_user_id())
+                                  mngr_doc_id, current_user.user_id)
                 raise ValueError(f'Manager {mngr_doc_id} does not exist.')
         else:
             mngr_doc_id = mngr_doc['_id']
@@ -144,20 +144,13 @@ class ManagerManager(object):
     def user_is_owner(self, *, mngr_doc_id: bson.ObjectId = None, mngr_doc: dict = None) -> bool:
         """Returns True iff the current user is an owner of the given Flamenco Manager."""
 
-        import flask
-        from pillar.api.utils.authorization import user_matches_roles
-        from flamenco.auth import ROLES_REQUIRED_TO_VIEW_FLAMENCO, ROLES_REQUIRED_TO_USE_FLAMENCO
-
-        current_user = flask.g.get('current_user') or {}
-        user_id = current_user.get('user_id')
-
-        if not user_id or not user_matches_roles(ROLES_REQUIRED_TO_VIEW_FLAMENCO):
-            self._log.debug('user_is_owner(...): user %s is not a subscriber/demo', user_id)
+        user_id = current_user.user_id
+        if not current_user.has_cap('flamenco-view'):
+            self._log.debug('user_is_owner(...): user %s does not have flamenco-view cap', user_id)
             return False
 
-        if not user_matches_roles(ROLES_REQUIRED_TO_USE_FLAMENCO):
-            self._log.debug('user_is_owner(...): user %s is not in %s',
-                            user_id, ROLES_REQUIRED_TO_USE_FLAMENCO)
+        if not current_user.has_cap('flamenco-use'):
+            self._log.debug('user_is_owner(...): user %s does not have flamenco-use cap', user_id)
             return False
 
         mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'owner': 1})
@@ -177,13 +170,13 @@ class ManagerManager(object):
 
         if not self.user_is_manager():
             self._log.debug('user_manages(...): user %s is not a Flamenco manager service account',
-                            current_user_id())
+                            current_user.user_id)
             return False
 
         mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'service_account': 1})
 
         service_account = mngr_doc.get('service_account')
-        user_id = current_user_id()
+        user_id = current_user.user_id
         if service_account != user_id:
             self._log.debug('user_manages(%s): current user %s is not manager %s',
                             mngr_doc_id, user_id, service_account)
@@ -198,9 +191,7 @@ class ManagerManager(object):
         """
 
         import flask
-        from pillar.api.utils.authorization import user_matches_roles
         from flamenco import current_flamenco
-        from ..auth import ROLES_REQUIRED_TO_USE_FLAMENCO
 
         # Flamenco Admins always have access.
         if current_flamenco.auth.current_user_is_flamenco_admin():
@@ -208,14 +199,12 @@ class ManagerManager(object):
 
         mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'user_groups': 1})
 
-        current_user = flask.g.get('current_user', {})
-        user_groups = set(current_user.get('groups', []))
-
+        user_groups = set(current_user.group_ids)
         owner_group = mngr_doc.get('owner')
         if owner_group and owner_group in user_groups:
             return True
 
-        if not user_matches_roles(ROLES_REQUIRED_TO_USE_FLAMENCO):
+        if not current_user.has_cap('flamenco-use'):
             return False
 
         manager_groups = set(mngr_doc.get('user_groups', []))
@@ -251,7 +240,7 @@ class ManagerManager(object):
 
         if not manager_doc:
             self._log.warning('api_assign_to_project(%s, %s): no manager with id=%s (user=%s)',
-                              manager_id, project_id, manager_id, current_user_id())
+                              manager_id, project_id, manager_id, current_user.user_id)
             return False
 
         mngr_projects = set(manager_doc.get('projects', []))
@@ -344,7 +333,7 @@ class ManagerManager(object):
         import pymongo.results
 
         self._log.info('Generating new authentication token for Manager %s on behalf of user %s',
-                       manager_id, current_user_id())
+                       manager_id, current_user.user_id)
 
         service_account_id = self.find_service_account_id(manager_id)
 
@@ -362,7 +351,7 @@ class ManagerManager(object):
     def share_unshare_manager(self, manager_id: bson.ObjectId, share_action: ShareAction,
                               subject_uid: bson.ObjectId):
         self._log.info('%s Manager %s on behalf of user %s, subject user is %s',
-                       share_action, manager_id, current_user_id(), subject_uid)
+                       share_action, manager_id, current_user.user_id, subject_uid)
 
         from pillar.api import users
 
@@ -374,7 +363,7 @@ class ManagerManager(object):
         owners = users_coll.find({'groups': owner_gid})
         if share_action == ShareAction.unshare and owners.count() < 2:
             self._log.warning('User %s tried to make Manager %s ownerless',
-                              current_user_id(), manager_id)
+                              current_user.user_id, manager_id)
             raise ValueError('Manager cannot become ownerless.')
 
         group_action = {

@@ -2,16 +2,17 @@
 import logging
 
 import bson
-from flask import Blueprint, render_template, request
 import flask_login
+from flask import Blueprint, render_template, request
 import werkzeug.exceptions as wz_exceptions
 
 import pillar.flask_extra
 from pillar.web.system_util import pillar_api
+from pillar.auth import current_user
 
 from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco
-from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS, Actions
+from flamenco.auth import Actions
 
 TASK_LOG_PAGE_SIZE = 10
 
@@ -96,7 +97,7 @@ def view_task(project, flamenco_props, task_id):
         return job_routes.for_project(project, job_id=task['job'], task_id=task_id)
 
     # Task list is public, task details are not.
-    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
+    if not current_user.has_cap('flamenco-view'):
         raise wz_exceptions.Forbidden()
 
     task = Task.find(task_id, api=api)

@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, redirect, url_for
 from flask_login import login_required
 import werkzeug.exceptions as wz_exceptions
 
-from pillar.auth import current_web_user as current_user
+from pillar.auth import current_user as current_user
 from pillar.api.utils.authentication import current_user_id
 from pillar.web.utils import attach_project_pictures
 from pillar.web.system_util import pillar_api

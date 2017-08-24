@@ -5,16 +5,16 @@ import logging
 
 import bson
 from flask import Blueprint, render_template, request, redirect, url_for
-import flask_login
 import werkzeug.exceptions as wz_exceptions
 
 import pillarsdk
 import pillar.flask_extra
 from pillar.web.system_util import pillar_api
+from pillar.auth import current_user
 
 from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco
-from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, Actions
+from flamenco.auth import Actions
 
 blueprint = Blueprint('flamenco.jobs', __name__, url_prefix='/jobs')
 perproject_blueprint = Blueprint('flamenco.jobs.perproject', __name__,
@@ -83,7 +83,7 @@ def view_job(project, flamenco_props, job_id):
         return for_project(project, job_id=job_id)
 
     # Job list is public, job details are not.
-    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
+    if not current_user.has_cap('flamenco-view'):
         raise wz_exceptions.Forbidden()
 
     from .sdk import Job
@@ -169,7 +169,7 @@ def archive(project, job_id):
 @flamenco_project_view(extension_props=False, action=Actions.VIEW)
 def view_job_depsgraph(project, job_id):
     # Job list is public, job details are not.
-    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
+    if not current_user.has_cap('flamenco-view'):
         raise wz_exceptions.Forbidden()
 
     focus_task_id = request.args.get('t', None)
@@ -184,7 +184,7 @@ def view_job_depsgraph(project, job_id):
 @flamenco_project_view(extension_props=False, action=Actions.VIEW)
 def view_job_depsgraph_data(project, job_id, focus_task_id=None):
     # Job list is public, job details are not.
-    if not flask_login.current_user.has_role(*ROLES_REQUIRED_TO_VIEW_ITEMS):
+    if not current_user.has_cap('flamenco-view'):
         raise wz_exceptions.Forbidden()
 
     import collections

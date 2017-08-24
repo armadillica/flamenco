@@ -39,7 +39,7 @@
 				button.btn(onclick='createNewManager(this)') Create new Manager (max {{max_managers}})
 				#create_manager_result_panel
 				| {% endif %}
-				| {% if has_flamenco_role and not can_create_manager %}
+				| {% if may_use_flamenco and not can_create_manager %}
 				button.btn(disabled) Create new Manager (max {{max_managers}})
 				| {% endif %}
 

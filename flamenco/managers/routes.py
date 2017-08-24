@@ -10,8 +10,7 @@ from pillarsdk import User
 import pillar.flask_extra
 from pillar.api.utils import authorization, str2id, gravatar
 from pillar.web.system_util import pillar_api
-from pillar.api.utils.authentication import current_user_id
-from pillar.api.utils.authorization import user_matches_roles
+from pillar.auth import current_user
 
 import flamenco.auth
 
@@ -34,14 +33,12 @@ def index(manager_id: str = None):
     manager_limit_reached = managers['_meta']['total'] >= flamenco.auth.MAX_MANAGERS_PER_USER
 
     # TODO Sybren: move this to a utility function + check on endpoint to create manager
-    has_flamenco_role = user_matches_roles(flamenco.auth.ROLES_REQUIRED_TO_USE_FLAMENCO)
-    has_flamenco_view_role = user_matches_roles(flamenco.auth.ROLES_REQUIRED_TO_VIEW_FLAMENCO)
-    can_create_manager = has_flamenco_role and has_flamenco_view_role and not manager_limit_reached
+    may_use_flamenco = current_user.has_cap('flamenco-use')
+    can_create_manager = may_use_flamenco and not manager_limit_reached
 
     return render_template('flamenco/managers/index.html',
                            manager_limit_reached=manager_limit_reached,
-                           has_flamenco_role=has_flamenco_role,
-                           has_flamenco_view_role=has_flamenco_view_role,
+                           may_use_flamenco=may_use_flamenco,
                            can_create_manager=can_create_manager,
                            max_managers=flamenco.auth.MAX_MANAGERS_PER_USER,
                            managers=managers,
@@ -94,13 +91,13 @@ def view_embed(manager_id: str):
 
 
 @blueprint.route('/create-new', methods=['POST'])
-@authorization.require_login(require_roles=flamenco.auth.ROLES_REQUIRED_TO_USE_FLAMENCO)
+@authorization.require_login(require_cap='flamenco-use')
 def create_new():
     """Creates a new Flamenco Manager, owned by the currently logged-in user."""
 
     from pillar.api.service import ServiceAccountCreationError
 
-    user_id = current_user_id()
+    user_id = current_user.user_id
     log.info('Creating new manager for user %s', user_id)
 
     name = request.form['name']
@@ -110,14 +107,14 @@ def create_new():
         current_flamenco.manager_manager.create_new_manager(name, description, user_id)
     except ServiceAccountCreationError as ex:
         log.error('Unable to create service account for Manager (current user=%s): %s',
-                  current_user_id(), ex)
+                  current_user.user_id, ex)
         return 'Error creating service account', 500
 
     return '', 204
 
 
 @blueprint.route('/<manager_id>/auth-token', methods=['POST'])
-@authorization.require_login(require_roles=flamenco.auth.ROLES_REQUIRED_TO_USE_FLAMENCO)
+@authorization.require_login(require_cap='flamenco-use')
 def manager_auth_token(manager_id):
     """Returns the Manager's authentication token.
 
@@ -129,13 +126,13 @@ def manager_auth_token(manager_id):
     csrf = request.form.get('csrf', '')
     if not flask_wtf.csrf.validate_csrf(csrf):
         log.warning('User %s tried to get authentication token for Manager %s without '
-                    'valid CSRF token!', current_user_id(), manager_oid)
+                    'valid CSRF token!', current_user.user_id, manager_oid)
         raise wz_exceptions.PreconditionFailed()
 
     if not current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_oid):
         log.warning('User %s wants to get authentication token of manager %s, '
                     'but user is not owner of that Manager. Request denied.',
-                    current_user_id(), manager_oid)
+                    current_user.user_id, manager_oid)
         raise wz_exceptions.Forbidden()
 
     auth_token_info = current_flamenco.manager_manager.auth_token(manager_oid)
@@ -146,7 +143,7 @@ def manager_auth_token(manager_id):
 
 
 @blueprint.route('/<manager_id>/generate-auth-token', methods=['POST'])
-@authorization.require_login(require_roles=flamenco.auth.ROLES_REQUIRED_TO_USE_FLAMENCO)
+@authorization.require_login(require_cap='flamenco-use')
 def generate_auth_token(manager_id):
     """Revokes the Manager's existing authentication tokens and generates a new one.
 
@@ -158,13 +155,13 @@ def generate_auth_token(manager_id):
     csrf = request.form.get('csrf', '')
     if not flask_wtf.csrf.validate_csrf(csrf):
         log.warning('User %s tried to generate authentication token for Manager %s without '
-                    'valid CSRF token!', current_user_id(), manager_oid)
+                    'valid CSRF token!', current_user.user_id, manager_oid)
         raise wz_exceptions.PreconditionFailed()
 
     if not current_flamenco.manager_manager.user_is_owner(mngr_doc_id=manager_oid):
         log.warning('User %s wants to generate authentication token of manager %s, '
                     'but user is not owner of that Manager. Request denied.',
-                    current_user_id(), manager_oid)
+                    current_user.user_id, manager_oid)
         raise wz_exceptions.Forbidden()
 
     auth_token_info = current_flamenco.manager_manager.gen_new_auth_token(manager_oid)

@@ -4,11 +4,10 @@ import logging
 import typing
 
 import werkzeug.exceptions as wz_exceptions
-from pillar.api.utils.authorization import user_matches_roles
+from pillar.auth import current_user
 
 import flamenco.eve_hooks
 from flamenco import current_flamenco
-from flamenco.auth import ROLES_REQUIRED_TO_VIEW_ITEMS, ROLES_REQUIRED_TO_VIEW_LOGS
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ def check_task_permission_fetch(task_doc: dict):
 
 
 def check_task_log_permission_fetch(task_log_docs):
-    if user_matches_roles(ROLES_REQUIRED_TO_VIEW_LOGS):
+    if current_user.has_cap('flamenco-view-logs'):
         return
     raise wz_exceptions.Forbidden()
 
@@ -43,7 +42,7 @@ def check_task_permission_fetch_resource(response):
 
     if not current_flamenco.manager_manager.user_is_manager():
         # Subscribers can read Flamenco tasks.
-        if user_matches_roles(ROLES_REQUIRED_TO_VIEW_ITEMS):
+        if current_user.has_cap('flamenco-view'):
             return
 
     raise wz_exceptions.Forbidden()

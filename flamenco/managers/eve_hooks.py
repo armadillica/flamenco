@@ -1,11 +1,8 @@
-# -*- encoding: utf-8 -*-
-
 import logging
 
 import werkzeug.exceptions as wz_exceptions
 
-from pillar.api.utils.authentication import current_user_id
-from pillar.api.utils.authorization import user_matches_roles
+from pillar.auth import current_user
 
 from flamenco import current_flamenco
 import flamenco.auth
@@ -22,7 +19,7 @@ def check_manager_permissions(mngr_doc):
         return
 
     log.info('Denying access to Manager %s to user %s',
-             mngr_doc.get('_id'), current_user_id())
+             mngr_doc.get('_id'), current_user.user_id)
     raise wz_exceptions.Forbidden()
 
 
@@ -32,9 +29,9 @@ def check_manager_resource_permissions(response):
 
 
 def check_manager_permissions_create(mngr_doc):
-    if not user_matches_roles(flamenco.auth.ROLES_REQUIRED_TO_USE_FLAMENCO):
+    if not current_user.has_cap('flamenco-use'):
         log.info('Denying access to create Manager to user %s',
-                 current_user_id())
+                 current_user.user_id)
         raise wz_exceptions.Forbidden()
 
 
@@ -48,17 +45,14 @@ def check_manager_permissions_modify(mngr_doc, original_doc=None):
         return
 
     log.info('Denying access to edit Manager %s to user %s',
-             mngr_doc.get('_id'), current_user_id())
+             mngr_doc.get('_id'), current_user.user_id)
     raise wz_exceptions.Forbidden()
 
 
 def pre_get_flamenco_managers(request, lookup):
     """Filter returned Flamenco managers."""
 
-    from flask import g
-
-    current_user = g.get('current_user')
-    if not current_user:
+    if current_user.is_anonymous:
         log.warning('Disallowing anonymous access to list of managers.')
         raise wz_exceptions.Forbidden()
 
@@ -66,11 +60,9 @@ def pre_get_flamenco_managers(request, lookup):
     if current_flamenco.auth.current_user_is_flamenco_admin():
         return
 
-    user_id = current_user['user_id']
-
     if current_flamenco.auth.current_user_is_flamenco_manager():
         # If this user is a Flamenco Manager, just return its own document.
-        lookup['service_account'] = user_id
+        lookup['service_account'] = current_user.user_id
     else:
         querying_single = bool(lookup.get('_id') or request.args.get('_id'))
         if not querying_single:

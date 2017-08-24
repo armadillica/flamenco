@@ -21,8 +21,17 @@ class FlamencoExtension(PillarExtension):
         'flamenco-user',
         'flamenco-admin',
         'flamenco_manager',
+        'org-flamenco',
     }
-    user_roles_indexable = {'flamenco-user'}
+    user_roles_indexable = {'flamenco-user', 'org-flamenco'}
+
+    FLAMENCO_CAPS = frozenset({'flamenco-use', 'flamenco-view', 'flamenco-view-logs'})
+    user_caps = {
+        'flamenco-user': FLAMENCO_CAPS,
+        'org-flamenco': FLAMENCO_CAPS,
+        'flamenco-admin': FLAMENCO_CAPS | frozenset({'flamenco-admin'}),
+        'admin': FLAMENCO_CAPS | frozenset({'flamenco-admin'}),
+    }
 
     def __init__(self):
         self._log = logging.getLogger('%s.FlamencoExtension' % __name__)
