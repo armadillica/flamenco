@@ -398,8 +398,9 @@ class ManagerManager(object):
 
 
 def setup_app(app):
-    from . import eve_hooks, api, patch
+    from . import eve_hooks, api, patch, linking_api
 
     eve_hooks.setup_app(app)
     api.setup_app(app)
     patch.setup_app(app)
+    linking_api.setup_app(app)

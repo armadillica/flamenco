@@ -170,6 +170,18 @@ class FlamencoExtension(PillarExtension):
             sparse=False,
         )
 
+        # Manager linking keys
+        if 'flamenco_manager_linking_keys' not in db.collection_names(
+                include_system_collections=False):
+            self._log.info('Creating flamenco_manager_linking_keys collection.')
+            db.create_collection('flamenco_manager_linking_keys')
+        else:
+            self._log.debug(
+                'Not creating flamenco_manager_linking_keys collection, already exists.')
+
+        self._log.info('Creating index on flamenco_manager_linking_keys')
+        db.flamenco_manager_linking_keys.create_index('remove_after', expireAfterSeconds=0)
+
     def flamenco_projects(self, *, projection: dict = None):
         """Returns projects set up for Flamenco.
 
