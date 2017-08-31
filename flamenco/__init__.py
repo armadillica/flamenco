@@ -88,6 +88,7 @@ class FlamencoExtension(PillarExtension):
         import flamenco.jobs.routes
         import flamenco.tasks.routes
         import flamenco.managers.routes
+        import flamenco.managers.linking_routes
 
         return [
             routes.blueprint,
@@ -98,6 +99,7 @@ class FlamencoExtension(PillarExtension):
             flamenco.tasks.routes.perjob_blueprint,
             flamenco.tasks.routes.perproject_blueprint,
             flamenco.managers.routes.blueprint,
+            flamenco.managers.linking_routes.blueprint,
         ]
 
     @property

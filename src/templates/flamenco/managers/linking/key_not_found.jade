@@ -1,0 +1,12 @@
+| {% extends "flamenco/managers/linking/layout.html" %}
+| {% block centrebody %}
+
+.box.alert.alert-danger
+	h2 Secret key not found.
+	p
+		| The identifier passed on the URL does not match any secret key in our database.
+		| Secret keys are kept for a short while only, so it's probably best to
+		| <a href='javascript:history.back()'>go back to Flamenco Manager</a> and
+		| restart the linking process.
+
+| {% endblock %}

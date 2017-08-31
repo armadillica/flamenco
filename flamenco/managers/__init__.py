@@ -389,11 +389,19 @@ class ManagerManager(object):
         managers = managers_coll.find({'projects': project_id}, {'_id': 1})
         return [m['_id'] for m in managers]
 
-    def owned_managers(self, user_group_ids: typing.List[bson.ObjectId]) -> pymongo.cursor.Cursor:
-        """Returns a Mongo cursor of Manager object IDs owned by the given user."""
+    def owned_managers(self, user_group_ids: typing.List[bson.ObjectId],
+                       projection: typing.Optional[dict]=None) -> pymongo.cursor.Cursor:
+        """Returns a Mongo cursor of Manager object IDs owned by the given user.
+
+        :param user_group_ids: list of the group IDs of the user.
+        :param projection: When not None, it is used instead of the default {'_id': 1}.
+        """
+
+        if projection is None:
+            projection = {'_id': 1}
 
         managers_coll = current_flamenco.db('managers')
-        managers = managers_coll.find({'owner': {'$in': user_group_ids}}, {'_id': 1})
+        managers = managers_coll.find({'owner': {'$in': user_group_ids}}, projection)
         return managers
 
 

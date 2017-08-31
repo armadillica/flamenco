@@ -1,0 +1,49 @@
+| {% extends "flamenco/managers/linking/layout.html" %}
+| {% block centrebody %}
+
+.box
+    form(onsubmit="return linkManager(this)",method='POST')
+        | {% if not managers %}
+        p You have no Manager registered at Flamenco Server. Provide a name for your new Manager.
+        | {% else %}
+        p
+            | You have {{ managers|count }} manager{{ managers|pluralize }}.
+            | Choose one{% if can_create_manager %}, or create a new Manager by providing a name{% endif %}.
+        | {% endif %}
+        .form-group
+            | {% for mngr in managers %}
+            .form-check
+                label.form-check-label
+                    input.form-check-input(type='radio',name='manager-id',value='{{ mngr._id }}')
+                    | {{ mngr.name }}
+            | {% endfor %}
+            .form-check
+                label.form-check-label
+                    input#new_manager_checkbox.form-check-input(type='radio',name='manager-id',value='new',
+                        onfocus='document.getElementById("new_manager_name").focus()')
+                    input#new_manager_name.form-input(type='text',name='manager-name',placeholder='new Manager name',
+                        onfocus='document.getElementById("new_manager_checkbox").checked = true')
+        .form-group
+            button.btn.btn-primary(type='submit') Link Manager
+
+| {% endblock %}
+| {% block footer_scripts %}
+script.
+    function linkManager(form_element) {
+        var new_mngr_checked = document.getElementById("new_manager_checkbox").checked;
+        var new_mngr_name = document.getElementById("new_manager_name").value.trim();
+        var manager_id = $('input[name="manager-id"]:checked').val();
+        
+        if (typeof manager_id === 'undefined' || manager_id == '') {
+            toastr.error("Choose a Manager");
+            return false;
+        }
+        
+        if (new_mngr_checked && new_mngr_name == "") {
+            toastr.error("Provide a name for your new Manager");
+            return false;
+        }
+        
+        return true;
+    }
+| {% endblock %}

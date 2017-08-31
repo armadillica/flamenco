@@ -1,0 +1,15 @@
+| {% extends 'flamenco/layout.html' %}
+| {% block bodyattrs %}{{ super() }} data-context='managers'{% endblock %}
+| {% block page_title %}Flamenco - Link Manager{% endblock %}
+
+| {% block body %}
+.container
+    .row
+        .col-lg-8.mx-auto
+            h1
+                i.pi-flamenco
+                | Link a Flamenco Manager
+
+            | {% block centrebody %}
+            | {% endblock centrebody %}
+| {% endblock %}
