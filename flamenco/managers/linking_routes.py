@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 blueprint = Blueprint('flamenco.managers.linking', __name__, url_prefix='/managers/link')
 
 
-def _check_hmac(secret_key: bytes, message: bytes, received_hash: str):
+def check_hmac(secret_key: bytes, message: bytes, received_hash: str):
     """Checks the HMAC of the message, raising a BadRequest exception if it's wrong.
 
     :param secret_key: the key to use for hashing
@@ -63,9 +63,9 @@ def index():
                     user_id)
         return render_template('flamenco/managers/linking/key_not_found.html')
 
-    _check_hmac(key_info['secret_key'],
-                f'{identifier}{return_url}'.encode('ascii'),
-                request_hmac)
+    check_hmac(key_info['secret_key'],
+               f'{identifier}-{return_url}'.encode('ascii'),
+               request_hmac)
 
     # Only deal with POST data after HMAC verification is performed.
     if request.method == 'POST':
@@ -101,7 +101,7 @@ def index():
                  manager_oid, identifier)
 
         # Now redirect the user back to Flamenco Manager in a verifyable way.
-        msg = f'{identifier}{manager_oid}'.encode('ascii')
+        msg = f'{identifier}-{manager_oid}'.encode('ascii')
         mac = _compute_hash(key_info['secret_key'], msg)
         qs = urllib.parse.urlencode({
             'hmac': mac,
