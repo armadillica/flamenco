@@ -17,12 +17,14 @@
                     input.form-check-input(type='radio',name='manager-id',value='{{ mngr._id }}')
                     | {{ mngr.name }}
             | {% endfor %}
+            | {% if can_create_manager %}
             .form-check
                 label.form-check-label
                     input#new_manager_checkbox.form-check-input(type='radio',name='manager-id',value='new',
                         onfocus='document.getElementById("new_manager_name").focus()')
                     input#new_manager_name.form-input(type='text',name='manager-name',placeholder='new Manager name',
                         onfocus='document.getElementById("new_manager_checkbox").checked = true')
+            | {% endif %}
         .form-group
             button.btn.btn-primary(type='submit') Link Manager
 
