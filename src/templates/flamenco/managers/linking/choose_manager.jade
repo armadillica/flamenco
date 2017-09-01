@@ -8,7 +8,7 @@
         | {% else %}
         p
             | You have {{ managers|count }} manager{{ managers|pluralize }}.
-            | Choose one{% if can_create_manager %}, or create a new Manager by providing a name{% endif %}.
+            | Choose one{% if can_create_manager %}, or register a new Manager by providing a name{% endif %}.
         | {% endif %}
         .form-group
             | {% for mngr in managers %}
