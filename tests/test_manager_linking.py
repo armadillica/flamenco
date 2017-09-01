@@ -55,3 +55,43 @@ class ManagerLinkTest(AbstractFlamencoTest):
 
         coll = self.flamenco.db('manager_linking_keys')
         self.assertEqual(0, coll.count())
+
+    def test_reset_auth_token_happy(self):
+        import secrets
+
+        from flamenco.managers.linking_routes import _compute_hash
+
+        mngr_doc, account, old_token_info = self.create_manager_service_account()
+        manager_id = mngr_doc['_id']
+
+        # Exchange two keys
+        ident = self._normal_exchange()
+        self.post('/api/flamenco/managers/link/exchange', json={'key': 'aabbccddeeff'})
+
+        coll = self.flamenco.db('manager_linking_keys')
+        self.assertEqual(2, coll.count())
+
+        # Bind them to the same Manager
+        coll.update_many({}, {'$set': {'manager_id': manager_id}})
+
+        # Check that both secret keys are gone after requesting an auth token reset.
+        padding = secrets.token_hex(32)
+        msg = f'{padding}-{ident}-{manager_id}'
+        mac = _compute_hash(secret_bin, msg.encode('ascii'))
+        payload = {
+            'manager_id': str(manager_id),
+            'identifier': str(ident),
+            'padding': padding,
+            'hmac': mac,
+        }
+        resp = self.post('/api/flamenco/managers/link/reset-token', json=payload)
+
+        # Test the token by getting the manager document.
+        token_info = resp.get_json()
+        token = token_info['token']
+        self.get(f'/api/flamenco/managers/{manager_id}', auth_token=token)
+
+        # The old token shouldn't work any more.
+        self.get(f'/api/flamenco/managers/{manager_id}',
+                 auth_token=old_token_info['token'],
+                 expected_status=403)
