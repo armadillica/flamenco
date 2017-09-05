@@ -44,22 +44,25 @@ Workers, which you also run locally, and the Server, which runs on the
 
 ### Manager installation and configuration
 
-Install [MongoDB 3.2 or newer](https://docs.mongodb.com/manual/administration/install-community/),
-[download](https://www.flamenco.io/download/) the Flamenco Manager package for your platform and
-unzip. Copy `flamenco-manager-example.yaml` to `flamenco-manager.yaml` and edit the file to suit
-your needs.
-These are the minimal changes you'll have to do to get Flamenco Manager running:
+To run Flamenco Manager for the first time, follow these steps:
 
-- Update `own_url` to point to the IP address or hostname by which your machine can be reached by
-  the workers.
-- Set the `manager_id` and `manager_secret` to the values obtained from Flamenco on Blender Cloud.
-- Either generate TLS certificates (TLS is the we-are-no-longer-living-in-the-90ies-name for SSL),
-  or remove the `tlskey` and `tlscert` options from your `flamenco-manager.yaml` file.
-- Update the `variables` for your render farm. The `blender` variable should point to the Blender
-  executable where it can be found *on the workers* and can contain extra CLI options. The
-  `--factory-startup` in the example file can be removed to enable GPU rendering.
+1. Download [Flamenco Manager](https://www.flamenco.io/download/) for your platform.
+2. Extract the downloaded file.
+3. Run `./flamenco-manager -setup` (Linux/macOS) or `flamenco-manager.exe -setup` (Windows).
+4. Flamenco Manager will give you a list of URLs at which it can be reached. Open the URL that is
+   reachable both for you and the workers.
+5. Link Flamenco Manager to Blender Cloud by following the steps in the web interface.
+6. Configure Flamenco Manager via the web interface. Update the variables and path replacement
+   variables for your render farm; the `blender` variable should point to the Blender executable
+   where it can be found *on the workers*. The path replacement variables allow you to set different
+   paths for both Clients (like the Blender Cloud Add-on) and Workers, given their respective
+   platforms.
+7. Once you have completed configuration, restart Flamenco Manager through the web interface. It
+   will now run in normal (i.e. non-setup) mode.
 
-At this point, you can start the Manager by runnin the `./flamenco-manager` command.
+Note that `variables` and `path_replacement` share a namespace -- variable names have to be unique,
+and cannot be used in both `variables` and `path_replacement` sections. If this happens, Flamenco
+Manager will log the offending name, and refuse to start.
 
 
 ## Flamenco Worker
@@ -82,7 +85,8 @@ Create a `flamenco-worker.cfg` file in a directory where you are going to run th
 All configuration keys should be placed in the `[flamenco-worker]` section of the config file.
 At least take a look at:
 
-- `manager_url`: Flamenco Manager URL.
+- `manager_url`: Flamenco Manager URL. Leave empty to use UPnP/SSDP to find the Manager on your
+  network automatically.
 - `task_types`: Space-separated list of task types this worker may execute.
 - `task_update_queue_db`: filename of the SQLite3 database, holding the queue of task updates to be
   sent to the Master. If this file does not exist yet, Flamenco Manager will create it.
