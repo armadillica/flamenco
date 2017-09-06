@@ -38,7 +38,7 @@ def _compute_hash(secret_key: bytes, message: bytes) -> str:
 
 
 @blueprint.route('/choose', methods=['GET', 'POST'])
-@authorization.require_login(require_cap='flamenco-use')
+@authorization.require_login(require_cap='flamenco-use', redirect_to_login=True)
 def index():
     user_id = current_user.user_id
 
