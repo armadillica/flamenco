@@ -1,6 +1,11 @@
 Flamenco Server Changelog
 =========================
 
+## Version 2.0.5 (released 2017-09-07)
+
+- Added automatic linking of Managers.
+
+
 ## Version 2.0.4 (released 2017-06-23)
 
 - Task updates from the Manager, on tasks that do not exist, are now accepted but ignored by
