@@ -172,4 +172,28 @@ def archive_job(job_id):
     log.info('Created Celery task %s', celery_task)
 
 
+@manager_flamenco.command
+def unused_manager_owners():
+    """Lists all email addresses of unused Manager owners"""
+
+    from flamenco import current_flamenco
+
+    mngr_coll = current_flamenco.db('managers')
+    found = mngr_coll.aggregate([
+        {'$match': {'url': {'$exists': False}}},
+        {'$lookup': {
+            'from': 'users',
+            'localField': 'owner',
+            'foreignField': 'groups',
+            'as': 'owners'
+        }},
+        {'$unwind': {'path': '$owners'}},
+        {'$match': {'owners.settings.email_communications': {'$ne': 0}}},
+        {'$group': {'_id': '$owners.email'}},
+    ])
+
+    emails = ', '.join(sorted(result['_id'] for result in found))
+    print(emails)
+
+
 manager.add_command("flamenco", manager_flamenco)
