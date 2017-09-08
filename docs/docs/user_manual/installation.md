@@ -10,28 +10,15 @@ project. If you haven't, log in and create a [new project](https://cloud.blender
 
 Here is an overview of the steps required to get Flamenco up an running.
 
-- Enable your project for Flamenco
 - Download and configure your Manager
 - Download and configure your Worker
+- Enable your project for Flamenco
 - Configure the Blender Cloud Add-on and start rendering
 
 
 !!! note
     This is meant as a step-by-step quick install guide. For more in-depth installation and
     configuration documents, check out the sources of each component.
-
-
-## Enable project for Flamenco
-
-You can enable for Flamenco any Blender Cloud project you are part of, by going to the main project
-view (the homepage of a project), clicking on "Edit Project" and then "Flamenco". Alternatively,
-you can visit the url `https://cloud.blender.org/p/<your_project_url>/edit/flamenco`.
-Once in the Flamenco page, click on "Enable for Flamenco". After clicking, some things will happen:
-
-- you will be able to see your project in [Flamenco](https://cloud.blender.org/flamenco/), where you
-  will manage jobs and tasks
-- a Flamenco Manager will be attached to the project (if you had no Manager, one will be created
-  for you, otherwise the existing one will be used)
 
 
 ## Flamenco Manager
@@ -65,6 +52,18 @@ and cannot be used in both `variables` and `path_replacement` sections. If this 
 Manager will log the offending name, and refuse to start.
 
 
+## Enable project for Flamenco
+
+You can enable for Flamenco any Blender Cloud project you are part of, by going to the main project
+view (the homepage of a project), clicking on "Edit Project" and then "Flamenco". Alternatively,
+you can visit the url `https://cloud.blender.org/p/<your_project_url>/edit/flamenco`.
+Once in the Flamenco page, click on "Enable for Flamenco". After clicking, some things will happen:
+
+- You will be able to see your project in [Flamenco](https://cloud.blender.org/flamenco/), where you
+  will manage jobs and tasks.
+- A Flamenco Manager will be attached to the project.
+
+
 ## Flamenco Worker
 
 Flamenco Workers are in charge of executing tasks they fetch from the Manager. Workers are written
@@ -73,17 +72,14 @@ in Python 3.5, so they will run on any system that supports Python 3.5 or newer.
 
 ### Worker installation and configuration
 
-Make sure you have Python 3.5+ installed on your system. Download and unzip the [latest version of
-the Worker](https://www.flamenco.io/download/) and install it with the  `pip3 install
-flamenco_worker-xxxx.whl` command. We recommend performing this installation command in a
-[virtual environment](https://docs.python.org/3.5/library/venv.html), so that A) it doesn't require
-root rights, and B) dependencies can be installed without interaction with the rest of your system.
-
-Create a `flamenco-worker.cfg` file in a directory where you are going to run the worker command
-(can be any directory on the system).
+1. Download and unzip the [latest version of the Worker](https://www.flamenco.io/download/) and
+   extract it.
+2. If you're upgrading from a previous installation: copy `flamenco-worker.cfg` and
+  `flamenco-worker.db` to the newly extracted directoy.
+3. Run `./flamenco-worker` (macOS and Linux) or `flamenco-worker.exe` (Windows)
 
 All configuration keys should be placed in the `[flamenco-worker]` section of the config file.
-At least take a look at:
+Take a look at:
 
 - `manager_url`: Flamenco Manager URL. Leave empty to use UPnP/SSDP to find the Manager on your
   network automatically.
@@ -94,4 +90,4 @@ At least take a look at:
 
 Run the Worker with the `flamenco-worker` command. The Worker will automatically connect to the
 Manager, negotiate a worker ID and password, and start querying for tasks. The worker ID and
-password will be stored in `$HOME/.flamenco-worker.cfg`
+password will be stored in `$HOME/.flamenco-worker.cfg`.
