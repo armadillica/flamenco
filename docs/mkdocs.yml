@@ -25,6 +25,7 @@ pages:
     - 'developer_docs/permissions_system.md'
     - 'developer_docs/scheduling.md'
     - 'developer_docs/roadmap.md'
+    - 'developer_docs/linking.md'
 
 # Options
 extra:
