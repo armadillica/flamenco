@@ -114,6 +114,7 @@ class FlamencoExtension(PillarExtension):
         """Connects Blinker signals and sets up other app-dependent stuff in
         submodules.
         """
+        self._setup_orphan_finder()
 
         # Create the flamenco_task_logs collection with a compressing storage engine.
         # If the zlib compression is too CPU-intensive, switch to Snappy instead.
@@ -125,6 +126,25 @@ class FlamencoExtension(PillarExtension):
         managers.setup_app(app)
         jobs.setup_app(app)
         tasks.setup_app(app)
+
+    def _setup_orphan_finder(self):
+        """Registers a few MongoDB collections to be skipped by the orphan finder."""
+
+        try:
+            from pillar.cli.maintenance import ORPHAN_FINDER_SKIP_COLLECTIONS
+        except ImportError:
+            # Running on an older Pillar version without the orphan file finder.
+            # In that case there is nothing for us to set up, so we can skip.
+            return
+
+        # Skipping the flamenco_task_logs collection under the assumption
+        # that it does not contain any file references, and that it's too
+        # big to iterate.
+        ORPHAN_FINDER_SKIP_COLLECTIONS.add('flamenco_task_logs')
+
+        # This collection doesn't link to files, and shouldn't be touched
+        # by anything due to its sensitive nature.
+        ORPHAN_FINDER_SKIP_COLLECTIONS.add('flamenco_manager_linking_keys')
 
     def _create_collections(self, db):
         import pymongo
