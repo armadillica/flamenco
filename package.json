@@ -1,6 +1,6 @@
 {
 	"name": "flamenco",
-	"license": "GPL",
+	"license": "GPL-2.0+",
 	"author": "Blender Institute",
 	"repository": {
 		"type": "git",
