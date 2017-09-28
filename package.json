@@ -4,7 +4,7 @@
 	"author": "Blender Institute",
 	"repository": {
 		"type": "git",
-		"url": "git://git.blender.org/flamenco-server.git"
+		"url": "git://git.blender.org/flamenco.git"
 	},
 	"devDependencies": {
 		"gulp": "~3.9.1",
