@@ -21,6 +21,12 @@ var enabled = {
     liveReload: !argv.production
 };
 
+var destination = {
+    css: 'flamenco/static/assets/css',
+    pug: 'flamenco/templates',
+    js: 'flamenco/static/assets/js/generated',
+}
+
 
 /* CSS */
 gulp.task('styles', function() {
@@ -32,7 +38,7 @@ gulp.task('styles', function() {
             ))
         .pipe(autoprefixer("last 3 versions"))
         .pipe(gulpif(enabled.maps, sourcemaps.write(".")))
-        .pipe(gulp.dest('flamenco/static/assets/css'))
+        .pipe(gulp.dest(destination.css))
         .pipe(gulpif(enabled.liveReload, livereload()));
 });
 
@@ -45,7 +51,7 @@ gulp.task('templates', function() {
         .pipe(jade({
             pretty: enabled.prettyPug
         }))
-        .pipe(gulp.dest('flamenco/templates/'))
+        .pipe(gulp.dest(destination.pug))
         .pipe(gulpif(enabled.liveReload, livereload()));
 });
 
@@ -60,7 +66,7 @@ gulp.task('scripts', function() {
         .pipe(rename({suffix: '.min'}))
         .pipe(gulpif(enabled.maps, sourcemaps.write(".")))
         .pipe(chmod(644))
-        .pipe(gulp.dest('flamenco/static/assets/js/generated/'))
+        .pipe(gulp.dest(destination.js))
         .pipe(gulpif(enabled.liveReload, livereload()));
 });
 
@@ -75,7 +81,7 @@ gulp.task('scripts_tutti', function() {
         .pipe(gulpif(enabled.uglify, uglify()))
         .pipe(gulpif(enabled.maps, sourcemaps.write(".")))
         .pipe(chmod(644))
-        .pipe(gulp.dest('flamenco/static/assets/js/generated/'))
+        .pipe(gulp.dest(destination.js))
         .pipe(gulpif(enabled.liveReload, livereload()));
 });
 
