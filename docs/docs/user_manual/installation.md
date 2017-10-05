@@ -29,7 +29,7 @@ Workers, which you also run locally, and the Server, which runs on the
 [cloud.blender.org](https://cloud.blender.org) website.
 
 
-### Manager installation and configuration
+### Manager installation
 
 To run Flamenco Manager for the first time, follow these steps:
 
@@ -39,18 +39,29 @@ To run Flamenco Manager for the first time, follow these steps:
 4. Flamenco Manager will give you a list of URLs at which it can be reached. Open the URL that is
    reachable both for you and the workers.
 5. Link Flamenco Manager to Blender Cloud by following the steps in the web interface.
-6. Configure Flamenco Manager via the web interface. Update the variables and path replacement
-   variables for your render farm; the `blender` variable should point to the Blender executable
-   where it can be found *on the workers*. The path replacement variables allow you to set different
-   paths for both Clients (like the Blender Cloud Add-on) and Workers, given their respective
-   platforms.
-7. Once you have completed configuration, restart Flamenco Manager through the web interface. It
-   will now run in normal (i.e. non-setup) mode.
+6. Configure Flamenco Manager via the web interface; details are described below.
+7. Once you have completed configuration, save the configuration, then restart Flamenco Manager
+   through the web interface. It will now run in normal (i.e. non-setup) mode.
+
+### Manager configuration
+
+Flamenco Manager can be configured via the web interface. Update the variables and path replacement
+variables for your render farm; the `blender` variable should point to the Blender executable where
+it can be found *on the workers*. If the path to Blender contains a space, it should be enclosed in
+double quotes, for example
+`"C:/Program Files/Blender Foundation/blender-2.78-windows64/blender.exe" --enable-new-depsgraph`.
+
+The path replacement variables allow you to set different paths for both Clients (like the Blender
+Cloud Add-on) and Workers, given their respective platforms. For example, you can define the
+variable `render` as `/render` (Linux & macOS) and `r:/` (Windows). Once that is done, you can
+create a render job that outputs to `{render}/projectname/scenename`, which will do the right thing
+on different platforms.
+
+**We recommend using forward slashes everywhere, also on Windows.**
 
 Note that `variables` and `path_replacement` share a namespace -- variable names have to be unique,
 and cannot be used in both `variables` and `path_replacement` sections. If this happens, Flamenco
 Manager will log the offending name, and refuse to start.
-
 
 ## Enable project for Flamenco
 
