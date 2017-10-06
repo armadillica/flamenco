@@ -183,17 +183,19 @@
 		.col-md-8
 			p
 				i.pi-lock
-				a#show_auth_token(href='javascript:void(0);')
-					// When changing the button text, also update _displayAuthToken().
-					| click to show authentication token
-
+				| Due to a security upgrade it is no longer possible to view the Manager's
+				| authentication token here. Instead, use the
+				=" "
+				a(href='https://www.flamenco.io/docs/user_manual/installation/#linking-the-manager-to-a-server', target='_blank') Flamenco Manager Web Setup
+				=" "
+				| to re-link your Manager. This automatically generates a new authentication token.
 		.col-md-4
-			button.btn.btn-block#gen-auth-token(
-				title="Generate New Token",
-				name="Generate New Token",
-				onclick="generateNewAuthToken()")
-				// When changing the button text, also update generateNewAuthToken().
-				| Generate new token
+			button.btn.btn-block#revoke-auth-token(
+				title="Revoke any existing authentication token",
+				name="Revoke Token",
+				onclick="revokeAuthToken()")
+				// When changing the button text, also update revokeAuthToken().
+				| Revoke existing token
 
 | {% endif %}
 
@@ -376,10 +378,10 @@ script.
 		return false;
 	}
 
-	var auth_token_link = $('#show_auth_token');
+	var $show_auth_token = $('#show_auth_token');
 	function _displayAuthToken(json_data) {
 		function _hideAuthToken() {
-			auth_token_link
+			$show_auth_token
 				.text('click to show authentication token')
 				.removeClass('copy-to-clipboard')
 				.removeAttr('title')
@@ -389,73 +391,59 @@ script.
 			$('#click_token_text').remove();
 		}
 
-		auth_token_link
+		$('#click_token_text').remove();
+
+		$('<a>')
 			.text(json_data.token)
 			.addClass('copy-to-clipboard')
+			.attr('href', 'javascript:void(0);')
 			.attr('title', 'Click to copy to clipboard')
 			.attr('data-clipboard-text', json_data.token)
 			.off('click')
+			.insertAfter($show_auth_token)
 		;
-		$('#click_token_text').remove();
 		$('<p>')
 			.attr('id', 'click_token_text')
 			.text(
 				'Click the token to copy to your clipboard, ' +
 				'then paste it into the manager_secret setting in your flamenco-manager.yml file.')
 			.addClass('hint')
-			.insertAfter(auth_token_link.parent())
+			.insertAfter($show_auth_token)
 		;
 		createClipboard();
-		window.setTimeout(_hideAuthToken, 20000);
+		window.setTimeout(_hideAuthToken, 60000);
 	}
 
-	function showAuthToken() {
-		$('.action-result-panel').html('');
-
-		$.post(
-			'{{ url_for("flamenco.managers.manager_auth_token", manager_id=manager._id) }}',
-			{csrf: '{{ csrf }}'}
-		)
-		.done(_displayAuthToken)
-		.fail(function(err) {
-			var $p = xhrErrorResponseElement(err, 'Error fetching auth token: ');
-			toastr.error($p);
-		})
-		;
-	}
-	auth_token_link.click(showAuthToken);
-
-	function generateNewAuthToken() {
-		$('.action-result-panel').html('');
-		var $btn = $('#gen-auth-token');
+	function revokeAuthToken() {
+		var $btn = $('#revoke-auth-token');
 
 		function restoreButtonText() {
 			window.setTimeout(function() {
-				$btn.text('Generate new token');
+				$btn.text('Revoke existing token');
 			}, 3000);
 		}
 
-		if (!confirm('Are you sure you want to generate a new authentication token? ' +
-				'This will invalidate any previously existing token.')) {
+		if (!confirm('Are you sure you want to revoke any existing authentication token? ' +
+				'This will stop your Manager from working until you re-link it.')) {
 			$btn.text('Cancelled');
 			restoreButtonText();
 			return;
 		}
 
-		$btn.attr('disabled', 'disabled').text('Generating...');
+		$btn.attr('disabled', 'disabled').text('Revoking...');
 
 		$.post(
-			'{{ url_for("flamenco.managers.generate_auth_token", manager_id=manager._id) }}',
+			'{{ url_for("flamenco.managers.revoke_auth_token", manager_id=manager._id) }}',
 			{csrf: '{{ csrf }}'}
 		)
 		.done(function(data) {
-			$btn.removeAttr('disabled').text('Token generated');
+			$btn.removeAttr('disabled').text('Authentication token revoked');
 			_displayAuthToken(data);
 			restoreButtonText();
-			toastr.success('New token generated');
+			toastr.success('Authentication token revoked');
 		})
 		.fail(function(err) {
-			var $p = xhrErrorResponseElement(err, 'Error generating auth token: ');
+			var $p = xhrErrorResponseElement(err, 'Error revoking auth token: ');
 			toastr.error($p);
 			restoreButtonText();
 		})

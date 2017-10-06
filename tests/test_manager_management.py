@@ -1,4 +1,7 @@
+import datetime
+
 import bson
+from bson.tz_util import utc
 
 from pillar.tests import common_test_data as ctd
 from abstract_flamenco_test import AbstractFlamencoTest
@@ -176,42 +179,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
             mngr_coll = current_flamenco.db('managers')
             return mngr_coll.find_one(mngr_id)
 
-    def test_auth_token__one_token(self):
-        import datetime
-        from bson.tz_util import utc
-
-        with self.app.test_request_context():
-            token = self.flamenco.manager_manager.auth_token(self.mngr_id)
-
-        self.assertEqual(token.token, self.mngr_token)
-        self.assertTrue(token.expire_time > datetime.datetime.now(tz=utc))
-
-    def test_auth_token__two_tokens(self):
-        from pillar.api import service
-
-        with self.app.test_request_context():
-            service_account_id = self.flamenco.manager_manager.find_service_account_id(self.mngr_id)
-            service.generate_auth_token(service_account_id)
-
-            token = self.flamenco.manager_manager.auth_token(self.mngr_id)
-
-        # Should find the first one.
-        self.assertEqual(token.token, self.mngr_token)
-
-    def test_auth_token__zero_tokens(self):
-        with self.app.test_request_context():
-            tokens_coll = self.app.db('tokens')
-            service_account_id = self.flamenco.manager_manager.find_service_account_id(self.mngr_id)
-            result = tokens_coll.delete_many({'user': service_account_id})
-            self.assertEqual(result.deleted_count, 1)
-
-            token = self.flamenco.manager_manager.auth_token(self.mngr_id)
-
-        self.assertIsNone(token)
-
     def test_gen_new_auth_token(self):
-        import datetime
-        from bson.tz_util import utc
         from pillar.api import service
 
         with self.app.test_request_context():
@@ -235,6 +203,27 @@ class ManagerAccessTest(AbstractFlamencoTest):
         self.assertNotEqual(token.token, self.mngr_token)
         self.assertTrue(token.token.startswith('SRV'))
         self.assertTrue(token.expire_time > datetime.datetime.now(tz=utc))
+
+    def test_revoke_auth_token(self):
+        from pillar.api import service
+
+        with self.app.test_request_context():
+            tokens_coll = self.app.db('tokens')
+            service_account_id = self.flamenco.manager_manager.find_service_account_id(self.mngr_id)
+
+            # Create a new more tokens
+            service.generate_auth_token(service_account_id)
+            service.generate_auth_token(service_account_id)
+            service.generate_auth_token(service_account_id)
+
+            all_tokens = tokens_coll.find({'user': service_account_id})
+            self.assertEqual(all_tokens.count(), 4)
+
+            self.flamenco.manager_manager.revoke_auth_token(self.mngr_id)
+
+            # All should have been deleted.
+            all_tokens = tokens_coll.find({'user': service_account_id})
+            self.assertEqual(all_tokens.count(), 0)
 
     def test_share(self):
 

@@ -301,27 +301,25 @@ class ManagerManager(object):
             raise wz_exceptions.NotFound()
         return service_account_id
 
-    def auth_token(self, manager_id: bson.ObjectId) -> typing.Optional[AuthTokenInfo]:
-        """Returns the authentication token info of the given Manager."""
+    def revoke_auth_token(self, manager_id: bson.ObjectId) -> bson.ObjectId:
+        """Deletes all existing authentication tokens of the Manager.
 
+        Returns the service account ID.
+        """
+
+        import pymongo.results
+
+        self._log.info('Revoking authentication tokens for Manager %s on behalf of user %s',
+                       manager_id, current_user.user_id)
         service_account_id = self.find_service_account_id(manager_id)
 
         tokens_coll = current_app.db('tokens')
-        tokens = tokens_coll.find({'user': service_account_id})
-        if tokens.count() == 0:
-            self._log.warning('Manager %s with service account %s has no authentication token',
-                              manager_id, service_account_id)
-            return None
+        result: pymongo.results.DeleteResult = tokens_coll.delete_many({'user': service_account_id})
 
-        if tokens.count() > 1:
-            self._log.warning('Manager %s with service account %s has %i authentication tokens',
-                              manager_id, service_account_id, tokens.count())
+        self._log.debug('Deleted %i authentication tokens of Manager %s',
+                        result.deleted_count, manager_id)
 
-        token = tokens.next()
-        return AuthTokenInfo(
-            token=token['token'],
-            expire_time=token['expire_time'],
-        )
+        return service_account_id
 
     def gen_new_auth_token(self, manager_id: bson.ObjectId) -> typing.Optional[AuthTokenInfo]:
         """Generates a new authentication token for the given Manager.
@@ -330,22 +328,15 @@ class ManagerManager(object):
         """
 
         from pillar.api import service
-        import pymongo.results
+
+        service_account_id = self.revoke_auth_token(manager_id)
 
         self._log.info('Generating new authentication token for Manager %s on behalf of user %s',
                        manager_id, current_user.user_id)
-
-        service_account_id = self.find_service_account_id(manager_id)
-
-        tokens_coll = current_app.db('tokens')
-        result: pymongo.results.DeleteResult = tokens_coll.delete_many({'user': service_account_id})
-        self._log.debug('Deleted %i authentication tokens of Manager %s',
-                        result.deleted_count, manager_id)
-
-        token = service.generate_auth_token(service_account_id)
+        token_info = service.generate_auth_token(service_account_id)
         return AuthTokenInfo(
-            token=token['token'],
-            expire_time=token['expire_time'],
+            token=token_info['token'],
+            expire_time=token_info['expire_time'],
         )
 
     def share_unshare_manager(self, manager_id: bson.ObjectId, share_action: ShareAction,
