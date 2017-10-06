@@ -1,6 +1,12 @@
 Flamenco Server Changelog
 =========================
 
+## Version 2.0.6 (released 2017-10-06)
+
+- Removed the retrieval of Manager authentication codes. Since Blender Cloud now stores them hashed,
+  this retrieval is no longer possible. Instead, the automatic linking of Managers should be used.
+
+
 ## Version 2.0.5 (released 2017-09-07)
 
 - Added automatic linking of Managers.
