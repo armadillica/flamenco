@@ -63,6 +63,16 @@ Note that `variables` and `path_replacement` share a namespace -- variable names
 and cannot be used in both `variables` and `path_replacement` sections. If this happens, Flamenco
 Manager will log the offending name, and refuse to start.
 
+
+### Linking the Manager to a Server
+
+To tell the Manager which Server to use, and to let the Server know that this Manager is available,
+you have to **link your Manager**. This can be done by starting Flamenco Manager in setup mode
+(i.e. run `flamenco-manager -setup`) and visiting the web interface. There you can provide the
+Server URL (typically https://cloud.blender.org/) and click on the Link button. Follow the
+on-screen instructions to complete the link.
+
+
 ## Enable project for Flamenco
 
 You can enable for Flamenco any Blender Cloud project you are part of, by going to the main project
