@@ -6,51 +6,12 @@ for live/production situations.
 
 import logging
 
-from bson import ObjectId
 from flask import current_app
 
 from . import EXTENSION_NAME, current_flamenco
+from pillar.api.projects.utils import get_project, put_project
 
 log = logging.getLogger(__name__)
-
-
-def _get_project(project_url):
-    """Find a project in the database, or SystemExit()s.
-
-    :param project_url: UUID of the project
-    :type: str
-    :return: the project
-    :rtype: dict
-    """
-
-    projects_collection = current_app.data.driver.db['projects']
-
-    # Find the project in the database.
-    project = projects_collection.find_one({'url': project_url})
-    if not project:
-        raise RuntimeError('Project %s does not exist.' % project_url)
-
-    return project
-
-
-def _update_project(project):
-    """Updates a project in the database, or SystemExit()s.
-
-    :param project: the project data, should be the entire project document
-    :type: dict
-    :return: the project
-    :rtype: dict
-    """
-
-    from pillar.api.utils import remove_private_keys
-
-    project_id = ObjectId(project['_id'])
-    project = remove_private_keys(project)
-    result, _, _, status_code = current_app.put_internal('projects', project, _id=project_id)
-
-    if status_code != 200:
-        raise RuntimeError(f"Can't update project {project_id}, "
-                           f"status {status_code} with issues: {result}")
 
 
 def setup_for_flamenco(project_url, replace=False):
@@ -64,14 +25,14 @@ def setup_for_flamenco(project_url, replace=False):
 
     # Copy permissions from the project, then give everyone with PUT
     # access also DELETE access.
-    project = _get_project(project_url)
+    project = get_project(project_url)
 
     # Set default extension properties. Be careful not to overwrite any
     # properties that are already there.
     eprops = project.setdefault('extension_props', {})
     eprops.setdefault(EXTENSION_NAME, {})
 
-    _update_project(project)
+    put_project(project)
 
     log.info('Project %s was updated for Flamenco.', project_url)
 
