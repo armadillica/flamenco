@@ -78,9 +78,6 @@ def startup(manager_id, notification):
 def task_update_batch(manager_id, task_updates):
     from pillar.api.utils import jsonify
 
-    if not task_updates:
-        raise wz_exceptions.BadRequest('no JSON payload received')
-
     total_modif_count, handled_update_ids = handle_task_update_batch(manager_id, task_updates)
 
     # Check which tasks are in state 'cancel-requested', as those need to be sent back.
