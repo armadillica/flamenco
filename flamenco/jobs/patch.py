@@ -16,7 +16,7 @@ patch_api_blueprint = Blueprint('flamenco.jobs.patch', __name__)
 class JobPatchHandler(patch_handler.AbstractPatchHandler):
     item_name = 'job'
 
-    @authorization.require_login(require_roles={'subscriber', 'demo', 'flamenco-admin'})
+    @authorization.require_login(require_cap='flamenco-use')
     def patch_set_job_status(self, job_id: bson.ObjectId, patch: dict):
         """Updates a job's status in the database."""
 
@@ -34,7 +34,7 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
         except ValueError:
             raise wz_exceptions.UnprocessableEntity(f'Status {new_status} is invalid')
 
-    @authorization.require_login(require_roles={'subscriber', 'demo', 'flamenco-admin'})
+    @authorization.require_login(require_cap='flamenco-use')
     def patch_archive_job(self, job_id: bson.ObjectId, patch: dict):
         """Archives the given job in a background task."""
 

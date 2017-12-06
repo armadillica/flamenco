@@ -64,7 +64,7 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
             # Manager Manager will have already logged the cause.
             raise wz_exceptions.InternalServerError()
 
-    @authorization.require_login(require_roles={'flamenco-admin', 'flamenco-user'})
+    @authorization.require_login(require_cap='flamenco-use')
     def patch_assign_to_project(self, manager_id: bson.ObjectId, patch: dict):
         """Assigns a manager to a project.
 
@@ -73,7 +73,7 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
 
         return self._assign_or_remove_project(manager_id, patch, 'assign')
 
-    @authorization.require_login(require_roles={'flamenco-admin', 'flamenco-user'})
+    @authorization.require_login(require_cap='flamenco-use')
     def patch_remove_from_project(self, manager_id: bson.ObjectId, patch: dict):
         """Unassigns a manager from a project.
 
@@ -82,7 +82,7 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
 
         return self._assign_or_remove_project(manager_id, patch, 'remove')
 
-    @authorization.require_login(require_roles={'flamenco-admin', 'flamenco-user'})
+    @authorization.require_login(require_cap='flamenco-use')
     def patch_edit_from_web(self, manager_id: bson.ObjectId, patch: dict):
         """Updates Manager fields from the web."""
 
@@ -122,7 +122,7 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
 
         return '', 204
 
-    @authorization.require_login(require_roles={'flamenco-admin', 'flamenco-user'})
+    @authorization.require_login(require_cap='flamenco-use')
     def patch_change_ownership(self, manager_id: bson.ObjectId, patch: dict):
         """Shares or un-shares the Manager with a user."""
 
