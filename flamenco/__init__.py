@@ -18,16 +18,14 @@ class FlamencoExtension(PillarExtension):
         'flamenco.celery.job_archival',
     ]
     user_roles = {
-        'flamenco-user',
         'flamenco-admin',
         'flamenco_manager',
         'org-flamenco',
     }
-    user_roles_indexable = {'flamenco-user', 'org-flamenco'}
+    user_roles_indexable = {'org-flamenco'}
 
     FLAMENCO_CAPS = frozenset({'flamenco-use', 'flamenco-view', 'flamenco-view-logs'})
     user_caps = {
-        'flamenco-user': FLAMENCO_CAPS,
         'org-flamenco': FLAMENCO_CAPS,
         'flamenco-admin': FLAMENCO_CAPS | frozenset({'flamenco-admin'}),
         'admin': FLAMENCO_CAPS | frozenset({'flamenco-admin'}),
