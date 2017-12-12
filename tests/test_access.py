@@ -233,26 +233,6 @@ class AccessTest(AbstractAccessTest):
         self.assertEqual(str(self.mngr_id), resp1['_items'][0]['_id'])
         self.assertEqual(str(self.mngr2_id), resp2['_items'][0]['_id'])
 
-    def test_manager_list_as_nonprojmember_flamuser(self):
-        self.create_user(24 * 'd',
-                         roles={'subscriber', 'flamenco-user'},
-                         groups=[self.mngr_doc['owner']],
-                         token='owner1-token')
-        self.create_user(24 * 'e',
-                         roles={'demo', 'flamenco-user'},
-                         groups=[self.mngr2_doc['owner']],
-                         token='owner2-token')
-        resp1 = self.get('/api/flamenco/managers/',
-                         expected_status=200,
-                         auth_token='owner1-token').json()
-        resp2 = self.get('/api/flamenco/managers/',
-                         expected_status=200,
-                         auth_token='owner2-token').json()
-        self.assertEqual(1, resp1['_meta']['total'])
-        self.assertEqual(1, resp2['_meta']['total'])
-        self.assertEqual(str(self.mngr_id), resp1['_items'][0]['_id'])
-        self.assertEqual(str(self.mngr2_id), resp2['_items'][0]['_id'])
-
     def test_manager_list_as_nonprojmember_subscriber(self):
         self.create_user(24 * 'd',
                          roles={'subscriber'},
@@ -273,7 +253,7 @@ class AccessTest(AbstractAccessTest):
         self.assertEqual(str(self.mngr_id), resp1['_items'][0]['_id'])
         self.assertEqual(str(self.mngr2_id), resp2['_items'][0]['_id'])
 
-    def test_manager_as_flamenco_user(self):
+    def test_manager_as_subscriber(self):
         """Subscriber/Flamenco-user member of a Flamenco project should not get a list of managers.
 
         The user can access specific managers assigned to her projects, but listing
@@ -281,7 +261,7 @@ class AccessTest(AbstractAccessTest):
         """
 
         self.create_project_member(24 * 'e',
-                                   roles={'subscriber', 'flamenco-user'},
+                                   roles={'subscriber'},
                                    token='flamuser-token')
         self.assign_manager_to_project(self.mngr_id, self.proj_id)
 
@@ -302,33 +282,6 @@ class AccessTest(AbstractAccessTest):
         self.get('/api/flamenco/managers/%s' % self.mngr2_id,
                  expected_status=403,
                  auth_token='flamuser-token')
-
-    def test_manager_as_subscriber(self):
-        """Subscriber member of a Flamenco project should not get a list of managers.
-
-        The user can NOT access specific managers assigned to her projects.
-        """
-
-        self.create_project_member(24 * 'e', roles={'subscriber'}, token='subscriber-token')
-        self.assign_manager_to_project(self.mngr_id, self.proj_id)
-
-        resp = self.get('/api/flamenco/managers/',
-                        expected_status=200,
-                        auth_token='subscriber-token').json()
-
-        self.assertEqual(1, resp['_meta']['page'])
-        self.assertEqual(0, resp['_meta']['total'])
-        self.assertEqual([], resp['_items'])
-
-        # Project-assigned manager
-        self.get('/api/flamenco/managers/%s' % self.mngr_id,
-                 expected_status=403,
-                 auth_token='subscriber-token')
-
-        # Not project-assigned manager
-        self.get('/api/flamenco/managers/%s' % self.mngr2_id,
-                 expected_status=403,
-                 auth_token='subscriber-token')
 
 
 class UserAccessTest(AbstractAccessTest):
@@ -391,7 +344,7 @@ class UserAccessTest(AbstractAccessTest):
             for idx, prid in self.prid.items():
                 self.admin_gid[idx] = get_admin_group_id(prid)
         self.create_user(
-            roles={'subscriber', 'flamenco-user'},
+            roles={'subscriber'},
             groups=[
                 self.admin_gid[1],
                 self.admin_gid[2],

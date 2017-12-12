@@ -13,12 +13,12 @@ class ManagerEditTest(AbstractFlamencoTest):
         self.mngr_token = token['token']
 
         self.create_user(user_id=24 * 'e',
-                         roles={'subscriber', 'flamenco-user'},
+                         roles={'subscriber'},
                          groups=[self.mngr_doc['owner']],
                          token='owner-token')
 
         self.create_user(user_id=24 * 'a',
-                         roles={'subscriber', 'flamenco-user'},
+                         roles={'subscriber'},
                          token='other-flamuser-token')
 
     def test_patch_edit_from_web(self):

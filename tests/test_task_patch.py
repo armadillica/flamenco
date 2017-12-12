@@ -129,7 +129,7 @@ class TaskPatchingTest(AbstractFlamencoTest):
         """Check that a flamenco-user outside the project cannot PATCH."""
 
         self.create_user(user_id=24 * 'e',
-                         roles={'subscriber', 'flamenco-user'},
+                         roles={'subscriber'},
                          token='flamuser-token')
 
         task_id = self._get_first_task_id()
@@ -148,11 +148,11 @@ class TaskPatchingTest(AbstractFlamencoTest):
         """Check that a project member flamenco-user can PATCH a task to requeue it."""
 
         self.create_project_member(user_id=24 * 'e',
-                                   roles={'subscriber', 'flamenco-user'},
+                                   roles={'subscriber'},
                                    token='flamuser-token')
 
         self.create_project_member(user_id=24 * 'd',
-                                   roles={'subscriber', 'flamenco-user'},
+                                   roles={'subscriber'},
                                    groups=[self.mngr_doc['owner']],
                                    token='owner-token')
 
@@ -187,47 +187,3 @@ class TaskPatchingTest(AbstractFlamencoTest):
             expected_status=204,
         )
         self.assert_task_status(task_id, 'queued')
-
-    def test_projmember_subscriber_permissions(self):
-        """Check that a project member subscriber cannot PATCH a task to requeue it."""
-
-        self.create_project_member(user_id=24 * 'e',
-                                   roles={'subscriber'},
-                                   token='subscriber-token')
-
-        self.create_project_member(user_id=24 * 'd',
-                                   roles={'subscriber', 'flamenco-user'},
-                                   groups=[self.mngr_doc['owner']],
-                                   token='owner-token')
-
-        task_id = self._get_first_task_id()
-        self.force_task_status(task_id, 'failed')
-
-        # Test without assigning the manager to the project
-        self.patch(
-            '/api/flamenco/tasks/%s' % task_id,
-            json={'op': 'set-task-status',
-                  'status': 'queued'},
-            auth_token='subscriber-token',
-            expected_status=403,
-        )
-        self.assert_task_status(task_id, 'failed')
-
-        # Assign the manager to the project
-        self.patch(
-            f'/api/flamenco/managers/{self.mngr_id}',
-            json={'op': 'assign-to-project',
-                  'project': self.proj_id},
-            auth_token='owner-token',
-            expected_status=204,
-        )
-
-        # Test after assigning the manager to the project
-        self.patch(
-            '/api/flamenco/tasks/%s' % task_id,
-            json={'op': 'set-task-status',
-                  'status': 'queued'},
-            auth_token='subscriber-token',
-            expected_status=403,
-        )
-        self.assert_task_status(task_id, 'failed')

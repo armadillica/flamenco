@@ -91,7 +91,7 @@ class JobRecreationTest(AbstractFlamencoTest):
             admin_gid = get_admin_group_id(self.proj_id)
 
         self.create_user(24 * 'd',
-                         roles={'subscriber', 'flamenco-user'},
+                         roles={'subscriber'},
                          groups=[groups['subscriber'], admin_gid],
                          token='user-token')
 

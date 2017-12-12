@@ -45,7 +45,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
         """The owner of a manager should be able to assign it to any project she's a member of."""
 
         self.create_project_member(user_id=24 * 'd',
-                                   roles={'subscriber', 'flamenco-user'},
+                                   roles={'subscriber'},
                                    groups=[self.mngr_doc['owner']],
                                    token='owner-projmember-token')
 
@@ -73,16 +73,16 @@ class ManagerAccessTest(AbstractFlamencoTest):
         """Non-project members and non-owners should not be able to assign."""
 
         self.create_user(24 * 'c',
-                         roles={'subscriber', 'flamenco-user'},
+                         roles={'subscriber'},
                          groups=[self.mngr_doc['owner']],
                          token='owner-nonprojmember-token')
 
         self.create_project_member(user_id=24 * 'e',
-                                   roles={'subscriber', 'flamenco-user'},
+                                   roles={'subscriber'},
                                    token='projmember-token')
 
         self.create_project_member(user_id=24 * 'd',
-                                   roles={'subscriber'},
+                                   roles=set(),
                                    groups=[self.mngr_doc['owner']],
                                    token='nonfluser-token')
 
@@ -95,7 +95,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
             expected_status=403,
         )
 
-        # User who is project member but not owner the Manager cannot assign.
+        # User who is project member but not owner of the Manager cannot assign.
         self.patch(
             f'/api/flamenco/managers/{self.mngr_id}',
             json={'op': 'assign-to-project',
@@ -104,7 +104,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
             expected_status=403,
         )
 
-        # Owner who is project member but not flamenco-user Manager cannot assign.
+        # Owner who is project member but not subscriber cannot assign.
         self.patch(
             f'/api/flamenco/managers/{self.mngr_id}',
             json={'op': 'assign-to-project',
@@ -228,10 +228,10 @@ class ManagerAccessTest(AbstractFlamencoTest):
     def test_share(self):
 
         owner_gid = self.mngr_doc['owner']
-        self.create_user(24 * 'a', roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(24 * 'a', roles={'subscriber'}, groups=[owner_gid],
                          token='owner-token')
         subject_uid = 24 * 'b'
-        self.create_user(subject_uid, roles={'subscriber', 'flamenco-user'},
+        self.create_user(subject_uid, roles={'subscriber'},
                          token='subject-token')
 
         self.patch(f'/api/flamenco/managers/{self.mngr_id}',
@@ -248,9 +248,9 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
     def test_unshare(self):
         owner_gid = self.mngr_doc['owner']
-        self.create_user(24 * 'a', roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(24 * 'a', roles={'subscriber'}, groups=[owner_gid],
                          token='owner-token')
-        self.create_user(24 * 'b', roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(24 * 'b', roles={'subscriber'}, groups=[owner_gid],
                          token='subject-token')
 
         self.patch(f'/api/flamenco/managers/{self.mngr_id}',
@@ -267,10 +267,10 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
     def test_share_with_non_flamenco_subject(self):
         owner_gid = self.mngr_doc['owner']
-        self.create_user(24 * 'a', roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(24 * 'a', roles={'subscriber'}, groups=[owner_gid],
                          token='owner-token')
         subject_uid = 24 * 'b'
-        self.create_user(subject_uid, roles={'subscriber'},
+        self.create_user(subject_uid, roles=set(),
                          token='subject-token')
 
         self.patch(f'/api/flamenco/managers/{self.mngr_id}',
@@ -290,7 +290,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
         self.create_user(24 * 'a', roles={'subscriber'}, groups=[owner_gid],
                          token='owner-token')
         subject_uid = 24 * 'b'
-        self.create_user(subject_uid, roles={'subscriber', 'flamenco-user'},
+        self.create_user(subject_uid, roles=set(),
                          token='subject-token')
 
         self.patch(f'/api/flamenco/managers/{self.mngr_id}',
@@ -307,10 +307,10 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
     def test_hand_over_manager(self):
         owner_gid = self.mngr_doc['owner']
-        self.create_user(24 * 'a', roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(24 * 'a', roles={'subscriber'}, groups=[owner_gid],
                          token='owner-token')
         subject_uid = 24 * 'b'
-        self.create_user(subject_uid, roles={'subscriber', 'flamenco-user'},
+        self.create_user(subject_uid, roles={'subscriber'},
                          token='subject-token')
 
         # Share with subject-user
@@ -341,10 +341,10 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
     def test_hand_over_manager_abandon(self):
         owner_gid = self.mngr_doc['owner']
-        self.create_user(24 * 'a', roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(24 * 'a', roles={'subscriber'}, groups=[owner_gid],
                          token='owner-token')
         subject_uid = 24 * 'b'
-        self.create_user(subject_uid, roles={'subscriber', 'flamenco-user'},
+        self.create_user(subject_uid, roles={'subscriber'},
                          token='subject-token')
 
         # Share with subject-user by owner
@@ -376,10 +376,10 @@ class ManagerAccessTest(AbstractFlamencoTest):
     def test_unshare_self(self):
         owner_gid = self.mngr_doc['owner']
         owner_uid = 24 * 'a'
-        self.create_user(owner_uid, roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(owner_uid, roles={'subscriber'}, groups=[owner_gid],
                          token='owner-token')
         subject_uid = 24 * 'b'
-        self.create_user(subject_uid, roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(subject_uid, roles={'subscriber'}, groups=[owner_gid],
                          token='other-token')
 
         self.patch(f'/api/flamenco/managers/{self.mngr_id}',
@@ -397,10 +397,10 @@ class ManagerAccessTest(AbstractFlamencoTest):
     def test_unshare_last_user(self):
         owner_gid = self.mngr_doc['owner']
         owner_uid = 24 * 'a'
-        self.create_user(owner_uid, roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(owner_uid, roles={'subscriber'}, groups=[owner_gid],
                          token='owner-token')
         other_uid = 24 * 'b'
-        self.create_user(other_uid, roles={'subscriber', 'flamenco-user'}, groups=[owner_gid],
+        self.create_user(other_uid, roles={'subscriber'}, groups=[owner_gid],
                          token='other-token')
 
         for uid in (self.mngr_owner, other_uid):
@@ -427,8 +427,8 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
     def test_owning_users(self):
         owner_gid = self.mngr_doc['owner']
-        self.create_user(24 * 'a', roles={'subscriber', 'flamenco-user'}, groups=[owner_gid])
-        self.create_user(24 * 'b', roles={'subscriber', 'flamenco-user'})
+        self.create_user(24 * 'a', roles={'subscriber'}, groups=[owner_gid])
+        self.create_user(24 * 'b', roles={'subscriber'})
         self.create_user(24 * 'c', roles=[], groups=[owner_gid])
 
         with self.app.test_request_context():

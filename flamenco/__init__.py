@@ -26,6 +26,8 @@ class FlamencoExtension(PillarExtension):
 
     FLAMENCO_CAPS = frozenset({'flamenco-use', 'flamenco-view', 'flamenco-view-logs'})
     user_caps = {
+        'subscriber': FLAMENCO_CAPS,
+        'demo': FLAMENCO_CAPS,
         'org-flamenco': FLAMENCO_CAPS,
         'flamenco-admin': FLAMENCO_CAPS | frozenset({'flamenco-admin'}),
         'admin': FLAMENCO_CAPS | frozenset({'flamenco-admin'}),
