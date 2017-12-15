@@ -20,6 +20,7 @@ pages:
     - 'user_manual/terminology.md'
     - 'user_manual/installation.md'
     - 'user_manual/blender_render.md'
+    - 'user_manual/testing.md'
   - Developer Docs:
     - 'developer_docs/architecture.md'
     - 'developer_docs/permissions_system.md'
