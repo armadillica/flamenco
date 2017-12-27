@@ -17,6 +17,7 @@ from pillarsdk.exceptions import ResourceNotFound
 COLOR_FOR_TASK_STATUS = {
     'queued': '#b4bbaa',
     'canceled': '#999',
+    'cancel-requested': '#d0a46d',
     'failed': '#ff8080',
     'claimed-by-manager': '#d1c5d3',
     'processing': '#ffbe00',

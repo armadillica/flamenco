@@ -26,6 +26,13 @@
 				#{$property}: $color-status-canceled-dark
 			@else
 				#{$property}: $color-status-canceled
+		&-cancel-requested#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-cancel-requested-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-cancel-requested-dark
+			@else
+				#{$property}: $color-status-cancel-requested
 		&-failed#{$where}
 			@if ($variation == 'light')
 				#{$property}: $color-status-failed-light
