@@ -6,8 +6,8 @@
 
 
 # Primary requirements
-mkdocs==0.16.2
-mkdocs-material==1.4.1
+mkdocs==0.17.2
+mkdocs-material==2.2.2
 
 # Secondary requirements
 Markdown==2.6.8
