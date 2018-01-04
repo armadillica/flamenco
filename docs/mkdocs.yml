@@ -11,7 +11,17 @@ repo_url: 'https://github.com/armadillica/flamenco'
 # Copyright
 copyright: 'Copyright &copy; 2016 Blender Institute - CC-BY-SA v4.0.'
 
-theme: 'material'
+theme:
+  name: 'material'
+  logo: 'img/logo_flamenco_white.svg'
+  palette:
+    primary: 'red'
+    accent: 'red'
+  social:
+    - type: 'github'
+      link: 'https://github.com/armadillica'
+    - type: 'twitter'
+      link: 'https://twitter.com/flamenco_io'
 
 pages:
   - Home: 'index.md'
@@ -28,17 +38,6 @@ pages:
     - 'developer_docs/roadmap.md'
     - 'developer_docs/linking.md'
 
-# Options
-extra:
-  logo: 'img/logo_flamenco_white.svg'
-  palette:
-    primary: 'red'
-    accent: 'red'
-  social:
-    - type: 'github'
-      link: 'https://github.com/armadillica'
-    - type: 'twitter'
-      link: 'https://twitter.com/flamenco_io'
 
 # Google Analytics
 google_analytics:
