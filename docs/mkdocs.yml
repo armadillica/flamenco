@@ -9,7 +9,7 @@ repo_name: 'armadillica/flamenco'
 repo_url: 'https://github.com/armadillica/flamenco'
 
 # Copyright
-copyright: 'Copyright &copy; 2016 Blender Institute - CC-BY-SA v4.0.'
+copyright: 'Copyright &copy; 2016-2018 Blender Institute - CC-BY-SA v4.0.'
 
 theme:
   name: 'material'
