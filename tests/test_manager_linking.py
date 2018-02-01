@@ -14,16 +14,13 @@ secret_bin = b'\xe0V\x076\xe1[\x1e\x021\x1aI\x96\x15\x05\xa0\xd3\x91\x81\xfd' \
 class ManagerLinkTest(AbstractFlamencoTest):
     """Test for linking Managers to this Server."""
 
-    def setUp(self, **kwargs):
-        super().setUp(**kwargs)
-        self.enter_app_context()
-
     def _normal_exchange(self) -> bson.ObjectId:
         resp = self.post('/api/flamenco/managers/link/exchange',
                          json={'key': secret_hex})
         return bson.ObjectId(resp.get_json()['identifier'])
 
     def test_exchange_secret_key_happy(self):
+        self.enter_app_context()
         before_request = datetime.datetime.now(tz=tz_util.utc)
 
         ident = self._normal_exchange()
@@ -45,34 +42,37 @@ class ManagerLinkTest(AbstractFlamencoTest):
                   json={'key': secret_hex[:-1]},
                   expected_status=400)
 
-        coll = self.flamenco.db('manager_linking_keys')
-        self.assertEqual(0, coll.count())
+        with self.app.app_context():
+            coll = self.flamenco.db('manager_linking_keys')
+            self.assertEqual(0, coll.count())
 
     def test_exchange_secret_key_no_key(self):
         self.post('/api/flamenco/managers/link/exchange',
                   json={},
                   expected_status=400)
 
-        coll = self.flamenco.db('manager_linking_keys')
-        self.assertEqual(0, coll.count())
+        with self.app.app_context():
+            coll = self.flamenco.db('manager_linking_keys')
+            self.assertEqual(0, coll.count())
 
     def test_reset_auth_token_happy(self):
         import secrets
 
         from flamenco.managers.linking_routes import _compute_hash
 
-        mngr_doc, account, old_token_info = self.create_manager_service_account()
-        manager_id = mngr_doc['_id']
+        with self.app.app_context():
+            mngr_doc, account, old_token_info = self.create_manager_service_account()
+            manager_id = mngr_doc['_id']
 
-        # Exchange two keys
-        ident = self._normal_exchange()
-        self.post('/api/flamenco/managers/link/exchange', json={'key': 'aabbccddeeff'})
+            # Exchange two keys
+            ident = self._normal_exchange()
+            self.post('/api/flamenco/managers/link/exchange', json={'key': 'aabbccddeeff'})
 
-        coll = self.flamenco.db('manager_linking_keys')
-        self.assertEqual(2, coll.count())
+            coll = self.flamenco.db('manager_linking_keys')
+            self.assertEqual(2, coll.count())
 
-        # Bind them to the same Manager
-        coll.update_many({}, {'$set': {'manager_id': manager_id}})
+            # Bind them to the same Manager
+            coll.update_many({}, {'$set': {'manager_id': manager_id}})
 
         # Check that both secret keys are gone after requesting an auth token reset.
         padding = secrets.token_hex(32)
