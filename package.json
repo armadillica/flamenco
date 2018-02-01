@@ -14,7 +14,7 @@
 		"gulp-concat": "~2.6.0",
 		"gulp-if": "^2.0.1",
 		"gulp-git": "~2.4.2",
-		"gulp-jade": "~1.1.0",
+		"gulp-pug": "~3.3.0",
 		"gulp-livereload": "~3.8.1",
 		"gulp-plumber": "~1.1.0",
 		"gulp-rename": "~1.2.2",
