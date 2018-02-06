@@ -40,8 +40,12 @@ def index():
                            projs_with_summaries=projs_with_summaries)
 
 
-def error_project_not_setup_for_flamenco():
-    return render_template('flamenco/errors/project_not_setup.html')
+def error_project_not_setup_for_flamenco(project):
+    setup_url = url_for('projects.edit_extension',
+                        project_url=project.url,
+                        extension_name=current_flamenco.name)
+    return render_template('flamenco/errors/project_not_setup.html',
+                           project=project, setup_url=setup_url)
 
 
 def error_project_not_available():
@@ -115,7 +119,7 @@ def flamenco_project_view(extra_project_projections: dict = None,
 
             is_flamenco = current_flamenco.is_flamenco_project(project)
             if not is_flamenco:
-                return error_project_not_setup_for_flamenco()
+                return error_project_not_setup_for_flamenco(project)
 
             session['flamenco_last_project'] = project.to_dict()
 
