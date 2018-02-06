@@ -1,6 +1,13 @@
 Flamenco Server Changelog
 =========================
 
+## Version 2.0.7 (in development)
+
+- Moved to new deployment model (see Blender Cloud deployment), so removed `rsync_ui.sh` and
+  `deploy.sh`.
+- Replaced Jade with Pug.
+
+
 ## Version 2.0.6 (released 2017-10-06)
 
 - Removed the retrieval of Manager authentication codes. Since Blender Cloud now stores them hashed,
