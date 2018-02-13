@@ -145,6 +145,11 @@ class ManagerManager(object):
         """Returns True iff the current user is an owner of the given Flamenco Manager."""
 
         user_id = current_user.user_id
+        if current_user.has_cap('flamenco-admin'):
+            self._log.debug('user_is_owner(...): user %s has flamenco-admin cap, '
+                            'so considered owner', user_id)
+            return True
+
         if not current_user.has_cap('flamenco-view'):
             self._log.debug('user_is_owner(...): user %s does not have flamenco-view cap', user_id)
             return False
