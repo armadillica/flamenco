@@ -114,7 +114,15 @@ function manager_open(manager_id)
 window.onpopstate = function(event)
 {
     var state = event.state;
-
+    if (state == null) {
+        // We're going back to the first time this page was opened, which
+        // means we should show the first Job/Task/Manager.
+        ctx = ProjectUtils.context();
+        state = {
+            itemId: $('.item-list a[data-' + ctx + '-id]').first().data(ctx + '-id'),
+            itemType: ctx,
+        }
+    }
     item_open(state.itemId, state.itemType, false);
 }
 
