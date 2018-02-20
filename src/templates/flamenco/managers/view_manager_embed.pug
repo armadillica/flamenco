@@ -219,35 +219,7 @@
 | {% if can_edit %}
 script.
 	$(document).ready(function() {
-		var APPLICATION_ID = '{{config.ALGOLIA_USER}}'
-		var SEARCH_ONLY_API_KEY = '{{config.ALGOLIA_PUBLIC_KEY}}';
-		var INDEX_NAME = '{{config.ALGOLIA_INDEX_USERS}}';
-		var client = algoliasearch(APPLICATION_ID, SEARCH_ONLY_API_KEY);
-		var index = client.initIndex(INDEX_NAME);
-
-		$('#user-select').autocomplete({hint: false}, [
-			{
-				source: function (q, cb) {
-					index.search(q, {hitsPerPage: 5}, function (error, content) {
-						if (error) {
-							cb([]);
-							return;
-						}
-						cb(content.hits, content);
-					});
-				},
-				displayKey: 'full_name',
-				minLength: 2,
-				limit: 10,
-				templates: {
-					suggestion: function (hit) {
-						var suggestion = hit.full_name + ' (' + hit.username + ')';
-						var $p = $('<p>').text(suggestion);
-						return $p.html();
-					}
-				}
-			}
-		]).on('autocomplete:selected', function (event, hit, dataset) {
+		$('#user-select').userSearch(function(event, hit, dataset) {
 			var $existing = $('li.sharing-users-item[data-user-id="' + hit.objectID + '"]');
 			if ($existing.length) {
 				$existing
