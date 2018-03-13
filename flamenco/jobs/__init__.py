@@ -185,7 +185,7 @@ class JobManager(object):
             fail_perc = fail_count / float(total_count) * 100
             if fail_perc >= TASK_FAIL_JOB_PERCENTAGE:
                 self._log.info('Failing job %s because %i of its %i tasks (%i%%) failed',
-                                  job_id, fail_count, total_count, fail_perc)
+                               job_id, fail_count, total_count, fail_perc)
                 self.api_set_job_status(job_id, 'failed')
             else:
                 self._log.info('Task %s of job %s failed; '
