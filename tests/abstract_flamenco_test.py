@@ -117,7 +117,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
         with self.app.test_request_context():
             jobs_coll = self.flamenco.db('jobs')
             job = jobs_coll.find_one(self.job_id, projection={'status': 1})
-        self.assertEqual(job['status'], str(expected_status))
+        self.assertEqual(str(expected_status), job['status'])
 
     def set_job_status(self, new_status, job_id=None):
         """Nice, official, ripple-to-task-status approach"""

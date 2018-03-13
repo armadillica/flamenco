@@ -157,9 +157,25 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
 
     def test_status_from_canceled_to_queued(self):
-        # This should re-queue all non-completed tasks.
+        # This should not change any task status what so ever.
         self.force_job_status('canceled')
         self.set_job_status('queued')
+
+        self.assert_task_status(0, 'queued')  # was: queued
+        self.assert_task_status(1, 'claimed-by-manager')  # was: claimed-by-manager
+        self.assert_task_status(2, 'completed')  # was: completed
+        self.assert_task_status(3, 'active')  # was: active
+        self.assert_task_status(4, 'canceled')  # was: canceled
+        self.assert_task_status(5, 'failed')  # was: failed
+
+        # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
+        self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+
+    def test_status_from_canceled_to_requeued(self):
+        # This should re-queue all non-completed tasks.
+        self.force_job_status('canceled')
+        self.set_job_status('requeued')
+        self.assert_job_status('queued')
 
         self.assert_task_status(0, 'queued')  # was: queued
         self.assert_task_status(1, 'queued')  # was: claimed-by-manager
@@ -171,10 +187,30 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
 
-    def test_status_from_completed_to_queued(self):
+    def test_status_from_canceled_job_but_completed_tasks_to_requeued(self):
+        # Force the job to be cancelled with all tasks at 'completed'.
+        # This is not a state that should be possible, but if it happens,
+        # the user should be able to get out of it.
+        with self.app.app_context():
+            # Update all tasks, including the file management task that is
+            # otherwise ignored by the tests.
+            tasks_coll = self.app.db('flamenco_tasks')
+            tasks_coll.update_many({'job': self.job_id}, {'$set': {'status': 'completed'}})
+        self.force_job_status('canceled')
+
+        # This should re-queue all non-completed tasks, see that they are all
+        # completed, and complete the job.
+        self.set_job_status('requeued')
+        self.assert_job_status('completed')
+
+        for tidx in range(7):
+            self.assert_task_status(tidx, 'completed')
+
+    def test_status_from_completed_to_requeued(self):
         # This should re-queue all tasks.
         self.force_job_status('completed')
-        self.set_job_status('queued')
+        self.set_job_status('requeued')
+        self.assert_job_status('queued')
 
         self.assert_task_status(0, 'queued')  # was: queued
         self.assert_task_status(1, 'queued')  # was: claimed-by-manager

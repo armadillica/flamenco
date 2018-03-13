@@ -31,7 +31,8 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
                  current_user_id(), job_id, new_status)
         try:
             current_flamenco.job_manager.api_set_job_status(job_id, new_status)
-        except ValueError:
+        except ValueError as ex:
+            log.debug('api_set_job_status(%s, %r) raised %s', job_id, new_status, ex)
             raise wz_exceptions.UnprocessableEntity(f'Status {new_status} is invalid')
 
     @authorization.require_login(require_cap='flamenco-use')

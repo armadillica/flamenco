@@ -29,7 +29,7 @@ blueprint_for_archived = {
 log = logging.getLogger(__name__)
 
 # The job statuses that can be set from the web-interface.
-ALLOWED_JOB_STATUSES_FROM_WEB = {'cancel-requested', 'queued'}
+ALLOWED_JOB_STATUSES_FROM_WEB = {'cancel-requested', 'queued', 'requeued'}
 
 
 @perproject_blueprint.route('/', endpoint='index')

@@ -1,4 +1,5 @@
 """Job management."""
+import typing
 
 import collections
 import copy
@@ -163,7 +164,7 @@ class JobManager(object):
             __job_status_if_a_then_b('completed', 'queued')
             return
 
-        if new_task_status in {'queued', 'cancel-requested', 'claimed-by-manager'}:
+        if new_task_status in {'cancel-requested', 'claimed-by-manager'}:
             # Also, canceling a single task has no influence on the job itself.
             # A task being claimed by the manager also doesn't change job status.
             return
@@ -226,26 +227,34 @@ class JobManager(object):
         job.patch({'op': 'set-job-status',
                    'status': new_status}, api=api)
 
-    def api_set_job_status(self, job_id, new_status,
+    def api_set_job_status(self, job_id: bson.ObjectId, new_status: str,
                            *, now: datetime.datetime = None) -> pymongo.results.UpdateResult:
         """API-level call to updates the job status."""
-
-        self._log.info('Setting job %s status to "%s"', job_id, new_status)
+        assert new_status
+        self._log.debug('Setting job %s status to "%s"', job_id, new_status)
 
         jobs_coll = current_flamenco.db('jobs')
         curr_job = jobs_coll.find_one({'_id': job_id}, projection={'status': 1})
         old_status = curr_job['status']
 
-        result = current_flamenco.update_status('jobs', job_id, new_status, now=now)
-        self.handle_job_status_change(job_id, old_status, new_status)
+        # Go through all necessary status transitions.
+        result = None  # make sure that 'result' always has a value.
+        while new_status:
+            result = current_flamenco.update_status('jobs', job_id, new_status, now=now)
+            next_status = self.handle_job_status_change(job_id, old_status, new_status)
+            old_status, new_status = new_status, next_status
 
         return result
 
-    def handle_job_status_change(self, job_id, old_status, new_status):
-        """Updates task statuses based on this job status transition."""
+    def handle_job_status_change(self, job_id: bson.ObjectId,
+                                 old_status: str, new_status: str) -> typing.Optional[str]:
+        """Updates task statuses based on this job status transition.
 
-        query = None
-        to_status = None
+        :returns: the new job status, if this status transition should be
+            followed by another one.
+        """
+        self._log.info('status transition job_id %s from %r to %r', job_id, old_status, new_status)
+
         if new_status in {'completed', 'canceled'}:
             # Nothing to do; this will happen as a response to all tasks receiving this status.
             return
@@ -254,68 +263,94 @@ class JobManager(object):
             # do with other tasks in the job.
             return
         elif new_status in {'cancel-requested', 'failed'}:
-            # Directly cancel any task that might run in the future, but is not touched by
-            # a manager yet.
-            current_flamenco.update_status_q(
-                'tasks',
-                {'job': job_id, 'status': 'queued'},
-                'canceled')
-            # Request cancel of any task that might run on the manager.
-            cancelreq_result = current_flamenco.update_status_q(
-                'tasks',
-                {'job': job_id, 'status': {'$in': ['active', 'claimed-by-manager']}},
-                'cancel-requested')
-
-            # Update the activity of all the tasks we just cancelled (or requested cancellation),
-            # so that users can tell why they were cancelled.
-            current_flamenco.task_manager.api_set_activity(
-                {'job': job_id,
-                 'status': {'$in': ['cancel-requested', 'canceled']},
-                 'activity': {'$exists': False}},
-                'Server cancelled this task because the job got status %r.' % new_status
-            )
-
-            # If the new status is cancel-requested, and no tasks were marked as cancel-requested,
-            # we can directly transition the job to 'canceled', without waiting for more task
-            # updates.
-            if new_status == 'cancel-requested' and cancelreq_result.modified_count == 0:
-                self._log.info('handle_job_status_change(%s, %s, %s): no cancel-requested tasks, '
-                               'so transitioning directly to canceled',
-                               job_id, old_status, new_status)
-                self.api_set_job_status(job_id, 'canceled')
-            return
+            return self._do_cancel_tasks(job_id, old_status, new_status)
+        elif new_status == 'requeued':
+            return self._do_requeue(job_id, old_status, new_status)
         elif new_status == 'queued':
-            if old_status == 'under-construction':
-                # Nothing to do, the job compiler has just finished its work; the tasks have
-                # already been set to 'queued' status.
-                self._log.debug('Ignoring job status change %r -> %r', old_status, new_status)
-                return
+            return self._do_check_completion(job_id, new_status)
 
-            if old_status == 'completed':
-                # Re-queue all tasks except cancel-requested; those should remain
-                # untouched; changing their status is only allowed by managers, to avoid
-                # race conditions.
-                query = {'status': {'$ne': 'cancel-requested'}}
-            else:
-                # Re-queue any non-completed task. Cancel-requested tasks should also be
-                # untouched; changing their status is only allowed by managers, to avoid
-                # race conditions.
-                query = {'status': {'$nin': ['completed', 'cancel-requested']}}
-            to_status = 'queued'
+    def _do_cancel_tasks(self, job_id, old_status, new_status) -> typing.Optional[str]:
+        """Directly cancel any task that might run in the future.
 
-        if query is None:
-            self._log.debug('Job %s status change from %s to %s has no effect on tasks.',
-                            job_id, old_status, new_status)
+        Only cancels tasks that haven't been touched by a manager yet;
+        otherwise it requests the Manager to cancel the tasks.
+
+        :returns: the next job status, if a status change is required.
+        """
+
+        current_flamenco.update_status_q(
+            'tasks',
+            {'job': job_id, 'status': 'queued'},
+            'canceled')
+        # Request cancel of any task that might run on the manager.
+        cancelreq_result = current_flamenco.update_status_q(
+            'tasks',
+            {'job': job_id, 'status': {'$in': ['active', 'claimed-by-manager']}},
+            'cancel-requested')
+        # Update the activity of all the tasks we just cancelled (or requested cancellation),
+        # so that users can tell why they were cancelled.
+        current_flamenco.task_manager.api_set_activity(
+            {'job': job_id,
+             'status': {'$in': ['cancel-requested', 'canceled']},
+             'activity': {'$exists': False}},
+            'Server cancelled this task because the job got status %r.' % new_status
+        )
+        # If the new status is cancel-requested, and no tasks were marked as cancel-requested,
+        # we can directly transition the job to 'canceled', without waiting for more task
+        # updates.
+        if new_status == 'cancel-requested' and cancelreq_result.modified_count == 0:
+            self._log.info('handle_job_status_change(%s, %s, %s): no cancel-requested tasks, '
+                           'so transitioning directly to canceled',
+                           job_id, old_status, new_status)
+            return 'canceled'
+
+    def _do_requeue(self, job_id, old_status, new_status) -> typing.Optional[str]:
+        """Re-queue all tasks of the job, and the job itself.
+
+        :returns: the new job status, if this status transition should be
+            followed by another one.
+        """
+        if old_status == 'under-construction':
+            # Nothing to do, the job compiler has just finished its work; the tasks have
+            # already been set to 'queued' status.
+            self._log.debug('Ignoring job status change %r -> %r', old_status, new_status)
             return
-        if to_status is None:
-            self._log.error('Job %s status change from %s to %s has to_status=None, aborting.',
-                            job_id, old_status, new_status)
-            return
+
+        if old_status == 'completed':
+            # Re-queue all tasks except cancel-requested; those should remain
+            # untouched; changing their status is only allowed by managers, to avoid
+            # race conditions.
+            query = {'status': {'$ne': 'cancel-requested'}}
+        else:
+            # Re-queue any non-completed task. Cancel-requested tasks should also be
+            # untouched; changing their status is only allowed by managers, to avoid
+            # race conditions.
+            query = {'status': {'$nin': ['completed', 'cancel-requested']}}
 
         # Update the tasks.
         query['job'] = job_id
+        current_flamenco.update_status_q('tasks', query, 'queued')
+        return 'queued'
 
-        current_flamenco.update_status_q('tasks', query, to_status)
+    def _do_check_completion(self, job_id, new_status) -> typing.Optional[str]:
+        """Completes the job if all tasks are completed.
+
+        :returns: the new job status, if this status transition should be
+            followed by another one.
+        """
+
+        tasks_coll = current_flamenco.db('tasks')
+        total_tasks = tasks_coll.find({'job': job_id}).count()
+        completed_tasks = tasks_coll.find({'job': job_id, 'status': 'completed'}).count()
+        if completed_tasks < total_tasks:
+            # Not yet completed, so just stay at current status.
+            self._log.debug('Job %s has %d of %d tasks completed, staying at status %r',
+                            job_id, completed_tasks, total_tasks, new_status)
+            return
+
+        self._log.info("Job %s has all %d tasks completed, transition from %r to 'completed'",
+                       job_id, total_tasks, new_status)
+        return 'completed'
 
     def archive_job(self, job: dict):
         """Initiates job archival by creating a Celery task for it."""

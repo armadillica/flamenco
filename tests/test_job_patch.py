@@ -76,6 +76,7 @@ class JobPatchingTest(AbstractFlamencoTest):
     def test_task_status_change_due_to_job_patch(self, mock_handle_job_status_change):
         self.assert_job_status('queued')
 
+        mock_handle_job_status_change.return_value = None
         self.patch(
             '/api/flamenco/jobs/%s' % self.job_id,
             json={'op': 'set-job-status',
@@ -96,6 +97,7 @@ class JobPatchingTest(AbstractFlamencoTest):
                          token='flamuser-token')
 
         self.assert_job_status('queued')
+        mock_handle_job_status_change.return_value = None
         self.patch(
             '/api/flamenco/jobs/%s' % self.job_id,
             json={'op': 'set-job-status',
@@ -121,6 +123,7 @@ class JobPatchingTest(AbstractFlamencoTest):
                          token='flamuser-token')
 
         self.assert_job_status('queued')
+        mock_handle_job_status_change.return_value = None
         self.patch(
             '/api/flamenco/jobs/%s' % self.job_id,
             json={'op': 'set-job-status',

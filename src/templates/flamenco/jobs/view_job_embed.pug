@@ -70,7 +70,7 @@
 			| Cancel Job
 		| {%     endif %}
 		| {%     if can_requeue_job %}
-		button.btn.btn-success.requeue-job(onclick="setJobStatus('{{ job._id }}', 'queued')")
+		button.btn.btn-success.requeue-job(onclick="setJobStatus('{{ job._id }}', 'requeued')")
 			i.pi-refresh
 			| Re-queue Job
 		| {%     endif %}

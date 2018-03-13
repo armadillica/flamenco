@@ -116,6 +116,35 @@ class TaskPatchingTest(AbstractFlamencoTest):
         )
         self.assert_job_status('queued')
 
+    def test_requeue_task_of_completed_job(self):
+        """Re-queueing a single task of a completed job should keep the other tasks completed."""
+
+        with self.app.app_context():
+            tasks_coll = self.app.db('flamenco_tasks')
+            tasks_coll.update_many({}, {'$set': {'status': 'completed'}})
+            tasks = list(tasks_coll.find({'job': self.job_id}))
+            one_task_id = tasks[-1]['_id']
+
+        self.force_job_status('completed')
+
+        # Re-queueing a task on a completed job should re-queue the job too,
+        # but leave the completed tasks completed.
+        self.patch(
+            '/api/flamenco/tasks/%s' % one_task_id,
+            json={'op': 'set-task-status', 'status': 'queued'},
+            auth_token='fladmin-token',
+            expected_status=204,
+        )
+        self.assert_job_status('queued')
+
+        with self.app.app_context():
+            for task in tasks_coll.find({'job': self.job_id}):
+                if task['_id'] == one_task_id:
+                    expected_status = 'queued'
+                else:
+                    expected_status = 'completed'
+                self.assertEqual(expected_status, task['status'], f"for task {task['_id']}")
+
     def _get_first_task_id(self) -> str:
         """Uses the manager's token to get the first task ID from the depsgraph."""
 
