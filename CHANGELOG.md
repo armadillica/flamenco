@@ -6,6 +6,7 @@ Flamenco Server Changelog
 - Moved to new deployment model (see Blender Cloud deployment), so removed `rsync_ui.sh` and
   `deploy.sh`.
 - Replaced Jade with Pug.
+- Re-queueing a single task of a completed job no longer re-queues all tasks.
 
 
 ## Version 2.0.6 (released 2017-10-06)
