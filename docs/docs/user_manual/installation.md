@@ -15,10 +15,12 @@ Here is an overview of the steps required to get Flamenco up an running.
 - Enable your project for Flamenco
 - Configure the Blender Cloud Add-on and start rendering
 
-
 !!! note
-    This is meant as a step-by-step quick install guide. For more in-depth installation and
-    configuration documents, check out the sources of each component.
+    On Windows, make sure you use mapped drives, so don't use `\\SERVER` directly. Instead, map it
+    to a drive letter and use that. Furthermore, use forward slashes, so `S:/some/path`.
+
+This is meant as a step-by-step quick install guide. For more in-depth installation and
+configuration documents, check out the `README.md` files and sources of each component.
 
 
 ## Flamenco Manager
@@ -33,6 +35,11 @@ Workers, which you also run locally, and the Server, which runs on the
 
 To run Flamenco Manager for the first time, follow these steps:
 
+0. Optionally install [ImageMagick](https://www.imagemagick.org/script/download.php), if you want to
+   show the latest rendered image in the Manager's dashboard, and make sure that the `convert`
+   command can be found on `$PATH`. Since there are multiple builds of ImageMagick available, make
+   sure you install the version that is compatible with your render output; for example, get a
+   HDR-enabled build if you render to HDR EXR files.
 1. Download [Flamenco Manager](https://www.flamenco.io/download/) for your platform.
 2. Extract the downloaded file.
 3. Run `./flamenco-manager -setup` (Linux/macOS) or `flamenco-manager.exe -setup` (Windows).
