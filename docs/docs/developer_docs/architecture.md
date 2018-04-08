@@ -44,8 +44,10 @@ The Server software is based on [Pillar](https://pillarframework.org/), the Free
 CMS that provides agnostic user authentication, resource and project management. It requires:
 
 - Linux, macOS or Windows
-- Python 2.7 (soon to become Python 3)
+- Python 3.6
 - MongoDB
+- Redis
+- RabbitMQ
 
 ## Manager
 
