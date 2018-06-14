@@ -78,6 +78,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                          auth_token=self.mngr_token).json()['depsgraph']
         task = chunk[0]
+        etag_before = task['_etag']
 
         task_update_id = 24 * '0'
         resp = self.post('/api/flamenco/managers/%s/task-update-batch' % self.mngr_id,
@@ -96,6 +97,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         self.assertEqual(db_task['activity'], 'testing stuff')
         self.assertEqual(db_task['_updated'],
                          dateutil.parser.parse('2018-03-04T3:27:47+02:00'))
+        self.assertNotEqual(db_task['_etag'], etag_before)
 
     def test_set_task_invalid_status(self):
         chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,

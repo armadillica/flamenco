@@ -3,7 +3,7 @@ import logging
 from flask import Blueprint, request
 import werkzeug.exceptions as wz_exceptions
 
-from pillar.api.utils import authorization, authentication, utcnow
+from pillar.api.utils import authorization, authentication, utcnow, random_etag
 
 api_blueprint = Blueprint('flamenco.managers.api', __name__)
 log = logging.getLogger(__name__)
@@ -163,6 +163,7 @@ def handle_task_update_batch(manager_id, task_updates):
             'current_command_index': task_update.get('current_command_index', 0),
             'command_progress_percentage': task_update.get('command_progress_percentage', 0),
             '_updated': received_on_manager,
+            '_etag': random_etag(),
         }
 
         new_status = determine_new_task_status(manager_id, task_id, task_info,
