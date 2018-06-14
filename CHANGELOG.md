@@ -7,6 +7,8 @@ Flamenco Server Changelog
   `deploy.sh`.
 - Replaced Jade with Pug.
 - Re-queueing a single task of a completed job no longer re-queues all tasks.
+- Task fields `_updated` and `_etag` are now properly updated after receiving task updates from
+  Flamenco Manager.
 
 
 ## Version 2.0.6 (released 2017-10-06)
