@@ -3,7 +3,7 @@ import logging
 from flask import Blueprint, request
 import werkzeug.exceptions as wz_exceptions
 
-from pillar.api.utils import authorization, authentication
+from pillar.api.utils import authorization, authentication, utcnow
 
 api_blueprint = Blueprint('flamenco.managers.api', __name__)
 log = logging.getLogger(__name__)
@@ -140,10 +140,15 @@ def handle_task_update_batch(manager_id, task_updates):
                         manager_id, task_id, task_info['manager'])
             continue
 
+        if task_update.get('received_on_manager'):
+            received_on_manager = dateutil.parser.parse(task_update['received_on_manager'])
+        else:
+            # Fake a 'received on manager' field; it really should have been in the JSON payload.
+            received_on_manager = utcnow()
+
         # Store the log for this task, allowing for duplicate log reports.
         task_log = task_update.get('log')
         if task_log:
-            received_on_manager = dateutil.parser.parse(task_update['received_on_manager'])
             log_doc = {
                 '_id': update_id,
                 'task': task_id,
@@ -157,6 +162,7 @@ def handle_task_update_batch(manager_id, task_updates):
             'task_progress_percentage': task_update.get('task_progress_percentage', 0),
             'current_command_index': task_update.get('current_command_index', 0),
             'command_progress_percentage': task_update.get('command_progress_percentage', 0),
+            '_updated': received_on_manager,
         }
 
         new_status = determine_new_task_status(manager_id, task_id, task_info,

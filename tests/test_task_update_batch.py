@@ -72,6 +72,31 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
             )
             self.job_id = job['_id']
 
+    def test_set_task_update_happy(self):
+        import dateutil.parser
+
+        chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json()['depsgraph']
+        task = chunk[0]
+
+        task_update_id = 24 * '0'
+        resp = self.post('/api/flamenco/managers/%s/task-update-batch' % self.mngr_id,
+                         auth_token=self.mngr_token,
+                         json=[{
+                             '_id': task_update_id,
+                             'task_id': task['_id'],
+                             'task_status': 'active',
+                             'activity': 'testing stuff',
+                             'received_on_manager': '2018-03-04T3:27:47+02:00',
+                         }])
+
+        self.assertEqual(resp.json()['handled_update_ids'], [task_update_id])
+
+        db_task = self.assert_task_status(task['_id'], 'active')
+        self.assertEqual(db_task['activity'], 'testing stuff')
+        self.assertEqual(db_task['_updated'],
+                         dateutil.parser.parse('2018-03-04T3:27:47+02:00'))
+
     def test_set_task_invalid_status(self):
         chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                          auth_token=self.mngr_token).json()['depsgraph']
@@ -276,7 +301,6 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         # Perform the update -- these should be accepted.
         self.do_batch_update(tasks, [0, 1, 2], 3 * ['completed'])
         self.assert_job_status('archived')
-
 
 
 class LargeTaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
