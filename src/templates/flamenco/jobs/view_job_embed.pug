@@ -116,8 +116,17 @@
 	| {% endif %}
 
 script.
+	/* Load correct task page; was stored at the bottom of _task_list.pug */
+	var sess_task_page = window.sessionStorage.getItem('flamenco-task-page');
+	var tasks_url = "{{url_for('flamenco.tasks.perjob.list_for_job', job_id=job._id, project_url=project.url)}}";
 
-	loadTasks("{{url_for('flamenco.tasks.perjob.list_for_job', job_id=job._id, project_url=project.url)}}");
+	if (sess_task_page != null) {
+		page_info = JSON.parse(sess_task_page);
+		if (page_info.job_id == '{{ job._id }}') {
+			tasks_url += '?page=' + page_info.task_page;
+		}
+	}
+	loadTasks(tasks_url);
 
 	if (typeof openModalUrl == 'function')
 		$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");

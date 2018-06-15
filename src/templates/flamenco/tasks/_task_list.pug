@@ -40,6 +40,12 @@
 	| {% endfor %}
 script.
 	function loadTaskPage(page_idx) {
+		/* Save the current page; is loaded from view_job_embed.pug */
+		window.sessionStorage.setItem('flamenco-task-page', JSON.stringify({
+			job_id: '{{ job_id }}',
+			task_page: page_idx,
+		}));
+
 		var loader = $('#task-navigation-loader');
 		loader.show();
 		loadTasks("{{url_for('flamenco.tasks.perjob.list_for_job', job_id=job_id, project_url=project.url)}}?page=" + page_idx)
