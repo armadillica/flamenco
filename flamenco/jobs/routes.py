@@ -102,7 +102,7 @@ def view_job(project, flamenco_props, job_id):
         manager = None
 
     from . import (CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES,
-                   ARCHIVE_JOB_STATES, ARCHIVEABLE_JOB_STATES)
+                   ARCHIVE_JOB_STATES, ARCHIVEABLE_JOB_STATES, FAILED_TASKS_REQUEABLE_JOB_STATES)
 
     auth = current_flamenco.auth
     write_access = auth.current_user_may(auth.Actions.USE, bson.ObjectId(project['_id']))
@@ -126,6 +126,8 @@ def view_job(project, flamenco_props, job_id):
         can_requeue_job=write_access and status in REQUEABLE_JOB_STATES,
         can_recreate_job=write_access and status in RECREATABLE_JOB_STATES,
         can_archive_job=write_access and status in ARCHIVEABLE_JOB_STATES,
+        # TODO(Sybren): check that there are actually failed tasks before setting to True:
+        can_requeue_failed_tasks=write_access and status in FAILED_TASKS_REQUEABLE_JOB_STATES,
         is_archived=is_archived,
         write_access=write_access,
         archive_available=archive_available,

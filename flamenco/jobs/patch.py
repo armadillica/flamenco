@@ -47,6 +47,19 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
         log.info('User %s uses PATCH to start archival of job %s', current_user_id(), job_id)
         current_flamenco.job_manager.archive_job(job)
 
+    @authorization.require_login(require_cap='flamenco-use')
+    def patch_requeue_failed_tasks(self, job_id: bson.ObjectId, patch: dict):
+        """Re-queue all failed tasks in this job."""
+
+        from flamenco import current_flamenco
+        from pillar.api.utils.authentication import current_user_id
+
+        self.assert_job_access(job_id)
+
+        log.info('User %s uses PATCH to requeue failed tasks of job %s', current_user_id(), job_id)
+        current_flamenco.task_manager.api_set_task_status_for_job(
+            job_id, from_status='failed', to_status='queued')
+
     def assert_job_access(self, job_id: bson.ObjectId) -> dict:
         from flamenco import current_flamenco
         from pillar.api.utils.authentication import current_user_id

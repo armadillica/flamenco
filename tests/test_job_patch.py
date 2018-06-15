@@ -135,3 +135,19 @@ class JobPatchingTest(AbstractFlamencoTest):
         mock_handle_job_status_change.assert_called_with(
             self.job_id, 'queued', 'completed')
         self.assert_job_status('completed')
+
+    @mock.patch('flamenco.tasks.TaskManager.api_set_task_status_for_job')
+    def test_requeue_failed_tasks(self, mock_api_set_task_status_for_job):
+        self.force_job_status('active')
+
+        mock_api_set_task_status_for_job.return_value = None
+        self.patch(
+            '/api/flamenco/jobs/%s' % self.job_id,
+            json={'op': 'requeue-failed-tasks'},
+            auth_token='fladmin-token',
+            expected_status=204,
+        )
+
+        mock_api_set_task_status_for_job.assert_called_with(
+            self.job_id, from_status='failed', to_status='queued')
+        self.assert_job_status('active')

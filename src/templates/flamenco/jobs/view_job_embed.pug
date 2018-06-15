@@ -69,6 +69,12 @@
 			i.pi-cancel
 			| Cancel Job
 		| {%     endif %}
+		| {%     if can_requeue_failed_tasks %}
+		button.btn.btn-success.requeue-failed-tasks(onclick="requeueFailedTasks('{{ job._id }}')",
+			title='Note that seeing this button does not mean there are actually any failed tasks. It is always shown when the job is active/queued.')
+			i.pi-refresh
+			| Re-queue failed tasks
+		| {%     endif %}
 		| {%     if can_requeue_job %}
 		button.btn.btn-success.requeue-job(onclick="setJobStatus('{{ job._id }}', 'requeued')")
 			i.pi-refresh
