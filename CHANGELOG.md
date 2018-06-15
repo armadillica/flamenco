@@ -9,6 +9,8 @@ Flamenco Server Changelog
 - Re-queueing a single task of a completed job no longer re-queues all tasks.
 - Task fields `_updated` and `_etag` are now properly updated after receiving task updates from
   Flamenco Manager.
+- Added 'Re-queue all tasks' button. Note that seeing this button does not mean there are actually
+  any failed tasks; it is always shown when the job status is active or queued.
 
 
 ## Version 2.0.6 (released 2017-10-06)
