@@ -53,16 +53,26 @@ To run Flamenco Manager for the first time, follow these steps:
 ### Manager configuration
 
 Flamenco Manager can be configured via the web interface. Update the variables and path replacement
-variables for your render farm; the `blender` variable should point to the Blender executable where
+variables for your render farm. The `blender` variable should point to the Blender executable where
 it can be found *on the workers*. If the path to Blender contains a space, it should be enclosed in
 double quotes, for example
 `"C:/Program Files/Blender Foundation/blender-2.78-windows64/blender.exe" --enable-new-depsgraph`.
 
-The path replacement variables allow you to set different paths for both Clients (like the Blender
-Cloud Add-on) and Workers, given their respective platforms. For example, you can define the
-variable `render` as `/render` (Linux & macOS) and `r:/` (Windows). Once that is done, you can
-create a render job that outputs to `{render}/projectname/scenename`, which will do the right thing
-on different platforms.
+The **path replacement variables** allow you to run different platforms, e.g. use a Windows desktop
+to create render jobs, and render them on Linux workers, or vice versa. For example, you can declare
+that "`/shared/flamencofiles` on Linux is `E:/flamencofiles` on Windows and
+`/Volumes/Shared/flamencofiles` on MacOS" like this:
+
+    path_replacement:
+      flamencofiles:
+        linux: /shared/flamencofiles
+        windows: E:/flamencofiles
+        darwin: /Volumes/Shared/flamencofiles
+
+When creating a render job for `/shared/flamencofiles/projectX/thefile.blend`, Flamenco will
+internally change that to `{flamencofiles}/projectX/thefile.blend`. When sending that job to a
+worker running on Windows, it'll change it to `E:/flamencofiles/projectX/thefile.blend`.
+
 
 **We recommend using forward slashes everywhere, also on Windows.**
 
