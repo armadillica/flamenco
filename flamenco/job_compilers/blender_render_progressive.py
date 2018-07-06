@@ -26,6 +26,7 @@ class BlenderRenderProgressive(AbstractJobCompiler):
 
     def _compile(self, job):
         import math
+        from .blender_render import intermediate_path
 
         self._log.info('Compiling job %s', job['_id'])
         self.validate_job_settings(job)
@@ -36,7 +37,7 @@ class BlenderRenderProgressive(AbstractJobCompiler):
         # the directory that will contain the frames.
         self.render_output = PurePath(job['settings']['render_output'])
         self.render_path = self.render_output.parent
-        self.intermediate_path = self.render_path.with_name(self.render_path.name + '__intermediate')
+        self.intermediate_path = intermediate_path(job, self.render_path)
 
         destroy_interm_task_id = self._make_destroy_intermediate_task(job)
         task_count = 1

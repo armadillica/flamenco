@@ -11,6 +11,8 @@ Flamenco Server Changelog
   Flamenco Manager.
 - Added 'Re-queue all tasks' button. Note that seeing this button does not mean there are actually
   any failed tasks; it is always shown when the job status is active or queued.
+- Blender Render jobs now render to a job-specific intermediate directory. The name of that
+  directory is now `{job name}__intermediate-{job creation timestamp}`.
 
 
 ## Version 2.0.6 (released 2017-10-06)

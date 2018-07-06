@@ -8,6 +8,13 @@ from .abstract_compiler import AbstractJobCompiler
 from . import commands, register_compiler
 
 
+def intermediate_path(job: dict, render_path: pathlib.PurePath) -> pathlib.PurePath:
+    """Determine the intermediate render output path."""
+
+    name = f'{render_path.name}__intermediate-{job["_created"]:%Y-%m-%d_%H%M%S}'
+    return render_path.with_name(name)
+
+
 @register_compiler('blender-render')
 class BlenderRender(AbstractJobCompiler):
     """Basic Blender render job."""
@@ -24,7 +31,7 @@ class BlenderRender(AbstractJobCompiler):
         # the directory that will contain the frames.
         self.render_output = pathlib.PurePath(job['settings']['render_output'])
         self.final_dir = self.render_output.parent
-        self.render_dir = self.final_dir.with_name(self.final_dir.name + '__intermediate')
+        self.render_dir = intermediate_path(job, self.final_dir)
 
         render_tasks = self._make_render_tasks(job)
         self._make_move_to_final_task(job, render_tasks)

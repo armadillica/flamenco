@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pathlib
 import unittest
 from unittest import mock
 
@@ -95,12 +96,31 @@ class CommandTest(unittest.TestCase):
 
 
 class BlenderRenderTest(unittest.TestCase):
+    def setUp(self):
+        # Create a timestamp before we start mocking datetime.datetime.
+        self.created = datetime.datetime(2018, 7, 6, 11, 52, 33, tzinfo=tz_util.utc)
+
+    def test_intermediate_path(self):
+        from flamenco.job_compilers import blender_render
+
+        job_doc = JobDocForTesting({
+            '_created': self.created,
+        })
+
+        render_path = pathlib.PurePosixPath('/path/to/output')
+        path = blender_render.intermediate_path(job_doc, render_path)
+        self.assertEqual(
+            pathlib.PurePath('/path/to/output__intermediate-2018-07-06_115233'),
+            path
+        )
+
     @mock.patch('datetime.datetime')
     def test_small_job(self, mock_datetime):
         from flamenco.job_compilers import blender_render, commands
 
         job_doc = JobDocForTesting({
             '_id': ObjectId(24 * 'f'),
+            '_created': self.created,
             'settings': {
                 'frames': '1-5',
                 'chunk_size': 2,
@@ -138,7 +158,7 @@ class BlenderRenderTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/frames-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
                     frames='1,2')],
                 'blender-render-1,2',
                 status='under-construction',
@@ -150,7 +170,7 @@ class BlenderRenderTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/frames-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
                     frames='3,4')],
                 'blender-render-3,4',
                 status='under-construction',
@@ -162,7 +182,7 @@ class BlenderRenderTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/frames-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
                     frames='5')],
                 'blender-render-5',
                 status='under-construction',
@@ -173,7 +193,7 @@ class BlenderRenderTest(unittest.TestCase):
             mock.call(
                 job_doc,
                 [commands.MoveToFinal(
-                    src='/render/out__intermediate',
+                    src='/render/out__intermediate-2018-07-06_115233',
                     dest='/render/out')],
                 'move-to-final',
                 parents=task_ids[0:3],
@@ -188,12 +208,17 @@ class BlenderRenderTest(unittest.TestCase):
 
 
 class BlenderRenderProgressiveTest(unittest.TestCase):
+    def setUp(self):
+        # Create a timestamp before we start mocking datetime.datetime.
+        self.created = datetime.datetime(2018, 7, 6, 11, 52, 33, tzinfo=tz_util.utc)
+
     def test_nonexr_job(self):
         from flamenco.job_compilers import blender_render_progressive
         from flamenco.exceptions import JobSettingError
 
         job_doc = JobDocForTesting({
             '_id': ObjectId(24 * 'f'),
+            '_created': self.created,
             'settings': {
                 'frames': '1-6',
                 'chunk_size': 2,
@@ -221,6 +246,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
 
         job_doc = JobDocForTesting({
             '_id': ObjectId(24 * 'f'),
+            '_created': self.created,
             'settings': {
                 'frames': '1-5',
                 'chunk_size': 2,
@@ -251,7 +277,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
             # Pre-existing intermediate directory is destroyed.
             mock.call(  # task 0
                 job_doc,
-                [commands.RemoveTree(path='/render/out__intermediate')],
+                [commands.RemoveTree(path='/render/out__intermediate-2018-07-06_115233')],
                 'destroy-preexisting-intermediate',
                 status='under-construction',
                 task_type='file-management',
@@ -264,7 +290,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/render-smpl-0001-0010-frm-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-######',
                     frames='1,2',
                     cycles_num_chunks=3,
                     cycles_chunk=1,
@@ -282,7 +308,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/render-smpl-0001-0010-frm-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-######',
                     frames='3,4',
                     cycles_num_chunks=3,
                     cycles_chunk=1,
@@ -300,7 +326,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/render-smpl-0001-0010-frm-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-######',
                     frames='5',
                     cycles_num_chunks=3,
                     cycles_chunk=1,
@@ -320,23 +346,23 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 [
                     commands.MoveOutOfWay(src='/render/out'),
                     commands.CopyFile(
-                        src='/render/out__intermediate/render-smpl-0001-0010-frm-000001.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000001.exr',
                         dest='/render/out/frames-000001.exr',
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/render-smpl-0001-0010-frm-000002.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000002.exr',
                         dest='/render/out/frames-000002.exr',
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/render-smpl-0001-0010-frm-000003.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000003.exr',
                         dest='/render/out/frames-000003.exr',
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/render-smpl-0001-0010-frm-000004.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000004.exr',
                         dest='/render/out/frames-000004.exr',
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/render-smpl-0001-0010-frm-000005.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000005.exr',
                         dest='/render/out/frames-000005.exr',
                     ),
                 ],
@@ -353,7 +379,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/render-smpl-0011-0020-frm-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0020-frm-######',
                     frames='1,2',
                     cycles_num_chunks=3,
                     cycles_chunk=2,
@@ -371,7 +397,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/render-smpl-0011-0020-frm-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0020-frm-######',
                     frames='3,4',
                     cycles_num_chunks=3,
                     cycles_chunk=2,
@@ -389,7 +415,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/render-smpl-0011-0020-frm-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0020-frm-######',
                     frames='5',
                     cycles_num_chunks=3,
                     cycles_chunk=2,
@@ -407,25 +433,25 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/render-smpl-0001-0010-frm-000001.exr',
-                        input2='/render/out__intermediate/render-smpl-0011-0020-frm-000001.exr',
-                        output='/render/out__intermediate/merge-smpl-0020-frm-000001.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000001.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0020-frm-000001.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000001.exr',
                         weight1=10,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0020-frm-000001.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000001.exr',
                         dest='/render/out/frames-000001.exr',
                     ),
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/render-smpl-0001-0010-frm-000002.exr',
-                        input2='/render/out__intermediate/render-smpl-0011-0020-frm-000002.exr',
-                        output='/render/out__intermediate/merge-smpl-0020-frm-000002.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000002.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0020-frm-000002.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000002.exr',
                         weight1=10,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0020-frm-000002.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000002.exr',
                         dest='/render/out/frames-000002.exr',
                     ),
                 ],
@@ -439,25 +465,25 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/render-smpl-0001-0010-frm-000003.exr',
-                        input2='/render/out__intermediate/render-smpl-0011-0020-frm-000003.exr',
-                        output='/render/out__intermediate/merge-smpl-0020-frm-000003.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000003.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0020-frm-000003.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000003.exr',
                         weight1=10,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0020-frm-000003.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000003.exr',
                         dest='/render/out/frames-000003.exr',
                     ),
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/render-smpl-0001-0010-frm-000004.exr',
-                        input2='/render/out__intermediate/render-smpl-0011-0020-frm-000004.exr',
-                        output='/render/out__intermediate/merge-smpl-0020-frm-000004.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000004.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0020-frm-000004.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000004.exr',
                         weight1=10,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0020-frm-000004.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000004.exr',
                         dest='/render/out/frames-000004.exr',
                     ),
                 ],
@@ -471,14 +497,14 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/render-smpl-0001-0010-frm-000005.exr',
-                        input2='/render/out__intermediate/render-smpl-0011-0020-frm-000005.exr',
-                        output='/render/out__intermediate/merge-smpl-0020-frm-000005.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0010-frm-000005.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0020-frm-000005.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000005.exr',
                         weight1=10,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0020-frm-000005.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000005.exr',
                         dest='/render/out/frames-000005.exr',
                     ),
                 ],
@@ -496,7 +522,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/render-smpl-0021-0030-frm-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0021-0030-frm-######',
                     frames='1,2',
                     cycles_num_chunks=3,
                     cycles_chunk=3,
@@ -514,7 +540,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/render-smpl-0021-0030-frm-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0021-0030-frm-######',
                     frames='3,4',
                     cycles_num_chunks=3,
                     cycles_chunk=3,
@@ -532,7 +558,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
-                    render_output='/render/out__intermediate/render-smpl-0021-0030-frm-######',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0021-0030-frm-######',
                     frames='5',
                     cycles_num_chunks=3,
                     cycles_chunk=3,
@@ -552,25 +578,25 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/merge-smpl-0020-frm-000001.exr',
-                        input2='/render/out__intermediate/render-smpl-0021-0030-frm-000001.exr',
-                        output='/render/out__intermediate/merge-smpl-0030-frm-000001.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000001.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0021-0030-frm-000001.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000001.exr',
                         weight1=20,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0030-frm-000001.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000001.exr',
                         dest='/render/out/frames-000001.exr',
                     ),
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/merge-smpl-0020-frm-000002.exr',
-                        input2='/render/out__intermediate/render-smpl-0021-0030-frm-000002.exr',
-                        output='/render/out__intermediate/merge-smpl-0030-frm-000002.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000002.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0021-0030-frm-000002.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000002.exr',
                         weight1=20,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0030-frm-000002.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000002.exr',
                         dest='/render/out/frames-000002.exr',
                     ),
                 ],
@@ -584,25 +610,25 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/merge-smpl-0020-frm-000003.exr',
-                        input2='/render/out__intermediate/render-smpl-0021-0030-frm-000003.exr',
-                        output='/render/out__intermediate/merge-smpl-0030-frm-000003.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000003.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0021-0030-frm-000003.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000003.exr',
                         weight1=20,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0030-frm-000003.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000003.exr',
                         dest='/render/out/frames-000003.exr',
                     ),
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/merge-smpl-0020-frm-000004.exr',
-                        input2='/render/out__intermediate/render-smpl-0021-0030-frm-000004.exr',
-                        output='/render/out__intermediate/merge-smpl-0030-frm-000004.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000004.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0021-0030-frm-000004.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000004.exr',
                         weight1=20,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0030-frm-000004.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000004.exr',
                         dest='/render/out/frames-000004.exr',
                     ),
                 ],
@@ -616,14 +642,14 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
-                        input1='/render/out__intermediate/merge-smpl-0020-frm-000005.exr',
-                        input2='/render/out__intermediate/render-smpl-0021-0030-frm-000005.exr',
-                        output='/render/out__intermediate/merge-smpl-0030-frm-000005.exr',
+                        input1='/render/out__intermediate-2018-07-06_115233/merge-smpl-0020-frm-000005.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0021-0030-frm-000005.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000005.exr',
                         weight1=20,
                         weight2=10,
                     ),
                     commands.CopyFile(
-                        src='/render/out__intermediate/merge-smpl-0030-frm-000005.exr',
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-frm-000005.exr',
                         dest='/render/out/frames-000005.exr',
                     ),
                 ],
