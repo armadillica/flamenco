@@ -1,7 +1,7 @@
 Flamenco Server Changelog
 =========================
 
-## Version 2.0.7 (in development)
+## Version 2.0.7 (released 2018-07-06)
 
 - Moved to new deployment model (see Blender Cloud deployment), so removed `rsync_ui.sh` and
   `deploy.sh`.
