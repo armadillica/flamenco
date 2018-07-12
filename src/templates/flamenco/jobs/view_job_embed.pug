@@ -78,7 +78,11 @@
 		| {%     if can_requeue_job %}
 		button.btn.btn-success.requeue-job(onclick="setJobStatus('{{ job._id }}', 'requeued')")
 			i.pi-refresh
+			| {% if job.status == 'paused' %}
+			| Queue Job
+			| {% else %}
 			| Re-queue Job
+			| {% endif %}
 		| {%     endif %}
 		| {%     if can_recreate_job %}
 		button.btn.btn-success.requeue-job(

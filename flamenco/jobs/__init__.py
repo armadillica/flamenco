@@ -18,7 +18,7 @@ from pillar.web.system_util import pillar_api
 from flamenco import current_flamenco
 
 CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
-REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed'}
+REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed', 'paused'}
 RECREATABLE_JOB_STATES = {'canceled'}
 ARCHIVE_JOB_STATES = {'archiving', 'archived'}  # states that represent more-or-less archived jobs.
 ARCHIVEABLE_JOB_STATES = REQUEABLE_JOB_STATES  # states from which a job can be archived.
@@ -63,7 +63,8 @@ class JobManager(object):
     _log = attrs_extra.log('%s.JobManager' % __name__)
 
     def api_create_job(self, job_name, job_desc, job_type, job_settings,
-                       project_id, user_id, manager_id, priority=50):
+                       project_id, user_id, manager_id, priority=50,
+                       *, start_paused=False):
         """Creates a job, returning a dict with its generated fields."""
 
         job = {
@@ -77,6 +78,8 @@ class JobManager(object):
             'priority': int(priority),
             'settings': copy.deepcopy(job_settings),
         }
+        if start_paused:
+            job['start_paused'] = True
 
         self._log.info('Creating job %r for user %s and manager %s',
                        job_name, user_id, manager_id)

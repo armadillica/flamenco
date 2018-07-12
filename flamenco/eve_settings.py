@@ -168,6 +168,7 @@ jobs_schema = {
         'type': 'string',
         'allowed': [
             'under-construction',  # Job is still being compiled, tasks must be ignored by Manager.
+            'paused',  # Job can go to queued, tasks must be ignored by Manager until then.
             'completed',
             'active',
             'canceled',
@@ -179,6 +180,11 @@ jobs_schema = {
             'archived',
         ],
         'default': 'queued'
+    },
+    # When True, after construction the job goes to 'paused' state instead of 'queued'.
+    'start_paused': {
+        'type': 'boolean',
+        'required': False,
     },
     # Higher number means higher priority.
     'priority': {
@@ -251,6 +257,7 @@ tasks_schema = {
         'type': 'string',
         'allowed': [
             'under-construction',  # Job is still being compiled, task must be ignored by Manager.
+            'paused',  # Job can go to queued, tasks must be ignored by Manager until then.
             'queued',
             'claimed-by-manager',
             'completed',

@@ -23,7 +23,7 @@ class JobDocForTesting(dict):
 class SleepSimpleTest(unittest.TestCase):
     @mock.patch('datetime.datetime')
     def test_job_compilation(self, mock_datetime):
-        from flamenco.job_compilers import sleep, commands
+        from flamenco.job_compilers import sleep
 
         job_doc = {
             '_id': ObjectId(24 * 'f'),
@@ -42,6 +42,16 @@ class SleepSimpleTest(unittest.TestCase):
 
         compiler = sleep.Sleep(task_manager=task_manager, job_manager=job_manager)
         compiler.compile(job_doc)
+
+        self._expect_create_task_calls(task_manager, job_doc)
+
+        # Both calls should be performed with the same 'now'.
+        task_manager.api_set_task_status_for_job.assert_called_with(
+            job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+
+    def _expect_create_task_calls(self, task_manager, job_doc):
+        from flamenco.job_compilers import commands
 
         task_manager.api_create_task.assert_has_calls([
             mock.call(
@@ -76,10 +86,35 @@ class SleepSimpleTest(unittest.TestCase):
             ),
         ])
 
+    @mock.patch('datetime.datetime')
+    def test_start_paused(self, mock_datetime):
+        from flamenco.job_compilers import sleep, commands
+
+        job_doc = {
+            '_id': ObjectId(24 * 'f'),
+            'settings': {
+                'frames': '1-30, 40-44',
+                'chunk_size': 13,
+                'time_in_seconds': 3,
+            },
+            'start_paused': True,
+        }
+        task_manager = mock.Mock()
+        job_manager = mock.Mock()
+
+        # Create a stable 'now' for testing.
+        mock_now = datetime.datetime.now(tz=tz_util.utc)
+        mock_datetime.now.side_effect = [mock_now]
+
+        compiler = sleep.Sleep(task_manager=task_manager, job_manager=job_manager)
+        compiler.compile(job_doc)
+
+        self._expect_create_task_calls(task_manager, job_doc)
+
         # Both calls should be performed with the same 'now'.
         task_manager.api_set_task_status_for_job.assert_called_with(
-            job_doc['_id'], 'under-construction', 'queued', now=mock_now)
-        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+            job_doc['_id'], 'under-construction', 'paused', now=mock_now)
+        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'paused', now=mock_now)
 
 
 class CommandTest(unittest.TestCase):

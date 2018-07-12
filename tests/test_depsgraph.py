@@ -65,9 +65,25 @@ class DepsgraphTest(AbstractFlamencoTest):
                 self.mngr_id,
             )
             self.jobid3 = job['_id']
+            job = self.jmngr.api_create_job(
+                'test job 4',
+                'Wörk wørk w°rk.',
+                'sleep',
+                {
+                    'frames': '12-18, 20-22',
+                    'chunk_size': 3,
+                    'time_in_seconds': 3,
+                },
+                self.proj_id,
+                ctd.EXAMPLE_PROJECT_OWNER_ID,
+                self.mngr_id,
+                start_paused=True,
+            )
+            self.jobid4 = job['_id']
             assert isinstance(self.jobid1, ObjectId)
             assert isinstance(self.jobid2, ObjectId)
             assert isinstance(self.jobid3, ObjectId)
+            assert isinstance(self.jobid4, ObjectId)
 
             self.set_job_status('completed', job_id=self.jobid3)
 

@@ -45,9 +45,15 @@ class AbstractJobCompiler(object, metaclass=abc.ABCMeta):
         # race conditions.
         now = datetime.datetime.now(tz=tz_util.utc)
 
+        # handle 'start paused' flag
+        if job.get('start_paused', False):
+            new_status = 'paused'
+        else:
+            new_status = 'queued'
+
         self.task_manager.api_set_task_status_for_job(
-            job['_id'], 'under-construction', 'queued', now=now)
-        self.job_manager.api_set_job_status(job['_id'], 'queued', now=now)
+            job['_id'], 'under-construction', new_status, now=now)
+        self.job_manager.api_set_job_status(job['_id'], new_status, now=now)
 
     def _create_task(self, job, commands, name, task_type, **kwargs) -> bson.ObjectId:
         """Creates an under-construction task.

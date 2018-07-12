@@ -87,7 +87,9 @@ class JobStatusChangeTest(AbstractFlamencoTest):
                 {
                     'blender_cmd': '{blender}',
                     'filepath': '/my/blend.file',
-                    'frames': '12-18, 20-25',
+                    # Frames and chunk size chosen to produce as many tasks
+                    # as there are task statuses - 1 (we don't test 'under-construction')
+                    'frames': '12-18, 20-27',
                     'chunk_size': 2,
                     'time_in_seconds': 3,
                     'render_output': '/not-relevant-now/####',
@@ -118,6 +120,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.force_task_status(4, 'canceled')
         self.force_task_status(5, 'failed')
         self.force_task_status(6, 'cancel-requested')
+        self.force_task_status(7, 'paused')
 
     def assert_task_status(self, task_idx, expected_status):
         with self.app.test_request_context():
@@ -142,6 +145,25 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+        self.assert_task_status(7, 'paused')  # was: paused
+
+    def test_status_from_paused_to_queued(self):
+        # This shouldn't change any of the tasks.
+        self.force_job_status('paused')
+        self.set_job_status('requeued')
+
+        self.assert_task_status(0, 'queued')  # was: queued
+        self.assert_task_status(1, 'queued')  # was: claimed-by-manager
+        self.assert_task_status(2, 'completed')  # was: completed
+        self.assert_task_status(3, 'queued')  # was: active
+        self.assert_task_status(4, 'queued')  # was: canceled
+        self.assert_task_status(5, 'queued')  # was: failed
+
+        # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
+        self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+        self.assert_task_status(7, 'queued')  # was: paused
+
+        self.assert_job_status('queued')
 
     def test_status_from_active_to_cancel_requested(self):
         # This should cancel all tasks that could possibly still run.
@@ -155,6 +177,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+        self.assert_task_status(7, 'paused')  # was: paused
 
     def test_status_from_canceled_to_queued(self):
         # This should not change any task status what so ever.
@@ -170,6 +193,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
 
         # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+        self.assert_task_status(7, 'paused')  # was: paused
 
     def test_status_from_canceled_to_requeued(self):
         # This should re-queue all non-completed tasks.
@@ -186,6 +210,9 @@ class JobStatusChangeTest(AbstractFlamencoTest):
 
         # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+        self.assert_task_status(7, 'queued')  # was: paused
+
+        self.assert_job_status('queued')
 
     def test_status_from_canceled_job_but_completed_tasks_to_requeued(self):
         # Force the job to be cancelled with all tasks at 'completed'.
@@ -221,6 +248,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
 
         # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+        self.assert_task_status(7, 'queued')  # was: paused
 
     def test_status_from_active_to_failed(self):
         # If the job fails, it cancels all remaining tasks.
@@ -234,6 +262,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+        self.assert_task_status(7, 'paused')  # was: paused
 
     def test_status_from_active_to_completed(self):
         # Shouldn't do anything, as going to completed is a result of all tasks being completed.
@@ -247,6 +276,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
+        self.assert_task_status(7, 'paused')  # was: paused
 
     def test_status_from_active_to_canceled(self):
         self.force_job_status('active')
@@ -267,6 +297,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'failed')  # was: also failed
+        self.assert_task_status(7, 'paused')  # was: paused
 
         self.assert_job_status('canceled')
 
