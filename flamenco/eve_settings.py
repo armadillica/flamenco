@@ -180,7 +180,7 @@ jobs_schema = {
         ],
         'default': 'queued'
     },
-    # This number could be also be a float between 0 and 1.
+    # Higher number means higher priority.
     'priority': {
         'type': 'integer',
         'min': 1,
