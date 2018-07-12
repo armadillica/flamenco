@@ -1,6 +1,12 @@
 Flamenco Server Changelog
 =========================
 
+## Version 2.1 (under development)
+
+- Allow jobs to be started in 'paused' state. Such jobs are ignored by the Manager, and have to be
+  manually queued to start.
+
+
 ## Version 2.0.7 (released 2018-07-06)
 
 - Moved to new deployment model (see Blender Cloud deployment), so removed `rsync_ui.sh` and
