@@ -15,7 +15,7 @@ class AbstractAccessTest(AbstractFlamencoTest):
                          expected_status=201,
                          data={'project_name': project_name,
                                'is_private': True})
-        return resp.json()
+        return resp.json
 
     def _create_user_and_project(self, roles, user_id='cafef00df00df00df00df00d', token='token',
                                  project_name='Prøject El Niño') -> dict:
@@ -104,7 +104,7 @@ class AccessTest(AbstractAccessTest):
         own_url = '/api/flamenco/managers/%s' % self.mngr_id
         own_doc = self.get(own_url,
                            expected_status=200,
-                           auth_token=self.mngr_token).json()
+                           auth_token=self.mngr_token).json
         other_url = '/api/flamenco/managers/%s' % self.mngr2_id
         self.get(other_url,
                  expected_status=404,
@@ -138,10 +138,10 @@ class AccessTest(AbstractAccessTest):
         own_job_url = '/api/flamenco/jobs/%s' % self.job_id
         own_job = self.get(own_job_url,
                            expected_status=200,
-                           auth_token=self.mngr_token).json()
+                           auth_token=self.mngr_token).json
         resp = self.get('/api/flamenco/jobs',
                         expected_status=200,
-                        auth_token=self.mngr_token).json()
+                        auth_token=self.mngr_token).json
         jobs = resp['_items']
         self.assertEqual(1, len(jobs))
         self.assertEqual(1, resp['_meta']['total'])
@@ -187,7 +187,7 @@ class AccessTest(AbstractAccessTest):
 
         resp = self.get('/api/flamenco/managers/',
                         expected_status=200,
-                        auth_token='subscriber-token').json()
+                        auth_token='subscriber-token').json
 
         self.assertEqual([], resp['_items'])
         self.assertEqual(1, resp['_meta']['page'])
@@ -200,14 +200,14 @@ class AccessTest(AbstractAccessTest):
 
         resp = self.get('/api/flamenco/managers/',
                         expected_status=200,
-                        auth_token='fladmin-token').json()
+                        auth_token='fladmin-token').json
 
         expected_manager1 = self.get('/api/flamenco/managers/%s' % self.mngr_id,
                                      expected_status=200,
-                                     auth_token=self.mngr_token).json()
+                                     auth_token=self.mngr_token).json
         expected_manager2 = self.get('/api/flamenco/managers/%s' % self.mngr2_id,
                                      expected_status=200,
-                                     auth_token=self.mngr2_token).json()
+                                     auth_token=self.mngr2_token).json
 
         self.assertEqual(2, resp['_meta']['total'])
         self.assertEqual(expected_manager1, resp['_items'][0])
@@ -224,10 +224,10 @@ class AccessTest(AbstractAccessTest):
                          token='owner2-token')
         resp1 = self.get('/api/flamenco/managers/',
                          expected_status=200,
-                         auth_token='owner1-token').json()
+                         auth_token='owner1-token').json
         resp2 = self.get('/api/flamenco/managers/',
                          expected_status=200,
-                         auth_token='owner2-token').json()
+                         auth_token='owner2-token').json
         self.assertEqual(1, resp1['_meta']['total'])
         self.assertEqual(1, resp2['_meta']['total'])
         self.assertEqual(str(self.mngr_id), resp1['_items'][0]['_id'])
@@ -244,10 +244,10 @@ class AccessTest(AbstractAccessTest):
                          token='owner2-token')
         resp1 = self.get('/api/flamenco/managers/',
                          expected_status=200,
-                         auth_token='owner1-token').json()
+                         auth_token='owner1-token').json
         resp2 = self.get('/api/flamenco/managers/',
                          expected_status=200,
-                         auth_token='owner2-token').json()
+                         auth_token='owner2-token').json
         self.assertEqual(1, resp1['_meta']['total'])
         self.assertEqual(1, resp2['_meta']['total'])
         self.assertEqual(str(self.mngr_id), resp1['_items'][0]['_id'])
@@ -267,7 +267,7 @@ class AccessTest(AbstractAccessTest):
 
         resp = self.get('/api/flamenco/managers/',
                         expected_status=200,
-                        auth_token='flamuser-token').json()
+                        auth_token='flamuser-token').json
 
         self.assertEqual(1, resp['_meta']['page'])
         self.assertEqual(0, resp['_meta']['total'])
@@ -356,14 +356,14 @@ class UserAccessTest(AbstractAccessTest):
 
         # Make some assertions about the access rights on the projects.
         for idx in (1, 2, 3):
-            p = self.get(f'/api/projects/{self.prid[idx]}', auth_token='user-token').json()
+            p = self.get(f'/api/projects/{self.prid[idx]}', auth_token='user-token').json
             self.assertEqual({'GET', 'PUT', 'DELETE', 'POST'}, set(p['allowed_methods']),
                              f'Unexpected methods {p["allowed_methods"]} in project nr {idx}')
         for idx in (4, 5):
             self.get(f'/api/projects/{self.prid[idx]}', auth_token='user-token',
                      expected_status=403)
         for idx in (6, 7):
-            p = self.get(f'/api/projects/{self.prid[idx]}', auth_token='user-token').json()
+            p = self.get(f'/api/projects/{self.prid[idx]}', auth_token='user-token').json
             self.assertEqual({'GET'}, set(p['allowed_methods']),
                              f'Unexpected methods {p["allowed_methods"]} in project nr {idx}')
 

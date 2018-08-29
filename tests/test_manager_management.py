@@ -243,7 +243,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
                    auth_token='owner-token',
                    expected_status=204)
 
-        user = self.get('/api/users/me', auth_token='subject-token').json()
+        user = self.get('/api/users/me', auth_token='subject-token').json
         self.assertIn(str(owner_gid), user['groups'])
 
     def test_unshare(self):
@@ -262,7 +262,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
                    auth_token='owner-token',
                    expected_status=204)
 
-        user = self.get('/api/users/me', auth_token='subject-token').json()
+        user = self.get('/api/users/me', auth_token='subject-token').json
         self.assertNotIn(str(owner_gid), user['groups'])
 
     def test_share_with_non_flamenco_subject(self):
@@ -282,7 +282,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
                    auth_token='owner-token',
                    expected_status=403)
 
-        user = self.get('/api/users/me', auth_token='subject-token').json()
+        user = self.get('/api/users/me', auth_token='subject-token').json
         self.assertNotIn(str(owner_gid), user['groups'])
 
     def test_share_with_non_flamenco_user(self):
@@ -302,7 +302,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
                    auth_token='owner-token',
                    expected_status=403)
 
-        user = self.get('/api/users/me', auth_token='subject-token').json()
+        user = self.get('/api/users/me', auth_token='subject-token').json
         self.assertNotIn(str(owner_gid), user['groups'])
 
     def test_hand_over_manager(self):
@@ -333,8 +333,8 @@ class ManagerAccessTest(AbstractFlamencoTest):
                    auth_token='subject-token',
                    expected_status=204)
 
-        old_owner = self.get('/api/users/me', auth_token='owner-token').json()
-        new_owner = self.get('/api/users/me', auth_token='subject-token').json()
+        old_owner = self.get('/api/users/me', auth_token='owner-token').json
+        new_owner = self.get('/api/users/me', auth_token='subject-token').json
 
         self.assertNotIn(str(owner_gid), old_owner['groups'])
         self.assertIn(str(owner_gid), new_owner['groups'])
@@ -367,8 +367,8 @@ class ManagerAccessTest(AbstractFlamencoTest):
                    auth_token='owner-token',
                    expected_status=204)
 
-        old_owner = self.get('/api/users/me', auth_token='owner-token').json()
-        new_owner = self.get('/api/users/me', auth_token='subject-token').json()
+        old_owner = self.get('/api/users/me', auth_token='owner-token').json
+        new_owner = self.get('/api/users/me', auth_token='subject-token').json
 
         self.assertNotIn(str(owner_gid), old_owner['groups'])
         self.assertIn(str(owner_gid), new_owner['groups'])
@@ -391,7 +391,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
                    auth_token='owner-token',
                    expected_status=204)
 
-        user = self.get('/api/users/me', auth_token='owner-token').json()
+        user = self.get('/api/users/me', auth_token='owner-token').json
         self.assertNotIn(str(owner_gid), user['groups'])
 
     def test_unshare_last_user(self):
@@ -422,7 +422,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
                    auth_token='owner-token',
                    expected_status=400)
 
-        user = self.get('/api/users/me', auth_token='owner-token').json()
+        user = self.get('/api/users/me', auth_token='owner-token').json
         self.assertIn(str(owner_gid), user['groups'])
 
     def test_owning_users(self):

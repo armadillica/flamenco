@@ -100,7 +100,7 @@ class DepsgraphTest(AbstractFlamencoTest):
 
         resp = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                         auth_token=self.mngr_token)
-        depsgraph = resp.json()['depsgraph']
+        depsgraph = resp.json['depsgraph']
         self.assertEqual(len(self.tasks), len(depsgraph))
         self.assertEqual({str(t['_id']) for t in self.tasks},
                          {t['_id'] for t in depsgraph})
@@ -129,7 +129,7 @@ class DepsgraphTest(AbstractFlamencoTest):
 
         resp = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                         auth_token=self.mngr_token)
-        depsgraph = resp.json()['depsgraph']
+        depsgraph = resp.json['depsgraph']
         self.assertEqual(len(self.tasks) - 3, len(depsgraph))
 
         deps_tids = {t['_id'] for t in depsgraph}
@@ -172,7 +172,7 @@ class DepsgraphTest(AbstractFlamencoTest):
                         auth_token=self.mngr_token,
                         headers={'X-Flamenco-If-Updated-Since': last_modified})
 
-        depsgraph = resp.json()['depsgraph']
+        depsgraph = resp.json['depsgraph']
         self.assertEqual(2, len(depsgraph))  # we should not get the cancel-requested task back.
 
         deps_tids = {t['_id'] for t in depsgraph}

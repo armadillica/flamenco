@@ -30,7 +30,7 @@ class TaskWorkflowTest(AbstractFlamencoTest):
         url = '/api/projects/%s' % self.project_id
 
         resp = self.get(url)
-        proj = resp.json()
+        proj = resp.json
 
         put_proj = pillar.api.utils.remove_private_keys(proj)
 
@@ -66,7 +66,7 @@ class SetupForFlamencoThroughWebInterfaceTest(AbstractFlamencoTest):
 
         # Test that the project is set up for Flamenco and has a Manager assigned.
         # The Manager should have been created too.
-        new_proj = self.get(f'/api/projects/{self.project_id}', auth_token='admin-token').json()
+        new_proj = self.get(f'/api/projects/{self.project_id}', auth_token='admin-token').json
         self.assertTrue(self.flamenco.is_flamenco_project(pillarsdk.Project(new_proj)))
 
         man_man = self.flamenco.manager_manager
@@ -89,7 +89,7 @@ class SetupForFlamencoThroughWebInterfaceTest(AbstractFlamencoTest):
         self.do_setup_for_flamenco()
 
         # Test that the project is set up for Flamenco and has a Manager assigned.
-        new_proj = self.get(f'/api/projects/{self.project_id}', auth_token='admin-token').json()
+        new_proj = self.get(f'/api/projects/{self.project_id}', auth_token='admin-token').json
         self.assertTrue(self.flamenco.is_flamenco_project(pillarsdk.Project(new_proj)))
 
         with self.app.test_request_context():

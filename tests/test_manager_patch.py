@@ -43,7 +43,7 @@ class ManagerEditTest(AbstractFlamencoTest):
         resp = self.patch(f'/api/flamenco/managers/{self.mngr_id}',
                           auth_token='owner-token',
                           json=patch,
-                          expected_status=422).json()
+                          expected_status=422).json
         self.assertIn('name', resp['_errors'])
         self.assertIn('description', resp['_errors'])
 

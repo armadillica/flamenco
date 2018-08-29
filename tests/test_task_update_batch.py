@@ -20,7 +20,7 @@ class AbstractTaskBatchUpdateTest(AbstractFlamencoTest):
         # The test job consists of 4 tasks; get their IDs through the scheduler.
         # This should set the task status to claimed-by-manager.
         tasks = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
-                         auth_token=self.mngr_token).json()['depsgraph']
+                         auth_token=self.mngr_token).json['depsgraph']
         # TODO: maybe claimed-by-manager?
         # self.assert_job_status('active')
         self.assertEqual(self.TASK_COUNT, len(tasks))
@@ -76,7 +76,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         import dateutil.parser
 
         chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
-                         auth_token=self.mngr_token).json()['depsgraph']
+                         auth_token=self.mngr_token).json['depsgraph']
         task = chunk[0]
         etag_before = task['_etag']
 
@@ -91,7 +91,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
                              'received_on_manager': '2018-03-04T3:27:47+02:00',
                          }])
 
-        self.assertEqual(resp.json()['handled_update_ids'], [task_update_id])
+        self.assertEqual(resp.json['handled_update_ids'], [task_update_id])
 
         db_task = self.assert_task_status(task['_id'], 'active')
         self.assertEqual(db_task['activity'], 'testing stuff')
@@ -101,7 +101,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
 
     def test_set_task_invalid_status(self):
         chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
-                         auth_token=self.mngr_token).json()['depsgraph']
+                         auth_token=self.mngr_token).json['depsgraph']
         task = chunk[0]
 
         # A warning should be logged and the status should be rejected.
@@ -116,7 +116,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
                              'activity': 'testing stuff',
                          }])
 
-        self.assertEqual(resp.json()['handled_update_ids'], [task_update_id])
+        self.assertEqual(resp.json['handled_update_ids'], [task_update_id])
 
         db_task = self.assert_task_status(task['_id'], 'claimed-by-manager')
         self.assertEqual(db_task['activity'], 'testing stuff')
@@ -125,7 +125,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         from flamenco import current_flamenco
 
         chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
-                         auth_token=self.mngr_token).json()['depsgraph']
+                         auth_token=self.mngr_token).json['depsgraph']
         task = chunk[0]
 
         # Request task cancellation after it was received by the manager.
@@ -143,7 +143,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
                              'task_status': 'active',
                          }])
 
-        resp_json = resp.json()
+        resp_json = resp.json
         self.assertEqual(resp_json['handled_update_ids'], [task_update_id])
         self.assertEqual(resp_json['cancel_task_ids'], [task['_id']])
 
@@ -153,7 +153,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         from flamenco import current_flamenco
 
         chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
-                         auth_token=self.mngr_token).json()['depsgraph']
+                         auth_token=self.mngr_token).json['depsgraph']
         task = chunk[0]
 
         # Request task cancellation after it was received by the manager.
@@ -170,7 +170,7 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
                              'task_id': task['_id'],
                              'task_status': 'canceled',
                          }])
-        resp_json = resp.json()
+        resp_json = resp.json
         self.assertEqual(resp_json['handled_update_ids'], [task_update_id])
 
         # The task should no longer be cancel-requested due to the update we just pushed.

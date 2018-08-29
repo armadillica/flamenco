@@ -312,7 +312,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
                          token='fladmin-token')
 
         json_job = self.get('/api/flamenco/jobs/%s' % self.job_id,
-                            auth_token='fladmin-token').json()
+                            auth_token='fladmin-token').json
 
         json_job['status'] = 'canceled'
 
