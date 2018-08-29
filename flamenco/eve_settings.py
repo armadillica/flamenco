@@ -29,7 +29,7 @@ managers_schema = {
     'job_types': {
         'type': 'dict',
         # TODO: will be renamed to 'keyschema' in Cerberus 1.0
-        'propertyschema': {  # name of the job type
+        'keyschema': {  # name of the job type
             'type': 'string',
         },
         'valueschema': {  # configuration of the job type
@@ -38,7 +38,7 @@ managers_schema = {
                 'vars': {
                     'type': 'dict',
                     # TODO: will be renamed to 'keyschema' in Cerberus 1.0
-                    'propertyschema': {  # name of the variable
+                    'keyschema': {  # name of the variable
                         'type': 'string',
                     },
                     'valueschema': {  # variable values for different platforms.
