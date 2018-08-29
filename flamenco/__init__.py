@@ -150,7 +150,7 @@ class FlamencoExtension(PillarExtension):
         import pymongo
 
         # flamenco_task_logs
-        if 'flamenco_task_logs' not in db.collection_names(include_system_collections=False):
+        if 'flamenco_task_logs' not in db.list_collection_names():
             self._log.info('Creating flamenco_task_logs collection.')
             db.create_collection('flamenco_task_logs',
                                  storageEngine={
@@ -193,8 +193,7 @@ class FlamencoExtension(PillarExtension):
         )
 
         # Manager linking keys
-        if 'flamenco_manager_linking_keys' not in db.collection_names(
-                include_system_collections=False):
+        if 'flamenco_manager_linking_keys' not in db.list_collection_names():
             self._log.info('Creating flamenco_manager_linking_keys collection.')
             db.create_collection('flamenco_manager_linking_keys')
         else:
