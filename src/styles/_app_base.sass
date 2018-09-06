@@ -1,10 +1,11 @@
 body
-	position: absolute // allow columns/errors to fill the whole page
-	top: 0
+	background-color: $color-background-light
+	bottom: 0
+	font-size: initial
 	left: 0
 	right: 0
-	bottom: 0
-	background-color: $color-background-light
+	position: absolute // allow columns/errors to fill the whole page
+	top: 0
 
 	&[data-context="dashboard"]
 		nav.sidebar .navbar-item.flamenco
@@ -26,7 +27,10 @@ nav.sidebar
 	a.navbar-item
 		&.tasks, &.jobs, &.managers, &.archive
 			text-transform: initial
-			font-size: .85em
+			font-size: .8em
+
+	.dropdown-menu
+		font-size: initial
 
 .input-group
 	width: 100%
