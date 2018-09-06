@@ -1,18 +1,18 @@
 var argv         = require('minimist')(process.argv.slice(2));
 var autoprefixer = require('gulp-autoprefixer');
+var cache        = require('gulp-cached');
 var chmod        = require('gulp-chmod');
 var concat       = require('gulp-concat');
 var git          = require('gulp-git');
 var gulp         = require('gulp');
 var gulpif       = require('gulp-if');
-var pug          = require('gulp-pug');
 var livereload   = require('gulp-livereload');
 var plumber      = require('gulp-plumber');
+var pug          = require('gulp-pug');
 var rename       = require('gulp-rename');
 var sass         = require('gulp-sass');
 var sourcemaps   = require('gulp-sourcemaps');
-var uglify       = require('gulp-uglify');
-var cache        = require('gulp-cached');
+var uglify       = require('gulp-uglify-es').default;
 
 var enabled = {
     uglify: argv.production,
