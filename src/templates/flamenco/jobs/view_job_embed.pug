@@ -54,7 +54,7 @@
 		| {% if is_archived %}
 		|     {% if write_access %}
 		|         {% if archive_available %}
-		a.btn.btn-default(href="{{ url_for('flamenco.jobs.perproject.archive', project_url=project.url, job_id=job._id) }}")
+		a.btn.btn-outline-success(href="{{ url_for('flamenco.jobs.perproject.archive', project_url=project.url, job_id=job._id) }}")
 			i.pi-download
 			| Download job archive
 		|         {% elif job.status == 'archiving' %}
@@ -113,7 +113,7 @@
 			pre.
 				{{ job.to_dict() | pprint }}
 	| {% endif %}
-	
+
 	| {% if not is_archived %}
 	#tasks
 	#comments-embed

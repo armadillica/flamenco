@@ -18,18 +18,16 @@ style.
 | {% block body %}
 #col_main
 	.dashboard
-		.d-stats
-			h4
-				i.pi-flamenco
-				|  Flamenco
+		.d-stats.pt-2.px-2
+			span.h4 Flamenco
 
 			| {% for proj, summary in projs_with_summaries %}
 			.d-stats-card
-				h4
-					a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=proj.url) }}") {{ proj.name }}
+				h6
+					a.text-muted(href="{{ url_for('flamenco.jobs.perproject.index', project_url=proj.url) }}") {{ proj.name }}
 
-					span.pull-right
-						a(href="{{ url_for('flamenco.jobs.perproject.index', project_url=proj.url) }}") Jobs&nbsp;
+					span.float-right
+						a.text-muted(href="{{ url_for('flamenco.jobs.perproject.index', project_url=proj.url) }}") Jobs&nbsp;
 				.progress
 					| {% for status, percentage in summary.percentages() %}
 					.progress-bar.bg-status(
@@ -57,11 +55,8 @@ style.
 		.welcome-text
 			p Your Render Management Software
 
-	section
-		p
-			| For documentation, downloads, and everything you need for running your own
-			| Ren&shy;der Ma&shy;na&shy;ge&shy;ment Soft&shy;ware, visit the
-			=' '
-			a(href='https://www.flamenco.io/', target='_blank') Flamenco Website.
+	.text-center.p-3
+		| For documentation, downloads, and everything you need for running
+		| Flamenco on your own server, visit #[a(href='https://www.flamenco.io/', target='_blank') flamenco.io].
 
 | {% endblock %}

@@ -22,7 +22,7 @@
 				placeholder="Manager's description") {{ manager.description | hide_none }}
 
 		.input-group
-			button#item-save.btn.btn-default.btn-block(type='submit')
+			button#item-save.btn.btn-outline-success.btn-block(type='submit')
 				i.pi-check
 				| Save Manager
 		| {% else %}
@@ -108,10 +108,10 @@
 			i.pi-link
 			| Link project
 		| {% elif linked_projects %}
-		button.btn.btn-default(disabled)
+		button.btn.btn-secondary(disabled)
 			| All available projects are linked already.
 		| {% else %}
-		button.btn.btn-default(disabled)
+		button.btn.btn-secondary(disabled)
 			| You have no projects set up for Flamenco.
 		| {% endif %}
 	| {% endif %}

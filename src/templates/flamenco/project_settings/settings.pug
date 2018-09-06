@@ -35,7 +35,7 @@
 	p You have no Flamenco Manager.
 	|   {% elif managers._meta.total == 1 %}
 	p You have one Manager "{{ first_manager.name }}" available to you.
-		button.btn.btn-default(onclick="clickLinkProject('{{ first_manager._id }}')") Use it for this project
+		button.btn.btn-outline-secondary(onclick="clickLinkProject('{{ first_manager._id }}')") Use it for this project
 
 	|   {% else %}
 	p.

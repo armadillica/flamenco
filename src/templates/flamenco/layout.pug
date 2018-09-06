@@ -25,11 +25,12 @@ html(lang="en")
 		#app-main
 			#col_sidebar
 				nav.sidebar(role='navigation')
+					a.navbar-brand(
+						href="{{ url_for('main.homepage') }}",
+						title="Blender Cloud")
+						span.app-logo
+							i.pi-blender-cloud
 					ul
-						li
-							a.navbar-item.cloud(href="{% if project %}{{url_for('projects.view', project_url=project.url)}}{% else %}{{ url_for('main.homepage') }}{% endif %}",
-								title='Blender Cloud')
-								i.pi-blender-cloud
 						li
 							a.navbar-item.flamenco(href="{{ url_for('flamenco.index') }}",
 								title='Flamenco')
@@ -63,13 +64,13 @@ html(lang="en")
 				h1 Right
 			| {% endblock %}
 
-		.modal.fade#modal(role="dialog")
-			.modal-dialog
+		.modal#modal(role="dialog", tabindex="-1")
+			.modal-dialog(role="document")
 				.modal-content
 					.modal-header
+						span.modal-title.title
 						button.close(type="button", data-dismiss="modal", aria-label="Close")
 							i.pi-cancel
-						span.title
 					.modal-body
 
 		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery.select2.min.js') }}", async=true)
