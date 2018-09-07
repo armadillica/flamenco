@@ -6,18 +6,20 @@
 script(src="{{ url_for('static_flamenco', filename='assets/js/generated/tutti.min.js') }}")
 | {% endblock %}
 
-| {% block project_context_header %}
-span#project-edit-title
-	| {{ self.page_title() }}
-| {% endblock %}
-
 | {% block project_context %}
+.container-fluid
+	.row
+		.col-md-12
+			h5.pt-3 {{ self.page_title() }}
+
+			hr
+
 #node-edit-container
 	| {% block flamenco_container %}
 	| {% endblock flamenco_container %}
 
-	.settings-footer
-		p
-			| New to Flamenco?
-			| <a href="https://www.flamenco.io/">Learn more at flamenco.io</a>
+	p.settings-footer.
+		New to Flamenco?
+		#[a(href="https://www.flamenco.io/") Learn more at flamenco.io]
+
 | {% endblock project_context %}

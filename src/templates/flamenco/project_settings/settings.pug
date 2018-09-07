@@ -3,7 +3,7 @@
 | {% block flamenco_container %}
 #node-edit-form
 
-	h3 Flamenco Managers
+	h5 Flamenco Managers
 	p
 		= 'There are {{ managers._meta.total }} manager{{ managers._meta.total|pluralize }} available to you. '
 		a(href="{{ url_for ('flamenco.managers.index' ) }}") Manage Managers
@@ -23,10 +23,10 @@
 					| {{ manager.name }}
 
 			.actions
-				a.btn(
+				a.btn.btn-sm.btn-outline-primary.px-3(
 					href="javascript:clickUnlinkProject('{{ manager._id }}')",
 					title="Un-link {{ manager.name }} from this project")
-					i.pi-unlink
+					i.pr-2.pi-unlink
 					| Un-link
 
 		|   {% endfor %}
