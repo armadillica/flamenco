@@ -203,9 +203,9 @@ def determine_new_task_status(manager_id, task_id, current_task_info, new_status
 
     if current_status == 'cancel-requested':
         if new_status not in ACCEPTED_AFTER_CANCEL_REQUESTED:
-            log.warning('Manager %s wants to set task %s to status %r, but that is not allowed '
-                        'because the task is in status %s',
-                        manager_id, task_id, new_status, current_status)
+            log.info('Manager %s wants to set task %s to status %r, but that is not allowed '
+                     'because the task is in status %s',
+                     manager_id, task_id, new_status, current_status)
             return None
 
     if new_status not in valid_statuses:
