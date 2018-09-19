@@ -173,6 +173,20 @@ def archive_job(job_id):
 
 
 @manager_flamenco.command
+def resume_job_archiving():
+    """Resumes archiving of jobs that are stuck in status "archiving".
+
+    Finds all jobs in status "archiving" that is older than one day and creates
+    a new Celery archival task for each job.
+    """
+
+    from flamenco.celery import job_archival
+
+    log.info('Creating Celery background tasks for resuming archival of jobs')
+    job_archival.resume_job_archiving()
+
+
+@manager_flamenco.command
 def unused_manager_owners():
     """Lists all email addresses of unused Manager owners"""
 

@@ -5,20 +5,16 @@ import pathlib
 import tempfile
 from unittest import mock
 
-import pillar.tests.common_test_data as ctd
-
-from test_task_update_batch import AbstractTaskBatchUpdateTest
-
 import bson
 import bson.tz_util
 
+import pillar.tests.common_test_data as ctd
+from pillar.api.utils import utcnow
+from test_task_update_batch import AbstractTaskBatchUpdateTest
 
-class JobArchivalTest(AbstractTaskBatchUpdateTest):
-    TASK_COUNT = 4
 
-    def setUp(self, **kwargs):
-        super().setUp(**kwargs)
-
+class AbstractJobArchivalTest(AbstractTaskBatchUpdateTest):
+    def create_job(self):
         from pillar.api.utils.authentication import force_cli_user
 
         with self.app.test_request_context():
@@ -36,7 +32,15 @@ class JobArchivalTest(AbstractTaskBatchUpdateTest):
                 ctd.EXAMPLE_PROJECT_OWNER_ID,
                 self.mngr_id,
             )
-            self.job_id = job['_id']
+        return job['_id']
+
+class JobArchivalTest(AbstractJobArchivalTest):
+    TASK_COUNT = 4
+
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+
+        self.job_id = self.create_job()
 
         self.task_ids = [t['_id'] for t in self.do_schedule_tasks()]
         self.enter_app_context()
@@ -115,3 +119,41 @@ class JobArchivalTest(AbstractTaskBatchUpdateTest):
         db_job = jobs_coll.find_one(self.job_id)
         self.assertEqual('archiving', db_job['status'])
         self.assertEqual('completed', db_job['pre_archive_status'])
+
+
+class ResumeArchiveJobsTest(AbstractJobArchivalTest):
+    TASK_COUNT = 12
+
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+
+        self.job1_id = self.create_job()
+        self.job2_id = self.create_job()
+        self.job3_id = self.create_job()
+
+        self.task_ids = [t['_id'] for t in self.do_schedule_tasks()]
+        self.enter_app_context()
+
+    @mock.patch('flamenco.celery.job_archival.archive_job')
+    def test_resume_archiving(self, mock_archive_job):
+        from flamenco.celery import job_archival
+
+        now = utcnow()
+
+        # 1 day old in status archiving. Should be resumed
+        self.force_job_status('archiving', self.job1_id)
+        self.set_job_updated(now - datetime.timedelta(days=1), self.job1_id)
+
+        # archiving status but to new. Should *not* be resumed
+        self.force_job_status('archiving', self.job2_id)
+        self.set_job_updated(now - datetime.timedelta(hours=23), self.job2_id)
+
+        # 1 day old but in wrong status. Should *not* be resumed
+        self.set_job_updated(now - datetime.timedelta(days=1), self.job3_id)
+
+        with mock.patch('pillar.api.utils.utcnow') as mock_utcnow:
+            mock_utcnow.return_value = now
+            job_archival.resume_job_archiving()
+
+        mock_archive_job.delay.assert_called_once()
+        mock_archive_job.delay.assert_called_with(str(self.job1_id))

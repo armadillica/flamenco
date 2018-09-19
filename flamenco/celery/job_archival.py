@@ -4,7 +4,7 @@ import pathlib
 import bson
 
 from pillar import current_app
-from pillar.api.utils import dumps
+from pillar.api.utils import dumps, utcnow
 
 from flamenco import current_flamenco
 
@@ -77,6 +77,25 @@ def archive_job(job_id: str):
         chain = download_tasks | chain
 
     chain()
+
+@current_app.celery.task(ignore_result=True)
+def resume_job_archiving():
+    """Resumes archiving of jobs that are stuck in status "archiving".
+
+    Finds all jobs in status "archiving" that is older than one day and
+    calls archive_job with each job.
+    """
+    age = current_app.config['FLAMENCO_RESUME_ARCHIVING_AGE']
+    jobs_coll = current_flamenco.db('jobs')
+    archiving = jobs_coll.find({
+        'status': 'archiving',
+        '_updated': {'$lte': utcnow() - age},
+    })
+
+    log.info('Resume archiving %d jobs', archiving.count())
+    for job in archiving:
+        log.debug('Resume archiving job %s', job['_id'])
+        archive_job.delay(str(job['_id']))
 
 
 # Unable to ignore results, see

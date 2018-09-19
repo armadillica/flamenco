@@ -128,13 +128,28 @@ class AbstractFlamencoTest(AbstractPillarTest):
         with self.app.test_request_context():
             self.jmngr.api_set_job_status(job_id, new_status)
 
-    def force_job_status(self, new_status):
+    def force_job_status(self, new_status, job_id=None):
         """Directly to MongoDB approach"""
+
+        if job_id is None:
+            job_id = self.job_id
 
         with self.app.test_request_context():
             jobs_coll = self.flamenco.db('jobs')
-            result = jobs_coll.update_one({'_id': self.job_id},
+            result = jobs_coll.update_one({'_id': job_id},
                                           {'$set': {'status': new_status}})
+        self.assertEqual(1, result.matched_count)
+
+    def set_job_updated(self, new_updated, job_id=None):
+        """Directly to MongoDB approach"""
+
+        if job_id is None:
+            job_id = self.job_id
+
+        with self.app.app_context():
+            jobs_coll = self.flamenco.db('jobs')
+            result = jobs_coll.update_one({'_id': job_id},
+                                          {'$set': {'_updated': new_updated}})
         self.assertEqual(1, result.matched_count)
 
     def assert_task_status(self, task_id, expected_status):
