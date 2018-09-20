@@ -140,15 +140,15 @@ class ResumeArchiveJobsTest(AbstractJobArchivalTest):
 
         now = utcnow()
 
-        # 1 day old in status archiving. Should be resumed
+        # 1 day old in status archiving. Should be resumed.
         self.force_job_status('archiving', self.job1_id)
         self.set_job_updated(now - datetime.timedelta(days=1), self.job1_id)
 
-        # archiving status but to new. Should *not* be resumed
+        # In archiving status but too new. Should *not* be resumed.
         self.force_job_status('archiving', self.job2_id)
         self.set_job_updated(now - datetime.timedelta(hours=23), self.job2_id)
 
-        # 1 day old but in wrong status. Should *not* be resumed
+        # 1 day old but in wrong status. Should *not* be resumed.
         self.set_job_updated(now - datetime.timedelta(days=1), self.job3_id)
 
         with mock.patch('pillar.api.utils.utcnow') as mock_utcnow:

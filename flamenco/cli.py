@@ -176,8 +176,8 @@ def archive_job(job_id):
 def resume_job_archiving():
     """Resumes archiving of jobs that are stuck in status "archiving".
 
-    Finds all jobs in status "archiving" that is older than one day and creates
-    a new Celery archival task for each job.
+    Creates a new celery archival task for each job that has been stuck in status
+    archiving for one day or more.
     """
 
     from flamenco.celery import job_archival
