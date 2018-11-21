@@ -5,6 +5,9 @@ Flamenco Server Changelog
 
 - Allow jobs to be started in 'paused' state. Such jobs are ignored by the Manager, and have to be
   manually queued to start.
+- Added a `create-video` task which can convert an image sequence to a video. This is currently only
+  used in `blender-render` jobs that render an image sequence, and requires Blender Cloud add-on
+  1.9.5 or newer.
 
 
 ## Version 2.0.7 (released 2018-07-06)

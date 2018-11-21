@@ -17,7 +17,7 @@ class NotificationTest(AbstractFlamencoTest):
     }
 
     def setUp(self, **kwargs):
-        AbstractFlamencoTest.setUp(self, **kwargs)
+        super().setUp(**kwargs)
 
         mngr_doc, account, token = self.create_manager_service_account()
         self.mngr_id = mngr_doc['_id']

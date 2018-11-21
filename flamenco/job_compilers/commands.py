@@ -129,3 +129,12 @@ class MergeProgressiveRenders(AbstractCommand):
     # Blender command to run in order to merge the two EXR files.
     # This is usually determined by the Flamenco Manager configuration.
     blender_cmd: str = '{blender}'
+
+
+@attr.s(auto_attribs=True)
+class CreateVideo(AbstractCommand):
+    """Creates a video from an image sequence."""
+
+    input_files: str
+    output_file: str
+    fps: int
