@@ -37,6 +37,7 @@
 		span.status-indicator(title="Status: {{ task.status | undertitle }}")
 		span.name {{ task.name }}
 		span.type {{ task.status }} - {{ task.job_type | undertitle }}
+		span.worker {{ task.worker }}
 	| {% endfor %}
 script.
 	function loadTaskPage(page_idx) {

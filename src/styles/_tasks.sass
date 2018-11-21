@@ -138,7 +138,7 @@
 		.status-indicator
 			transform: scale(1.2)
 
-	.status, .type
+	.status, .type, .worker
 		display: inline-block
 		margin-right: 10px
 		text-transform: uppercase
@@ -147,8 +147,14 @@
 
 	.type
 		margin-left: auto
+
+	.type, .worker
 		color: $color-text-dark-secondary
 		+text-overflow-ellipsis
+
+	.worker
+		min-width: 130px
+		text-align: right
 
 	.name
 		padding: 2px 10px
