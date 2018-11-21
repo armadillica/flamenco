@@ -10,6 +10,7 @@ __pycache__
 
 /build
 /.cache
+/.mypy_cache
 /*.egg-info/
 /.eggs/
 /node_modules/
