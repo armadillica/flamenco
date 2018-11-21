@@ -28,7 +28,6 @@ managers_schema = {
     # on how a job type looks like (in terms of tasks).
     'job_types': {
         'type': 'dict',
-        # TODO: will be renamed to 'keyschema' in Cerberus 1.0
         'keyschema': {  # name of the job type
             'type': 'string',
         },
@@ -37,7 +36,6 @@ managers_schema = {
             'schema': {
                 'vars': {
                     'type': 'dict',
-                    # TODO: will be renamed to 'keyschema' in Cerberus 1.0
                     'keyschema': {  # name of the variable
                         'type': 'string',
                     },
