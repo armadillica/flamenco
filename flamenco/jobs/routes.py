@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 import collections
+import functools
 import logging
 
 import bson
@@ -47,11 +48,30 @@ def for_project(project, job_id=None, task_id=None):
         new_url = url_for(f'{target_blueprint.name}.{target_endpoint}', **request.view_args)
         return redirect(new_url, code=307)
 
-    # Find the link URL for each job.
+    @functools.lru_cache()
+    def manager_name(manager_id: str) -> str:
+        from .sdk import Job
+        from ..managers.sdk import Manager
+
+        api = pillar_api()
+        job = Job.find(job_id, api=api)
+
+        try:
+            manager = Manager.find(manager_id, api=api)
+        except pillarsdk.ForbiddenAccess:
+            # It's possible that the user doesn't have access to this Manager.
+            return '-unknown-'
+        except pillarsdk.ResourceNotFound:
+            log.warning('Flamenco job %s has a non-existant manager %s', job_id, job.manager)
+            return '-unknown-'
+        return manager['name'] or '-unknown-'
+
+    # Find the link URL and Manager name for each job.
     for job in jobs['_items']:
         target_blueprint = blueprint_for_archived[job.status == 'archived']
         job.url = url_for(f'{target_blueprint.name}.view_job',
                           project_url=project.url, job_id=job._id)
+        job.manager_name = manager_name(job['manager'])
 
     return render_template('flamenco/jobs/list_for_project.html',
                            stats={'nr_of_jobs': '∞', 'nr_of_tasks': '∞'},
