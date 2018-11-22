@@ -44,26 +44,47 @@ def manager_api_call(wrapped):
 @api_blueprint.route('/<manager_id>/startup', methods=['POST'])
 @manager_api_call
 def startup(manager_id, notification):
+    log.info('Received startup notification from manager %s %s', manager_id, notification)
+    return handle_notification(manager_id, notification)
+
+
+@api_blueprint.route('/<manager_id>/update', methods=['POST'])
+@manager_api_call
+def update(manager_id, notification):
+    log.info('Received configuration update notification from manager %s %s',
+             manager_id, notification)
+    return handle_notification(manager_id, notification)
+
+
+def handle_notification(manager_id: str, notification: dict):
     from flamenco import current_flamenco
     import uuid
     import datetime
 
-    log.info('Received startup notification from manager %s %s', manager_id, notification)
-
     if not notification:
         raise wz_exceptions.BadRequest('no JSON payload received')
 
-    mngr_coll = current_flamenco.db('managers')
-    update_res = mngr_coll.update_one(
-        {'_id': manager_id},
-        {'$set': {
+    try:
+        updates = {
             '_updated': datetime.datetime.utcnow(),
             '_etag': uuid.uuid4().hex,
             'url': notification['manager_url'],
             'variables': notification['variables'],
             'path_replacement': notification['path_replacement'],
             'stats.nr_of_workers': notification['nr_of_workers'],
-        }}
+        }
+    except KeyError as ex:
+        raise wz_exceptions.BadRequest(f'Missing key {ex}')
+
+    try:
+        updates['worker_task_types'] = notification['worker_task_types']
+    except KeyError:
+        pass
+
+    mngr_coll = current_flamenco.db('managers')
+    update_res = mngr_coll.update_one(
+        {'_id': manager_id},
+        {'$set': updates}
     )
     if update_res.matched_count != 1:
         log.warning('Updating manager %s matched %i documents.',
@@ -230,7 +251,7 @@ def tasks_cancel_requested(manager_id):
         task['_id']
         for task in tasks_coll.find({'manager': manager_id, 'status': 'cancel-requested'},
                                     projection={'_id': 1})
-        }
+    }
 
     log.debug('Returning %i tasks to be canceled by manager %s', len(task_ids), manager_id)
     return task_ids

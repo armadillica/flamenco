@@ -117,8 +117,14 @@ managers_schema = {
                 'type': 'integer',
             }
         }
-    }
-
+    },
+    # All the task types this Manager's Workers support.
+    'worker_task_types': {
+        'type': 'list',
+        'schema': {
+            'type': 'string',
+        },
+    },
 }
 
 jobs_schema = {

@@ -47,6 +47,10 @@
 					| {% else %}
 					| None yet, will be set by the Manager
 					| {% endif %}
+			.table-row.properties-last-updated
+				.table-cell Task Types
+				.table-cell(title="Task types supported by this Manager's Workers")
+					| {{ manager.worker_task_types | sort | join(', ') | default('never sent by Manager', true) }}
 
 	| {% if manager.variables %}
 	h4 Variables
