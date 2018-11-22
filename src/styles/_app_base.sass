@@ -136,8 +136,10 @@ nav.sidebar
 			&.item-status
 				min-width: 60px
 
-			&.item-name
+			&.item-name, &.item-manager
 				text-align: left
+
+			&.item-name
 				padding-left: 5px
 
 			span.collapser
@@ -184,13 +186,13 @@ nav.sidebar
 						margin: auto 0
 						line-height: 1.1em
 
-			&.item-type
+			&.item-type, &.item-manager
 				text-align: left
 				a
 					+text-overflow-ellipsis
 					color: $color-text-dark-primary
 
-			&.item-priority a
+			&.item-priority a, &.item-manager a
 				color: $color-text-dark-secondary
 
 			&.item-status

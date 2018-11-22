@@ -24,6 +24,8 @@
 							span.collapser(title="Collapse status column") Status
 						.table-cell.item-name
 							span.collapser(title="Collapse name column") Name
+						.table-cell.item-manager
+							span.collapser(title="Collapse manager column") Manager
 						.table-cell.item-priority
 							span.collapser(title="Collapse priority column") Priority
 
@@ -42,6 +44,10 @@
 								href="{{ job.url }}",
 								class="job-link")
 								span(class="job-name-{{ job._id }}") {{ job.name }}
+						.table-cell.item-manager
+							a(data-job-id="{{ job._id }}",
+								href="{{ job.url }}")
+								| {{ job.manager_name }}
 						.table-cell.item-priority
 							a(data-job-id="{{ job._id }}",
 								href="{{ job.url }}")
