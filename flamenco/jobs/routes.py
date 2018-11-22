@@ -12,6 +12,7 @@ import pillarsdk
 import pillar.flask_extra
 from pillar.web.system_util import pillar_api
 from pillar.auth import current_user
+from pillar import current_app
 
 from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco
@@ -37,6 +38,8 @@ ALLOWED_JOB_STATUSES_FROM_WEB = {'cancel-requested', 'queued', 'requeued'}
 @perproject_archive_blueprint.route('/', endpoint='index')
 @flamenco_project_view(extension_props=False, action=Actions.VIEW)
 def for_project(project, job_id=None, task_id=None):
+    api = pillar_api()
+
     is_archive = request.blueprint == perproject_archive_blueprint.name
     jobs = current_flamenco.job_manager.jobs_for_project(project['_id'],
                                                          archived=is_archive)
@@ -50,11 +53,7 @@ def for_project(project, job_id=None, task_id=None):
 
     @functools.lru_cache()
     def manager_name(manager_id: str) -> str:
-        from .sdk import Job
         from ..managers.sdk import Manager
-
-        api = pillar_api()
-        job = Job.find(job_id, api=api)
 
         try:
             manager = Manager.find(manager_id, api=api)
@@ -62,7 +61,8 @@ def for_project(project, job_id=None, task_id=None):
             # It's possible that the user doesn't have access to this Manager.
             return '-unknown-'
         except pillarsdk.ResourceNotFound:
-            log.warning('Flamenco job %s has a non-existant manager %s', job_id, job.manager)
+            log.warning('Unable to find manager %r for job list of project %s',
+                        manager_id, project['_id'])
             return '-unknown-'
         return manager['name'] or '-unknown-'
 
@@ -121,6 +121,13 @@ def view_job(project, flamenco_props, job_id):
         log.warning('Flamenco job %s has a non-existant manager %s', job_id, job.manager)
         manager = None
 
+    users_coll = current_app.db('users')
+    user = users_coll.find_one(bson.ObjectId(job.user), projection={'username': 1})
+    if user:
+        user_name = user.get('username') or '-unknown-'
+    else:
+        user_name = '-unknown-'
+
     from . import (CANCELABLE_JOB_STATES, REQUEABLE_JOB_STATES, RECREATABLE_JOB_STATES,
                    ARCHIVE_JOB_STATES, ARCHIVEABLE_JOB_STATES, FAILED_TASKS_REQUEABLE_JOB_STATES)
 
@@ -138,6 +145,7 @@ def view_job(project, flamenco_props, job_id):
     return render_template(
         'flamenco/jobs/view_job_embed.html',
         job=job,
+        user_name=user_name,
         manager=manager,
         project=project,
         flamenco_props=flamenco_props.to_dict(),

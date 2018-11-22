@@ -12,6 +12,10 @@
 				.table-cell(class="status-{{ job.status }}")
 					| {{ job.status | undertitle }}
 			.table-row
+				.table-cell Created by
+				.table-cell
+					| {{ user_name }}
+			.table-row
 				.table-cell Last Update
 				.table-cell(title="{{ job._updated }}")
 					span(role='button',
