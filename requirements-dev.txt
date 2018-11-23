@@ -3,15 +3,3 @@
 -r ../pillar/requirements-dev.txt
 
 -e ../flamenco  # also works from parent project, like blender-cloud
-
-
-# Primary requirements
-mkdocs==0.17.2
-mkdocs-material==2.2.2
-
-# Secondary requirements
-Markdown==2.6.11
-PyYAML==3.12
-click==6.7
-livereload==2.5.1
-tornado==4.4.2
