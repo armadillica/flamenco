@@ -10,14 +10,16 @@ project. If you haven't, log in and create a [new project](https://cloud.blender
 
 Here is an overview of the steps required to get Flamenco up an running.
 
+- Download and install [Blender](https://www.blender.org/), either on each Worker separately or on a
+  shared storage. Make sure the path is the same on each Worker.
 - Download and configure your Manager
 - Download and configure your Worker
 - Enable your project for Flamenco
 - Configure the Blender Cloud Add-on and start rendering
 
 !!! note
-    On Windows, make sure you use mapped drives, so don't use `\\SERVER` directly. Instead, map it
-    to a drive letter and use that. Furthermore, use forward slashes, so `S:/some/path`.
+    On Windows, make sure you use mapped drives, so do **not** use `\\SERVER` directly. Instead, map
+    it to a drive letter and use that. Furthermore, **use forward slashes**, so `S:/some/path`.
 
 This is meant as a step-by-step quick install guide. For more in-depth installation and
 configuration documents, check out the `README.md` files and sources of each component.
@@ -53,10 +55,23 @@ To run Flamenco Manager for the first time, follow these steps:
 ### Manager configuration
 
 Flamenco Manager can be configured via the web interface. Update the variables and path replacement
-variables for your render farm. The `blender` variable should point to the Blender executable where
-it can be found *on the workers*. If the path to Blender contains a space, it should be enclosed in
-double quotes, for example
-`"C:/Program Files/Blender Foundation/blender-2.78-windows64/blender.exe" --enable-new-depsgraph`.
+variables for your render farm. The `blender` and `ffmpeg` variables should point to respectively
+the Blender and FFmpeg executables where they can be found *on the workers*. If the path contains a
+space, it should be enclosed in double quotes. Example:
+
+    variables:
+        blender:
+            darwin: /Applications/blender-2.80/blender.app/Contents/MacOS/blender
+            linux: /home/sybren/bin/blender
+            windows: "C:/Program Files/Blender Foundation/Blender-2.80/blender.exe" --factory-startup
+        ffmpeg:
+            windows: "C:/Program Files/FFmpeg/ffmpeg.exe"
+            linux: /usr/bin/ffmpeg
+            darwin: /usr/bin/ffmpeg
+
+!!! note
+    We recommend using forward slashes everywhere, also on Windows.
+
 
 The **path replacement variables** allow you to run different platforms, e.g. use a Windows desktop
 to create render jobs, and render them on Linux workers, or vice versa. For example, you can declare
@@ -64,17 +79,17 @@ that "`/shared/flamencofiles` on Linux is `E:/flamencofiles` on Windows and
 `/Volumes/Shared/flamencofiles` on MacOS" like this:
 
     path_replacement:
-      flamencofiles:
-        linux: /shared/flamencofiles
-        windows: E:/flamencofiles
-        darwin: /Volumes/Shared/flamencofiles
+        flamencofiles:
+            linux: /shared/flamencofiles
+            windows: E:/flamencofiles
+            darwin: /Volumes/Shared/flamencofiles
 
 When creating a render job for `/shared/flamencofiles/projectX/thefile.blend`, Flamenco will
 internally change that to `{flamencofiles}/projectX/thefile.blend`. When sending that job to a
 worker running on Windows, it'll change it to `E:/flamencofiles/projectX/thefile.blend`.
 
-
-**We recommend using forward slashes everywhere, also on Windows.**
+!!! note
+    We recommend using forward slashes everywhere, also on Windows.
 
 Note that `variables` and `path_replacement` share a namespace -- variable names have to be unique,
 and cannot be used in both `variables` and `path_replacement` sections. If this happens, Flamenco
@@ -129,3 +144,48 @@ Take a look at:
 Run the Worker with the `flamenco-worker` command. The Worker will automatically connect to the
 Manager, negotiate a worker ID and password, and start querying for tasks. The worker ID and
 password will be stored in `$HOME/.flamenco-worker.cfg`.
+
+
+## Video Encoding of Image Sequences
+
+**Requires Flamenco Manager and Worker version 2.2 or newer.**
+
+A Blender Render job can optionally create a video from an image sequence. This allows you to render
+as an image sequence (allowing each worker to render one or more frames), and as a final step
+combine those images into a video for easier viewing. However, since this requires FFmpeg, this step
+is optional and by default Flamenco Server will **not** generate this video creation task. To enable
+this, follow these steps:
+
+- Decide which of your Workers will run the video encoding tasks. This could be all Workers, or one
+  or more dedicated machines.
+- On those workers, update the `flamenco_worker.cfg` file to have `video-encoding` in the
+  `task_types` setting. For example:
+
+        task_types = sleep blender-render file-management exr-merge video-encoding
+
+- Download and install [FFmpeg](https://ffmpeg.org/), either on each Worker separately or on a
+  shared storage. Make sure the path is the same on each Worker.
+- Add an `ffmpeg` variable to your Manager's `flamenco_manager.yaml` configuration file, which
+  should point to the path where the Workers can find the `ffmpeg` binary. For example:
+
+        variables:
+            blender:
+                darwin: /Applications/blender-2.80/blender.app/Contents/MacOS/blender
+                linux: /home/sybren/bin/blender
+                windows: "C:/Program Files/Blender Foundation/Blender-2.80/blender.exe" --factory-startup
+            ffmpeg:
+                windows: "C:/Program Files/FFmpeg/ffmpeg.exe"
+                linux: /usr/bin/ffmpeg
+                darwin: /usr/bin/ffmpeg
+- Restart Flamenco Manager and your Workers to activate the change in configuration.
+- Upgrade your [Blender Cloud add-on](https://cloud.blender.org/services) to version 1.9.5 or newer
+  (not yet released at the moment of writing.)
+
+Once these steps have been performed, you can check
+[your Manager configuration on Blender Cloud](https://cloud.blender.org/flamenco/managers/). Look at
+the Task Types, and double-check that it shows `video-encoding` in the list. Once that is there,
+new Simple Blender Render jobs will automatically use FFmpeg to create videos from file sequences.
+
+
+!!!note
+    We highly recommend ensuring you have exactly the same version of FFmpeg on each worker.
