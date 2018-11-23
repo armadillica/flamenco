@@ -138,3 +138,6 @@ class CreateVideo(AbstractCommand):
     input_files: str
     output_file: str
     fps: int
+
+    # Path to the ffmpeg binary. This is usually determined by the Flamenco Manager configuration.
+    ffmpeg_cmd: str = '{ffmpeg}'

@@ -330,6 +330,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                     input_files='/render/out__intermediate-2018-07-06_115233/*.exr',
                     output_file='/render/out__intermediate-2018-07-06_115233/somefile-1-5.mkv',
                     fps=24,
+                    ffmpeg_cmd='{ffmpeg}',
                 )],
                 'create-video',
                 parents=task_ids[0:2],
