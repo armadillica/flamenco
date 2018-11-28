@@ -34,6 +34,7 @@ class AbstractJobArchivalTest(AbstractTaskBatchUpdateTest):
             )
         return job['_id']
 
+
 class JobArchivalTest(AbstractJobArchivalTest):
     TASK_COUNT = 4
 

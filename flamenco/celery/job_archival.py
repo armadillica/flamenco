@@ -65,9 +65,9 @@ def archive_job(job_id: str):
     # The chain of everything except downloading tasks & logs. Celery can't handle empty
     # groups, so we have to be careful in constructing the download_tasks group.
     chain = (
-        create_upload_zip.si(str(job['project']), storage_path, str(zip_path)) |
-        update_mongo.s(job_id) |
-        cleanup.si(storage_path)
+            create_upload_zip.si(str(job['project']), storage_path, str(zip_path)) |
+            update_mongo.s(job_id) |
+            cleanup.si(storage_path)
     )
 
     if tasks.count():
@@ -77,6 +77,7 @@ def archive_job(job_id: str):
         chain = download_tasks | chain
 
     chain()
+
 
 @current_app.celery.task(ignore_result=True)
 def resume_job_archiving():
