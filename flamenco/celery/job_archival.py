@@ -30,7 +30,22 @@ def archive_job(job_id: str):
     import tempfile
     import celery
 
-    job_oid = bson.ObjectId(job_id)
+    try:
+        job_oid = bson.ObjectId(job_id)
+    except bson.errors.InvalidId as ex:
+        log.error('%s', ex)
+        return
+
+    jobs_coll = current_flamenco.db('jobs')
+    job = jobs_coll.find_one({'_id': job_oid})
+    if job is None:
+        log.info('Job %s does not exist, not archiving', job_oid)
+        return
+
+    if job['status'] == 'archived':
+        log.info('Job %s already archived, not archiving again', job_oid)
+        return
+
     log.info('Archiving job %s', job_oid)
 
     # Create a temporary directory for the file operations.
@@ -41,9 +56,6 @@ def archive_job(job_id: str):
     # TODO: store the ZIP link in the job JSON in MongoDB.
 
     # Write the job to JSON.
-    jobs_coll = current_flamenco.db('jobs')
-    job = jobs_coll.find_one({'_id': job_oid})
-
     pre_archive_status = job.get('pre_archive_status')
     if pre_archive_status:
         job['status'] = pre_archive_status

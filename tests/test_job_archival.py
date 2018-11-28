@@ -121,6 +121,36 @@ class JobArchivalTest(AbstractJobArchivalTest):
         self.assertEqual('archiving', db_job['status'])
         self.assertEqual('completed', db_job['pre_archive_status'])
 
+    @mock.patch('celery.group')
+    def test_archive_job_already_archived(self, mocked_group):
+        from flamenco.celery import job_archival
+
+        self.force_job_status('archived')
+
+        with mock.patch('tempfile.mkdtemp') as mock_mkdtemp:
+            mock_mkdtemp.side_effect = [RuntimeError('NO tempfile allowed!')]
+            job_archival.archive_job(self.job_id)
+
+        mocked_group.assert_not_called()
+
+        jobs_coll = self.flamenco.db('jobs')
+        job = jobs_coll.find_one(self.job_id)
+        self.assertEqual('archived', job['status'])
+
+        # This key would have been set by regular archival, but not
+        # by our call to force_job_status('archived').
+        self.assertNotIn('pre_archive_status', job)
+
+    @mock.patch('celery.group')
+    def test_archive_nonexistant_job(self, mocked_group):
+        from flamenco.celery import job_archival
+
+        with mock.patch('tempfile.mkdtemp') as mock_mkdtemp:
+            mock_mkdtemp.side_effect = [RuntimeError('NO tempfile allowed!')]
+            job_archival.archive_job(24 * 'f')
+
+        mocked_group.assert_not_called()
+
 
 class ResumeArchiveJobsTest(AbstractJobArchivalTest):
     TASK_COUNT = 12

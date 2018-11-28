@@ -158,11 +158,6 @@ def archive_job(job_id):
 
     Can also be used to recreate the Celery task to start job archival,
     in case a job got stuck in the "archiving" state.
-
-    WARNING: this is a dangerous operation, as it may re-archive an already
-    archived job. As a result, the archive will not contain any tasks, since
-    those tasks would have been deleted by the previous archival task. Use
-    with extreme care.
     """
 
     from flamenco.celery import job_archival
