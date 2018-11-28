@@ -142,6 +142,8 @@ def view_job(project, flamenco_props, job_id):
     job_settings = collections.OrderedDict((key, job.settings[key])
                                            for key in sorted(job.settings.to_dict().keys()))
 
+    change_prio_states = RECREATABLE_JOB_STATES | REQUEABLE_JOB_STATES | CANCELABLE_JOB_STATES
+
     return render_template(
         'flamenco/jobs/view_job_embed.html',
         job=job,
@@ -156,6 +158,7 @@ def view_job(project, flamenco_props, job_id):
         can_archive_job=write_access and status in ARCHIVEABLE_JOB_STATES,
         # TODO(Sybren): check that there are actually failed tasks before setting to True:
         can_requeue_failed_tasks=write_access and status in FAILED_TASKS_REQUEABLE_JOB_STATES,
+        can_change_prio=write_access and status in change_prio_states,
         is_archived=is_archived,
         write_access=write_access,
         archive_available=archive_available,

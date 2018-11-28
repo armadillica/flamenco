@@ -441,3 +441,54 @@ function getTaskLog(url, container){
         $('#item-action-panel .action-result-panel').html(show_html);
     });
  }
+
+ /**
+  * Request changing the job's priority.
+  */
+function changeJobPriority(job_id) {
+    if (typeof job_id === 'undefined') {
+        if (console) console.log("changeJobPriority(" + job_id + ") called");
+        return;
+    }
+
+    var str_prio = prompt("What should the new priority be? A higher number means a higher priority.");
+    if (!str_prio) return;
+    var new_priority = parseInt(str_prio);
+    if (new_priority != new_priority) {
+        statusBarSet('error', 'Priority should be an integer.', 'pi-error');
+        return;
+    }
+
+    $.ajax({
+            method: 'PATCH',
+            url: '/api/flamenco/jobs/' + job_id,
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'op': 'set-job-priority',
+                'priority': new_priority
+            }),
+        })
+        .done(function(data) {
+            if (console) console.log('New job priority was accepted');
+            // Reload the entire page, since both the view-embed and the job list need refreshing.
+            location.reload(true);
+        })
+        .fail(function(xhr) {
+            if (console) {
+                console.log('Error requesting change of job priority');
+                console.log('XHR:', xhr);
+            }
+
+            statusBarSet('error', 'Error requesting change of job priority', 'pi-error');
+
+            var show_html;
+            if (xhr.status) {
+                show_html = xhrErrorResponseElement(xhr, 'Change in job priority failed: ');
+            } else {
+                show_html = $('<p>').addClass('text-danger').text(
+                    'Change in job priority failed. There possibly was an error connecting to the server. ' +
+                    'Please check your network connection and try again.');
+            }
+            $('#item-action-panel .action-result-panel').html(show_html);
+        });
+}

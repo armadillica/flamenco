@@ -34,6 +34,9 @@
 				.table-cell Priority
 				.table-cell(title="Higher number means higher priority")
 					| {{ job.priority }}
+					| {% if can_change_prio %}
+					a(href="javascript:changeJobPriority('{{ job._id }}')") (change)
+					| {% endif %}
 			| {% if manager %}
 			// manager can be None if the user doesn't have GET rights on it.
 			.table-row
