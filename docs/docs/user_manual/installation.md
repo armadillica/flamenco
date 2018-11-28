@@ -52,6 +52,12 @@ To run Flamenco Manager for the first time, follow these steps:
 7. Once you have completed configuration, save the configuration, then restart Flamenco Manager
    through the web interface. It will now run in normal (i.e. non-setup) mode.
 
+!!! note
+    Flamenco Manager uses coloured output for its logging. On Windows by default these colours
+    will not be shown, and instead it will show the control codes literally. This can be solved
+    by adding one key to the Registry, as [described in this answer on Stack Overflow](https://stackoverflow.com/a/16799175/875379).
+
+
 ### Manager configuration
 
 Flamenco Manager can be configured via the web interface. Update the variables and path replacement
