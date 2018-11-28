@@ -36,6 +36,24 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
             raise wz_exceptions.UnprocessableEntity(f'Status {new_status} is invalid')
 
     @authorization.require_login(require_cap='flamenco-use')
+    def patch_set_job_priority(self, job_id: bson.ObjectId, patch: dict):
+        """Updates a job's priority in the database."""
+
+        from flamenco import current_flamenco
+        from pillar.api.utils.authentication import current_user_id
+
+        self.assert_job_access(job_id)
+
+        new_prio = patch['priority']
+        if not isinstance(new_prio, int):
+            log.debug('patch_set_job_priority(%s): invalid prio %r received', job_id, new_prio)
+            raise wz_exceptions.UnprocessableEntity(f'Priority {new_prio} should be an integer')
+
+        log.info('User %s uses PATCH to set job %s priority to %d',
+                 current_user_id(), job_id, new_prio)
+        current_flamenco.job_manager.api_set_job_priority(job_id, new_prio)
+
+    @authorization.require_login(require_cap='flamenco-use')
     def patch_archive_job(self, job_id: bson.ObjectId, patch: dict):
         """Archives the given job in a background task."""
 

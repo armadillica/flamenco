@@ -1,9 +1,11 @@
 # -*- encoding: utf-8 -*-
 
 import logging
+import typing
 
 from bson import ObjectId
 
+from pillar.api.projects.utils import get_admin_group_id
 from pillar.tests import common_test_data as ctd
 from abstract_flamenco_test import AbstractFlamencoTest
 
@@ -16,9 +18,17 @@ class DepsgraphTest(AbstractFlamencoTest):
 
         from pillar.api.utils.authentication import force_cli_user
 
-        mngr_doc, account, token = self.create_manager_service_account()
+        mngr_doc, account, token = self.create_manager_service_account(
+            assign_to_project_id=self.proj_id)
         self.mngr_id = mngr_doc['_id']
         self.mngr_token = token['token']
+
+        with self.app.app_context():
+            project_gid = get_admin_group_id(self.proj_id)
+
+        self.user = self.create_user(roles={'subscriber'},
+                                     groups=[project_gid, mngr_doc['owner']],
+                                     token='user-token')
 
         # Create three test jobs, one of which is completed and two are queued.
         with self.app.test_request_context():
@@ -192,3 +202,38 @@ class DepsgraphTest(AbstractFlamencoTest):
         self.assertEqual(task2['status'], 'claimed-by-manager')
         self.assertEqual(2 * ['claimed-by-manager'],
                          [task['status'] for task in depsgraph])
+
+    def test_changed_job_priority(self):
+        # Get a clean slate first, so that we get the timestamp of last modification
+        log.info('Getting clean slate first, for timestamp')
+        resp = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                        auth_token=self.mngr_token)
+        last_modified = resp.headers['X-Flamenco-Last-Updated']
+
+        # Increase the priority of job 2 by PATCHing the job.
+        self.patch(f'/api/flamenco/jobs/{self.jobid2}',
+                   json={'op': 'set-job-priority', 'priority': 60},
+                   expected_status=204,
+                   auth_token='user-token')
+
+        # Get the depsgraph again, we should get all the tasks of the changed job.
+        resp = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                        auth_token=self.mngr_token,
+                        headers={'X-Flamenco-If-Updated-Since': last_modified})
+        last_modified = resp.headers['X-Flamenco-Last-Updated']
+
+        depsgraph = resp.json['depsgraph']
+        self.assertEqual(4, len(depsgraph))
+        self.assertEqual(4 * [60], [task['job_priority'] for task in depsgraph])
+
+        # Do the PATCH again but keep the same priority
+        self.patch(f'/api/flamenco/jobs/{self.jobid2}',
+                   json={'op': 'set-job-priority', 'priority': 60},
+                   expected_status=204,
+                   auth_token='user-token')
+
+        # The depsgraph should be empty as nothing should have changed.
+        self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                 auth_token=self.mngr_token,
+                 headers={'X-Flamenco-If-Updated-Since': last_modified},
+                 expected_status=304)

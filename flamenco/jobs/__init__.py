@@ -13,6 +13,7 @@ import werkzeug.exceptions as wz_exceptions
 
 import pillarsdk
 from pillar import attrs_extra
+from pillar.api.utils import random_etag, utcnow
 from pillar.web.system_util import pillar_api
 
 from flamenco import current_flamenco
@@ -381,6 +382,40 @@ class JobManager(object):
 
         self._log.info('Creating Celery background task for archival of job %s', job_id)
         job_archival.archive_job.delay(str(job_id))
+
+    def api_set_job_priority(self, job_id: bson.ObjectId, new_priority: int):
+        """API-level call to updates the job priority."""
+        assert isinstance(new_priority, int)
+        self._log.debug('Setting job %s priority to %r', job_id, new_priority)
+
+        jobs_coll = current_flamenco.db('jobs')
+        curr_job = jobs_coll.find_one({'_id': job_id}, projection={'priority': 1})
+        old_priority = curr_job['priority']
+
+        if old_priority == new_priority:
+            self._log.debug('Job %s is already at priority %r', job_id, old_priority)
+            return
+
+        new_etag = random_etag()
+        now = utcnow()
+        jobs_coll = current_flamenco.db('jobs')
+        result = jobs_coll.update_one({'_id': job_id},
+                                      {'$set': {'priority': new_priority,
+                                                '_updated': now,
+                                                '_etag': new_etag,
+                                                }})
+        if result.matched_count != 1:
+            self._log.warning('Matched %d jobs while setting job %s to priority %r',
+                              result.matched_count, job_id, new_priority)
+
+        tasks_coll = current_flamenco.db('tasks')
+        result = tasks_coll.update_many({'job': job_id},
+                                        {'$set': {'job_priority': new_priority,
+                                                  '_updated': now,
+                                                  '_etag': new_etag,
+                                                  }})
+        self._log.debug('Matched %d tasks while setting job %s to priority %r',
+                        result.matched_count, job_id, new_priority)
 
 
 def setup_app(app):
