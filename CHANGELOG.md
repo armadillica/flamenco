@@ -8,6 +8,12 @@ Flamenco Server Changelog
 - Added a `create-video` task which can convert an image sequence to a video. This is currently only
   used in `blender-render` jobs that render an image sequence, and requires Blender Cloud add-on
   1.9.5 or newer.
+- Re-queue an active job when a task goes to status `claimed-by-manager` and no `active` tasks
+  remain. This task status change happens when a Worker returns its task to the Manager (requires
+  Manager 2.2 or newer).
+- Allow users to change the priority of jobs. Previously the job priority was determined at creation
+  time and could not be changed afterwards. Note that any running task is still finished. Only when
+  a Worker asks for a new task will the new priority be taken into account.
 
 
 ## Version 2.0.7 (released 2018-07-06)
