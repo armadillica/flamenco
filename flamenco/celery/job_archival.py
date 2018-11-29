@@ -127,9 +127,11 @@ def download_task_and_log(storage_path: str, task_id: str):
     logs_coll = current_flamenco.db('task_logs')
 
     task = tasks_coll.find_one({'_id': task_oid})
+
+    # Use the exact same sort as we've created an index for.
     logs = logs_coll.find({'task': task_oid}).sort([
+        ('task', pymongo.ASCENDING),
         ('received_on_manager', pymongo.ASCENDING),
-        ('_id', pymongo.ASCENDING),
     ])
 
     # Save the task as JSON

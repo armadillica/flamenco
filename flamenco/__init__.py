@@ -161,7 +161,7 @@ class FlamencoExtension(PillarExtension):
 
         self._log.info('Creating index on flamenco_task_logs collection')
         db.flamenco_task_logs.create_index(
-            [('task_id', pymongo.ASCENDING),
+            [('task', pymongo.ASCENDING),
              ('received_on_manager', pymongo.ASCENDING)],
             background=True,
             unique=False,
