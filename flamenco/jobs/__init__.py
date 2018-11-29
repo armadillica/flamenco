@@ -169,16 +169,24 @@ class JobManager(object):
             __job_status_if_a_then_b('completed', 'queued')
             return
 
+        if new_task_status == 'claimed-by-manager':
+            # See if there are any active tasks left. If the job was active, but a task
+            # goes to 'claimed-by-manager', this means the task likely active and now re-queued.
+            statuses = tasks_coll.distinct('status', {'job': job_id})
+            if 'active' not in statuses:
+                __job_status_if_a_then_b('active', 'queued')
+            return
+
         if new_task_status in {'cancel-requested', 'claimed-by-manager'}:
-            # Also, canceling a single task has no influence on the job itself.
             # A task being claimed by the manager also doesn't change job status.
+            # Also, canceling a single task has no influence on the job itself.
             return
 
         if new_task_status == 'canceled':
             # This could be the last cancel-requested task to go to 'canceled.
             statuses = tasks_coll.distinct('status', {'job': job_id})
             if 'cancel-requested' not in statuses:
-                self._log.info('Last task %s of job %s went from cancel-requested to canceld.',
+                self._log.info('Last task %s of job %s went from cancel-requested to canceled.',
                                task_id, job_id)
                 self.api_set_job_status(job_id, 'canceled')
             return

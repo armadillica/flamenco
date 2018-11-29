@@ -304,6 +304,21 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         self.do_batch_update(tasks, [0, 1, 2], 3 * ['completed'])
         self.assert_job_status('archived')
 
+    def test_job_status_queued_after_task_update(self):
+        """A job should go to queued when its tasks are going back to claimed-by-manager.
+        """
+
+        self.force_job_status('queued')
+        tasks = self.do_schedule_tasks()
+
+        # Mimick two tasks going active, and then one-by-one being re-queued.
+        self.do_batch_update(tasks, [0, 1], ['active', 'active'])
+        self.assert_job_status('active')
+        self.do_batch_update(tasks, [0], ['claimed-by-manager'])
+        self.assert_job_status('active')
+        self.do_batch_update(tasks, [1], ['claimed-by-manager'])
+        self.assert_job_status('queued')
+
 
 class LargeTaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
     """Similar tests to TaskBatchUpdateTest, but with a job consisting of many more tasks."""
