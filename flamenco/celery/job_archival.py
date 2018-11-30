@@ -117,6 +117,11 @@ def resume_job_archiving():
 def download_task_and_log(storage_path: str, task_id: str):
     """Downloads task + task log and stores them."""
 
+    log.error('NOT RUNNING download_task_and_log(%r, %r) BECAUSE '
+              'OF CELERY BUG https://github.com/celery/celery/issues/3430',
+              storage_path, task_id)
+    return
+
     import gzip
     import pymongo
 
@@ -155,6 +160,11 @@ def create_upload_zip(project_id: str, storage_path: str, zip_path: str) -> str:
 
     Returns the name of the storage blob the ZIP is stored in.
     """
+
+    log.error('NOT RUNNING create_upload_zip(%r, %r, %r) BECAUSE '
+              'OF CELERY BUG https://github.com/celery/celery/issues/3430',
+              project_id, storage_path, zip_path)
+    return 'je moeder'
 
     import itertools
     import zipfile
@@ -196,6 +206,11 @@ def create_upload_zip(project_id: str, storage_path: str, zip_path: str) -> str:
 def update_mongo(archive_blob_name: str, job_id: str):
     """Updates MongoDB by removing tasks and logs, and setting the job status."""
 
+    log.error('NOT RUNNING update_mongo(%r, %r) BECAUSE '
+              'OF CELERY BUG https://github.com/celery/celery/issues/3430',
+              archive_blob_name, job_id)
+    return
+
     job_oid = bson.ObjectId(job_id)
     tasks_coll = current_flamenco.db('tasks')
     logs_coll = current_flamenco.db('task_logs')
@@ -230,6 +245,11 @@ def update_mongo(archive_blob_name: str, job_id: str):
 @current_app.celery.task(ignore_result=True)
 def cleanup(storage_path: str):
     """Removes the temporary storage path."""
+
+    log.error('NOT RUNNING cleanup(%r) BECAUSE '
+              'OF CELERY BUG https://github.com/celery/celery/issues/3430',
+              storage_path)
+    return
 
     import shutil
 
