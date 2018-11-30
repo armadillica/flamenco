@@ -17,6 +17,9 @@ DEPSGRAPH_CLEAN_SLATE_TASK_STATUSES = ['queued', 'claimed-by-manager',
                                        'active', 'cancel-requested']
 DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES = ['queued', 'claimed-by-manager']
 
+# Number of lines of logging to keep on the task itself.
+LOG_TAIL_LINES = 10
+
 
 def manager_api_call(wrapped):
     """Decorator, performs some standard stuff for Manager API endpoints."""
@@ -168,6 +171,10 @@ def handle_task_update_batch(manager_id, task_updates):
             received_on_manager = utcnow()
 
         # Store the log for this task, allowing for duplicate log reports.
+        #
+        # NOTE: is deprecated and will be removed in a future version of Flamenco;
+        # only periodically send the last few lines of logging in 'log_tail' and
+        # store the entire log on the Manager itself.
         task_log = task_update.get('log')
         if task_log:
             log_doc = {
@@ -198,6 +205,13 @@ def handle_task_update_batch(manager_id, task_updates):
         worker = task_update.get('worker')
         if worker:
             updates['worker'] = worker
+
+        # Store the last lines of logging on the task itself.
+        task_log_tail: str = task_update.get('log_tail')
+        if not task_log_tail and task_log:
+            task_log_tail = '\n'.join(task_log.split('\n')[-LOG_TAIL_LINES:])
+        if task_log_tail:
+            updates['log'] = task_log_tail
 
         result = tasks_coll.update_one({'_id': task_id}, {'$set': updates})
         total_modif_count += result.modified_count

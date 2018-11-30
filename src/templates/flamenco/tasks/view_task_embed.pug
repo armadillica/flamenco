@@ -65,8 +65,16 @@
 					.table-cell Worker
 					.table-cell {{ task.worker }}
 
+| {% if can_view_log %}
+.flamenco-box.task
+	span.header-title Last Task Log Lines
+	pre.last-log-lines
+		| {{ task.log }}
+
+| {% endif %}
+
 #item-action-panel
-	| {% if can_view_log %}
+	| {% if can_view_log and not task.log %}
 	button.btn.item-log-load.js-log-load(
 		data-url="{{ url_for('flamenco.tasks.perproject.view_task_log', project_url=project.url, task_id=task._id) }}")
 		i.pi-list
