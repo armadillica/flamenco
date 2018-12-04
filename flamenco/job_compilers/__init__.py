@@ -23,10 +23,6 @@ from . import sleep, blender_render, blender_render_progressive, abstract_compil
 def compile_job(job):
     """Creates tasks from the given job."""
 
-    import datetime
-    from bson import tz_util
-    from flamenco import current_flamenco
-
     compiler = construct_job_compiler(job)
     compiler.compile(job)
 
