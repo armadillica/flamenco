@@ -37,6 +37,11 @@ class Echo(AbstractCommand):
 
 
 @attr.s(auto_attribs=True)
+class Exec(AbstractCommand):
+    cmd: str
+
+
+@attr.s(auto_attribs=True)
 class BlenderRender(AbstractCommand):
     # Blender executable to run.
     blender_cmd: str

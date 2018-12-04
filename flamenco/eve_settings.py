@@ -294,6 +294,7 @@ tasks_schema = {
             'exr-merge',  # EXR merging, probably also happens with Blender.
             'file-management',  # removing directory trees, moving files around, etc.
             'video-encoding',  # Running things through ffmpeg to produce videos.
+            'debug',  # Debugging stuff.
         ]
     },
     'commands': {
