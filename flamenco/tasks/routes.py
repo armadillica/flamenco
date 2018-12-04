@@ -1,5 +1,6 @@
 # coding=utf-8
 import logging
+from urllib.parse import urljoin
 
 import bson
 import flask_login
@@ -86,6 +87,7 @@ def list_for_job(project, job_id, task_id=None):
 @flamenco_project_view(extension_props=True, action=Actions.VIEW)
 def view_task(project, flamenco_props, task_id):
     from flamenco.tasks.sdk import Task
+    from flamenco.managers.sdk import Manager
 
     api = pillar_api()
 
@@ -107,12 +109,22 @@ def view_task(project, flamenco_props, task_id):
 
     write_access = current_flamenco.auth.current_user_may(Actions.USE, project_id)
     can_requeue_task = write_access and task['status'] in REQUEABLE_TASK_STATES
+    if write_access and task.log:
+        # Having task.log means the Manager is using the current approach of sending
+        # the log tail only. Not having it means the Manager is using the deprecated
+        # approach of sending the entire log, thus it isn't upgraded to 2.2+ yet, and
+        # thus it doesn't support the logfile endpoint yet.
+        manager = Manager.find(task.manager, api=api)
+        log_download_url = urljoin(manager.url, f'logfile/{task.job}/{task._id}')
+    else:
+        log_download_url = ''
 
     return render_template('flamenco/tasks/view_task_embed.html',
                            task=task,
                            project=project,
                            flamenco_props=flamenco_props.to_dict(),
                            flamenco_context=request.args.get('context'),
+                           log_download_url=log_download_url,
                            can_view_log=write_access,
                            can_requeue_task=can_requeue_task)
 

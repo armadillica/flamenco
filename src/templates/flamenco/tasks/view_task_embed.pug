@@ -74,11 +74,22 @@
 | {% endif %}
 
 #item-action-panel
-	| {% if can_view_log and not task.log %}
+	| {% if can_view_log %}
+	| {% if task.log %}
+	//- This means new-style on-manager logging is used (task.log is only the last few lines).
+	a.btn.btn-success.item-log-link(
+			href="{{ log_download_url }}",
+			target="_blank",
+			title="Note that this requires you to be able to access this Flamenco Manager directly")
+		i.pi-list
+		| View Log on Manager
+	| {% else %}
+	//- This means old-style on-server logging is used.
 	button.btn.item-log-load.js-log-load(
 		data-url="{{ url_for('flamenco.tasks.perproject.view_task_log', project_url=project.url, task_id=task._id) }}")
 		i.pi-list
 		| View Log
+	| {% endif %}
 	| {% endif %}
 
 	.pull-right
