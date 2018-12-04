@@ -1,7 +1,7 @@
 Flamenco Server Changelog
 =========================
 
-## Version 2.1 (under development)
+## Version 2.1 (released 2018-12-04)
 
 - Allow jobs to be started in 'paused' state. Such jobs are ignored by the Manager, and have to be
   manually queued to start.
