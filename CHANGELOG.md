@@ -14,6 +14,9 @@ Flamenco Server Changelog
 - Allow users to change the priority of jobs. Previously the job priority was determined at creation
   time and could not be changed afterwards. Note that any running task is still finished. Only when
   a Worker asks for a new task will the new priority be taken into account.
+- Store the last lines of task logs on the task itself. This allows Managers to only send the log
+  'tail' in a batch of task updates (in the `log_tail` key) to reduce network traffic and storage
+  requirements on the Server. Flamenco Manager 2.2 or newer is required to take advantage of this.
 
 
 ## Version 2.0.7 (released 2018-07-06)
