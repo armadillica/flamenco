@@ -86,9 +86,9 @@ class AbstractJobCompiler(object, metaclass=abc.ABCMeta):
             return
 
         from flamenco import exceptions
-        job_id = job.get('_id', '')
+        job_id = job.get('_id') or ''
         if job_id:
-            job_id = ' ' + job_id
+            job_id = ' %s' % job_id
         if len(missing) == 1:
             setting = 'setting'
         else:

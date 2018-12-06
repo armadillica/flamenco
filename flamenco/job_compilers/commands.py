@@ -70,6 +70,19 @@ class BlenderRenderProgressive(BlenderRender):
 
 
 @attr.s(auto_attribs=True)
+class BlenderRenderAudio(AbstractCommand):
+    # Blender executable to run.
+    blender_cmd: str
+    # blend file path.
+    filepath: str
+    # output file path.
+    render_output: str
+    # frame range to render.
+    frame_start: int
+    frame_end: int
+
+
+@attr.s(auto_attribs=True)
 class MoveOutOfWay(AbstractCommand):
     """Moves a file or directory out of the way.
 
@@ -140,9 +153,66 @@ class MergeProgressiveRenders(AbstractCommand):
 class CreateVideo(AbstractCommand):
     """Creates a video from an image sequence."""
 
-    input_files: str
+    input_files: str  # Can be a glob, hence the plural.
     output_file: str
     fps: int
 
     # Path to the ffmpeg binary. This is usually determined by the Flamenco Manager configuration.
     ffmpeg_cmd: str = '{ffmpeg}'
+
+
+@attr.s(auto_attribs=True)
+class ConcatenateVideos(AbstractCommand):
+    """Creates a video from a video sequence.
+
+    Requires the video sequence to have the same codec and parameters.
+    """
+
+    input_files: str  # Can be a glob, hence the plural.
+    output_file: str
+
+    # Path to the ffmpeg binary. This is usually determined by the Flamenco Manager configuration.
+    ffmpeg_cmd: str = '{ffmpeg}'
+
+    # Place '_001' (or higher number) in the output name, after any other
+    # number-and-underscore characters.
+    counter_in_output_name: bool = False
+
+
+@attr.s(auto_attribs=True)
+class MuxAudio(AbstractCommand):
+    """Combine audio and video into an output file."""
+
+    audio_file: str
+    video_file: str
+    output_file: str
+
+
+@attr.s(auto_attribs=True)
+class EncodeAudio(AbstractCommand):
+    """Reencode audio using FFmpeg."""
+
+    input_file: str
+    codec: str
+    bitrate: str  # like '192k'
+    output_file: str
+
+
+@attr.s(auto_attribs=True)
+class RemoveFile(AbstractCommand):
+    """Remove a file if it exists."""
+
+    path: str
+
+
+@attr.s(auto_attribs=True)
+class MoveWithCounter(AbstractCommand):
+    """Move a file to a new place, adding a counter to the filename to ensure uniqueness.
+
+    If the file starts with a number-and-underscores prefix, the counter is
+    added after that prefix. Otherwise the counter is added at the end of the
+    filename stem (so just before the extension).
+    """
+
+    src: str
+    dest: str

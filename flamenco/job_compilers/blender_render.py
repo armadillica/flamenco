@@ -4,7 +4,7 @@ import typing
 import bson
 from pillar import attrs_extra
 
-from flamenco import current_flamenco
+from flamenco import current_flamenco, exceptions
 from .abstract_compiler import AbstractJobCompiler
 from . import commands, register_compiler
 
@@ -21,7 +21,18 @@ class BlenderRender(AbstractJobCompiler):
     """Basic Blender render job."""
     _log = attrs_extra.log('%s.BlenderRender' % __name__)
 
-    REQUIRED_SETTINGS = ('blender_cmd', 'filepath', 'render_output', 'frames', 'chunk_size')
+    REQUIRED_SETTINGS = ('filepath', 'render_output', 'frames', 'chunk_size')
+
+    def validate_job_settings(self, job):
+        super().validate_job_settings(job)
+
+        if hasattr(job, 'to_dict'):
+            job = job.to_dict()
+
+        fps = job['settings'].get('fps')
+        if fps is not None and not isinstance(fps, (int, float)):
+            raise exceptions.JobSettingError(
+                f'Job {job["_id"]} has non-numerical "fps" setting {fps!r}')
 
     def _compile(self, job):
         self._log.info('Compiling job %s', job['_id'])
@@ -34,11 +45,11 @@ class BlenderRender(AbstractJobCompiler):
         self.final_dir = self.render_output.parent
         self.render_dir = intermediate_path(job, self.final_dir)
 
-        render_tasks = self._make_render_tasks(job)
-        create_video_task = self._make_create_video_task(job, render_tasks)
+        render_tasks, parent_tasks = self._make_render_tasks(job)
+        create_video_task = self._make_create_video_task(job, parent_tasks)
 
         if create_video_task is None:
-            final_parents = render_tasks
+            final_parents = parent_tasks
         else:
             final_parents = [create_video_task]
         self._make_move_to_final_task(job, final_parents)
@@ -131,10 +142,11 @@ class BlenderRender(AbstractJobCompiler):
                                     parents=parent_task_ids)
         return task_id
 
-    def _make_render_tasks(self, job) -> typing.List[bson.ObjectId]:
+    def _make_render_tasks(self, job) \
+            -> typing.Tuple[typing.List[bson.ObjectId], typing.List[bson.ObjectId]]:
         """Creates the render tasks for this job.
 
-        :returns: the list of task IDs.
+        :returns: two lists of task IDs: (all tasks, parent tasks for next command)
         """
         from flamenco.utils import iter_frame_range, frame_range_merge
 
@@ -147,7 +159,7 @@ class BlenderRender(AbstractJobCompiler):
 
             task_cmds = [
                 commands.BlenderRender(
-                    blender_cmd=job_settings['blender_cmd'],
+                    blender_cmd=job_settings.get('blender_cmd', '{blender}'),
                     filepath=job_settings['filepath'],
                     format=job_settings.get('format'),
                     render_output=str(self.render_dir / self.render_output.name),
@@ -157,4 +169,4 @@ class BlenderRender(AbstractJobCompiler):
             name = 'blender-render-%s' % frame_range
             task_ids.append(self._create_task(job, task_cmds, name, 'blender-render'))
 
-        return task_ids
+        return task_ids, task_ids

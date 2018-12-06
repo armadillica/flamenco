@@ -1,4 +1,5 @@
 import contextlib
+import typing
 
 
 def frame_range_parse(frame_range=None):
@@ -30,6 +31,38 @@ def frame_range_parse(frame_range=None):
             # print("Frame range %d-%d" % (frame_start, frame_end))
     frames_list.sort()
     return frames_list
+
+
+def frame_range_start_end(frame_range: typing.Optional[str]) \
+        -> typing.Tuple[typing.Optional[int], typing.Optional[int]]:
+    """Given a range of frames, return the start and end frame.
+
+    :Example:
+    >>> frame_range_start_end('0-100')
+    (0, 100)
+    >>> frame_range_start_end('1,3-5,8')
+    (1, 8)
+    """
+    if not frame_range:
+        return None, None
+
+    min_start = float('inf')
+    max_end = float('-inf')
+    for part in frame_range.split(','):
+        x = part.split("-")
+        num_parts = len(x)
+        if num_parts == 1:
+            frame = int(x[0])
+            part_start = part_end = frame
+        elif num_parts == 2:
+            part_start = int(x[0])
+            part_end = int(x[1])
+        else:
+            continue
+        min_start = min(min_start, part_start)
+        max_end = max(max_end, part_end)
+
+    return min_start, max_end
 
 
 def frame_range_merge(frames_list=None, blender_style=False):

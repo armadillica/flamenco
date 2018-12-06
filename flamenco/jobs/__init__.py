@@ -20,7 +20,7 @@ from flamenco import current_flamenco
 
 CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
 REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed', 'paused'}
-RECREATABLE_JOB_STATES = {'canceled'}
+RECREATABLE_JOB_STATES = {'canceled', 'completed'}
 ARCHIVE_JOB_STATES = {'archiving', 'archived'}  # states that represent more-or-less archived jobs.
 ARCHIVEABLE_JOB_STATES = REQUEABLE_JOB_STATES  # states from which a job can be archived.
 FAILED_TASKS_REQUEABLE_JOB_STATES = {'active', 'queued'}

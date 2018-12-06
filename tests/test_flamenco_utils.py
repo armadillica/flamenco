@@ -71,3 +71,15 @@ class FrameRangeTest(unittest.TestCase):
         self.assertEqual('camel_case_with_many_words', cctlcu('CamelCaseWithManyWords'))
         self.assertEqual('', cctlcu(''))
         self.assertIs(None, cctlcu(None))
+
+    def test_frame_range_start_end(self):
+        from flamenco.utils import frame_range_start_end
+
+        self.assertEqual((None, None), frame_range_start_end(None))
+        self.assertEqual((None, None), frame_range_start_end(''))
+        self.assertEqual((1, 1), frame_range_start_end('1,1'))
+        self.assertEqual((1, 10), frame_range_start_end('1,10'))
+        self.assertEqual((0, 100), frame_range_start_end('0-100'))
+        self.assertEqual((0, 140), frame_range_start_end('0-100, 130-140'))
+        self.assertEqual((0, 100), frame_range_start_end('0-100, 4-50'))
+        self.assertEqual((0, 100), frame_range_start_end('0-10, 99-100, 4-50'))

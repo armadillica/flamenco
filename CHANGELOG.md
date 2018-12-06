@@ -1,6 +1,27 @@
 Flamenco Server Changelog
 =========================
 
+## Version 2.2 (in development)
+
+- Added `blender-video-chunks` job type, together with `blender_render_audio`, `concatenate_videos`,
+  `mux_audio`, `encode_audio`, `remove_file`, and `move_with_counter` commands.
+
+  This job type is meant for encoding the edit of a film from the video sequence editor. In the
+  Blender Cloud add-on, configure it to use Matroska video and be sure to configure an audio codec
+  if you want audio to be in the final file.
+
+  The job consists of the following tasks:
+    - Per video chunk, render the frames as PNG and combine each chunk into a Matroska (MKV) video
+      file.
+    - Concatenate all MKV files into one file.
+    - Render the audio, convert to AAC.
+    - Mux audio and video into a single MKV file.
+    - Move that file to the final location, and name it with the current date, a counter to make the
+      filename unique, and the name of the blend file.
+- Requires Flamenco Worker 2.2 or newer.
+- Requires Blender Cloud add-on 2.0 or newer.
+
+
 ## Version 2.1 (released 2018-12-04)
 
 - Allow jobs to be started in 'paused' state. Such jobs are ignored by the Manager, and have to be
