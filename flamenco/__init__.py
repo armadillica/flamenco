@@ -356,7 +356,7 @@ class FlamencoExtension(PillarExtension):
             raise ValueError('Job ID %s not found', job_id)
 
         if job_doc['status'] not in RECREATABLE_JOB_STATES:
-            raise ValueError('Job recreation is only possible on jobs in state %s.',
+            raise ValueError('Job recreation is only possible on jobs in state %s.' %
                              ', '.join(RECREATABLE_JOB_STATES))
 
         # Delete the tasks and revert the job to 'under-construction' status before recompiling it.
