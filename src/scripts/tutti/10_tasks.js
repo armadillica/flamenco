@@ -289,45 +289,84 @@ function setJobStatus(job_id, new_status) {
  }
 
 /**
- * Request re-queueing of all failed tasks of this job.
- */
- function requeueFailedTasks(job_id) {
-    if (typeof job_id === 'undefined') {
-        if (console) console.log("requeueFailedTasks(" + job_id + ") called");
+  * Request re-queueing of all failed tasks of this job.
+  */
+function requeueFailedTasks(job_id) {
+     if (typeof job_id === 'undefined') {
+         if (console) console.log("requeueFailedTasks(" + job_id + ") called");
+         return;
+     }
+
+     return $.ajax({
+         method: 'PATCH',
+         url: '/api/flamenco/jobs/' + job_id,
+         contentType: 'application/json',
+         data: JSON.stringify({'op': 'requeue-failed-tasks'}),
+     })
+     .done(function(data) {
+         if(console) console.log('Re-queued all failed tasks');
+         // Reload the entire page, since both the view-embed and the job list need refreshing.
+         location.reload(true);
+     })
+     .fail(function(xhr) {
+         if (console) {
+             console.log('Error requesting re-queueing of failed tasks');
+             console.log('XHR:', xhr);
+         }
+
+         statusBarSet('error', 'Error requesting re-queueing of failed tasks', 'pi-error');
+
+         var show_html;
+         if (xhr.status) {
+             show_html = xhrErrorResponseElement(xhr, 'Failed task requeue request failed: ');
+         } else {
+             show_html = $('<p>').addClass('text-danger').text(
+               'Failed task requeue request failed. There possibly was an error connecting to the server. ' +
+               'Please check your network connection and try again.');
+         }
+         $('#item-action-panel .action-result-panel').html(show_html);
+     });
+}
+
+
+/**
+  * Request re-queueing of the task and its successors on the dependency graph.
+  */
+function requeueTaskAndSuccessors(task_id) {
+    if (typeof task_id === 'undefined') {
+        if (console) console.log("requeueTaskAndSuccessors(" + task_id + ") called");
         return;
     }
-
     return $.ajax({
-        method: 'PATCH',
-        url: '/api/flamenco/jobs/' + job_id,
-        contentType: 'application/json',
-        data: JSON.stringify({'op': 'requeue-failed-tasks'}),
-    })
-    .done(function(data) {
-        if(console) console.log('Re-queued all failed tasks');
-        // Reload the entire page, since both the view-embed and the job list need refreshing.
-        location.reload(true);
-    })
-    .fail(function(xhr) {
-        if (console) {
-            console.log('Error requesting re-queueing of failed tasks');
-            console.log('XHR:', xhr);
-        }
-
-        statusBarSet('error', 'Error requesting re-queueing of failed tasks', 'pi-error');
-
-        var show_html;
-        if (xhr.status) {
-            show_html = xhrErrorResponseElement(xhr, 'Failed task requeue request failed: ');
-        } else {
-            show_html = $('<p>').addClass('text-danger').text(
-              'Failed task requeue request failed. There possibly was an error connecting to the server. ' +
-              'Please check your network connection and try again.');
-        }
-        $('#item-action-panel .action-result-panel').html(show_html);
-    });
- }
-
+            method: 'PATCH',
+            url: '/api/flamenco/tasks/' + task_id,
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'op': 'requeue'
+            }),
+        })
+        .done(function(data) {
+            if (console) console.log('Re-queue task', task_id);
+            // Reload the entire page, since both the view-embed and the job list need refreshing.
+            location.reload(true);
+        })
+        .fail(function(xhr) {
+            if (console) {
+                console.log('Error requesting re-queueing task');
+                console.log('XHR:', xhr);
+            }
+            statusBarSet('error', 'Error requesting re-queueing task', 'pi-error');
+            var show_html;
+            if (xhr.status) {
+                show_html = xhrErrorResponseElement(xhr, 'Task requeue request failed: ');
+            } else {
+                show_html = $('<p>').addClass('text-danger').text(
+                    'Task requeue request failed. There possibly was an error connecting to the server. ' +
+                    'Please check your network connection and try again.');
+            }
+            $('#item-action-panel .action-result-panel').html(show_html);
+        });
+}
 
 /**
  * Request cancellation or re-queueing of the given task ID.

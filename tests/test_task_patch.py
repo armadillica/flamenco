@@ -16,8 +16,8 @@ class TaskPatchingTest(AbstractFlamencoTest):
         self.mngr_id = self.mngr_doc['_id']
         self.mngr_token = token['token']
 
-        self.create_user(user_id=24 * 'f', roles={'flamenco-admin'})
-        self.create_valid_auth_token(24 * 'f', 'fladmin-token')
+        uid = self.create_user(user_id=24 * 'f', roles={'flamenco-admin'})
+        self.create_valid_auth_token(uid, 'fladmin-token')
 
         with self.app.test_request_context():
             force_cli_user()
@@ -216,3 +216,74 @@ class TaskPatchingTest(AbstractFlamencoTest):
             expected_status=204,
         )
         self.assert_task_status(task_id, 'queued')
+
+
+class ComplexerJobTest(AbstractFlamencoTest):
+    def setUp(self, **kwargs):
+        AbstractFlamencoTest.setUp(self, **kwargs)
+
+        from pillar.api.utils.authentication import force_cli_user
+
+        self.mngr_doc, account, token = self.create_manager_service_account()
+        self.mngr_id = self.mngr_doc['_id']
+        self.mngr_token = token['token']
+
+        uid = self.create_user(user_id=24 * 'f', roles={'flamenco-admin'})
+        self.create_valid_auth_token(uid, 'fladmin-token')
+
+        with self.app.test_request_context():
+            force_cli_user()
+            job = self.jmngr.api_create_job(
+                'test job',
+                'Wörk wørk w°rk.',
+                'blender-video-chunks',
+                {
+                    'frames': '100-250',
+                    'fps': 24,
+                    'chunk_size': 100,
+                    'render_output': '/tmp/render/spring/export/FILENAME.MKV',
+                    'filepath': '/spring/edit/sprloing.blend',
+                    'output_file_extension': '.mkv',
+                    'images_or_video': 'video',
+                    'extract_audio': True,
+                },
+                self.proj_id,
+                ctd.EXAMPLE_PROJECT_OWNER_ID,
+                self.mngr_id,
+            )
+            self.job_id = job['_id']
+
+    def test_requeue_task_and_successors(self):
+        with self.app.app_context():
+            tasks_coll = self.app.db('flamenco_tasks')
+            tasks_coll.update_many({}, {'$set': {'status': 'completed'}})
+            self.force_job_status('completed')
+
+            one_task = tasks_coll.find_one({'name': 'frame-chunk-200-250', 'job': self.job_id})
+            one_task_id = one_task['_id']
+
+        # Re-queueing a task on a completed job should re-queue the job too,
+        # and re-queue the successors.
+        self.patch(
+            '/api/flamenco/tasks/%s' % one_task_id,
+            json={'op': 'requeue'},
+            auth_token='fladmin-token',
+            expected_status=204,
+        )
+        self.assert_job_status('queued')
+
+        expected_requeue = {
+            'frame-chunk-200-250',
+            'video-chunk-200-250',
+            'concatenate-videos',
+            'mux-audio-video',
+            'move-with-counter',
+        }
+
+        with self.app.app_context():
+            for task in tasks_coll.find({'job': self.job_id}):
+                if task['name'] in expected_requeue:
+                    expected_status = 'queued'
+                else:
+                    expected_status = 'completed'
+                self.assertEqual(expected_status, task['status'], f"for task {task['name']}")

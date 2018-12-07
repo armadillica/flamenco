@@ -1,4 +1,5 @@
 """Task management."""
+import typing
 
 import attr
 import datetime
@@ -198,6 +199,32 @@ class TaskManager(object):
         tasks_coll = self.collection()
         delres: DeleteResult = tasks_coll.delete_many({'job': job_id})
         self._log.info('Deleted %i tasks of job %s', delres.deleted_count, job_id)
+
+    def api_requeue_task_and_successors(self, task_id: bson.ObjectId):
+        """Recursively re-queue a task and its successors on the job's depsgraph.
+
+        Does not update the job status itself. This is the responsibility
+        of the caller.
+        """
+        from flamenco import current_flamenco
+
+        tasks_coll = self.collection()
+        visited_tasks: typing.MutableSet[bson.ObjectId] = set()
+
+        def visit_task(tid: bson.ObjectId, depth: int):
+            if depth > 10000:
+                raise ValueError('Infinite recursion detected')
+
+            if tid in visited_tasks:
+                return
+            visited_tasks.add(tid)
+
+            current_flamenco.update_status('tasks', tid, 'queued')
+            children = tasks_coll.find({'parents': tid}, projection={'_id': True})
+            for child in children:
+                visit_task(child['_id'], depth + 1)
+
+        visit_task(task_id, 0)
 
 
 def setup_app(app):
