@@ -97,6 +97,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
             mock.call(  # 2
                 job_doc,
                 [commands.CreateVideo(
+                    ffmpeg_cmd='{ffmpeg}',
                     input_files=f'{frames}/chunk-00100-00199/*.png',
                     output_file=f'{frames}/chunk-00100-00199{extension}',
                     fps=24)],
@@ -121,6 +122,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
             mock.call(  # 4
                 job_doc,
                 [commands.CreateVideo(
+                    ffmpeg_cmd='{ffmpeg}',
                     input_files=f'{frames}/chunk-00200-00250/*.png',
                     output_file=f'{frames}/chunk-00200-00250{extension}',
                     fps=24)],
@@ -147,6 +149,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
             mock.call(  # 6
                 job_doc,
                 [commands.EncodeAudio(
+                    ffmpeg_cmd='{ffmpeg}',
                     input_file=f'{frames}/audio.flac',
                     codec='aac',
                     bitrate='192k',
@@ -162,6 +165,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
             mock.call(  # 7
                 job_doc,
                 [commands.ConcatenateVideos(
+                    ffmpeg_cmd='{ffmpeg}',
                     input_files=f'{frames}/chunk-*{extension}',
                     output_file=f'{frames}/video.mkv',
                 )],
@@ -175,6 +179,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
             mock.call(  # 8
                 job_doc,
                 [commands.MuxAudio(
+                    ffmpeg_cmd='{ffmpeg}',
                     audio_file=f'{frames}/audio.aac',
                     video_file=f'{frames}/video.mkv',
                     output_file=f'{frames}/muxed.mkv',
@@ -274,6 +279,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
             mock.call(  # 2
                 job_doc,
                 [commands.CreateVideo(
+                    ffmpeg_cmd='{ffmpeg}',
                     input_files=f'{frames}/chunk-00100-00199/*.png',
                     output_file=f'{frames}/chunk-00100-00199{extension}',
                     fps=24)],
@@ -298,6 +304,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
             mock.call(  # 4
                 job_doc,
                 [commands.CreateVideo(
+                    ffmpeg_cmd='{ffmpeg}',
                     input_files=f'{frames}/chunk-00200-00250/*.png',
                     output_file=f'{frames}/chunk-00200-00250{extension}',
                     fps=24)],
@@ -311,6 +318,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
             mock.call(  # 5
                 job_doc,
                 [commands.ConcatenateVideos(
+                    ffmpeg_cmd='{ffmpeg}',
                     input_files=f'{frames}/chunk-*{extension}',
                     output_file=f'{frames}/video.mkv',
                 )],

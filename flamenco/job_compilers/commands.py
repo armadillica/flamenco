@@ -187,6 +187,9 @@ class MuxAudio(AbstractCommand):
     video_file: str
     output_file: str
 
+    # Path to the ffmpeg binary. This is usually determined by the Flamenco Manager configuration.
+    ffmpeg_cmd: str = '{ffmpeg}'
+
 
 @attr.s(auto_attribs=True)
 class EncodeAudio(AbstractCommand):
@@ -196,6 +199,9 @@ class EncodeAudio(AbstractCommand):
     codec: str
     bitrate: str  # like '192k'
     output_file: str
+
+    # Path to the ffmpeg binary. This is usually determined by the Flamenco Manager configuration.
+    ffmpeg_cmd: str = '{ffmpeg}'
 
 
 @attr.s(auto_attribs=True)
