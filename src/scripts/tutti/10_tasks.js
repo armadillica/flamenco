@@ -261,6 +261,11 @@ function setJobStatus(job_id, new_status) {
     .done(function(data) {
         if(console) console.log('Job recreate request OK');
         // Reload the entire page, since both the view-embed and the job list need refreshing.
+        // However, if we have a task open now, that'll result in a 404 since the tasks will
+        // be deleted.
+        if (typeof document.body.dataset.taskId != 'undefined') {
+            closeTaskDetails();
+        }
         location.reload(true);
     })
     .fail(function(xhr) {
