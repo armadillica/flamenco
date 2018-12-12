@@ -14,6 +14,8 @@ html(lang="en")
 		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery-3.1.0.min.js')}}")
 		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery.bootstrap-3.3.7.min.js') }}")
 		script(src="{{ url_for('static_pillar', filename='assets/js/tutti.min.js') }}")
+		script.
+			pillar.utils.initCurrentUser({{ current_user | json | safe }});
 		script(src="{{ url_for('static_flamenco', filename='assets/js/generated/tutti.min.js') }}")
 		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/clipboard.min.js')}}")
 
