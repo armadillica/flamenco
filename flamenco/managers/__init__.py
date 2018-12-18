@@ -174,8 +174,7 @@ class ManagerManager(object):
         """
 
         if not self.user_is_manager():
-            self._log.debug('user_manages(...): user %s is not a Flamenco manager service account',
-                            current_user.user_id)
+            # User is not a Flamenco manager service account.
             return False
 
         mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'service_account': 1})
