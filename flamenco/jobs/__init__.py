@@ -183,12 +183,16 @@ class JobManager(object):
             return
 
         if new_task_status == 'canceled':
-            # This could be the last cancel-requested task to go to 'canceled.
-            statuses = tasks_coll.distinct('status', {'job': job_id})
-            if 'cancel-requested' not in statuses:
-                self._log.info('Last task %s of job %s went from cancel-requested to canceled.',
-                               task_id, job_id)
-                self.api_set_job_status(job_id, 'canceled')
+            # Only trigger cancellation of the job if that was actually requested.
+            # A user can also cancel a single task from the Server web UI or API.
+            job = jobs_coll.find_one(job_id, projection={'status': 1})
+            if job['status'] == 'cancel-requested':
+                # This could be the last cancel-requested task to go to 'canceled.
+                statuses = tasks_coll.distinct('status', {'job': job_id})
+                if 'cancel-requested' not in statuses:
+                    self._log.info('Last task %s of job %s went from cancel-requested to canceled.',
+                                   task_id, job_id)
+                    self.api_set_job_status(job_id, 'canceled')
             return
 
         if new_task_status == 'failed':

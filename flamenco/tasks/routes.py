@@ -104,11 +104,12 @@ def view_task(project, flamenco_props, task_id):
 
     task = Task.find(task_id, api=api)
 
-    from . import REQUEABLE_TASK_STATES
+    from . import REQUEABLE_TASK_STATES, CANCELABLE_TASK_STATES
     project_id = bson.ObjectId(project['_id'])
 
     write_access = current_flamenco.auth.current_user_may(Actions.USE, project_id)
     can_requeue_task = write_access and task['status'] in REQUEABLE_TASK_STATES
+    can_cancel_task = write_access and task['status'] in CANCELABLE_TASK_STATES
     if write_access and task.log:
         # Having task.log means the Manager is using the current approach of sending
         # the log tail only. Not having it means the Manager is using the deprecated
@@ -126,7 +127,8 @@ def view_task(project, flamenco_props, task_id):
                            flamenco_context=request.args.get('context'),
                            log_download_url=log_download_url,
                            can_view_log=write_access,
-                           can_requeue_task=can_requeue_task)
+                           can_requeue_task=can_requeue_task,
+                           can_cancel_task=can_cancel_task)
 
 
 @perproject_blueprint.route('/<task_id>/set-status', methods=['POST'])

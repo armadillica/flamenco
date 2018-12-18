@@ -101,6 +101,11 @@
 			i.pi-refresh
 			| Re-queue Task + Successors
 		| {% endif %}
+		| {% if can_cancel_task %}
+		button.btn.btn-danger.cancel-task(onclick="setTaskStatus('{{ task._id }}', 'cancel-requested')")
+			i.pi-refresh
+			| Cancel Single Task
+		| {% endif %}
 		.action-result-panel
 
 | {% if can_view_log %}
