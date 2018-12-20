@@ -126,6 +126,8 @@ def flamenco_project_view(extra_project_projections: dict = None,
             project_id = bson.ObjectId(project['_id'])
             auth = current_flamenco.auth
             if not auth.current_user_may(action, project_id):
+                if current_user.is_anonymous:
+                    raise wz_exceptions.Forbidden('Login required for this URL')
                 log.info('Denying user %s access %s to Flamenco on project %s',
                          flask_login.current_user, action, project_id)
                 return error_project_not_available()
