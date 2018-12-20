@@ -25,7 +25,11 @@ blueprint = Blueprint('flamenco.managers', __name__, url_prefix='/managers')
 def index(manager_id: str = None):
     api = pillar_api()
 
-    managers = Manager.all(api=api)
+    if current_user.is_authenticated:
+        params = {'where': {'owner': {'$in': current_user.groups}}}
+    else:
+        params = None
+    managers = Manager.all(params=params, api=api)
 
     if not manager_id and managers['_items']:
         manager_id = managers['_items'][0]._id
