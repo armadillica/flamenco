@@ -46,7 +46,8 @@ def index():
     man_man = current_flamenco.manager_manager
     managers = list(man_man.owned_managers(
         current_user.group_ids, {'_id': 1, 'name': 1}))
-    manager_limit_reached = len(managers) >= flamenco.auth.MAX_MANAGERS_PER_USER
+    manager_limit_reached = not current_user.has_cap('admin') and \
+                            len(managers) >= flamenco.auth.MAX_MANAGERS_PER_USER
 
     # Get the query arguments
     identifier: str = request.args.get('identifier', '')

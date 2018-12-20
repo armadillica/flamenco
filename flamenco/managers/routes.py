@@ -38,7 +38,8 @@ def index(manager_id: str = None):
 
     # TODO Sybren: move this to a utility function + check on endpoint to create manager
     may_use_flamenco = current_user.has_cap('flamenco-use')
-    can_create_manager = may_use_flamenco and not manager_limit_reached
+    can_create_manager = may_use_flamenco and (
+            not manager_limit_reached or current_user.has_cap('admin'))
 
     return render_template('flamenco/managers/index.html',
                            manager_limit_reached=manager_limit_reached,
