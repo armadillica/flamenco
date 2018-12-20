@@ -41,15 +41,21 @@ def for_project(project, job_id=None, task_id=None):
     api = pillar_api()
 
     is_archive = request.blueprint == perproject_archive_blueprint.name
-    jobs = current_flamenco.job_manager.jobs_for_project(project['_id'],
-                                                         archived=is_archive)
 
     # See if we need to redirect between archive and non-archive view.
-    if job_id and not any(job['_id'] == job_id for job in jobs['_items']):
-        target_blueprint = blueprint_for_archived[not is_archive]
-        target_endpoint = request.endpoint.split('.')[-1]
-        new_url = url_for(f'{target_blueprint.name}.{target_endpoint}', **request.view_args)
-        return redirect(new_url, code=307)
+    if job_id:
+        from .sdk import Job
+        job = Job.find(job_id, api=api)
+        job_is_archived = job.status == 'archived'
+
+        if job_is_archived != is_archive:
+            target_blueprint = blueprint_for_archived[not is_archive]
+            target_endpoint = request.endpoint.split('.')[-1]
+            new_url = url_for(f'{target_blueprint.name}.{target_endpoint}', **request.view_args)
+            return redirect(new_url, code=307)
+
+    jobs = current_flamenco.job_manager.jobs_for_project(project['_id'],
+                                                         archived=is_archive)
 
     @functools.lru_cache()
     def manager_name(manager_id: str) -> str:
