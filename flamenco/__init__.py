@@ -9,6 +9,8 @@ from werkzeug.local import LocalProxy
 
 import pillarsdk
 from pillar.extension import PillarExtension
+from pillar.auth import current_user
+
 
 EXTENSION_NAME = 'flamenco'
 
@@ -206,6 +208,8 @@ class FlamencoExtension(PillarExtension):
     def flamenco_projects(self, *, projection: dict = None):
         """Returns projects set up for Flamenco.
 
+        If the current user is authenticated, limits to that user's projects.
+
         :returns: {'_items': [proj, proj, ...], '_meta': Eve metadata}
         """
 
@@ -215,9 +219,15 @@ class FlamencoExtension(PillarExtension):
         api = pillar_api()
 
         # Find projects that are set up for Flamenco.
-        params = {'where': {'extension_props.flamenco': {'$exists': 1}}}
+        params: typing.MutableMapping[str, typing.Any] = {'where': {
+            'extension_props.flamenco': {'$exists': 1},
+        }}
         if projection:
             params['projection'] = projection
+
+        if current_user.is_authenticated:
+            # Limit to projects current user is member of (rather than has access to).
+            params['where']['permissions.groups.group'] = {'$in': current_user.groups}
 
         projects = pillarsdk.Project.all(params, api=api)
         return projects
