@@ -205,6 +205,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 'blender-render-1,2',
                 status='under-construction',
                 task_type='blender-render',
+                parents=None,
             ),
             mock.call(
                 job_doc,
@@ -217,6 +218,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 'blender-render-3,4',
                 status='under-construction',
                 task_type='blender-render',
+                parents=None,
             ),
             mock.call(
                 job_doc,
@@ -229,6 +231,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 'blender-render-5',
                 status='under-construction',
                 task_type='blender-render',
+                parents=None,
             ),
 
             # Move to final location
@@ -239,6 +242,122 @@ class BlenderRenderTest(AbstractFlamencoTest):
                     dest='/render/out')],
                 'move-to-final',
                 parents=task_ids[0:3],
+                status='under-construction',
+                task_type='file-management',
+            ),
+        ])
+
+        task_manager.api_set_task_status_for_job.assert_called_with(
+            job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+
+    @mock.patch('datetime.datetime')
+    def test_rna_overrides(self, mock_datetime):
+        from flamenco.job_compilers import blender_render, commands
+
+        job_doc = JobDocForTesting({
+            '_id': ObjectId(24 * 'f'),
+            '_created': self.created,
+            'settings': {
+                'frames': '1-5',
+                'chunk_size': 2,
+                'render_output': '/render/out/frames-######',
+                'format': 'EXR',
+                'filepath': '/agent327/scenes/someshot/somefile.blend',
+                'blender_cmd': '/path/to/blender --enable-new-depsgraph',
+                'rna_overrides': [
+                    'bpy.context.scene.render.stamp_note_text = "je moeder"',
+                    'bpy.context.scene.render.use_stamp_note = True',
+                    'bpy.context.scene.render.use_stamp = True',
+                ],
+            },
+            'job_type': 'blender-render',
+        })
+
+        expect_rna_overrides = '\n'.join([blender_render.RNA_OVERRIDES_HEADER,
+                                          *job_doc['settings']['rna_overrides']])
+
+        task_manager = mock.Mock()
+        job_manager = mock.Mock()
+
+        # Create a stable 'now' for testing.
+        mock_now = datetime.datetime.now(tz=tz_util.utc)
+        mock_datetime.now.side_effect = [mock_now]
+
+        # We expect:
+        # - 1 RNA override task
+        # - 3 frame chunks of 2 frames each
+        # - 1 move-to-final task
+        # so that's 5 tasks in total.
+        task_ids = [ObjectId() for _ in range(5)]
+        task_manager.api_create_task.side_effect = task_ids
+
+        compiler = blender_render.BlenderRender(
+            task_manager=task_manager, job_manager=job_manager)
+        compiler.compile(job_doc)
+
+        task_manager.api_create_task.assert_has_calls([
+            # Override task
+            mock.call(
+                job_doc,
+                [commands.CreatePythonFile(
+                    filepath='/agent327/scenes/someshot/somefile-overrides.py',
+                    contents=expect_rna_overrides,
+                )],
+                blender_render.RNA_OVERRIDES_TASK_NAME,
+                status='under-construction',
+                task_type='file-management',
+                parents=None,
+            ),
+            # Render tasks
+            mock.call(
+                job_doc,
+                [commands.BlenderRender(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    format='EXR',
+                    render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
+                    frames='1,2')],
+                'blender-render-1,2',
+                status='under-construction',
+                task_type='blender-render',
+                parents=[task_ids[0]],
+            ),
+            mock.call(
+                job_doc,
+                [commands.BlenderRender(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    format='EXR',
+                    render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
+                    frames='3,4')],
+                'blender-render-3,4',
+                status='under-construction',
+                task_type='blender-render',
+                parents=[task_ids[0]],
+            ),
+            mock.call(
+                job_doc,
+                [commands.BlenderRender(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    format='EXR',
+                    render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
+                    frames='5')],
+                'blender-render-5',
+                status='under-construction',
+                task_type='blender-render',
+                parents=[task_ids[0]],
+            ),
+
+            # Move to final location
+            mock.call(
+                job_doc,
+                [commands.MoveToFinal(
+                    src='/render/out__intermediate-2018-07-06_115233',
+                    dest='/render/out')],
+                'move-to-final',
+                parents=task_ids[1:4],
                 status='under-construction',
                 task_type='file-management',
             ),
@@ -309,6 +428,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 'blender-render-1-3',
                 status='under-construction',
                 task_type='blender-render',
+                parents=None,
             ),
             mock.call(
                 job_doc,
@@ -321,6 +441,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 'blender-render-4,5',
                 status='under-construction',
                 task_type='blender-render',
+                parents=None,
             ),
 
             # Create a video of the final frames.
@@ -417,6 +538,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 'blender-render-1-3',
                 status='under-construction',
                 task_type='blender-render',
+                parents=None,
             ),
             mock.call(
                 job_doc,
@@ -429,6 +551,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 'blender-render-4,5',
                 status='under-construction',
                 task_type='blender-render',
+                parents=None,
             ),
 
             # Move to final location

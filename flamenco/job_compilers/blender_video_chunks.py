@@ -7,11 +7,11 @@ from bson import ObjectId
 from pillar import attrs_extra
 
 from flamenco import exceptions
-from . import abstract_compiler, commands, register_compiler
+from . import abstract_compiler, blender_render, commands, register_compiler
 
 
 @register_compiler('blender-video-chunks')
-class BlenderVideoChunks(abstract_compiler.AbstractJobCompiler):
+class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
     """Render video as chunks, then use ffmpeg to merge.
 
     Creates a render task for each frame chunk, and then merges the output
@@ -64,7 +64,8 @@ class BlenderVideoChunks(abstract_compiler.AbstractJobCompiler):
 
         # Construct the tasks.
         moow_tid = self._make_moow_task(job)
-        render_tasks, parent_tasks = self._make_render_tasks(job, moow_tid)
+        rna_overrides_task_id = self._make_rna_overrides_task(job, moow_tid)
+        render_tasks, parent_tasks = self._make_render_tasks(job, rna_overrides_task_id or moow_tid)
 
         audio_tid = self._make_extract_audio_task(job, [moow_tid])
         video_tid = self._make_concat_video_task(job, parent_tasks)

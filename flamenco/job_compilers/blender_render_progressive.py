@@ -5,12 +5,11 @@ from bson import ObjectId
 
 from pillar import attrs_extra
 
-from .abstract_compiler import AbstractJobCompiler
-from . import commands, register_compiler
+from . import blender_render, commands, register_compiler
 
 
 @register_compiler('blender-render-progressive')
-class BlenderRenderProgressive(AbstractJobCompiler):
+class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
     """Progressive Blender render job.
 
     Creates a render task for each Cycles sample chunk, and creates merge
@@ -40,7 +39,9 @@ class BlenderRenderProgressive(AbstractJobCompiler):
         self.intermediate_path = intermediate_path(job, self.render_path)
 
         destroy_interm_task_id = self._make_destroy_intermediate_task(job)
-        task_count = 1
+        rna_overrides_task_id = self._make_rna_overrides_task(job, destroy_interm_task_id)
+        render_parent_task_id = rna_overrides_task_id or destroy_interm_task_id
+        task_count = 1 + bool(rna_overrides_task_id)
 
         cycles_sample_count = int(self.job_settings['cycles_sample_count'])
         self.cycles_num_chunks = int(self.job_settings['cycles_num_chunks'])
@@ -60,7 +61,7 @@ class BlenderRenderProgressive(AbstractJobCompiler):
             render_task_ids = self._make_progressive_render_tasks(
                 job,
                 'render-smpl%i-%i-frm%%s' % (cycles_samples_from, cycles_samples_to),
-                destroy_interm_task_id,
+                render_parent_task_id,
                 cycles_chunk_idx + 1,
                 cycles_samples_from,
                 cycles_samples_to,

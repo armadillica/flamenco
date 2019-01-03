@@ -83,6 +83,14 @@ class BlenderRenderAudio(AbstractCommand):
 
 
 @attr.s(auto_attribs=True)
+class CreatePythonFile(AbstractCommand):
+    """Write a Python file to a specific location."""
+
+    filepath: str
+    contents: str
+
+
+@attr.s(auto_attribs=True)
 class MoveOutOfWay(AbstractCommand):
     """Moves a file or directory out of the way.
 
