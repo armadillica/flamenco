@@ -6,7 +6,7 @@ from bson import ObjectId
 
 from pillar import attrs_extra
 
-from flamenco import exceptions
+from flamenco import current_flamenco, exceptions
 from . import abstract_compiler, blender_render, commands, register_compiler
 
 
@@ -209,3 +209,10 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
         )
         return self._create_task(job, [cmd], 'move-with-counter', 'file-management',
                                  parents=parent_task_ids)
+
+    def insert_rna_overrides_task(self, job: dict) -> ObjectId:
+        """Inject a new RNA Overrides task into an existing job.
+
+        Returns the new task ID.
+        """
+        return self._insert_rna_overrides_task(job, {'name': 'move-out-of-way'})

@@ -65,6 +65,28 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
         current_flamenco.task_manager.api_set_task_status_for_job(
             job_id, from_status='failed', to_status='queued')
 
+    @authorization.require_login(require_cap='flamenco-use')
+    def patch_rna_overrides(self, job_id: bson.ObjectId, patch: dict):
+        """Update the RNA overrides of this render job, and re-queue dependent tasks.
+
+        Note that once a job has RNA overrides, the RNA overrides task cannot
+        be deleted. If such task deletion were possible, it would still not
+        delete the RNA override file and effectively keep the old overrides in
+        place. Having an empty overrides file is better.
+        """
+        self.assert_job_access(job_id)
+
+        rna_overrides = patch.get('rna_overrides') or []
+        if not all(isinstance(override, str) for override in rna_overrides):
+            log.info('User %s wants to PATCH job %s to set RNA overrides, but not all '
+                     'overrides are strings', current_user_id(), job_id)
+            raise wz_exceptions.BadRequest(f'"rna_overrides" should be a list of strings,'
+                                           f' not {rna_overrides!r}')
+
+        log.info('User %s uses PATCH to update RNA overrides of job %s to %d overrides',
+                 current_user_id(), job_id, len(rna_overrides))
+        current_flamenco.job_manager.api_update_rna_overrides(job_id, rna_overrides)
+
     def assert_job_access(self, job_id: bson.ObjectId) -> dict:
         # TODO: possibly store job and project into flask.g to reduce the nr of Mongo queries.
         job = current_flamenco.db('jobs').find_one({'_id': job_id},

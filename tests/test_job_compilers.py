@@ -275,7 +275,8 @@ class BlenderRenderTest(AbstractFlamencoTest):
         })
 
         expect_rna_overrides = '\n'.join([blender_render.RNA_OVERRIDES_HEADER,
-                                          *job_doc['settings']['rna_overrides']])
+                                          *job_doc['settings']['rna_overrides'],
+                                          ''])
 
         task_manager = mock.Mock()
         job_manager = mock.Mock()

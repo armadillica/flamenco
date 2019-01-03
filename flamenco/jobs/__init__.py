@@ -17,6 +17,7 @@ from pillar.api.utils import random_etag, utcnow
 from pillar.web.system_util import pillar_api
 
 from flamenco import current_flamenco
+from flamenco.job_compilers import blender_render, construct_job_compiler
 
 CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
 REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed', 'paused'}
@@ -428,6 +429,41 @@ class JobManager(object):
                                                   }})
         self._log.debug('Matched %d tasks while setting job %s to priority %r',
                         result.matched_count, job_id, new_priority)
+
+    def api_update_rna_overrides(self, job_id: bson.ObjectId, rna_overrides: typing.List[str]):
+        """API-level call to create or update an RNA override task of a Blender Render job."""
+
+        new_etag = random_etag()
+        now = utcnow()
+        jobs_coll = current_flamenco.db('jobs')
+
+        # Check that the job exists and is a Blender-related job.
+        job = jobs_coll.find_one({'_id': job_id})
+        if not job:
+            self._log.warning('Unable to update RNA overrides of non-existing job %s', job_id)
+            return None
+
+        compiler = construct_job_compiler(job)
+        if not isinstance(compiler, blender_render.AbstractBlenderJobCompiler):
+            self._log.warning('Job compiler %r is not an AbstractBlenderJobCompiler, unable '
+                              'to update RNA overrides for job %s of type %r',
+                              type(compiler), job_id, job['job_type'])
+            return None
+
+        # Update the job itself before updating its tasks. Ideally this would happen in the
+        # same transaction.
+        # TODO(Sybren): put into one transaction when we upgrade to MongoDB 4+.
+        job['settings']['rna_overrides'] = rna_overrides
+        result = jobs_coll.update_one({'_id': job_id}, {'$set': {
+            'settings.rna_overrides': rna_overrides,
+            '_updated': now,
+            '_etag': new_etag,
+        }})
+        if result.matched_count != 1:
+            self._log.warning('Matched %d jobs while setting job %s RNA overrides',
+                              result.matched_count, job_id)
+
+        compiler.update_rna_overrides_task(job)
 
 
 def setup_app(app):

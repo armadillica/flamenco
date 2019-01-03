@@ -6,6 +6,7 @@ import bson
 from pillar import attrs_extra
 
 from flamenco import current_flamenco, exceptions
+from pillar.api.utils import random_etag, utcnow
 from .abstract_compiler import AbstractJobCompiler
 from . import commands, register_compiler
 
@@ -18,6 +19,7 @@ RNA_OVERRIDES_HEADER = """\
 #
 # This file should be placed next to the blend file that is going to be
 # rendered and named the same (except '-overrides.py' instead of '.blend').
+import bpy
 """
 
 
@@ -42,7 +44,7 @@ def rna_overrides_command(job: dict) -> commands.CreatePythonFile:
     index = filepath.lower().rindex('.blend')
     override_filepath = filepath[:index] + '-overrides.py'
 
-    file_contents = '\n'.join((RNA_OVERRIDES_HEADER, *rna_overrides))
+    file_contents = '\n'.join((RNA_OVERRIDES_HEADER, *rna_overrides, ''))
     cmd = commands.CreatePythonFile(
         filepath=override_filepath,
         contents=file_contents,
@@ -51,6 +53,9 @@ def rna_overrides_command(job: dict) -> commands.CreatePythonFile:
 
 
 class AbstractBlenderJobCompiler(AbstractJobCompiler, metaclass=abc.ABCMeta):
+    """Blender Render job compiler with support for RNA Overrides."""
+    _log = attrs_extra.log('%s.AbstractBlenderJobCompiler' % __name__)
+
     def _make_rna_overrides_task(self,
                                  job: dict,
                                  parent_task_id: typing.Optional[bson.ObjectId] = None) \
@@ -66,6 +71,74 @@ class AbstractBlenderJobCompiler(AbstractJobCompiler, metaclass=abc.ABCMeta):
         task_id = self._create_task(job, [cmd], RNA_OVERRIDES_TASK_NAME, 'file-management',
                                     parents=parent_task_ids)
         return task_id
+
+    @abc.abstractmethod
+    def insert_rna_overrides_task(self, job: dict) -> bson.ObjectId:
+        """Inject a new RNA Overrides task into an existing job.
+
+        Implement in a subclass. Can use _insert_rna_overrides_task() to do
+        the heavy lifting.
+
+        Returns the new task ID.
+        """
+
+    def _insert_rna_overrides_task(self, job: dict,
+                                   parent_task_selector: dict) -> bson.ObjectId:
+        # Find the task that is supposed to be the parent of the new task.
+        tasks_coll = current_flamenco.db('tasks')
+        if parent_task_selector:
+            parent_task = tasks_coll.find_one({'job': job['_id'], **parent_task_selector},
+                                              projection={'_id': True})
+            if not parent_task:
+                raise ValueError('unable to find move-out-of-way task, cannot update this job')
+
+            parents_kwargs = {'parents': [parent_task['_id']]}
+        else:
+            parents_kwargs = {}
+
+        # Construct the new task.
+        cmd = rna_overrides_command(job)
+        task_id = self._create_task(job, [cmd], RNA_OVERRIDES_TASK_NAME,
+                                    'file-management', priority=80,
+                                    status='queued', **parents_kwargs)
+        self._log.info('Inserted RNA Overrides task %s into job %s', task_id, job['_id'])
+
+        # Update existing render tasks to have the new task as parent.
+        new_etag = random_etag()
+        now = utcnow()
+        result = tasks_coll.update_many({
+            'job': job['_id'],
+            'task_type': 'blender-render',
+            **parents_kwargs,
+        }, {'$set': {
+            '_etag': new_etag,
+            '_updated': now,
+            'parents': [task_id],
+        }})
+        self._log.debug('Updated %d task parent pointers to %s', result.modified_count, task_id)
+        return task_id
+
+    def update_rna_overrides_task(self, job: dict):
+        """Update or create an RNA Overrides task of an existing job."""
+        tasks_coll = current_flamenco.db('tasks')
+        task = tasks_coll.find_one({'job': job['_id'], 'name': RNA_OVERRIDES_TASK_NAME},
+                                   projection={'_id': True})
+        if not task:
+            self.insert_rna_overrides_task(job)
+            return
+
+        cmd = rna_overrides_command(job)
+        new_etag = random_etag()
+        now = utcnow()
+        result = tasks_coll.update_one(task, {'$set': {
+            '_etag': new_etag,
+            '_updated': now,
+            'status': 'queued',
+            'commands': [cmd.to_dict()],
+        }})
+
+        self._log.info('Modified %d RNA override task (%s) of job %s',
+                       result.modified_count, task['_id'], job['_id'])
 
 
 @register_compiler('blender-render')
@@ -236,3 +309,10 @@ class BlenderRender(AbstractBlenderJobCompiler):
                                               parents=parent_task_ids))
 
         return task_ids, task_ids
+
+    def insert_rna_overrides_task(self, job: dict) -> bson.ObjectId:
+        """Inject a new RNA Overrides task into an existing job.
+
+        Returns the new task ID.
+        """
+        return self._insert_rna_overrides_task(job, {})

@@ -55,7 +55,8 @@ class AbstractJobCompiler(object, metaclass=abc.ABCMeta):
             job['_id'], 'under-construction', new_status, now=now)
         self.job_manager.api_set_job_status(job['_id'], new_status, now=now)
 
-    def _create_task(self, job, commands, name, task_type, **kwargs) -> bson.ObjectId:
+    def _create_task(self, job, commands, name, task_type, status='under-construction',
+                     **kwargs) -> bson.ObjectId:
         """Creates an under-construction task.
 
         Use this to construct tasks, rather than calling self.task_manager.api_create_task directly.
@@ -64,8 +65,8 @@ class AbstractJobCompiler(object, metaclass=abc.ABCMeta):
         """
 
         return self.task_manager.api_create_task(job, commands, name,
-                                                 status='under-construction',
                                                  task_type=task_type,
+                                                 status=status,
                                                  **kwargs)
 
     def validate_job_settings(self, job):
