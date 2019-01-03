@@ -6,8 +6,11 @@ import bson
 from flask import Blueprint
 import werkzeug.exceptions as wz_exceptions
 
+from pillar.api.utils.authentication import current_user_id
 from pillar.api.utils import authorization
 from pillar.api import patch_handler
+
+from flamenco import current_flamenco
 
 log = logging.getLogger(__name__)
 patch_api_blueprint = Blueprint('flamenco.jobs.patch', __name__)
@@ -19,10 +22,6 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
     @authorization.require_login(require_cap='flamenco-use')
     def patch_set_job_status(self, job_id: bson.ObjectId, patch: dict):
         """Updates a job's status in the database."""
-
-        from flamenco import current_flamenco
-        from pillar.api.utils.authentication import current_user_id
-
         self.assert_job_access(job_id)
 
         new_status = patch['status']
@@ -38,10 +37,6 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
     @authorization.require_login(require_cap='flamenco-use')
     def patch_set_job_priority(self, job_id: bson.ObjectId, patch: dict):
         """Updates a job's priority in the database."""
-
-        from flamenco import current_flamenco
-        from pillar.api.utils.authentication import current_user_id
-
         self.assert_job_access(job_id)
 
         new_prio = patch['priority']
@@ -56,10 +51,6 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
     @authorization.require_login(require_cap='flamenco-use')
     def patch_archive_job(self, job_id: bson.ObjectId, patch: dict):
         """Archives the given job in a background task."""
-
-        from flamenco import current_flamenco
-        from pillar.api.utils.authentication import current_user_id
-
         job = self.assert_job_access(job_id)
 
         log.info('User %s uses PATCH to start archival of job %s', current_user_id(), job_id)
@@ -68,10 +59,6 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
     @authorization.require_login(require_cap='flamenco-use')
     def patch_requeue_failed_tasks(self, job_id: bson.ObjectId, patch: dict):
         """Re-queue all failed tasks in this job."""
-
-        from flamenco import current_flamenco
-        from pillar.api.utils.authentication import current_user_id
-
         self.assert_job_access(job_id)
 
         log.info('User %s uses PATCH to requeue failed tasks of job %s', current_user_id(), job_id)
@@ -79,9 +66,6 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
             job_id, from_status='failed', to_status='queued')
 
     def assert_job_access(self, job_id: bson.ObjectId) -> dict:
-        from flamenco import current_flamenco
-        from pillar.api.utils.authentication import current_user_id
-
         # TODO: possibly store job and project into flask.g to reduce the nr of Mongo queries.
         job = current_flamenco.db('jobs').find_one({'_id': job_id},
                                                    {'project': 1,
