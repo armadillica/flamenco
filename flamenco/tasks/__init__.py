@@ -88,7 +88,7 @@ class TaskManager(object):
 
         payload = {
             'where': where,
-            'sorted': [
+            'sort': [
                 ('priority', -1),
                 ('_id', 1),
             ],
