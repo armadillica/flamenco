@@ -109,7 +109,7 @@ class BlenderRenderProgressive(AbstractJobCompiler):
         render_format = job['settings']['format']
         if render_format.upper() != 'EXR':
             raise exceptions.JobSettingError(
-                'Job %s must use format="EXR", not %r' % (job['_id'], render_format))
+                'Job %s must use format="EXR", not %r' % (job.get('_id', '-no-id-'), render_format))
 
         # This is quite a limitation, but makes our code to predict the
         # filename that Blender will use a lot simpler.
