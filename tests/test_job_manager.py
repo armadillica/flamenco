@@ -86,7 +86,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
                 'blender-render',
                 {
                     'blender_cmd': '{blender}',
-                    'filepath': '/my/blend.file',
+                    'filepath': '/my/file.blend',
                     # Frames and chunk size chosen to produce as many tasks
                     # as there are task statuses - 1 (we don't test 'under-construction')
                     'frames': '12-18, 20-27',
