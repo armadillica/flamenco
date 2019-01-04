@@ -26,6 +26,13 @@
 	"dependencies": {
 		"bootstrap": "^4.1.3",
 		"jquery": "^3.3.1",
+		"natives": "^1.1.6",
 		"popper.js": "^1.14.4"
+	},
+	"__COMMENTS__": [
+		"natives@1.1.6 for Gulp 3.x on Node 10.x: https://github.com/gulpjs/gulp/issues/2162#issuecomment-385197164"
+	],
+	"resolutions": {
+		"natives": "1.1.6"
 	}
 }
