@@ -9,7 +9,7 @@ from pillar import attrs_extra
 class AbstractJobCompiler(object, metaclass=abc.ABCMeta):
     task_manager = attr.ib(cmp=False, hash=False)
     job_manager = attr.ib(cmp=False, hash=False)
-    _log = attrs_extra.log('%s.AbstractJobType' % __name__)
+    _log = attrs_extra.log('%s.AbstractJobCompiler' % __name__)
 
     REQUIRED_SETTINGS = []
 
