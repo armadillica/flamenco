@@ -17,6 +17,7 @@ from pillar import current_app
 from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco
 from flamenco.auth import Actions
+from flamenco.job_compilers import blender_render
 
 blueprint = Blueprint('flamenco.jobs', __name__, url_prefix='/jobs')
 perproject_blueprint = Blueprint('flamenco.jobs.perproject', __name__,
@@ -165,6 +166,7 @@ def view_job(project, flamenco_props, job_id):
         # TODO(Sybren): check that there are actually failed tasks before setting to True:
         can_requeue_failed_tasks=write_access and status in FAILED_TASKS_REQUEABLE_JOB_STATES,
         can_change_prio=write_access and status in change_prio_states,
+        can_edit_rna_overrides=write_access and job['job_type'] in blender_render.job_types(),
         is_archived=is_archived,
         write_access=write_access,
         archive_available=archive_available,
@@ -407,3 +409,30 @@ def redir_job_id(job_id):
     target_blueprint = blueprint_for_archived[j.status == 'archived']
     return redirect(url_for(f'{target_blueprint.name}.view_job',
                             project_url=p.url, job_id=j._id))
+
+
+@perproject_blueprint.route('/<job_id>/rna-overrides')
+@flamenco_project_view(extension_props=False, action=Actions.USE)
+def edit_rna_overrides(project, job_id):
+    """Allows editing RNA overrides of this job."""
+    from .sdk import Job
+
+    api = pillar_api()
+    job = Job.find(job_id, api=api)
+
+    if job['job_type'] not in blender_render.job_types():
+        raise wz_exceptions.PreconditionFailed('Job is not a Blender job')
+
+    override_lines = job.settings.rna_overrides or []
+
+    return render_template(
+        'flamenco/jobs/edit_rna_overrides.html',
+        job=job,
+        job_id=job_id,
+        project=project,
+        override_lines=override_lines,
+        override_text='\n'.join(override_lines),
+        already_has_overrides=job.settings.rna_overrides is not None,
+        close_url=url_for('flamenco.jobs.perproject.view_job',
+                          project_url=project.url, job_id=job._id),
+    )

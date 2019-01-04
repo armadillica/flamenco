@@ -1,4 +1,5 @@
 import abc
+import functools
 import pathlib
 import typing
 
@@ -21,6 +22,18 @@ RNA_OVERRIDES_HEADER = """\
 # rendered and named the same (except '-overrides.py' instead of '.blend').
 import bpy
 """
+
+
+@functools.lru_cache(maxsize=1)
+def job_types() -> typing.Set[str]:
+    """Return set of job type names that are Blender Render jobs.
+
+    Cached for efficiency.
+    """
+    from . import compilers
+
+    return {name for name, compiler in compilers.items()
+            if issubclass(compiler, AbstractBlenderJobCompiler)}
 
 
 def intermediate_path(job: dict, render_path: pathlib.PurePath) -> pathlib.PurePath:

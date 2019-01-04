@@ -1,0 +1,89 @@
+| {% extends 'flamenco/layout.html' %}
+| {% block bodyattrs %}{{ super() }} data-context='rna-overrides'{% endblock %}
+| {% block page_title %}RNA overrides - {{ project.name }}{% endblock %}
+| {% block body %}
+#col_main
+	#col_main-content
+		.col_header.item-list-header
+			a.item-project(href="{{ url_for('projects.view', project_url=project.url) }}") {{ project.name }}
+
+	.flamenco-box
+		p RNA Overrides for {{ job.name }}
+
+		form(onsubmit="return patchJob()")
+			.input-group
+				label(for='rna_overrides') RNA Overrides, one per line:
+				textarea#rna_overrides.input-transparent(
+					name="rna_overrides",
+					type="text",
+					rows=3,
+					placeholder="RNA Overrides, one per line") {{ override_text }}
+			p.
+				Each override should be in the form <code>bpy.xxx.yyy = value</code> and be valid Python.
+				At this moment there is no validation of the validity yet, so any error will fail the render tasks.
+
+			p.
+				Note that setting overrides here does not change the job status.
+				It is up to you to requeue specific tasks or the entire job.
+
+			.actions
+				a.btn.btn-danger(href="{{ close_url }}")
+					i.pi-cancel
+					| Cancel
+
+				button.btn.btn-success(type='submit', style='margin-left: auto; display: block-inline')
+					i.pi-check
+					| {% if already_has_overrides %}Update{% else %}Create New{% endif %} Overrides
+		#patch_result
+.col-splitter
+
+#col_right
+	.col_header
+		span.header_text
+		#status-bar
+	#item-details.col-scrollable
+		.item-details-empty
+			| Job will load here
+
+script.
+	$(function() { item_open('{{ job_id }}', 'job', false); });
+
+	function patchJob() {
+		let overrides = $('#rna_overrides').val().split(/\n/);
+
+		$.ajax({
+			method: 'PATCH',
+			url: '/api/flamenco/jobs/{{ job_id }}',
+			contentType: 'application/json',
+			data: JSON.stringify({
+				'op': 'rna-overrides',
+				'rna_overrides': overrides,
+			}),
+		})
+		.done(function(data) {
+			if(console) console.log('Setting RNA overrides succeeded');
+			window.location.href = "{{ close_url }}";
+		})
+		.fail(function(xhr) {
+			if (console) {
+				console.log('Error requesting RNA Overrides');
+				console.log('XHR:', xhr);
+			}
+
+			statusBarSet('error', 'Error requesting RNA Overrides', 'pi-error');
+
+			var show_html;
+			if (xhr.status) {
+				show_html = xhrErrorResponseElement(xhr, 'Setting RNA Overrides failed: ');
+			} else {
+				show_html = $('<p>').addClass('text-danger').text(
+				  'RNA Overrides request failed. There possibly was an error connecting to the server. ' +
+				  'Please check your network connection and try again.');
+			}
+			$('#patch_result').html(show_html);
+		});
+
+		return false;  // prevent regular submit of the form.
+	}
+
+| {% endblock %}

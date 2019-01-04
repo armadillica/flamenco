@@ -103,6 +103,11 @@
 			i.pi-file-archive
 			| Archive Job
 		| {%     endif %}
+		| {%     if can_edit_rna_overrides %}
+		a.btn.btn-success.edit-rna-overrides(href="{{ url_for('flamenco.jobs.perproject.edit_rna_overrides', project_url=project.url, job_id=job._id) }}")
+			i.pi-blender
+			| Edit RNA Overrides
+			| {%     endif %}
 		| {% endif %}
 		.action-result-panel
 
@@ -133,13 +138,16 @@ script.
 	var sess_task_page = window.sessionStorage.getItem('flamenco-task-page');
 	var tasks_url = "{{url_for('flamenco.tasks.perjob.list_for_job', job_id=job._id, project_url=project.url)}}";
 
-	if (sess_task_page != null) {
-		page_info = JSON.parse(sess_task_page);
-		if (page_info.job_id == '{{ job._id }}') {
-			tasks_url += '?page=' + page_info.task_page;
+	// Only load tasks if we're in the "job" context (e.g. the "rna-overrides" context should not show tasks.)
+	if (ProjectUtils.context() == "job") {
+		if (sess_task_page != null) {
+			page_info = JSON.parse(sess_task_page);
+			if (page_info.job_id == '{{ job._id }}') {
+				tasks_url += '?page=' + page_info.task_page;
+			}
 		}
+		loadTasks(tasks_url);
 	}
-	loadTasks(tasks_url);
 
 	if (typeof openModalUrl == 'function')
 		$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
