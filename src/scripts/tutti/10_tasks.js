@@ -83,8 +83,7 @@ function item_open(item_id, item_type, pushState, project_url)
     });
 
     // Determine whether we should push the new state or not.
-    pushState = (typeof pushState !== 'undefined') ? pushState : true;
-    if (!pushState) return;
+    if (typeof pushState == 'undefined' || !pushState) return;
 
     // Push the correct URL onto the history.
     var push_state = {itemId: item_id, itemType: item_type};
