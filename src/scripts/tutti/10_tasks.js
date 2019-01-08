@@ -369,6 +369,49 @@ function requeueTaskAndSuccessors(task_id) {
 }
 
 /**
+  * Request that the Manager uploads the full log file for this task.
+  */
+function requestTaskLogFileUpload(task_id, force_rerequest) {
+    if (typeof task_id === 'undefined') {
+        if (console) console.log("requestTaskLogFileUpload(" + task_id + ") called");
+        return;
+    }
+
+    $.ajax({
+            method: 'PATCH',
+            url: '/api/flamenco/tasks/' + task_id,
+            contentType: 'application/json',
+            data: JSON.stringify({
+                'op': 'request-task-log-file',
+                'force_rerequest': !!force_rerequest,
+            }),
+        })
+        .done(function(data) {
+            toastr.success(
+                'Refresh the page in a minute to get updates',
+                'Task log file requested');
+        })
+        .fail(function(xhr) {
+            if (xhr.status == 409) {
+                // This indicates the log file has already arrived on the server.
+                toastr.success('The log file is already there, I will open it for you in another window', 'Task log file arrived');
+                window.open(xhr.getResponseHeader("Location"));
+                return;
+            }
+
+            var show_html;
+            if (xhr.status) {
+                show_html = xhrErrorResponseElement(xhr);
+            } else {
+                show_html = $('<p>').text(
+                    'Task log request failed. There possibly was an error connecting to the server. ' +
+                    'Please check your network connection and try again.');
+            }
+            toastr.error(show_html, 'Requesting log file failed');
+        });
+}
+
+/**
  * Request cancellation or re-queueing of the given task ID.
  */
 function setTaskStatus(task_id, new_status) {

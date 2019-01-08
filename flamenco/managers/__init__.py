@@ -13,6 +13,7 @@ import werkzeug.exceptions as wz_exceptions
 
 from pillar import attrs_extra, current_app
 from pillar.auth import current_user
+from pillar.api.utils import utcnow, random_etag
 
 from flamenco import current_flamenco
 
@@ -38,6 +39,12 @@ class ManagerManager(object):
 
     _log = attrs_extra.log('%s.ManagerManager' % __name__)
     ShareAction = ShareAction  # so you can use current_flamenco.manager_manager.ShareAction
+
+    def collection(self) -> pymongo.collection.Collection:
+        """Returns the Mongo database collection."""
+        from flamenco import current_flamenco
+
+        return current_flamenco.db('managers')
 
     def create_new_manager(self, name: str, description: str, owner_id: bson.ObjectId) \
             -> typing.Tuple[dict, dict, dict]:
@@ -201,7 +208,8 @@ class ManagerManager(object):
         if current_flamenco.auth.current_user_is_flamenco_admin():
             return True
 
-        mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc, {'user_groups': 1})
+        mngr_doc_id, mngr_doc = self._get_manager(mngr_doc_id, mngr_doc,
+                                                  {'owner': 1, 'user_groups': 1})
 
         user_groups = set(current_user.group_ids)
         owner_group = mngr_doc.get('owner')
@@ -385,7 +393,7 @@ class ManagerManager(object):
         return [m['_id'] for m in managers]
 
     def owned_managers(self, user_group_ids: typing.List[bson.ObjectId],
-                       projection: typing.Optional[dict]=None) -> pymongo.cursor.Cursor:
+                       projection: typing.Optional[dict] = None) -> pymongo.cursor.Cursor:
         """Returns a Mongo cursor of Manager object IDs owned by the given user.
 
         :param user_group_ids: list of the group IDs of the user.
@@ -398,6 +406,43 @@ class ManagerManager(object):
         managers_coll = current_flamenco.db('managers')
         managers = managers_coll.find({'owner': {'$in': user_group_ids}}, projection)
         return managers
+
+    def queue_task_log_request(self, manager_id: bson.ObjectId, job_id: bson.ObjectId,
+                               task_id: bson.ObjectId):
+        """Queue a request to the Manager to upload this task's log file."""
+
+        self._log.info('Queueing task log file request for Manager %s, job %s task %s',
+                       manager_id, job_id, task_id)
+        self._task_log_request(
+            manager_id,
+            {'$addToSet': {'upload_task_file_queue': {'job': job_id, 'task': task_id}}}
+        )
+
+    def dequeue_task_log_request(self, manager_id: bson.ObjectId, job_id: bson.ObjectId,
+                                 task_id: bson.ObjectId):
+        """De-queue a request to the Manager to upload this task's log file.
+
+        This is what's called when the Manager has actually uploaded this task's file.
+        """
+
+        self._log.info('De-queueing task log file request for Manager %s, job %s task %s',
+                       manager_id, job_id, task_id)
+        self._task_log_request(
+            manager_id,
+            {'$pullAll': {'upload_task_file_queue': [{'job': job_id, 'task': task_id}]}}
+        )
+
+    def _task_log_request(self, manager_id: bson.ObjectId, operation: dict):
+        managers_coll = current_flamenco.db('managers')
+        managers_coll.update_one(
+            {'_id': manager_id},
+            {
+                **operation,
+                '$set': {
+                    '_updated': utcnow(),
+                    '_etag': random_etag(),
+                },
+            })
 
 
 def setup_app(app):

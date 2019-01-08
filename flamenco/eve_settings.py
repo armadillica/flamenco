@@ -1,5 +1,6 @@
 from eve import ID_FIELD
 
+from pillar.api.eve_settings import STORAGE_BACKENDS
 
 managers_schema = {
     'name': {
@@ -123,6 +124,33 @@ managers_schema = {
         'type': 'list',
         'schema': {
             'type': 'string',
+        },
+    },
+
+    # List of (job ID, task ID) tuples the Manager is supposed to send us.
+    # This includes the job ID because the task may have already been purged
+    # from the Manager's database. By including the job ID in the request we
+    # allow the Manager to find the log file without relying on the database.
+    'upload_task_file_queue': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                'job': {
+                    'type': 'objectid',
+                    'data_relation': {
+                        'resource': 'flamenco_jobs',
+                        'field': '_id',
+                    },
+                },
+                'task': {
+                    'type': 'objectid',
+                    'data_relation': {
+                        'resource': 'flamenco_tasks',
+                        'field': '_id',
+                    },
+                },
+            },
         },
     },
 }
@@ -318,9 +346,27 @@ tasks_schema = {
             }
         },
     },
+
+    # Last few lines of logs. Overwritten when new log updates are received.
     'log': {
         'type': 'string',
     },
+    # When a logfile is uploaded by the Manager to the Server, its location is stored here.
+    'log_file': {
+        'type': 'dict',
+        'schema': {
+            'backend': {
+                'type': 'string',
+                'required': True,
+                'allowed': STORAGE_BACKENDS,
+            },
+            'file_path': {
+                'type': 'string',
+                'required': True,
+            },
+        },
+    },
+
     'activity': {
         'type': 'string',
         'maxlength': 128

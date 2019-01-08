@@ -16,11 +16,12 @@
 						a(href="javascript:void(0)")
 							i.pi-clipboard-copy
 							| Copy task ID to Clipboard
+					| {% if can_request_log_file %}
 					li
-						a(href="{{ url_for('flamenco.tasks.perproject.download_task_log', project_url=project.url, task_id=task._id) }}",
-							target="_blank")
+						a(href="javascript:requestTaskLogFileUpload('{{ task._id }}', true)")
 							i.pi-download
-							| Download Task Log
+							| Request Log File from Manager
+					| {% endif %}
 					li
 						a(href="{{ url_for('flamenco.jobs.perproject.view_job_depsgraph', project_url=project.url, job_id=task.job, t=task._id) }}",
 							target="_blank")
@@ -74,6 +75,21 @@
 | {% endif %}
 
 #item-action-panel
+	| {% if log_file_download_url %}
+	//- This means new-style on-manager logging is used, and the Manager sent us the compressed log file.
+	a.btn.btn-success.item-log-link(
+			href="{{ log_file_download_url }}",
+			target="_blank")
+		i.pi-download
+		| Download Log File
+	| {% endif %}
+	| {% if may_request_log_file %}
+	//- This means new-style on-manager logging is used, and the Manager could sent us the compressed log file but hasn't.
+	button.btn.btn-success.item-log-link(onclick="requestTaskLogFileUpload('{{ task._id }}')")
+		i.pi-list
+		| Request Log File from Manager
+	| {% endif %}
+
 	| {% if can_view_log %}
 	| {% if task.log %}
 	//- This means new-style on-manager logging is used (task.log is only the last few lines).

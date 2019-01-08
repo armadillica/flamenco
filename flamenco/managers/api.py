@@ -1,9 +1,14 @@
 import logging
 
-from flask import Blueprint, request
+from bson import ObjectId
+from flask import Blueprint, request, url_for
 import werkzeug.exceptions as wz_exceptions
+import werkzeug.datastructures
 
-from pillar.api.utils import authorization, authentication, utcnow, random_etag
+from pillar import current_app
+from pillar.api.utils import authorization, authentication, utcnow, random_etag, str2id, jsonify
+
+from flamenco import current_flamenco
 
 api_blueprint = Blueprint('flamenco.managers.api', __name__)
 log = logging.getLogger(__name__)
@@ -21,38 +26,53 @@ DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES = ['queued', 'claimed-by-manager']
 LOG_TAIL_LINES = 10
 
 
-def manager_api_call(wrapped):
-    """Decorator, performs some standard stuff for Manager API endpoints."""
-    import functools
+def manager_api_call(*args, pass_manager_doc=False):
+    """Decorator, performs some standard stuff for Manager API endpoints.
 
-    @authorization.require_login(require_roles={'service', 'flamenco_manager'}, require_all=True)
-    @functools.wraps(wrapped)
-    def wrapper(manager_id, *args, **kwargs):
-        from flamenco import current_flamenco
-        from pillar.api.utils import str2id, mongo
+    :param pass_manager_doc: causes either the manager ID (False) or entire
+        document (True) to be passed as the first parameter to the decorated
+        function.
+    """
 
-        manager_id = str2id(manager_id)
-        manager = mongo.find_one_or_404('flamenco_managers', manager_id)
-        if not current_flamenco.manager_manager.user_manages(mngr_doc=manager):
-            user_id = authentication.current_user_id()
-            log.warning('Service account %s called manager API endpoint for manager %s of another '
-                        'service account', user_id, manager_id)
-            raise wz_exceptions.Unauthorized()
+    if args and hasattr(args[0], '__call__'):
+        raise TypeError('use @manager_api_call() <-- note the parentheses')
 
-        return wrapped(manager_id, request.json, *args, **kwargs)
+    def decorator(wrapped):
+        import functools
 
-    return wrapper
+        @authorization.require_login(require_roles={'service', 'flamenco_manager'},
+                                     require_all=True)
+        @functools.wraps(wrapped)
+        def wrapper(manager_id, *args, **kwargs):
+            from pillar.api.utils import mongo
+
+            manager_id = str2id(manager_id)
+            manager = mongo.find_one_or_404('flamenco_managers', manager_id)
+            if not current_flamenco.manager_manager.user_manages(mngr_doc=manager):
+                user_id = authentication.current_user_id()
+                log.warning(
+                    'Service account %s called manager API endpoint for manager %s of another '
+                    'service account', user_id, manager_id)
+                raise wz_exceptions.Unauthorized()
+
+            return wrapped(manager if pass_manager_doc else manager_id,
+                           request.json,
+                           *args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 @api_blueprint.route('/<manager_id>/startup', methods=['POST'])
-@manager_api_call
+@manager_api_call()
 def startup(manager_id, notification):
     log.info('Received startup notification from manager %s %s', manager_id, notification)
     return handle_notification(manager_id, notification)
 
 
 @api_blueprint.route('/<manager_id>/update', methods=['POST'])
-@manager_api_call
+@manager_api_call()
 def update(manager_id, notification):
     log.info('Received configuration update notification from manager %s %s',
              manager_id, notification)
@@ -103,10 +123,20 @@ def handle_notification(manager_id: str, notification: dict):
 
 
 @api_blueprint.route('/<manager_id>/task-update-batch', methods=['POST'])
-@manager_api_call
-def task_update_batch(manager_id, task_updates):
+@manager_api_call(pass_manager_doc=True)
+def task_update_batch(manager: dict, task_updates):
+    """Handle task updates from the Manager and respond with actions for the Manager.
+
+    This endpoint receives batched task updates from the Manager, and handles
+    those (for example by failing a job when too many tasks failed).
+
+    In the response there are a few other pieces of data that basically
+    indicate actions to be performed by the manager (cancelling tasks, sending
+    task log files).
+    """
     from pillar.api.utils import jsonify
 
+    manager_id = manager['_id']
     total_modif_count, handled_update_ids = handle_task_update_batch(manager_id, task_updates)
 
     # Check which tasks are in state 'cancel-requested', as those need to be sent back.
@@ -118,6 +148,13 @@ def task_update_batch(manager_id, task_updates):
                 'handled_update_ids': handled_update_ids}
     if tasks_to_cancel:
         response['cancel_task_ids'] = list(tasks_to_cancel)
+
+    # TODO(Sybren): expose the fact that there are other types of actions to
+    # perform by the Manager in a different way, for example via a Redis or
+    # RabbitMQ channel.
+    upload_task_file_queue = manager.get('upload_task_file_queue')
+    if upload_task_file_queue:
+        response['upload_task_file_queue'] = upload_task_file_queue
 
     return jsonify(response)
 
@@ -277,7 +314,7 @@ def tasks_cancel_requested(manager_id):
 
 
 @api_blueprint.route('/<manager_id>/depsgraph')
-@manager_api_call
+@manager_api_call()
 def get_depsgraph(manager_id, request_json):
     """Returns the dependency graph of all tasks assigned to the given Manager.
 
@@ -339,9 +376,13 @@ def get_depsgraph(manager_id, request_json):
         log.info('Returning depsgraph of %i tasks', len(depsgraph))
 
     # Update the task status in the database to move queued tasks to claimed-by-manager.
+    # This also erases the link to any previously uploaded log files, to ensure the
+    # log is fresh and represents the current execution of the task.
     task_query['status'] = 'queued'
-    tasks_coll.update_many(task_query,
-                           {'$set': {'status': 'claimed-by-manager'}})
+    tasks_coll.update_many(task_query, {
+        '$set': {'status': 'claimed-by-manager'},
+        '$unset': {'log_file': True},
+    })
 
     # Update the returned task statuses. Unfortunately Mongo doesn't support
     # find_and_modify() on multiple documents.
@@ -367,6 +408,48 @@ def get_depsgraph(manager_id, request_json):
         # in the path between client & server.
         resp.headers['X-Flamenco-Last-Updated'] = last_modification.isoformat()
         resp.headers['X-Flamenco-Last-Updated-Format'] = 'ISO-8601'
+    return resp
+
+
+@api_blueprint.route('/<manager_id>/attach-task-log/<task_id>', methods=['POST'])
+@manager_api_call()
+def attach_task_log(manager_id: ObjectId, _, task_id: str):
+    """Store the POSTed task log as a file in the storage backend.
+
+    Also updates the task itself to have a reference to the file.
+    """
+    # We only want to deal with GZipped files.
+    if 'logfile' not in request.files:
+        raise wz_exceptions.BadRequest("Missing uploaded file named 'logfile'")
+    uploaded_file: werkzeug.datastructures.FileStorage = request.files['logfile']
+    if not uploaded_file.filename.endswith('.gz'):
+        # The test HTTP client doesn't support setting per-part headers.
+        raise wz_exceptions.BadRequest(f'GZIP your file!')
+
+    # Check whether this Manager may attach to this Task.
+    tasks_coll = current_flamenco.db('tasks')
+    task_oid = str2id(task_id)
+    task = tasks_coll.find_one({'_id': task_oid, 'manager': manager_id})
+    if not task:
+        raise wz_exceptions.NotFound(f'No such task exists')
+
+    proj_coll = current_app.db('projects')
+    project = proj_coll.find_one({'_id': task['project'], '_deleted': {'$ne': True}},
+                                 projection={'url': True})
+    if not project:
+        log.warning('attach_task_log(%s, %s): project %s does not exist!',
+                    manager_id, task_id, task['project'])
+        raise wz_exceptions.NotFound(f'Project for task {task_oid} does not exist')
+
+    preexisting = current_flamenco.task_manager.api_attach_log(task, uploaded_file)
+
+    current_flamenco.manager_manager.dequeue_task_log_request(
+        task['manager'], task['job'], task['_id'])
+
+    resp = jsonify({'_message': 'ok'}, status=200 if preexisting else 201)
+    resp.headers['Location'] = url_for(
+        'flamenco.tasks.perproject.download_task_log_file',
+        project_url=project['url'], task_id=task_id)
     return resp
 
 

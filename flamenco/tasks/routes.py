@@ -19,6 +19,7 @@ from flamenco.managers.sdk import Manager
 from flamenco.routes import flamenco_project_view
 from flamenco.tasks.sdk import Task, TaskLog
 
+from . import LOG_UPLOAD_REQUESTABLE_TASK_STATES
 
 TASK_LOG_PAGE_SIZE = 10
 
@@ -115,6 +116,21 @@ def view_task(project, flamenco_props, task_id):
     else:
         log_download_url = ''
 
+    # can_... = is actually possible (but maybe should be forced).
+    can_request_log_file = task['status'] in LOG_UPLOAD_REQUESTABLE_TASK_STATES
+    # may_... = the regular 'request' button should be shown.
+    may_request_log_file = False
+    log_file_download_url = ''
+    if write_access and task.log_file:
+        # Having task.log_file means the same as above, and the Manager has sent us
+        # the compressed log file.
+        log_file_download_url = url_for(
+            'flamenco.tasks.perproject.download_task_log_file',
+            project_url=project['url'], task_id=task_id)
+    elif log_download_url:
+        # This means the Manager supports sending us the log file, but hasn't yet.
+        may_request_log_file = can_request_log_file
+
     return render_template('flamenco/tasks/view_task_embed.html',
                            task=task,
                            project=project,
@@ -122,6 +138,9 @@ def view_task(project, flamenco_props, task_id):
                            flamenco_context=request.args.get('context'),
                            log_download_url=log_download_url,
                            can_view_log=write_access,
+                           log_file_download_url=log_file_download_url,
+                           can_request_log_file=can_request_log_file,
+                           may_request_log_file=may_request_log_file,
                            can_requeue_task=can_requeue_task,
                            can_cancel_task=can_cancel_task)
 
@@ -184,7 +203,12 @@ def view_task_log(project, task_id):
 @flask_login.login_required
 @flamenco_project_view(action=Actions.USE)
 def download_task_log(project, task_id):
-    """Shows the entire task log as text/plain"""
+    """Show the entire task log as text/plain.
+
+    This endpoint is for obtaining the task log stored in MongoDB. This
+    approach is deprecated in favour of having the Manager store & serve the
+    logs and upload them to the Server on demand (see flamenco.managers.api).
+    """
 
     if not is_valid_id(task_id):
         raise wz_exceptions.UnprocessableEntity()
@@ -211,3 +235,30 @@ def download_task_log(project, task_id):
             page_idx += 1
 
     return Response(stream_log(), mimetype='text/plain')
+
+
+@perproject_blueprint.route('/<task_id>.log.gz')
+@flask_login.login_required
+@flamenco_project_view(action=Actions.USE)
+def download_task_log_file(project, task_id):
+    """Redirect to the storage backend for the task log.
+
+    This endpoint is for obtaining the task log sent to us by Flamenco Manager,
+    and stored as a gzipped file in the storage backend. See the Manager API
+    for the endpoint that actually accepts the log file from the Manager.
+    """
+    from pillar.web.utils import is_valid_id
+    from .sdk import Task
+
+    if not is_valid_id(task_id):
+        raise wz_exceptions.UnprocessableEntity()
+
+    api = pillar_api()
+    task = Task.find(task_id, api=api)
+
+    if not task.log_file:
+        return wz_exceptions.NotFound(f'Task {task_id} has no attached log file')
+
+    blob = current_flamenco.task_manager.logfile_blob(task.to_dict())
+    url = blob.get_url(is_public=False)
+    return redirect(url, code=307)

@@ -20,6 +20,10 @@ Flamenco Server Changelog
       filename unique, and the name of the blend file.
 - Requires Flamenco Worker 2.2 or newer.
 - Requires Blender Cloud add-on 2.0 or newer.
+- Added ability to request task logs from Flamenco Manager. This allows users to access task logs
+  even though they are stored on the Manager. Requested task logs are compressed by the Manager,
+  uploaded to Flamenco Server, which then stores it in the project's storage location.
+  This feature requires Flamenco Manager 2.3 or newer.
 
 
 ## Version 2.1 (released 2018-12-04)

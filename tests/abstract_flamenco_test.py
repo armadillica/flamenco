@@ -6,6 +6,7 @@ import pillar.auth
 
 from bson import ObjectId
 
+from flamenco.managers import ManagerManager
 from pillar.tests import PillarTestServer, AbstractPillarTest
 from pillar.tests import common_test_data as ctd
 
@@ -31,6 +32,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
         self.tmngr: TaskManager = self.flamenco.task_manager
         self.jmngr: JobManager = self.flamenco.job_manager
+        self.mmngr: ManagerManager = self.flamenco.manager_manager
 
         self.proj_id, self.project = self.ensure_project_exists()
 

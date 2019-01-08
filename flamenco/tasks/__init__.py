@@ -1,8 +1,9 @@
 """Task management."""
+import datetime
+import pathlib
 import typing
 
 import attr
-import datetime
 
 import bson
 from flask import current_app
@@ -10,7 +11,9 @@ import pymongo.collection
 import werkzeug.exceptions as wz_exceptions
 
 from pillar import attrs_extra
+from pillar.api.file_storage_backends.abstract import FileType, Blob
 from pillar.web.system_util import pillar_api
+import pillar.api.projects.utils
 
 from pillarsdk.exceptions import ResourceNotFound
 
@@ -28,6 +31,7 @@ COLOR_FOR_TASK_STATUS = {
 
 REQUEABLE_TASK_STATES = {'completed', 'canceled', 'failed'}
 CANCELABLE_TASK_STATES = {'queued', 'claimed-by-manager', 'active'}
+LOG_UPLOAD_REQUESTABLE_TASK_STATES = {'canceled', 'cancel-requested', 'failed', 'completed'}
 
 
 @attr.s
@@ -226,6 +230,58 @@ class TaskManager(object):
                 visit_task(child['_id'], depth + 1)
 
         visit_task(task_id, 0)
+
+    def _tasklog_blob_fname(self, task: dict) -> str:
+        """Construct the blob filename for this task's log file.
+
+        The blob is supposed to go into the project's storage bucket,
+        so it does not contain the project ID.
+
+        Assumes the log will be gzip-compressed, and thus the returned
+        filename ends in '.log.gz'.
+        """
+
+        return f'flamenco-task-logs/job-{task["job"]}/task-{task["_id"]}.log.gz'
+
+    def logfile_blob(self, task: dict) -> Blob:
+        """Return the storage blob for this task's log file."""
+
+        project_id = task['project']
+        blob_fname = self._tasklog_blob_fname(task)
+        bucket = pillar.api.projects.utils.storage(project_id)
+        return bucket.blob(blob_fname)
+
+    def api_attach_log(self, task: dict, file_obj: FileType) -> bool:
+        """Store the POSTed task log as a file in the storage backend.
+
+        Also updates the task itself to have a reference to the file.
+
+        :return: Whether this file was new (False) or overwrote a pre-existing
+            log file (True).
+        """
+        blob = self.logfile_blob(task)
+
+        self._log.debug('Storing log for task %s in storage blob %s of project %s',
+                        task['_id'], blob.name, task['project'])
+
+        preexisting = blob.exists()
+        blob.create_from_file(file_obj, content_type='application/gzip')
+        blob.update_filename(pathlib.PurePosixPath(blob.name).name,
+                             is_attachment=False)
+        blob.update_content_type('text/plain', 'gzip')
+
+        self._log.info('Stored log for task %s in storage blob %s of project %s',
+                       task['_id'], blob.name, task['project'])
+
+        tasks_coll = self.collection()
+        tasks_coll.update_one({'_id': task['_id']}, {'$set': {
+            'log_file': {
+                'backend': blob.bucket.backend_name,
+                'file_path': blob.name,
+            },
+        }})
+
+        return preexisting
 
 
 def setup_app(app):
