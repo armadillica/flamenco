@@ -1,19 +1,24 @@
-# coding=utf-8
 import logging
 from urllib.parse import urljoin
 
 import bson
 import flask_login
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, redirect, Response, url_for
 import werkzeug.exceptions as wz_exceptions
 
+from pillar import current_app
 import pillar.flask_extra
 from pillar.web.system_util import pillar_api
+from pillar.web.utils import is_valid_id, last_page_index
 from pillar.auth import current_user
+import pillarsdk
 
-from flamenco.routes import flamenco_project_view
 from flamenco import current_flamenco
 from flamenco.auth import Actions
+from flamenco.managers.sdk import Manager
+from flamenco.routes import flamenco_project_view
+from flamenco.tasks.sdk import Task, TaskLog
+
 
 TASK_LOG_PAGE_SIZE = 10
 
@@ -33,15 +38,10 @@ log = logging.getLogger(__name__)
 @global_blueprint.route('/<task_id>')
 def redirect_to_task(task_id):
     """Allows creation of task links without knowing the job or project ID."""
-
-    from flamenco.tasks.sdk import Task
-    from pillarsdk import Project
-    from flask import url_for, redirect
-
     api = pillar_api()
 
     task = Task.find(task_id, {'projection': {'project': 1}}, api=api)
-    project = Project.find(task['project'], {'projection': {'url': 1}}, api=api)
+    project = pillarsdk.Project.find(task['project'], {'projection': {'url': 1}}, api=api)
 
     # FIXME Sybren: add permission check.
 
@@ -63,8 +63,6 @@ def list_for_project(project, task_id=None):
 @perjob_blueprint.route('/tasks')
 @flamenco_project_view(action=Actions.VIEW)
 def list_for_job(project, job_id, task_id=None):
-    from pillar.web.utils import last_page_index
-
     page_idx = int(request.args.get('page', '1'))
 
     tasks = current_flamenco.task_manager.tasks_for_job(
@@ -86,9 +84,6 @@ def list_for_job(project, job_id, task_id=None):
 @pillar.flask_extra.vary_xhr()
 @flamenco_project_view(extension_props=True, action=Actions.VIEW)
 def view_task(project, flamenco_props, task_id):
-    from flamenco.tasks.sdk import Task
-    from flamenco.managers.sdk import Manager
-
     api = pillar_api()
 
     if not request.is_xhr:
@@ -135,8 +130,6 @@ def view_task(project, flamenco_props, task_id):
 @flask_login.login_required
 @flamenco_project_view(action=Actions.USE)
 def set_task_status(project, task_id):
-    from flask_login import current_user
-
     new_status = request.form['status']
     if new_status not in ALLOWED_TASK_STATUSES_FROM_WEB:
         log.warning('User %s tried to set status of task %s to disallowed status "%s"; denied.',
@@ -157,11 +150,6 @@ def view_task_log(project, task_id):
 
     Pass page=N (N≥1) to request further entries.
     """
-
-    from pillarsdk import ResourceNotFound
-    from pillar.web.utils import is_valid_id, last_page_index
-    from flamenco.tasks.sdk import TaskLog
-
     if not is_valid_id(task_id):
         raise wz_exceptions.UnprocessableEntity()
 
@@ -172,7 +160,7 @@ def view_task_log(project, task_id):
                             'page': page_idx,
                             'max_results': TASK_LOG_PAGE_SIZE},
                            api=api)
-    except ResourceNotFound:
+    except pillarsdk.ResourceNotFound:
         logs = {'_items': [],
                 '_meta': {'total': 0,
                           'page': page_idx,
@@ -198,16 +186,11 @@ def view_task_log(project, task_id):
 def download_task_log(project, task_id):
     """Shows the entire task log as text/plain"""
 
-    from flask import Response, current_app
-
-    from pillar.web.utils import is_valid_id, last_page_index
-    from flamenco.tasks.sdk import TaskLog
-
     if not is_valid_id(task_id):
         raise wz_exceptions.UnprocessableEntity()
 
     # Required because the stream_log() generator will run outside the app context.
-    app = current_app._get_current_object()
+    app = current_app.real_app
     api = pillar_api()
 
     def stream_log():
