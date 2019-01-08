@@ -36,7 +36,7 @@
 	href="{{ url_for('flamenco.tasks.perproject.view_task', project_url=project.url, task_id=task._id) }}")
 		span.status-indicator(title="Status: {{ task.status | undertitle }}")
 		span.name {{ task.name }}
-		span.type {{ task.status }} - {{ task.job_type | undertitle }}
+		span.type {{ task.status }} - {{ task.task_type | undertitle }}
 		span.worker {{ task.worker }}
 	| {% endfor %}
 script.
