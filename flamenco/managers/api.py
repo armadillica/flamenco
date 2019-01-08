@@ -60,6 +60,11 @@ def update(manager_id, notification):
 
 
 def handle_notification(manager_id: str, notification: dict):
+    """Handle startup and update notifications.
+
+    These notifications contain info about the Manager, including the task
+    types supported by its Workers.
+    """
     from flamenco import current_flamenco
     import uuid
     import datetime
