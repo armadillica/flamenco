@@ -35,7 +35,7 @@ def manager_api_call(wrapped):
         manager = mongo.find_one_or_404('flamenco_managers', manager_id)
         if not current_flamenco.manager_manager.user_manages(mngr_doc=manager):
             user_id = authentication.current_user_id()
-            log.warning('Service account %s sent startup notification for manager %s of another '
+            log.warning('Service account %s called manager API endpoint for manager %s of another '
                         'service account', user_id, manager_id)
             raise wz_exceptions.Unauthorized()
 
