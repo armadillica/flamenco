@@ -105,7 +105,9 @@ def view_task(project, flamenco_props, task_id):
 
     write_access = current_flamenco.auth.current_user_may(Actions.USE, project_id)
     can_requeue_task = write_access and task['status'] in REQUEABLE_TASK_STATES
+    can_requeue_successors = write_access and task['status'] in (REQUEABLE_TASK_STATES | {'queued'})
     can_cancel_task = write_access and task['status'] in CANCELABLE_TASK_STATES
+
     if write_access and task.log:
         # Having task.log means the Manager is using the current approach of sending
         # the log tail only. Not having it means the Manager is using the deprecated
@@ -142,6 +144,7 @@ def view_task(project, flamenco_props, task_id):
                            can_request_log_file=can_request_log_file,
                            may_request_log_file=may_request_log_file,
                            can_requeue_task=can_requeue_task,
+                           can_requeue_task_and_successors=can_requeue_successors,
                            can_cancel_task=can_cancel_task)
 
 

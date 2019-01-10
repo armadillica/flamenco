@@ -113,6 +113,8 @@
 		button.btn.btn-success.requeue-task(onclick="setTaskStatus('{{ task._id }}', 'queued')")
 			i.pi-refresh
 			| Re-queue Single Task
+		| {% endif %}
+		| {% if can_requeue_task_and_successors %}
 		button.btn.btn-success.requeue-task(onclick="requeueTaskAndSuccessors('{{ task._id }}')")
 			i.pi-refresh
 			| Re-queue Task + Successors
