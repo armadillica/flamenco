@@ -31,7 +31,8 @@ COLOR_FOR_TASK_STATUS = {
 
 REQUEABLE_TASK_STATES = {'completed', 'canceled', 'failed'}
 CANCELABLE_TASK_STATES = {'queued', 'claimed-by-manager', 'active'}
-LOG_UPLOAD_REQUESTABLE_TASK_STATES = {'canceled', 'cancel-requested', 'failed', 'completed'}
+LOG_UPLOAD_REQUESTABLE_TASK_STATES = {'canceled', 'cancel-requested', 'failed', 'completed',
+                                      'claimed-by-manager'}
 
 
 @attr.s
