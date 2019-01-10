@@ -7,10 +7,12 @@ from flask import Blueprint
 import werkzeug.exceptions as wz_exceptions
 
 from pillar.api.utils.authentication import current_user_id
-from pillar.api.utils import authorization
+from pillar.api.utils import authorization, jsonify
 from pillar.api import patch_handler
 
 from flamenco import current_flamenco
+from . import rna_overrides as rna_overrides_mod
+
 
 log = logging.getLogger(__name__)
 patch_api_blueprint = Blueprint('flamenco.jobs.patch', __name__)
@@ -82,6 +84,20 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
                      'overrides are strings', current_user_id(), job_id)
             raise wz_exceptions.BadRequest(f'"rna_overrides" should be a list of strings,'
                                            f' not {rna_overrides!r}')
+
+        result = rna_overrides_mod.validate_rna_overrides(rna_overrides)
+        if result:
+            msg, line_num = result
+            log.info('User %s tries PATCH to update RNA overrides of job %s but has '
+                     'error %r in override %d',
+                     current_user_id(), job_id, msg, line_num)
+
+            return jsonify({
+                'validation_error': {
+                    'message': msg,
+                    'line_num': line_num,
+                }
+            }, status=422)
 
         log.info('User %s uses PATCH to update RNA overrides of job %s to %d overrides',
                  current_user_id(), job_id, len(rna_overrides))

@@ -20,7 +20,8 @@
 					placeholder="RNA Overrides, one per line") {{ override_text }}
 			p.
 				Each override should be in the form <code>bpy.xxx.yyy = value</code> and be valid Python.
-				At this moment there is no validation of the validity yet, so any error will fail the render tasks.
+				Syntax errors are checked for here in this form, but semantic errors can still fail the
+				render tasks.
 
 			p.
 				Note that setting overrides here does not change the job status.
@@ -73,7 +74,14 @@ script.
 			statusBarSet('error', 'Error requesting RNA Overrides', 'pi-error');
 
 			var show_html;
-			if (xhr.status) {
+			if (xhr.status == 422 && typeof xhr.responseJSON.validation_error !== 'undefined') {
+				let error_info = xhr.responseJSON.validation_error;
+				var msg = 'There was an error in the overrides: ' + error_info.message;
+				if (error_info.line_num > 0) {
+					msg += ' in override ' + error_info.line_num;
+				}
+				show_html = $('<p>').addClass('text-danger').text(msg);
+			} else if (xhr.status) {
 				show_html = xhrErrorResponseElement(xhr, 'Setting RNA Overrides failed: ');
 			} else {
 				show_html = $('<p>').addClass('text-danger').text(
