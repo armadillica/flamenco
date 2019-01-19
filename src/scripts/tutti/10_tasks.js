@@ -393,8 +393,11 @@ function requestTaskLogFileUpload(task_id, force_rerequest) {
         .fail(function(xhr) {
             if (xhr.status == 409) {
                 // This indicates the log file has already arrived on the server.
-                toastr.success('The log file is already there, I will open it for you in another window', 'Task log file arrived');
-                window.open(xhr.getResponseHeader("Location"));
+                let taskLogUrl = xhr.getResponseHeader("Location");
+                let text = 'The log file is <a href="' + taskLogUrl + '" target="_blank">already available</a>, ' +
+                    'it will be opened in another window.';
+                toastr.success(text);
+                window.open(taskLogUrl);
                 return;
             }
 
