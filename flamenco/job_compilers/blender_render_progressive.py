@@ -24,7 +24,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
     REQUIRED_SETTINGS = ('blender_cmd', 'filepath', 'render_output', 'frames', 'chunk_size',
                          'format', 'cycles_sample_count', 'cycles_num_chunks')
 
-    def _compile(self, job):
+    def _compile(self, job: dict):
         import math
         from .blender_render import intermediate_path
 

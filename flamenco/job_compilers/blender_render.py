@@ -161,11 +161,11 @@ class BlenderRender(AbstractBlenderJobCompiler):
 
     REQUIRED_SETTINGS = ('filepath', 'render_output', 'frames', 'chunk_size')
 
-    def validate_job_settings(self, job):
+    def validate_job_settings(self, job: dict):
         super().validate_job_settings(job)
 
-        if hasattr(job, 'to_dict'):
-            job = job.to_dict()
+        if not isinstance(job, dict):
+            raise TypeError('job should be a dict, not %s' % type(job))
 
         filepath = job['settings']['filepath']
         if not filepath.lower().endswith('.blend'):
@@ -231,11 +231,11 @@ class BlenderRender(AbstractBlenderJobCompiler):
             be created for this job.
         """
 
+        if not isinstance(job, dict):
+            raise TypeError('job should be a dict, not %s' % type(job))
+
         job_id: bson.ObjectId = job['_id']
         job_settings = job['settings']
-        if hasattr(job_settings, 'to_dict'):
-            # Convert from PillarSDK Resource to a dictionary.
-            job_settings = job_settings.to_dict()
 
         # Check whether we should create this task at all.
         images_or_video = job_settings.get('images_or_video', '-not set-')

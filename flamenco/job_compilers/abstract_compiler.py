@@ -22,6 +22,9 @@ class AbstractJobCompiler(object, metaclass=abc.ABCMeta):
         if not isinstance(job.get('_id'), bson.ObjectId):
             raise TypeError("job['_id'] should be an ObjectId, not %s" % job.get('_id'))
 
+        if not isinstance(job, dict):
+            raise TypeError('job should be a dict, not %s' % type(job))
+
         self._compile(job)
         self._flip_status(job)
 
@@ -55,7 +58,7 @@ class AbstractJobCompiler(object, metaclass=abc.ABCMeta):
             job['_id'], 'under-construction', new_status, now=now)
         self.job_manager.api_set_job_status(job['_id'], new_status, now=now)
 
-    def _create_task(self, job, commands, name, task_type, status='under-construction',
+    def _create_task(self, job: dict, commands, name, task_type, status='under-construction',
                      **kwargs) -> bson.ObjectId:
         """Creates an under-construction task.
 
@@ -69,16 +72,16 @@ class AbstractJobCompiler(object, metaclass=abc.ABCMeta):
                                                  status=status,
                                                  **kwargs)
 
-    def validate_job_settings(self, job):
+    def validate_job_settings(self, job: dict):
         """Raises an exception if required settings are missing.
 
         :raises: flamenco.exceptions.JobSettingError
         """
-        from pillarsdk import Resource
+
+        if not isinstance(job, dict):
+            raise TypeError('job should be a dict, not %s' % type(job))
 
         job_settings = job['settings']
-        if isinstance(job_settings, Resource):
-            job_settings = job_settings.to_dict()
 
         missing = [key for key in self.REQUIRED_SETTINGS
                    if key not in job_settings]

@@ -25,11 +25,8 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
                          'output_file_extension', 'images_or_video', 'fps',
                          'extract_audio')
 
-    def validate_job_settings(self, job):
+    def validate_job_settings(self, job: dict):
         super().validate_job_settings(job)
-
-        if hasattr(job, 'to_dict'):
-            job = job.to_dict()
 
         img_or_vid = job['settings']['images_or_video']
         if img_or_vid != 'video':
@@ -42,7 +39,7 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
                 f'Job {job["_id"]} setting "extract_audio" is {extract_audio!r},'
                 f' expected a boolean')
 
-    def _compile(self, job):
+    def _compile(self, job: dict):
         self._log.info('Compiling job %s', job['_id'])
         self.validate_job_settings(job)
 
@@ -80,13 +77,13 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
             task_count += 2
         self._log.info('Created %i tasks for job %s', task_count, job['_id'])
 
-    def _make_moow_task(self, job) -> ObjectId:
+    def _make_moow_task(self, job: dict) -> ObjectId:
         """Make the move-out-of-way task."""
 
         cmd = commands.MoveOutOfWay(src=str(self.frames_dir))
         return self._create_task(job, [cmd], 'move-out-of-way', 'file-management')
 
-    def _make_render_tasks(self, job, render_parent_tid: ObjectId) \
+    def _make_render_tasks(self, job: dict, render_parent_tid: ObjectId) \
             -> typing.Tuple[typing.List[ObjectId], typing.List[ObjectId]]:
         """Creates the render tasks for this job.
 
@@ -140,7 +137,7 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
 
         return task_ids, parent_task_ids
 
-    def _make_concat_video_task(self, job, parent_task_ids: typing.List[ObjectId]) \
+    def _make_concat_video_task(self, job: dict, parent_task_ids: typing.List[ObjectId]) \
             -> ObjectId:
         """Creates a MergeVideos command to merge the separate video chunks.
 
@@ -158,7 +155,7 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
         return self._create_task(job, [cmd], 'concatenate-videos', 'video-encoding',
                                  parents=parent_task_ids)
 
-    def _make_extract_audio_task(self, job, parent_task_ids: typing.List[ObjectId]) \
+    def _make_extract_audio_task(self, job: dict, parent_task_ids: typing.List[ObjectId]) \
             -> typing.Optional[ObjectId]:
         job_settings = job['settings']
         if not job_settings.get('extract_audio', False):
@@ -190,7 +187,7 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
         return self._create_task(job, [cmd], 'encode-audio', 'video-encoding',
                                  parents=[extract_tid])
 
-    def _make_mux_audio_task(self, job, parent_task_ids: typing.List[ObjectId]) \
+    def _make_mux_audio_task(self, job: dict, parent_task_ids: typing.List[ObjectId]) \
             -> ObjectId:
 
         cmd = commands.MuxAudio(
@@ -201,7 +198,7 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
         return self._create_task(job, [cmd], 'mux-audio-video', 'video-encoding',
                                  parents=parent_task_ids)
 
-    def _make_move_with_counter_task(self, job, parent_task_ids: typing.List[ObjectId]) \
+    def _make_move_with_counter_task(self, job: dict, parent_task_ids: typing.List[ObjectId]) \
             -> ObjectId:
         cmd = commands.MoveWithCounter(
             src=str(self.muxed_path),

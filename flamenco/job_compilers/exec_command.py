@@ -8,7 +8,7 @@ from . import commands, register_compiler
 class ExecCommand(AbstractJobCompiler):
     """Executes a single shell command; for debugging only."""
 
-    def _compile(self, job):
+    def _compile(self, job: dict):
         self._log.info('Compiling job %s', job['_id'])
 
         # Escape and recombine to normalise some quoting.
