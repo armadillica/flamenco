@@ -6,8 +6,8 @@ from bson import ObjectId
 
 from pillar import attrs_extra
 
-from flamenco import current_flamenco, exceptions
-from . import abstract_compiler, blender_render, commands, register_compiler
+from flamenco import exceptions
+from . import blender_render, commands, register_compiler
 
 
 @register_compiler('blender-video-chunks')
