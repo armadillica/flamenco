@@ -18,12 +18,18 @@ Flamenco Server Changelog
     - Mux audio and video into a single MKV file.
     - Move that file to the final location, and name it with the current date, a counter to make the
       filename unique, and the name of the blend file.
-- Requires Flamenco Worker 2.2 or newer.
-- Requires Blender Cloud add-on 2.0 or newer.
+- Requires Flamenco Worker 2.3 or newer.
+- Requires Blender Cloud add-on 2.1 or newer.
 - Added ability to request task logs from Flamenco Manager. This allows users to access task logs
   even though they are stored on the Manager. Requested task logs are compressed by the Manager,
   uploaded to Flamenco Server, which then stores it in the project's storage location.
   This feature requires Flamenco Manager 2.3 or newer.
+- Changed how progressive rendering works to make it more flexible & usable. Sample chunks are no
+  longer uniform, but initially start out small (1/40th of the total sample count) and increase
+  until an artist-given maximum sample count per task. A minimum of 5 sample chunks is now always
+  used. The artists no longer give the number of sample chunks, but only the maximum sample count
+  per render task. This is a backward-incompatible change, and requires an upgrade of both the
+  Blender Cloud add-on and the Flamenco Worker and Blender 2.80 from after 2019-01-30.
 
 
 ## Version 2.1 (released 2018-12-04)

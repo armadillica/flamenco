@@ -1,12 +1,95 @@
+import math
 from pathlib import PurePath
 import typing
 
+import attr
 from bson import ObjectId
 
 from pillar import attrs_extra
 
-from flamenco import current_flamenco
 from . import blender_render, commands, register_compiler
+
+SampleGenerator = typing.Callable[[int], float]
+
+
+@attr.s(auto_attribs=True)
+class ChunkGenerator:
+    """Cycles sample chunk generator."""
+    sample_count: int
+    sample_cap: int
+
+    uncapped_chunks: int = 5
+    """For testing with less than 5 chunks.
+
+    5 chunks, 400 samples, and a sample cap of 100 gives pleasant results for
+    the Blender Animation Studio, which is why those values were chosen here.
+    """
+
+    def __iter__(self) -> typing.Iterator[typing.Tuple[int, int]]:
+        """Return a new iterator of sample chunks."""
+        sample_generator = self._subquadratic_samples()
+        return self._sample_chunks(sample_generator)
+
+    def _sample_chunks(self, generator: SampleGenerator) -> typing.Iterator[typing.Tuple[int, int]]:
+        """Generator, yield (chunk_start, chunk_end) tuples.
+
+        The `chunk_start` and `chunk_end` return values are base-1, as
+        expected by the Cycles CLI args.
+
+        :param generator: function that takes a chunk index (base-0) and
+            returns the start sample index of that chunk.
+        """
+        last_sample = 0
+        generation = 0
+        sample_count = self.sample_count
+        sample_cap = self.sample_cap
+
+        while last_sample < sample_count:
+            sample = int(round(generator(generation)))
+            generation += 1
+
+            this_chunk = sample - last_sample
+            if this_chunk > sample_cap:
+                break
+
+            yield last_sample + 1, sample
+            last_sample = sample
+
+        if last_sample >= sample_count:
+            return
+
+        # Divide the remaining samples into chunks of no more than
+        # 'sample_cap', in such a way that the number of samples per
+        # chunk is as uniform as possible.
+        samples_left = sample_count - last_sample
+        nr_of_tasks = int(math.ceil(samples_left / sample_cap))
+        new_cap = samples_left / nr_of_tasks
+        # print('samples left:', samples_left)
+        # print('nr of tasks:', nr_of_tasks)
+        # print('new cap:', new_cap)
+        while last_sample < sample_count:
+            sample = min(last_sample + new_cap, sample_count)
+            yield int(math.floor(last_sample)) + 1, int(math.floor(sample))
+            last_sample = sample
+
+    def _subquadratic_samples(self) -> SampleGenerator:
+        # These values give pleasant results for the Blender Animation Studio.
+        start_count = self.sample_count / 40
+        e = 5 / 3
+        uncapped_chunks = self.uncapped_chunks
+
+        def _subquadratic(chunk_index: int) -> float:
+            """Sub-quadratic sample chunk function.
+
+            This divides the samples into an almost-quadratic curve and 5 chunks.
+            Due to capping of the number of samples per chunks more than 5 are
+            expected. However, after the 3rd chunk or so it's desirable to just
+            hit the cap and have constant-sized chunks.
+            """
+            return ((self.sample_count - start_count) ** (1 / e) /
+                    (uncapped_chunks - 1) * chunk_index) ** e + start_count
+
+        return _subquadratic
 
 
 @register_compiler('blender-render-progressive')
@@ -17,15 +100,22 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
     tasks to merge those render outputs into progressively refining output.
 
     Intermediary files are created in a subdirectory of the render output path.
+
+    To make things simple, we choose one chunk per sample. This requires
+    Blender 7744203b7fde3 or newer (from Tue Jan 29 18:08:12 2019 +0100).
+
+    NOTE: progressive rendering does not work with the denoiser.
     """
 
     _log = attrs_extra.log('%s.BlenderRenderProgressive' % __name__)
 
     REQUIRED_SETTINGS = ('blender_cmd', 'filepath', 'render_output', 'frames', 'chunk_size',
-                         'format', 'cycles_sample_count', 'cycles_num_chunks')
+                         'format', 'cycles_sample_count', 'cycles_sample_cap')
+
+    # So that unit tests can override this value and produce smaller jobs.
+    _uncapped_chunk_count = 5
 
     def _compile(self, job: dict):
-        import math
         from .blender_render import intermediate_path
 
         self._log.info('Compiling job %s', job['_id'])
@@ -45,27 +135,26 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         task_count = 1 + bool(rna_overrides_task_id)
 
         cycles_sample_count = int(self.job_settings['cycles_sample_count'])
-        self.cycles_num_chunks = int(self.job_settings['cycles_num_chunks'])
-        sample_count_per_chunk = int(math.ceil(float(cycles_sample_count) / self.cycles_num_chunks))
+        cycles_sample_cap = int(self.job_settings.get('cycles_sample_cap', 100))
 
         next_merge_task_deps = []
         prev_samples_to = 0
-        for cycles_chunk_idx in range(int(self.job_settings['cycles_num_chunks'])):
-            # Compute the Cycles sample range for this chunk (chunk_idx in base-0), in base-1.
-            cycles_samples_from = cycles_chunk_idx * sample_count_per_chunk + 1
-            cycles_samples_to = min((cycles_chunk_idx + 1) * sample_count_per_chunk,
-                                    cycles_sample_count)
 
+        self.chunk_generator = ChunkGenerator(cycles_sample_count, cycles_sample_cap,
+                                              self._uncapped_chunk_count)
+
+        for cycles_chunk_idx, (cycles_chunk_start, cycles_chunk_end) in \
+                enumerate(self.chunk_generator):
             # Create render tasks for each frame chunk. Only this function uses the base-0
             # chunk/sample numbers, so we also convert to the base-1 numbers that Blender
             # uses.
             render_task_ids = self._make_progressive_render_tasks(
                 job,
-                'render-smpl%i-%i-frm%%s' % (cycles_samples_from, cycles_samples_to),
+                'render-smpl%i-%i-frm%%s' % (cycles_chunk_start, cycles_chunk_end),
                 render_parent_task_id,
-                cycles_chunk_idx + 1,
-                cycles_samples_from,
-                cycles_samples_to,
+                cycles_sample_count,  # We use 1 chunk = 1 sample
+                cycles_chunk_start,
+                cycles_chunk_end,
                 task_priority=-cycles_chunk_idx * 10,
             )
             task_count += len(render_task_ids)
@@ -77,8 +166,8 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                 publish_task_id = self._make_publish_first_chunk_task(
                     job,
                     render_task_ids,
-                    cycles_samples_from,
-                    cycles_samples_to,
+                    cycles_chunk_start,
+                    cycles_chunk_end,
                 )
                 task_count += 1
                 next_merge_task_deps = len(render_task_ids) * [publish_task_id]
@@ -87,31 +176,41 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                 assert len(next_merge_task_deps) == len(render_task_ids)
                 merge_task_ids = self._make_merge_tasks(
                     job,
-                    'merge-to-smpl%i-frm%%s' % cycles_samples_to,
+                    'merge-to-smpl%i-frm%%s' % cycles_chunk_end,
                     cycles_chunk_idx + 1,
                     next_merge_task_deps,
                     render_task_ids,
-                    cycles_samples_to1=prev_samples_to,
-                    cycles_samples_from2=cycles_samples_from,
-                    cycles_samples_to2=cycles_samples_to,
+                    cycles_chunks_to1=prev_samples_to,
+                    cycles_chunks_from2=cycles_chunk_start,
+                    cycles_chunks_to2=cycles_chunk_end,
                     task_priority=-cycles_chunk_idx * 10 - 1,
                 )
                 task_count += len(merge_task_ids)
                 next_merge_task_deps = merge_task_ids
-            prev_samples_to = cycles_samples_to
+            prev_samples_to = cycles_chunk_end
 
         self._log.info('Created %i tasks for job %s', task_count, job['_id'])
 
     def validate_job_settings(self, job):
         """Ensure that the job uses format=EXR."""
-        super().validate_job_settings(job)
-
         from flamenco import exceptions
+
+        job_id_str = job.get('_id', '')
+        if job_id_str:
+            job_id_str = f'{job_id_str} '
+        if job['settings'].get('cycles_num_chunks'):
+            # End of January 2019 we changed how progressive rendering works.
+            # Users no longer provide the number of chunks, but the maximum
+            # number of samples per render task.
+            raise exceptions.JobSettingError(
+                f'Job {job_id_str}was created using outdated Blender Cloud add-on, please upgrade.')
+
+        super().validate_job_settings(job)
 
         render_format = job['settings']['format']
         if render_format.upper() != 'EXR':
             raise exceptions.JobSettingError(
-                'Job %s must use format="EXR", not %r' % (job.get('_id', '-no-id-'), render_format))
+                f'Job {job_id_str}must use format="EXR", not {render_format!r}')
 
         # This is quite a limitation, but makes our code to predict the
         # filename that Blender will use a lot simpler.
@@ -153,14 +252,14 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
 
     def _make_progressive_render_tasks(self,
                                        job, name_fmt, parents,
-                                       cycles_chunk_idx,
-                                       cycles_samples_from, cycles_samples_to,
-                                       task_priority):
+                                       cycles_num_chunks: int,
+                                       cycles_chunk_start: int,
+                                       cycles_chunk_end: int,
+                                       task_priority: int):
         """Creates the render tasks for this job.
 
         :param parents: either a list of parents, one for each task, or a
             single parent used for all tasks.
-        :param cycles_chunk_idx: base-1 sample chunk index
 
         :returns: created task IDs, one render task per frame chunk.
         :rtype: list
@@ -179,7 +278,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
 
             name = name_fmt % frame_range
 
-            render_output = self._render_output(cycles_samples_from, cycles_samples_to)
+            render_output = self._render_output(cycles_chunk_start, cycles_chunk_end)
 
             task_cmds = [
                 commands.BlenderRenderProgressive(
@@ -189,10 +288,9 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                     # Don't render to actual render output, but to an intermediate file.
                     render_output=str(render_output),
                     frames=frame_range_bstyle,
-                    cycles_num_chunks=self.cycles_num_chunks,
-                    cycles_chunk=cycles_chunk_idx,
-                    cycles_samples_from=cycles_samples_from,
-                    cycles_samples_to=cycles_samples_to,
+                    cycles_num_chunks=cycles_num_chunks,
+                    cycles_chunk_start=cycles_chunk_start,
+                    cycles_chunk_end=cycles_chunk_end,
                 )
             ]
 
@@ -233,9 +331,9 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
     def _make_merge_tasks(self, job, name_fmt,
                           cycles_chunk_idx,
                           parents1, parents2,
-                          cycles_samples_to1,
-                          cycles_samples_from2,
-                          cycles_samples_to2,
+                          cycles_chunks_to1,
+                          cycles_chunks_from2,
+                          cycles_chunks_to2,
                           task_priority):
         """Creates merge tasks for each chunk, consisting of merges for each frame.
 
@@ -250,18 +348,18 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
 
         task_ids = []
 
-        weight1 = cycles_samples_to1
-        weight2 = cycles_samples_to2 - cycles_samples_from2 + 1
+        weight1 = cycles_chunks_to1
+        weight2 = cycles_chunks_to2 - cycles_chunks_from2 + 1
 
         # Replace Blender formatting with Python formatting in render output path
         if cycles_chunk_idx == 2:
             # The first merge takes a render output as input1, subsequent ones take merge outputs.
             # Merging only happens from Cycles chunk 2 (it needs two inputs, hence 2 chunks).
-            input1 = self._render_output(1, cycles_samples_to1)
+            input1 = self._render_output(1, cycles_chunks_to1)
         else:
-            input1 = self._merge_output(cycles_samples_to1)
-        input2 = self._render_output(cycles_samples_from2, cycles_samples_to2)
-        output = self._merge_output(cycles_samples_to2)
+            input1 = self._merge_output(cycles_chunks_to1)
+        input2 = self._render_output(cycles_chunks_from2, cycles_chunks_to2)
+        output = self._merge_output(cycles_chunks_to2)
 
         # Construct format strings from the paths.
         input1_fmt = str(input1).replace('######', '%06i.exr')

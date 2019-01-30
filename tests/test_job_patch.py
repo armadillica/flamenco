@@ -331,7 +331,7 @@ class RNAOverridesTestProgressiveRender(AbstractRNAOverridesTest):
                     'filepath': '/agent327/scenes/someshot/somefile.blend',
                     'blender_cmd': '/path/to/blender --enable-new-depsgraph',
                     'cycles_sample_count': 30,
-                    'cycles_num_chunks': 3,
+                    'cycles_sample_cap': 30,
                 },
                 self.proj_id,
                 ctd.EXAMPLE_PROJECT_OWNER_ID,
@@ -351,7 +351,7 @@ class RNAOverridesTestProgressiveRender(AbstractRNAOverridesTest):
                                                  'task_type': 'blender-render',
                                                  'parents': [rm_tree_task['_id']]}))
         # Just checking some assumptions this test relies on.
-        self.assertEqual(9, len(render_tasks))
+        self.assertEqual(15, len(render_tasks))
         for task in render_tasks:
             self.assertEqual([rm_tree_task['_id']], task['parents'])
 
@@ -369,14 +369,14 @@ class RNAOverridesTestProgressiveRender(AbstractRNAOverridesTest):
         self.assert_job_status('active')
 
         # Check the parent pointers of the existing tasks.
-        # This is a simple blender-render job, so all blender-render tasks
+        # This is a blender-render-progressive job, so all blender-render tasks
         # should point to the new task.
         with self.app.app_context():
             tasks_coll = self.flamenco.db('tasks')
             tasks = list(tasks_coll
                          .find({'job': self.job_id})
                          .sort([('_id', 1)]))
-        self.assertEqual(18, len(tasks))
+        self.assertEqual(30, len(tasks))
 
         override_task = tasks[-1]
         self.assertValidOverrideTask(override, override_task)

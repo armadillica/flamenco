@@ -58,15 +58,13 @@ class BlenderRender(AbstractCommand):
 
 @attr.s(auto_attribs=True)
 class BlenderRenderProgressive(BlenderRender):
+    """Render command for rendering a range of Cycles sample chunks."""
     # Total number of Cycles sample chunks.
     cycles_num_chunks: int
-    # Cycle sample chunk to render in this command.
-    cycles_chunk: int
 
-    # Cycles first sample number, base-1
-    cycles_samples_from: int
-    # Cycles last sample number, base-1
-    cycles_samples_to: int
+    # Cycles first and last chunk number (base-1) for this chunk range.
+    cycles_chunk_start: int
+    cycles_chunk_end: int
 
 
 @attr.s(auto_attribs=True)
