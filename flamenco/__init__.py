@@ -349,12 +349,13 @@ class FlamencoExtension(PillarExtension):
         return result
 
     def api_recreate_job(self, job_id: bson.ObjectId):
-        """Deletes all tasks of a job, then recompiles the job to construct new tasks.
+        """Delete all tasks of a job, then recompile the job.
 
-        The job MUST be in state 'canceled', to ensure that the manager has stopped task execution.
+        The job state MUST be in RECREATABLE_JOB_STATES, to ensure that the
+        manager has stopped task execution.
 
-        As this functionality requires access to both the task manager and the job manager,
-        this is implemented on FlamencoExtension itself.
+        As this functionality requires access to both the task manager and the
+        job manager, this is implemented on FlamencoExtension itself.
         """
 
         from flamenco import job_compilers
@@ -373,8 +374,15 @@ class FlamencoExtension(PillarExtension):
         self._log.info('Recreating job %s', job_id)
         self.job_manager.api_set_job_status(job_id, 'under-construction')
         self.task_manager.api_delete_tasks_for_job(job_id)
-        job_compilers.compile_job(job_doc)
-        self._log.info('Recreated job %s', job_id)
+
+        try:
+            job_compilers.compile_job(job_doc)
+        except Exception as ex:
+            self._log.exception('Recreating job %s failed', job_id)
+            self.job_manager.api_set_job_status(job_id, 'construction-failed')
+            raise ValueError('Job recreation failed: %s' % ex)
+        else:
+            self._log.info('Recreated job %s', job_id)
 
 
 def _get_current_flamenco():

@@ -34,7 +34,13 @@ def after_inserting_jobs(jobs):
         # Prepare storage dir for the job files?
         # Generate tasks
         log.info(f'Generating tasks for job {job_id}')
-        job_compilers.compile_job(job)
+
+        try:
+            job_compilers.compile_job(job)
+        except Exception:
+            log.exception('Compiling job %s failed', job_id)
+            job['status'] = 'construction-failed'
+            current_flamenco.job_manager.api_set_job_status(job_id, job['status'])
 
 
 def check_job_permission_fetch(job_doc):

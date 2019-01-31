@@ -200,6 +200,7 @@ jobs_schema = {
         'type': 'string',
         'allowed': [
             'under-construction',  # Job is still being compiled, tasks must be ignored by Manager.
+            'construction-failed',  # There was an error compiling this job.
             'paused',  # Job can go to queued, tasks must be ignored by Manager until then.
             'completed',
             'active',
