@@ -1,4 +1,5 @@
 """Task management."""
+import collections
 import datetime
 import pathlib
 import typing
@@ -18,16 +19,19 @@ import pillar.api.projects.utils
 from pillarsdk.exceptions import ResourceNotFound
 
 # Keep this synced with _config.sass
-COLOR_FOR_TASK_STATUS = {
-    'queued': '#b4bbaa',
-    'canceled': '#999',
-    'cancel-requested': '#d0a46d',
-    'failed': '#ff8080',
-    'claimed-by-manager': '#d1c5d3',
-    'processing': '#ffbe00',
-    'active': '#00ceff',
-    'completed': '#bbe151',
-}
+COLOR_FOR_TASK_STATUS = collections.defaultdict(
+    lambda: '#ccd',
+    {
+        'queued': '#b4bbaa',
+        'canceled': '#999',
+        'cancel-requested': '#d0a46d',
+        'failed': '#ff8080',
+        'claimed-by-manager': '#d1c5d3',
+        'processing': '#ffbe00',
+        'active': '#00ceff',
+        'completed': '#bbe151',
+        'paused': '#ccc',
+    })
 
 REQUEABLE_TASK_STATES = {'completed', 'canceled', 'failed'}
 CANCELABLE_TASK_STATES = {'queued', 'claimed-by-manager', 'active'}
