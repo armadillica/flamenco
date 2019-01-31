@@ -81,6 +81,20 @@ class BlenderRenderAudio(AbstractCommand):
 
 
 @attr.s(auto_attribs=True)
+class ExrSequenceToJpeg(AbstractCommand):
+    # Blender executable to run.
+    blender_cmd: str
+    # Path of the blend file that produced the EXR files.
+    # This allow us to get the correct colour space & grading.
+    filepath: str
+
+    exr_directory: str
+
+    # Pattern like 'preview-######'; without extension.
+    output_pattern: str
+
+
+@attr.s(auto_attribs=True)
 class CreatePythonFile(AbstractCommand):
     """Write a Python file to a specific location."""
 
