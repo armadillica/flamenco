@@ -30,6 +30,9 @@ Flamenco Server Changelog
   used. The artists no longer give the number of sample chunks, but only the maximum sample count
   per render task. This is a backward-incompatible change, and requires an upgrade of both the
   Blender Cloud add-on and the Flamenco Worker and Blender 2.80 from after 2019-01-30.
+- Progressive rendering now generates preview JPEG images and an MKV video after each render
+  iteration. Note that contrary to regular render jobs, the video creation is *not* optional and
+  thus requires at least one worker to support the `video-encoding` task type.
 
 
 ## Version 2.1 (released 2018-12-04)

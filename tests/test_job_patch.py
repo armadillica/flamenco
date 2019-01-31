@@ -328,6 +328,7 @@ class RNAOverridesTestProgressiveRender(AbstractRNAOverridesTest):
                     'chunk_size': 2,
                     'render_output': '/render/out/frames-######',
                     'format': 'EXR',
+                    'fps': 44,
                     'filepath': '/agent327/scenes/someshot/somefile.blend',
                     'blender_cmd': '/path/to/blender --enable-new-depsgraph',
                     'cycles_sample_count': 30,
@@ -350,6 +351,8 @@ class RNAOverridesTestProgressiveRender(AbstractRNAOverridesTest):
             render_tasks = list(tasks_coll.find({'job': self.job_id,
                                                  'task_type': 'blender-render',
                                                  'parents': [rm_tree_task['_id']]}))
+            task_count = tasks_coll.count({'job': self.job_id})
+
         # Just checking some assumptions this test relies on.
         self.assertEqual(15, len(render_tasks))
         for task in render_tasks:
@@ -376,7 +379,7 @@ class RNAOverridesTestProgressiveRender(AbstractRNAOverridesTest):
             tasks = list(tasks_coll
                          .find({'job': self.job_id})
                          .sort([('_id', 1)]))
-        self.assertEqual(30, len(tasks))
+        self.assertEqual(task_count+1, len(tasks))
 
         override_task = tasks[-1]
         self.assertValidOverrideTask(override, override_task)

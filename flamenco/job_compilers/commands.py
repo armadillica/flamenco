@@ -175,7 +175,7 @@ class CreateVideo(AbstractCommand):
 
     input_files: str  # Can be a glob, hence the plural.
     output_file: str
-    fps: int
+    fps: typing.Union[int, float]
 
     # Path to the ffmpeg binary. This is usually determined by the Flamenco Manager configuration.
     ffmpeg_cmd: str = '{ffmpeg}'

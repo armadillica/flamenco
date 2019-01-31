@@ -110,7 +110,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
     _log = attrs_extra.log('%s.BlenderRenderProgressive' % __name__)
 
     REQUIRED_SETTINGS = ('blender_cmd', 'filepath', 'render_output', 'frames', 'chunk_size',
-                         'format', 'cycles_sample_count', 'cycles_sample_cap')
+                         'format', 'cycles_sample_count', 'cycles_sample_cap', 'fps')
 
     # So that unit tests can override this value and produce smaller jobs.
     _uncapped_chunk_count = 5
@@ -138,6 +138,8 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         cycles_sample_cap = int(self.job_settings.get('cycles_sample_cap', 100))
 
         next_merge_task_deps = []
+        next_preview_images_tid: typing.Optional[ObjectId] = None
+        next_preview_video_tid: typing.Optional[ObjectId] = None
         prev_samples_to = 0
 
         self.chunk_generator = ChunkGenerator(cycles_sample_count, cycles_sample_cap,
@@ -164,17 +166,19 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
             # and the just-created list.
             if cycles_chunk_idx == 0:
                 # Nothing to merge yet, just copy the first renders.
-                publish_task_id = self._make_publish_first_chunk_task(
+                publish_task_id = self._make_publish_task(
                     job,
                     render_task_ids,
                     cycles_chunk_start,
                     cycles_chunk_end,
                     task_priority=render_task_priority - 2,
+                    is_first=True,
                 )
-                self._make_previews(job, [publish_task_id],
-                                    task_priority=render_task_priority - 3)
-                task_count += 2
-                next_merge_task_deps = len(render_task_ids) * [publish_task_id]
+                next_preview_images_tid, next_preview_video_tid = self._make_previews(
+                    job, [publish_task_id], next_preview_images_tid, next_preview_video_tid,
+                    task_priority=render_task_priority - 3)
+                task_count += 3
+                next_merge_task_deps = render_task_ids
             else:
                 # Both merge and render tasks should have same number of frame chunks.
                 assert len(next_merge_task_deps) == len(render_task_ids)
@@ -189,8 +193,20 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                     cycles_chunks_to2=cycles_chunk_end,
                     task_priority=render_task_priority - 1,
                 )
-                # TODO(Sybren): publish merged EXR files + render to video file.
-                task_count += len(merge_task_ids)
+
+                publish_task_id = self._make_publish_task(
+                    job,
+                    merge_task_ids,
+                    1,
+                    cycles_chunk_end,
+                    task_priority=render_task_priority - 2,
+                    is_first=False,
+                )
+                next_preview_images_tid, next_preview_video_tid = self._make_previews(
+                    job, [publish_task_id], next_preview_images_tid, next_preview_video_tid,
+                    task_priority=render_task_priority - 3)
+
+                task_count += len(merge_task_ids) + 3
                 next_merge_task_deps = merge_task_ids
             prev_samples_to = cycles_chunk_end
 
@@ -232,16 +248,22 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                                     'file-management')
         return task_id
 
-    def _make_publish_first_chunk_task(self, job: dict, parents: typing.List[ObjectId],
-                                       cycles_samples_from: int,
-                                       cycles_samples_to: int,
-                                       task_priority: int) -> ObjectId:
-        """Publishes the first cycles-chunk of renders."""
+    def _make_publish_task(self, job: dict, parents: typing.List[ObjectId],
+                           cycles_samples_from: int,
+                           cycles_samples_to: int,
+                           task_priority: int,
+                           *,
+                           is_first: bool) -> ObjectId:
+        """Publish the progressive result."""
 
-        cmds: typing.List[commands.AbstractCommand] = [commands.MoveOutOfWay(
-            src=str(self.render_path))]
+        cmds: typing.List[commands.AbstractCommand] = []
 
-        src_path = self._render_output(cycles_samples_from, cycles_samples_to)
+        if is_first:
+            cmds.append(commands.MoveOutOfWay(src=str(self.render_path)))
+            src_path = self._render_output(cycles_samples_from, cycles_samples_to)
+        else:
+            src_path = self._merge_output(cycles_samples_to)
+
         src_fmt = str(src_path).replace('######', '%06i.exr')
         dest_fmt = str(self.render_output).replace('######', '%06i.exr')
 
@@ -252,13 +274,22 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                     dest=dest_fmt % frame,
                 ))
 
-        task_id = self._create_task(job, cmds, 'publish-first-chunk', 'file-management',
+        task_name = f'publish-samples-{cycles_samples_to}'
+        task_id = self._create_task(job, cmds, task_name, 'file-management',
                                     parents=parents, priority=task_priority)
         return task_id
 
     def _make_previews(self, job: dict, parents: typing.List[ObjectId],
-                       task_priority: int) -> ObjectId:
-        """Converts EXR files in the render output directory to JPEG files."""
+                       parent_images_tid: typing.Optional[ObjectId],
+                       parent_video_tid: typing.Optional[ObjectId],
+                       task_priority: int) -> typing.Tuple[ObjectId, ObjectId]:
+        """Converts EXR files in the render output directory to JPEG files.
+
+        This constructs two tasks, one of type 'blender-render' and one of
+        type 'video-encoding'.
+
+        :return: (images task ID, video task ID)
+        """
 
         job_settings = job['settings']
         cmds = [
@@ -268,15 +299,27 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                 exr_directory=str(self.render_path),
                 output_pattern='preview-######',
             ),
+        ]
+
+        image_parents = parents[:]
+        if parent_images_tid:
+            image_parents.insert(0, parent_images_tid)
+        images_task_id = self._create_task(job, cmds, 'create-preview-images', 'blender-render',
+                                           parents=image_parents, priority=task_priority)
+
+        cmds = [
             commands.CreateVideo(
                 input_files=str(self.render_path / 'preview-*.jpg'),
                 output_file=str(self.render_path / 'preview.mkv'),
                 fps=job_settings['fps'],
             )
         ]
-        task_id = self._create_task(job, cmds, 'exr-sequence-to-jpeg', 'blender-render',
-                                    parents=parents, priority=task_priority)
-        return task_id
+        video_parents = [images_task_id]
+        if parent_video_tid:
+            video_parents.insert(0, parent_video_tid)
+        video_task_id = self._create_task(job, cmds, 'create-preview-video', 'video-encoding',
+                                          parents=video_parents, priority=task_priority)
+        return images_task_id, video_task_id
 
     def _make_progressive_render_tasks(self,
                                        job, name_fmt, parents,
@@ -340,13 +383,13 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
 
     def _render_output(self, cycles_samples_from, cycles_samples_to) -> PurePath:
         """Intermediate render output path, with ###### placeholder for the frame nr"""
-        render_fname = 'render-smpl-%04i-%04i-frm-######' % (cycles_samples_from, cycles_samples_to)
+        render_fname = 'render-smpl-%04i-%04i-######' % (cycles_samples_from, cycles_samples_to)
         render_output = self.intermediate_path / render_fname
         return render_output
 
     def _merge_output(self, cycles_samples_to) -> PurePath:
         """Intermediate merge output path, with ###### placeholder for the frame nr"""
-        merge_fname = 'merge-smpl-%04i-frm-######' % cycles_samples_to
+        merge_fname = 'merge-smpl-%04i-######' % cycles_samples_to
         merge_output = self.intermediate_path / merge_fname
         return merge_output
 
@@ -393,8 +436,8 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         input1_fmt = str(input1).replace('######', '%06i.exr')
         input2_fmt = str(input2).replace('######', '%06i.exr')
         output_fmt = str(output).replace('######', '%06i.exr')
-        final_dest_fmt = str(self.render_output).replace('######', '%06i.exr')
 
+        blender_cmd = job['settings']['blender_cmd']
         for chunk_idx, chunk_frames in enumerate(self._iter_frame_chunks()):
             # Create a merge command for every frame in the chunk.
             task_cmds = []
@@ -402,16 +445,12 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                 intermediate = output_fmt % framenr
                 task_cmds.append(
                     commands.MergeProgressiveRenders(
+                        blender_cmd=blender_cmd,
                         input1=input1_fmt % framenr,
                         input2=input2_fmt % framenr,
                         output=intermediate,
                         weight1=weight1,
                         weight2=weight2,
-                    ))
-                task_cmds.append(
-                    commands.CopyFile(
-                        src=intermediate,
-                        dest=final_dest_fmt % framenr,
                     ))
 
             name = name_fmt % frame_range_merge(chunk_frames)
