@@ -16,6 +16,11 @@
 						a(href="javascript:void(0)")
 							i.pi-clipboard-copy
 							| Copy task ID to Clipboard
+					li
+						a(href="{{ url_for('flamenco_tasks|item_lookup', _id=task._id) }}",
+							target="_blank")
+							i.pi-share
+							| Show task definition JSON
 					| {% if can_request_log_file %}
 					li
 						a(href="javascript:requestTaskLogFileUpload('{{ task._id }}', true)")
