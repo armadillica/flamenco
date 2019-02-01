@@ -88,7 +88,7 @@ class ExrSequenceToJpeg(AbstractCommand):
     # This allow us to get the correct colour space & grading.
     filepath: str
 
-    exr_directory: str
+    exr_glob: str
 
     # Pattern like 'preview-######'; without extension.
     output_pattern: str

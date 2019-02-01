@@ -755,69 +755,36 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 task_type='blender-render',
             ),
 
-            # Pre-existing render output dir is moved aside, and intermediate is destroyed.
-            # Copy first sample chunk of frames to the output directory.
             mock.call(  # task 3
-                job_doc,
-                [
-                    commands.MoveOutOfWay(src='/render/out'),
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-000001.exr',
-                        dest='/render/out/frames-000001.exr',
-                    ),
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-000002.exr',
-                        dest='/render/out/frames-000002.exr',
-                    ),
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-000003.exr',
-                        dest='/render/out/frames-000003.exr',
-                    ),
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-000004.exr',
-                        dest='/render/out/frames-000004.exr',
-                    ),
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-000005.exr',
-                        dest='/render/out/frames-000005.exr',
-                    ),
-                ],
-                'publish-samples-1',
-                priority=-2,
-                parents=task_ids[1:3],
-                status='under-construction',
-                task_type='file-management',
-            ),
-            mock.call(  # task 4
                 job_doc,
                 [commands.ExrSequenceToJpeg(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
-                    exr_directory='/render/out',
+                    exr_glob='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-*.exr',
                     output_pattern='preview-######',
                 )],
                 'create-preview-images',
                 priority=-3,
-                parents=[task_ids[3]],
+                parents=task_ids[1:3],
                 status='under-construction',
                 task_type='blender-render',
             ),
-            mock.call(  # task 5
+            mock.call(  # task 4
                 job_doc,
                 [commands.CreateVideo(
-                    input_files='/render/out/preview-*.jpg',
-                    output_file='/render/out/preview.mkv',
+                    input_files='/render/out__intermediate-2018-07-06_115233/preview-*.jpg',
+                    output_file='/render/out__intermediate-2018-07-06_115233/preview.mkv',
                     fps=5.3,
                 )],
                 'create-preview-video',
                 priority=-3,
-                parents=[task_ids[4]],
+                parents=[task_ids[3]],
                 status='under-construction',
                 task_type='video-encoding',
             ),
 
             # Second Cycles chunk renders to intermediate directory.
-            mock.call(  # task 6
+            mock.call(  # task 5
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
@@ -834,7 +801,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 status='under-construction',
                 task_type='blender-render',
             ),
-            mock.call(  # task 7
+            mock.call(  # task 6
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
@@ -853,7 +820,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
             ),
 
             # First merge pass, outputs to intermediate directory and copies to output dir
-            mock.call(  # task 8
+            mock.call(  # task 7
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
@@ -882,12 +849,12 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     ),
                 ],
                 'merge-to-smpl10-frm1-3',
-                parents=[task_ids[1], task_ids[6]],
+                parents=[task_ids[1], task_ids[5]],
                 priority=-11,
                 status='under-construction',
                 task_type='exr-merge',
             ),
-            mock.call(  # task 9
+            mock.call(  # task 8
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
@@ -908,71 +875,41 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     ),
                 ],
                 'merge-to-smpl10-frm4,5',
-                parents=[task_ids[2], task_ids[7]],
+                parents=[task_ids[2], task_ids[6]],
                 priority=-11,
                 status='under-construction',
                 task_type='exr-merge',
             ),
-            mock.call(  # task 10
-                job_doc,
-                [
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0010-000001.exr',
-                        dest='/render/out/frames-000001.exr',
-                    ),
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0010-000002.exr',
-                        dest='/render/out/frames-000002.exr',
-                    ),
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0010-000003.exr',
-                        dest='/render/out/frames-000003.exr',
-                    ),
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0010-000004.exr',
-                        dest='/render/out/frames-000004.exr',
-                    ),
-                    commands.CopyFile(
-                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0010-000005.exr',
-                        dest='/render/out/frames-000005.exr',
-                    ),
-                ],
-                'publish-samples-10',
-                priority=-12,
-                parents=task_ids[8:10],
-                status='under-construction',
-                task_type='file-management',
-            ),
-            mock.call(  # task 11
+            mock.call(  # task 9
                 job_doc,
                 [commands.ExrSequenceToJpeg(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
-                    exr_directory='/render/out',
+                    exr_glob='/render/out__intermediate-2018-07-06_115233/merge-smpl-0010-*.exr',
                     output_pattern='preview-######',
                 )],
                 'create-preview-images',
                 priority=-13,
-                parents=[task_ids[4], task_ids[10]],
+                parents=[task_ids[3], task_ids[7], task_ids[8]],
                 status='under-construction',
                 task_type='blender-render',
             ),
-            mock.call(  # task 12
+            mock.call(  # task 10
                 job_doc,
                 [commands.CreateVideo(
-                    input_files='/render/out/preview-*.jpg',
-                    output_file='/render/out/preview.mkv',
+                    input_files='/render/out__intermediate-2018-07-06_115233/preview-*.jpg',
+                    output_file='/render/out__intermediate-2018-07-06_115233/preview.mkv',
                     fps=5.3,
                 )],
                 'create-preview-video',
                 priority=-13,
-                parents=[task_ids[5], task_ids[11]],
+                parents=[task_ids[4], task_ids[9]],
                 status='under-construction',
                 task_type='video-encoding',
             ),
 
             # Third Cycles chunk renders to intermediate directory.
-            mock.call(  # task 13
+            mock.call(  # task 11
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
@@ -989,7 +926,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 status='under-construction',
                 task_type='blender-render',
             ),
-            mock.call(  # task 14
+            mock.call(  # task 12
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
@@ -1010,7 +947,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
             # Final merge pass. Could happen directly to the output directory, but to ensure the
             # intermediate directory shows a complete picture (pun intended), we take a similar
             # approach as earlier merge passes.
-            mock.call(  # task 15
+            mock.call(  # task 13
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
@@ -1039,12 +976,12 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     ),
                 ],
                 'merge-to-smpl30-frm1-3',
-                parents=[task_ids[8], task_ids[13]],
+                parents=[task_ids[7], task_ids[11]],
                 priority=-21,
                 status='under-construction',
                 task_type='exr-merge',
             ),
-            mock.call(  # task 16
+            mock.call(  # task 14
                 job_doc,
                 [
                     commands.MergeProgressiveRenders(
@@ -1065,13 +1002,53 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     ),
                 ],
                 'merge-to-smpl30-frm4,5',
-                parents=[task_ids[9], task_ids[14]],
+                parents=[task_ids[8], task_ids[12]],
                 priority=-21,
                 status='under-construction',
                 task_type='exr-merge',
             ),
 
+            mock.call(  # task 15
+                job_doc,
+                [commands.ExrSequenceToJpeg(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    exr_glob='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-*.exr',
+                    output_pattern='preview-######',
+                )],
+                'create-preview-images',
+                priority=-23,
+                parents=[task_ids[9], task_ids[13], task_ids[14]],
+                status='under-construction',
+                task_type='blender-render',
+            ),
+            mock.call(  # task 16
+                job_doc,
+                [commands.CreateVideo(
+                    input_files='/render/out__intermediate-2018-07-06_115233/preview-*.jpg',
+                    output_file='/render/out__intermediate-2018-07-06_115233/preview.mkv',
+                    fps=5.3,
+                )],
+                'create-preview-video',
+                priority=-23,
+                parents=[task_ids[10], task_ids[15]],
+                status='under-construction',
+                task_type='video-encoding',
+            ),
+
             mock.call(  # task 17
+                job_doc,
+                [
+                    commands.MoveOutOfWay(src='/render/out'),
+                ],
+                'move-outdir-out-of-way',
+                priority=-30,
+                parents=task_ids[13:15],
+                status='under-construction',
+                task_type='file-management',
+            ),
+
+            mock.call(  # task 18
                 job_doc,
                 [
                     commands.CopyFile(
@@ -1095,38 +1072,55 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                         dest='/render/out/frames-000005.exr',
                     ),
                 ],
-                'publish-samples-30',
-                priority=-22,
-                parents=task_ids[15:17],
+                'publish-exr-to-output',
+                priority=-31,
+                parents=[task_ids[17]],
                 status='under-construction',
                 task_type='file-management',
             ),
-            mock.call(  # task 18
-                job_doc,
-                [commands.ExrSequenceToJpeg(
-                    blender_cmd='/path/to/blender --enable-new-depsgraph',
-                    filepath='/agent327/scenes/someshot/somefile.blend',
-                    exr_directory='/render/out',
-                    output_pattern='preview-######',
-                )],
-                'create-preview-images',
-                priority=-23,
-                parents=[task_ids[11], task_ids[17]],
-                status='under-construction',
-                task_type='blender-render',
-            ),
             mock.call(  # task 19
                 job_doc,
-                [commands.CreateVideo(
-                    input_files='/render/out/preview-*.jpg',
-                    output_file='/render/out/preview.mkv',
-                    fps=5.3,
-                )],
-                'create-preview-video',
-                priority=-23,
-                parents=[task_ids[12], task_ids[18]],
+                [
+                    commands.CopyFile(
+                        src='/render/out__intermediate-2018-07-06_115233/preview-000001.jpg',
+                        dest='/render/out/frames-000001.jpg',
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate-2018-07-06_115233/preview-000002.jpg',
+                        dest='/render/out/frames-000002.jpg',
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate-2018-07-06_115233/preview-000003.jpg',
+                        dest='/render/out/frames-000003.jpg',
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate-2018-07-06_115233/preview-000004.jpg',
+                        dest='/render/out/frames-000004.jpg',
+                    ),
+                    commands.CopyFile(
+                        src='/render/out__intermediate-2018-07-06_115233/preview-000005.jpg',
+                        dest='/render/out/frames-000005.jpg',
+                    ),
+                ],
+                'publish-jpeg-to-output',
+                priority=-31,
+                parents=[task_ids[15], task_ids[17]],
                 status='under-construction',
-                task_type='video-encoding',
+                task_type='file-management',
+            ),
+            mock.call(  # task 20
+                job_doc,
+                [
+                    commands.CopyFile(
+                        src='/render/out__intermediate-2018-07-06_115233/preview.mkv',
+                        dest='/render/out/preview.mkv',
+                    ),
+                ],
+                'publish-video-to-output',
+                priority=-31,
+                parents=[task_ids[16], task_ids[17]],
+                status='under-construction',
+                task_type='file-management',
             ),
         ])
 
