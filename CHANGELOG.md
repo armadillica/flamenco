@@ -3,6 +3,8 @@ Flamenco Server Changelog
 
 ## Version 2.2 (in development)
 
+- Requires Flamenco Worker 2.3 or newer.
+- Requires Blender Cloud add-on 2.1 or newer.
 - Added `blender-video-chunks` job type, together with `blender_render_audio`, `concatenate_videos`,
   `mux_audio`, `encode_audio`, `remove_file`, and `move_with_counter` commands.
 
@@ -18,8 +20,6 @@ Flamenco Server Changelog
     - Mux audio and video into a single MKV file.
     - Move that file to the final location, and name it with the current date, a counter to make the
       filename unique, and the name of the blend file.
-- Requires Flamenco Worker 2.3 or newer.
-- Requires Blender Cloud add-on 2.1 or newer.
 - Added ability to request task logs from Flamenco Manager. This allows users to access task logs
   even though they are stored on the Manager. Requested task logs are compressed by the Manager,
   uploaded to Flamenco Server, which then stores it in the project's storage location.
@@ -33,6 +33,9 @@ Flamenco Server Changelog
 - Progressive rendering now generates preview JPEG images and an MKV video after each render
   iteration. Note that contrary to regular render jobs, the video creation is *not* optional and
   thus requires at least one worker to support the `video-encoding` task type.
+- The EXR merging of Progressive Rendering jobs is now done in one task per render iteration
+  (instead of one task per frame chunk). The entire EXR sequence is now merged in one run of
+  Blender.
 
 
 ## Version 2.1 (released 2018-12-04)

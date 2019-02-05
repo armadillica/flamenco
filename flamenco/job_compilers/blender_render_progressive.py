@@ -8,6 +8,7 @@ from bson import ObjectId
 from pillar import attrs_extra
 
 from . import blender_render, commands, register_compiler
+from flamenco import utils
 
 SampleGenerator = typing.Callable[[int], float]
 
@@ -177,8 +178,6 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                 task_count += 2
                 next_merge_task_deps = render_task_ids
             else:
-                # Both merge and render tasks should have same number of frame chunks.
-                assert len(next_merge_task_deps) == len(render_task_ids)
                 output_pattern = f'merge-to-smpl{cycles_chunk_end}-frm%s'
                 merge_task_ids = self._make_merge_tasks(
                     job,
@@ -459,10 +458,6 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         # Merging cannot happen unless we have at least two chunks
         assert cycles_chunk_idx >= 2
 
-        from flamenco.utils import frame_range_merge
-
-        task_ids = []
-
         weight1 = cycles_chunks_to1
         weight2 = cycles_chunks_to2 - cycles_chunks_from2 + 1
 
@@ -479,36 +474,33 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         # Construct format strings from the paths.
         input1_fmt = str(input1).replace('######', '%06i.exr')
         input2_fmt = str(input2).replace('######', '%06i.exr')
-        output_fmt = str(output).replace('######', '%06i.exr')
 
         blender_cmd = job['settings']['blender_cmd']
-        for chunk_idx, chunk_frames in enumerate(self._iter_frame_chunks()):
-            # Create a merge command for every frame in the chunk.
-            task_cmds = []
-            for framenr in chunk_frames:
-                intermediate = output_fmt % framenr
-                task_cmds.append(
-                    commands.MergeProgressiveRenders(
-                        blender_cmd=blender_cmd,
-                        input1=input1_fmt % framenr,
-                        input2=input2_fmt % framenr,
-                        output=intermediate,
-                        weight1=weight1,
-                        weight2=weight2,
-                    ))
 
-            name = name_fmt % frame_range_merge(chunk_frames)
+        frame_start, frame_end = utils.frame_range_start_end(self.job_settings['frames'])
+        assert frame_start is not None
+        assert frame_end is not None
 
-            parent1 = parents1[chunk_idx]
-            parent2 = parents2[chunk_idx]
+        cmds = [
+            commands.MergeProgressiveRenderSequence(
+                blender_cmd=blender_cmd,
+                input1=input1_fmt % frame_start,
+                input2=input2_fmt % frame_start,
+                output=str(output),
+                weight1=weight1,
+                weight2=weight2,
+                frame_start=frame_start,
+                frame_end=frame_end,
+            )
+        ]
+        name = name_fmt % f'{frame_start}-{frame_end}'
 
-            task_id = self._create_task(
-                job, task_cmds, name, 'exr-merge',
-                parents=[parent1, parent2],
-                priority=task_priority)
-            task_ids.append(task_id)
+        task_id = self._create_task(
+            job, cmds, name, 'exr-merge',
+            parents=parents1 + parents2,
+            priority=task_priority)
 
-        return task_ids
+        return [task_id]
 
     def _make_moow_task(self, job: dict, parents: typing.List[ObjectId],
                         task_priority: int) -> ObjectId:

@@ -170,6 +170,18 @@ class MergeProgressiveRenders(AbstractCommand):
 
 
 @attr.s(auto_attribs=True)
+class MergeProgressiveRenderSequence(MergeProgressiveRenders):
+    """Merges two Cycles output sequences into one by taking the weighted average.
+
+    input1 and input2 are the filenames of the first frames of the sequence.
+    """
+    # These have default values because they would otherwise be defined
+    # as mandatory arguments after the non-mandatory `blender_cmd`.
+    frame_start: int = 1
+    frame_end: int = 1
+
+
+@attr.s(auto_attribs=True)
 class CreateVideo(AbstractCommand):
     """Creates a video from an image sequence."""
 
