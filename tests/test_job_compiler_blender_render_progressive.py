@@ -15,7 +15,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
 
     def test_chunk_generator(self):
         from flamenco.job_compilers import blender_render_progressive as brp
-        cg = brp.ChunkGenerator(400, 100)
+        cg = brp.ChunkGenerator(400, 100, uncapped_chunks=5)
         expected = [
             (1, 10),
             (11, 49),
@@ -27,6 +27,10 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
         self.assertEqual(expected, list(cg))
         self.assertEqual(expected, list(cg), 're-iterating "cg" should work')
 
+        cg = brp.ChunkGenerator(400, 100, uncapped_chunks=4)
+        samples = [(end-start+1) for start, end in cg]
+        self.assertEqual([10, 62, 82, 82, 82, 82], samples)
+
         cg = brp.ChunkGenerator(30, 3000, uncapped_chunks=3)
         expected = [
             (1, 1),
@@ -34,6 +38,44 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
             (11, 30),
         ]
         self.assertEqual(expected, list(cg))
+
+    def test_dynamic_frame_chunking(self):
+        from flamenco.job_compilers import blender_render_progressive as brp
+
+        task_manager = mock.Mock()
+        job_manager = mock.Mock()
+        compiler = brp.BlenderRenderProgressive(
+            task_manager=task_manager, job_manager=job_manager)
+
+        # 100 samples / 10 samples per frame = 10 frames.
+        self.assertEqual(10, compiler._frame_chunk_size(
+            max_samples_per_task=100,
+            total_frame_count=30,
+            current_sample_count=10,
+        ))
+
+        # 100 samples / 40 samples per frame = 2.5 frames, so should be 2 per task
+        self.assertEqual(2, compiler._frame_chunk_size(
+            max_samples_per_task=100,
+            total_frame_count=30,
+            current_sample_count=40,
+        ))
+
+        # 100 samples / 20 samples per frame = 5 frames, but this would give 2 tasks
+        # with 5 resp. 2 frame each. A chunk size of 4 would result in more even spread.
+        self.assertEqual(4, compiler._frame_chunk_size(
+            max_samples_per_task=100,
+            total_frame_count=7,
+            current_sample_count=20,
+        ))
+
+        # 100 samples / 10 samples per frame = 10 frames per task, but this would give
+        # tasks [10, 10, ..., 1]. A chunk size of 9 would result in more even spread.
+        self.assertEqual(9, compiler._frame_chunk_size(
+            max_samples_per_task=100,
+            total_frame_count=301,
+            current_sample_count=10,
+        ))
 
     def test_nonexr_job(self):
         from flamenco.job_compilers import blender_render_progressive
@@ -130,7 +172,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
         mock_now = datetime.datetime.now(tz=tz_util.utc)
         mock_datetime.now.side_effect = [mock_now]
 
-        task_ids = [ObjectId() for _ in range(19)]
+        task_ids = [ObjectId() for _ in range(17)]
         task_manager.api_create_task.side_effect = task_ids
 
         compiler = blender_render_progressive.BlenderRenderProgressive(
@@ -156,35 +198,18 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
                     render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-######',
-                    frames='1..3',
+                    frames='1..5',
                     cycles_num_chunks=30,
                     cycles_chunk_start=1,
                     cycles_chunk_end=1)],
-                'render-smpl1-1-frm1-3',
-                priority=0,
-                parents=[task_ids[0]],
-                status='under-construction',
-                task_type='blender-render',
-            ),
-            mock.call(  # task 2
-                job_doc,
-                [commands.BlenderRenderProgressive(
-                    blender_cmd='/path/to/blender --enable-new-depsgraph',
-                    filepath='/agent327/scenes/someshot/somefile.blend',
-                    format='EXR',
-                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-######',
-                    frames='4,5',
-                    cycles_num_chunks=30,
-                    cycles_chunk_start=1,
-                    cycles_chunk_end=1)],
-                'render-smpl1-1-frm4,5',
+                'render-smpl1-1-frm1-5',
                 priority=0,
                 parents=[task_ids[0]],
                 status='under-construction',
                 task_type='blender-render',
             ),
 
-            mock.call(  # task 3
+            mock.call(  # task 2
                 job_doc,
                 [commands.ExrSequenceToJpeg(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
@@ -194,11 +219,11 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 )],
                 'create-preview-images',
                 priority=-3,
-                parents=task_ids[1:3],
+                parents=[task_ids[1]],
                 status='under-construction',
                 task_type='blender-render',
             ),
-            mock.call(  # task 4
+            mock.call(  # task 3
                 job_doc,
                 [commands.CreateVideo(
                     input_files='/render/out__intermediate-2018-07-06_115233/preview-*.jpg',
@@ -207,41 +232,24 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 )],
                 'create-preview-video',
                 priority=-3,
-                parents=[task_ids[3]],
+                parents=[task_ids[2]],
                 status='under-construction',
                 task_type='video-encoding',
             ),
 
             # Second Cycles chunk renders to intermediate directory.
-            mock.call(  # task 5
+            mock.call(  # task 4
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
                     format='EXR',
                     render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0002-0010-######',
-                    frames='1..3',
+                    frames='1..5',
                     cycles_num_chunks=30,
                     cycles_chunk_start=2,
                     cycles_chunk_end=10)],
-                'render-smpl2-10-frm1-3',
-                priority=-10,
-                parents=[task_ids[0]],
-                status='under-construction',
-                task_type='blender-render',
-            ),
-            mock.call(  # task 6
-                job_doc,
-                [commands.BlenderRenderProgressive(
-                    blender_cmd='/path/to/blender --enable-new-depsgraph',
-                    filepath='/agent327/scenes/someshot/somefile.blend',
-                    format='EXR',
-                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0002-0010-######',
-                    frames='4,5',
-                    cycles_num_chunks=30,
-                    cycles_chunk_start=2,
-                    cycles_chunk_end=10)],
-                'render-smpl2-10-frm4,5',
+                'render-smpl2-10-frm1-5',
                 priority=-10,
                 parents=[task_ids[0]],
                 status='under-construction',
@@ -249,7 +257,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
             ),
 
             # First merge pass, outputs to intermediate directory and copies to output dir
-            mock.call(  # task 7
+            mock.call(  # task 5
                 job_doc,
                 [
                     commands.MergeProgressiveRenderSequence(
@@ -264,12 +272,12 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     ),
                 ],
                 'merge-to-smpl10-frm1-5',
-                parents=[task_ids[1], task_ids[2], task_ids[5], task_ids[6]],
+                parents=[task_ids[1], task_ids[4]],
                 priority=-11,
                 status='under-construction',
                 task_type='exr-merge',
             ),
-            mock.call(  # task 8
+            mock.call(  # task 6
                 job_doc,
                 [commands.ExrSequenceToJpeg(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
@@ -279,11 +287,11 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 )],
                 'create-preview-images',
                 priority=-13,
-                parents=[task_ids[3], task_ids[7]],
+                parents=[task_ids[2], task_ids[5]],
                 status='under-construction',
                 task_type='blender-render',
             ),
-            mock.call(  # task 9
+            mock.call(  # task 7
                 job_doc,
                 [commands.CreateVideo(
                     input_files='/render/out__intermediate-2018-07-06_115233/preview-*.jpg',
@@ -292,13 +300,13 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 )],
                 'create-preview-video',
                 priority=-13,
-                parents=[task_ids[4], task_ids[8]],
+                parents=[task_ids[3], task_ids[6]],
                 status='under-construction',
                 task_type='video-encoding',
             ),
 
             # Third Cycles chunk renders to intermediate directory.
-            mock.call(  # task 10
+            mock.call(  # task 8
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
@@ -315,7 +323,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 status='under-construction',
                 task_type='blender-render',
             ),
-            mock.call(  # task 11
+            mock.call(  # task 9
                 job_doc,
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
@@ -336,7 +344,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
             # Final merge pass. Could happen directly to the output directory, but to ensure the
             # intermediate directory shows a complete picture (pun intended), we take a similar
             # approach as earlier merge passes.
-            mock.call(  # task 12
+            mock.call(  # task 10
                 job_doc,
                 [
                     commands.MergeProgressiveRenderSequence(
@@ -351,13 +359,13 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                     ),
                 ],
                 'merge-to-smpl30-frm1-5',
-                parents=[task_ids[7], task_ids[10], task_ids[11]],
+                parents=[task_ids[5], task_ids[8], task_ids[9]],
                 priority=-21,
                 status='under-construction',
                 task_type='exr-merge',
             ),
 
-            mock.call(  # task 13
+            mock.call(  # task 11
                 job_doc,
                 [commands.ExrSequenceToJpeg(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
@@ -367,11 +375,11 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 )],
                 'create-preview-images',
                 priority=-23,
-                parents=[task_ids[8], task_ids[12]],
+                parents=[task_ids[6], task_ids[10]],
                 status='under-construction',
                 task_type='blender-render',
             ),
-            mock.call(  # task 14
+            mock.call(  # task 12
                 job_doc,
                 [commands.CreateVideo(
                     input_files='/render/out__intermediate-2018-07-06_115233/preview-*.jpg',
@@ -380,24 +388,24 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 )],
                 'create-preview-video',
                 priority=-23,
-                parents=[task_ids[9], task_ids[13]],
+                parents=[task_ids[7], task_ids[11]],
                 status='under-construction',
                 task_type='video-encoding',
             ),
 
-            mock.call(  # task 15
+            mock.call(  # task 13
                 job_doc,
                 [
                     commands.MoveOutOfWay(src='/render/out'),
                 ],
                 'move-outdir-out-of-way',
                 priority=-30,
-                parents=[task_ids[12]],
+                parents=[task_ids[10]],
                 status='under-construction',
                 task_type='file-management',
             ),
 
-            mock.call(  # task 16
+            mock.call(  # task 14
                 job_doc,
                 [
                     commands.CopyFile(
@@ -423,11 +431,11 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'publish-exr-to-output',
                 priority=-31,
-                parents=[task_ids[15]],
+                parents=[task_ids[13]],
                 status='under-construction',
                 task_type='file-management',
             ),
-            mock.call(  # task 17
+            mock.call(  # task 15
                 job_doc,
                 [
                     commands.CopyFile(
@@ -453,11 +461,11 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'publish-jpeg-to-output',
                 priority=-31,
-                parents=[task_ids[13], task_ids[15]],
+                parents=[task_ids[11], task_ids[13]],
                 status='under-construction',
                 task_type='file-management',
             ),
-            mock.call(  # task 19
+            mock.call(  # task 16
                 job_doc,
                 [
                     commands.CopyFile(
@@ -467,7 +475,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 ],
                 'publish-video-to-output',
                 priority=-31,
-                parents=[task_ids[14], task_ids[15]],
+                parents=[task_ids[12], task_ids[13]],
                 status='under-construction',
                 task_type='file-management',
             ),

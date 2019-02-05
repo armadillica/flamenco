@@ -18,13 +18,7 @@ class ChunkGenerator:
     """Cycles sample chunk generator."""
     sample_count: int
     sample_cap: int
-
-    uncapped_chunks: int = 5
-    """For testing with less than 5 chunks.
-
-    5 chunks, 400 samples, and a sample cap of 100 gives pleasant results for
-    the Blender Animation Studio, which is why those values were chosen here.
-    """
+    uncapped_chunks: int  # For curve steepness.
 
     def __iter__(self) -> typing.Iterator[typing.Tuple[int, int]]:
         """Return a new iterator of sample chunks."""
@@ -114,7 +108,27 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                          'format', 'cycles_sample_count', 'cycles_sample_cap', 'fps')
 
     # So that unit tests can override this value and produce smaller jobs.
-    _uncapped_chunk_count = 5
+    _uncapped_chunk_count = 4
+
+    def _frame_chunk_size(self,
+                          max_samples_per_task: int,
+                          total_frame_count: int,
+                          current_sample_count: int,
+                          ) -> int:
+        """Compute the frame chunk given the current sample count."""
+
+        frame_chunk_size = max_samples_per_task // current_sample_count
+
+        # Allow the chunk size to become one frame smaller if that produces
+        # a less-empty last task. Having a task with only one frame is
+        # acceptable when the chunk size is only 1 or 2.
+        if frame_chunk_size > 2:
+            frames_in_last_task = total_frame_count % frame_chunk_size
+            with_smaller_chunk = total_frame_count % (frame_chunk_size - 1)
+            if 0 < frames_in_last_task < with_smaller_chunk:
+                frame_chunk_size -= 1
+
+        return frame_chunk_size
 
     def _compile(self, job: dict):
         from .blender_render import intermediate_path
@@ -150,11 +164,19 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         if len(chunks) < 2:
             raise ValueError('This job would not be progressive, use a blender-render job instead.')
 
+        max_frame_chunk_size: int = self.job_settings['chunk_size']
+        max_samples_per_task: int = max_frame_chunk_size * cycles_sample_cap
+        total_frame_count = utils.frame_range_count(self.job_settings['frames'])
+        self._log.info('Total frame count is %d', total_frame_count)
+
         for cycles_chunk_idx, (cycles_chunk_start, cycles_chunk_end) in enumerate(chunks):
-            # Create render tasks for each frame chunk. Only this function uses the base-0
-            # chunk/sample numbers, so we also convert to the base-1 numbers that Blender
-            # uses.
             render_task_priority = -cycles_chunk_idx * 10
+
+            # Compute how big the frame chunk can get given the current sample count.
+            frame_chunk_size = self._frame_chunk_size(
+                max_samples_per_task, total_frame_count,
+                cycles_chunk_end - cycles_chunk_start + 1)
+
             render_task_ids = self._make_progressive_render_tasks(
                 job,
                 f'render-smpl{cycles_chunk_start}-{cycles_chunk_end}-frm%s',
@@ -162,6 +184,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                 cycles_sample_count,  # We use 1 chunk = 1 sample
                 cycles_chunk_start,
                 cycles_chunk_end,
+                frame_chunk_size,
                 task_priority=render_task_priority,
             )
             task_count += len(render_task_ids)
@@ -369,6 +392,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                                        cycles_num_chunks: int,
                                        cycles_chunk_start: int,
                                        cycles_chunk_end: int,
+                                       frame_chunk_size: int,
                                        task_priority: int):
         """Creates the render tasks for this job.
 
@@ -385,7 +409,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         job_settings = job['settings']
 
         task_ids = []
-        frame_chunk_iter = iter_frame_range(job_settings['frames'], job_settings['chunk_size'])
+        frame_chunk_iter = iter_frame_range(job_settings['frames'], frame_chunk_size)
         for chunk_idx, chunk_frames in enumerate(frame_chunk_iter):
             frame_range = frame_range_merge(chunk_frames)
             frame_range_bstyle = frame_range_merge(chunk_frames, blender_style=True)

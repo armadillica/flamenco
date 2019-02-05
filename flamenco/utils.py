@@ -9,9 +9,8 @@ def frame_range_parse(frame_range=None):
     :rtype: list
 
     :Example:
-    >>> frames = "1,3-5,8"
-    >>> frame_range_parse(frames)
-    >>> [1, 3, 4, 5, 8]
+    >>> frame_range_parse("1,3-5,8")
+    [1, 3, 4, 5, 8]
     """
     if not frame_range:
         return list()
@@ -31,6 +30,40 @@ def frame_range_parse(frame_range=None):
             # print("Frame range %d-%d" % (frame_start, frame_end))
     frames_list.sort()
     return frames_list
+
+
+def frame_range_count(frame_range='') -> int:
+    """Given a range of frames, return the total number of frames.
+
+    :type frame_range: str
+    :rtype: list
+
+    :Example:
+    >>> frame_range_count("1,3-5,8")
+    5
+    >>> frame_range_count("")
+    0
+    >>> frame_range_count("1,45,11")
+    3
+    >>> frame_range_count("3-14,15-22")
+    20
+    """
+    if not frame_range:
+        return 0
+
+    frame_count = 0
+    for part in frame_range.split(','):
+        x = part.split("-")
+        num_parts = len(x)
+        if num_parts == 1:
+            frame_count += 1
+            # print("Individual frame %d" % (frame))
+        elif num_parts == 2:
+            frame_start = int(x[0])
+            frame_end = int(x[1])
+            frame_count += frame_end - frame_start + 1
+            # print("Frame range %d-%d" % (frame_start, frame_end))
+    return frame_count
 
 
 def frame_range_start_end(frame_range: typing.Optional[str]) \
@@ -76,9 +109,9 @@ def frame_range_merge(frames_list=None, blender_style=False):
     :Example:
     >>> frames = [1, 3, 4, 5, 8]
     >>> frame_range_merge(frames)
-    u'1,3-5,8'
+    '1,3-5,8'
     >>> frame_range_merge(frames, blender_style=True)
-    u'1,3..5,8'
+    '1,3..5,8'
     """
     if not frames_list:
         return ""
@@ -162,3 +195,8 @@ def camel_case_to_lower_case_underscore(string):
     if isinstance(string, str):
         return '_'.join(words)
     return '_'.join(words)
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()

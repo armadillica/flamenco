@@ -354,7 +354,6 @@ class RNAOverridesTestProgressiveRender(AbstractRNAOverridesTest):
             task_count = tasks_coll.count({'job': self.job_id})
 
         # Just checking some assumptions this test relies on.
-        self.assertEqual(15, len(render_tasks))
         for task in render_tasks:
             self.assertEqual([rm_tree_task['_id']], task['parents'])
 
