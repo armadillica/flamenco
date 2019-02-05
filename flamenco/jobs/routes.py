@@ -315,7 +315,9 @@ def view_job_depsgraph_data(project, job_id, focus_task_id=None):
     log.debug('Querying first-level family')
     add_parents_children(1, False)
     log.debug('Querying second-level family')
-    add_parents_children(2, True)
+    add_parents_children(2, False)
+    log.debug('Querying third-level family')
+    add_parents_children(3, True)
 
     # nodes and edges are only told apart by (not) having 'source' and 'target' properties.
     graph_items = []

@@ -88,6 +88,19 @@ gulp.task('scripts_tutti', function() {
         .pipe(gulpif(enabled.liveReload, livereload()));
 });
 
+/* Simply copy these vendor scripts from node_modules. */
+gulp.task('scripts_copy_vendor', function(done) {
+    let toCopy = [
+        'node_modules/d3/build/d3.min.js',
+        'node_modules/d3/build/d3.js',
+        'node_modules/dagre-d3/dist/dagre-d3.min.js',
+    ];
+
+    gulp.src(toCopy)
+        .pipe(gulp.dest(destination.js + '/vendor/'));
+    done();
+});
+
 
 // While developing, run 'gulp watch'
 gulp.task('watch',function() {
@@ -118,4 +131,10 @@ gulp.task('cleanup', function() {
 // Run 'gulp' to build everything at once
 var tasks = [];
 if (enabled.cleanup) tasks.push('cleanup');
-gulp.task('default', tasks.concat(['styles', 'templates', 'scripts', 'scripts_tutti']));
+gulp.task('default', tasks.concat([
+    'styles',
+    'templates',
+    'scripts',
+    'scripts_tutti',
+    'scripts_copy_vendor',
+]));

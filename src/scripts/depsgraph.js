@@ -2,6 +2,7 @@
 var GRAPH_ELEMENTS_CONSIDERED_BIG = 100;
 
 function depsgraph(canvas_id, elements, roots, focus_task_id) {
+
     // At least draw *something* when there is no data.
     if (!elements || elements.length == 0) {
         console.log('Nothing to draw');
@@ -12,82 +13,59 @@ function depsgraph(canvas_id, elements, roots, focus_task_id) {
         roots = null;
     }
 
-    var is_big_graph = elements.length >= GRAPH_ELEMENTS_CONSIDERED_BIG;
+    let is_big_graph = elements.length >= GRAPH_ELEMENTS_CONSIDERED_BIG;
 
-    var cy;
+    // Set up nodes
+    let nodes_list = [];
+    let task_id_to_node_index = {};
+    var node_idx = 0;
+    for (element of elements) {
+        if (element.group != "nodes") continue;
+        var node = element.data;
 
-    function centre_on_focus_node() {
-        if (!is_big_graph) return;
-        if (typeof focus_task_id == 'undefined') return;
-        if (typeof cy == 'undefined') return; // happens when layout is ready before cytoscape() returns.
+        var classes = ['task', node.status];
+        if (node.outside) classes.push('outside');
+        if (node.focus) classes.push('focus');
 
-        var node = cy.$("#" + focus_task_id);
-        cy.center(node);
+        g.setNode(node.id,  {
+            label: node.label,
+            class: classes.join(" "),
+            style: "background-color: " + node.color,
+            id: node.id,
+        });
+
+        // console.log('node', index, node_idx, element.data);
     }
 
-    cy = cytoscape({
-        container: document.getElementById(canvas_id),
-        elements: elements,
-        style: [
-            {
-                selector: 'node',
-                style: {
-                    'background-color': function(node) {
-                        if (node.data('outside')) return '#eee';
-                        return node.data('color');
-                    },
-                    'label': 'data(label)',
-                    'font-size': 12,
-                    'text-opacity': function(node) { return node.data('outside') ? 0.25 : 1; },
-                    'border-width': function(node) { return node.data('outside') || node.data('focus') ? 1 : 0; },
-                    'border-color': function(node) { return node.data('focus') ? '#fff' : '#ddd'; },
-                    'border-style': function(node) { return node.data('outside') ? 'dashed' : 'solid'; },
-                    'shadow-color': '#000',
-                    'shadow-blur': function(node) { return node.data('focus') ? '30px' : 0; },
-                    'shadow-offset-x': 0,
-                    'shadow-offset-y': 0,
-                    'shadow-opacity': function(node) { return node.data('focus') ? 0.4 : 0; },
-                }
-            },
-            {
-                selector: 'edge',
-                style: {
-                    'width': 3,
-                    'line-color': '#ccc',
-                    'mid-target-arrow-color': '#ccc',
-                    'mid-target-arrow-shape': 'triangle',
-                }
-            }
-        ],
-
-        layout: {
-            // name: 'cose-bilkent',
-            name: is_big_graph ? 'breadthfirst' : 'cose-bilkent',
-            // name: 'breadthfirst',
-            // name: 'preset',
-            // name: 'cose',
-            // circle: true,
-            // randomize: true,
-            animate: false,
-            directed: true,
-            maximalAdjustments: is_big_graph ? 1 : 50,
-            roots: roots,
-            fit: !is_big_graph,
-
-            ready: centre_on_focus_node,
-        },
-        zoom: 1,
+    g.nodes().forEach(function(v) {
+      var node = g.node(v);
+      // Round the corners of the nodes
+      node.rx = node.ry = 5;
     });
 
-    centre_on_focus_node();
+    // Set up edges
+    for (element of elements) {
+        if (element.group != "edges") continue;
+        // console.log("edge", element.data);
+        g.setEdge(element.data.source, element.data.target);
+    }
 
-    // Set up GUI events.
-    cy.on('tap', 'node', function(e) {
-        location.href = 'depsgraph?t=' + e.cyTarget.id();
-        // focus_on_node(e.cyTarget.id()); also works, but doesn't push to browser history.
-    });
-    cy.on('cxttap', 'node', function(e) {
-        window.open('../with-task/' + e.cyTarget.id(), '_blank');
+    // Create the renderer
+    var render = new dagreD3.render();
+
+    // Run the renderer. This is what draws the final graph.
+    render(d3.select("svg g"), g);
+
+    $('svg g.node')
+    .off('click')
+    .off('contextmenu')
+    .click(function(evt) {
+        evt.preventDefault();
+        focus_on_node(evt.delegateTarget.id);
+    })
+    .contextmenu(function(evt) {
+        evt.preventDefault();
+        window.open('../with-task/' + evt.delegateTarget.id, '_blank');
     });
 }
 
@@ -113,4 +91,18 @@ function focus_on_node(node_id) {
     })
     .always(function() { $('#loading').hide(); })
     ;
+}
+
+let g = new dagreD3.graphlib.Graph()
+    .setGraph({})
+    .setDefaultEdgeLabel(function() { return {}; });
+
+function init_depsgraph() {
+    // Set up zoom support
+    var svg = d3.select("svg"),
+        inner = d3.select("svg g"),
+        zoom = d3.zoom().on("zoom", function() {
+          inner.attr("transform", d3.event.transform);
+        });
+    svg.call(zoom);
 }
