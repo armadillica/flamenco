@@ -13,8 +13,6 @@ function depsgraph(canvas_id, elements, roots, focus_task_id) {
         roots = null;
     }
 
-    let is_big_graph = elements.length >= GRAPH_ELEMENTS_CONSIDERED_BIG;
-
     // Set up nodes
     let nodes_list = [];
     let task_id_to_node_index = {};
@@ -78,12 +76,6 @@ function focus_on_node(node_id) {
 
     $.getJSON(url, function(node_edge_data) {
         console.log('Node/edge data: ', node_edge_data);
-        if (node_edge_data.elements.length >= GRAPH_ELEMENTS_CONSIDERED_BIG) {
-            $('#graphsize').text(node_edge_data.elements.length);
-            $('#size_warning').show();
-        } else {
-            $('#size_warning').hide();
-        }
         depsgraph('depsgraph', node_edge_data.elements, node_edge_data.roots, node_id);
     })
     .fail(function(xhr) {

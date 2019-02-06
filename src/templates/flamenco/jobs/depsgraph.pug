@@ -38,11 +38,6 @@ html(lang="en")
 			section p {
 				margin: 0;
 			}
-			#size_warning {
-				color: #800;
-				font-weight: bold;
-				display: none;  // will be shown/hidden with JavaScript.
-			}
 			#loading {
 				font-weight: bold;
 			}
@@ -87,7 +82,6 @@ html(lang="en")
 		section
 			p Left-click to focus the graph on a task.
 			p Right-click to open the task in a new window.
-			p#size_warning This graph is big (<span id='graphsize'></span> elements), showing the ugly-but-fast 'breadthfirst' layout.
 			p#loading Loading dependency graph data...
 		svg(width='100%', height='100%')#depsgraph
 			g
