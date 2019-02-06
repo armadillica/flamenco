@@ -1,8 +1,6 @@
-li.tabs-flamenco(
-	title="Flamenco",
-	data-toggle="tooltip",
-	data-placement="right")
-	| {% if project %}
-	a(href="{{url_for('flamenco.jobs.perproject.index', project_url=project.url, _external=True)}}")
+li
+	a.navbar-item(
+		href="{{ url_for('flamenco.project_index', project_url=project.url) }}"
+		title="Flamenco Render Managment")
 		i.pi-flamenco
-	| {% endif %}
+		span Render Managment

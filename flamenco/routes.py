@@ -2,19 +2,21 @@ import functools
 import logging
 
 import bson
-from flask import Blueprint, render_template, redirect, url_for
+from flask import Blueprint, render_template, redirect, url_for, session
 from flask_login import login_required
 import werkzeug.exceptions as wz_exceptions
 
+from pillar import current_app
 from pillar.auth import current_user as current_user
 from pillar.api.utils.authentication import current_user_id
 from pillar.web.utils import attach_project_pictures
 from pillar.web.system_util import pillar_api
-from pillar.web.projects.routes import project_view
+from pillar.web.projects.routes import project_view, project_navigation_links
 import pillarsdk
 
 from flamenco import current_flamenco
 import flamenco.auth
+from pillarsdk import Project
 
 blueprint = Blueprint('flamenco', __name__)
 log = logging.getLogger(__name__)
@@ -36,8 +38,15 @@ def index():
         for proj in projects['_items']
     ]
 
+    project = Project(session.get('flamenco_last_project'))
+    navigation_links = project_navigation_links(project, pillar_api())
+    extension_sidebar_links = current_app.extension_sidebar_links(project)
+
     return render_template('flamenco/index.html',
-                           projs_with_summaries=projs_with_summaries)
+                           projs_with_summaries=projs_with_summaries,
+                           project=project,
+                           navigation_links=navigation_links,
+                           extension_sidebar_links=extension_sidebar_links)
 
 
 def error_project_not_setup_for_flamenco(project):
@@ -84,8 +93,6 @@ def flamenco_project_view(extra_project_projections: dict = None,
     from flask import session
     import flask_login
 
-    from . import EXTENSION_NAME
-
     if callable(extra_project_projections):
         raise TypeError('Use with @flamenco_project_view() <-- note the parentheses')
 
@@ -93,7 +100,9 @@ def flamenco_project_view(extra_project_projections: dict = None,
         '_id': 1,
         'name': 1,
         'permissions': 1,
-        'extension_props.%s' % EXTENSION_NAME: 1,
+        'nodes_featured': 1,
+        'node_types': 1,
+        'extension_props': 1,
         # We don't need this here, but this way the wrapped function has access
         # to the orignal URL passed to it.
         'url': 1,

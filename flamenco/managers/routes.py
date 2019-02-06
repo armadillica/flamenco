@@ -1,11 +1,13 @@
 import logging
 
 import attr
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, session
 import flask_wtf.csrf
 import werkzeug.exceptions as wz_exceptions
 
-from pillarsdk import User
+from pillar import current_app
+from pillar.web.projects.routes import project_navigation_links
+from pillarsdk import User, Project
 
 import pillar.flask_extra
 from pillar.api.utils import authorization, str2id, gravatar
@@ -41,13 +43,20 @@ def index(manager_id: str = None):
     can_create_manager = may_use_flamenco and (
             not manager_limit_reached or current_user.has_cap('admin'))
 
+    project = Project(session.get('flamenco_last_project'))
+    navigation_links = project_navigation_links(project, pillar_api())
+    extension_sidebar_links = current_app.extension_sidebar_links(project)
+
     return render_template('flamenco/managers/index.html',
                            manager_limit_reached=manager_limit_reached,
                            may_use_flamenco=may_use_flamenco,
                            can_create_manager=can_create_manager,
                            max_managers=flamenco.auth.MAX_MANAGERS_PER_USER,
                            managers=managers,
-                           open_manager_id=manager_id)
+                           open_manager_id=manager_id,
+                           project=project,
+                           navigation_links=navigation_links,
+                           extension_sidebar_links=extension_sidebar_links)
 
 
 @blueprint.route('/<manager_id>')

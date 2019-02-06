@@ -10,6 +10,7 @@ import werkzeug.exceptions as wz_exceptions
 
 import pillarsdk
 import pillar.flask_extra
+from pillar.web.projects.routes import project_navigation_links
 from pillar.web.system_util import pillar_api
 from pillar.auth import current_user
 from pillar import current_app
@@ -80,6 +81,9 @@ def for_project(project, job_id=None, task_id=None):
                           project_url=project.url, job_id=job._id)
         job.manager_name = manager_name(job['manager'])
 
+    navigation_links = project_navigation_links(project, pillar_api())
+    extension_sidebar_links = current_app.extension_sidebar_links(project)
+
     return render_template('flamenco/jobs/list_for_project.html',
                            stats={'nr_of_jobs': '∞', 'nr_of_tasks': '∞'},
                            jobs=jobs['_items'],
@@ -87,7 +91,9 @@ def for_project(project, job_id=None, task_id=None):
                            open_task_id=task_id,
                            project=project,
                            is_archive=is_archive,
-                           page_context='archive' if is_archive else 'job')
+                           page_context='archive' if is_archive else 'job',
+                           navigation_links=navigation_links,
+                           extension_sidebar_links=extension_sidebar_links)
 
 
 @perproject_blueprint.route('/with-task/<task_id>')

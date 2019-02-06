@@ -1,98 +1,49 @@
-doctype html
-html(lang="en")
-	head
-		meta(charset="utf-8")
-		title {% if self.page_title() %}{% block page_title %}{% endblock %} — {% endif %}Flamenco
-		meta(name="viewport", content="width=device-width, initial-scale=1.0")
+| {% extends 'projects/view.html' %}
+include ../../../../pillar/src/templates/mixins/components
 
-		| {% block head %}{% endblock %}
+| {% set title = 'production-tools' %}
 
-		link(href='//fonts.googleapis.com/css?family=Roboto:300,400', rel='stylesheet', type='text/css')
+| {% block css %}
+| {{ super() }}
+link(href="{{ url_for('static_flamenco', filename='assets/css/main.css') }}", rel="stylesheet")
+link(href="{{ url_for('static_flamenco', filename='assets/img/favicon.png') }}", rel="shortcut icon")
+| {% endblock css %}
 
-		link(href="{{ url_for('static_pillar', filename='assets/css/font-pillar.css') }}", rel="stylesheet")
-		link(href="{{ url_for('static_flamenco', filename='assets/css/main.css') }}", rel="stylesheet")
-		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery-3.1.0.min.js')}}")
-		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery.bootstrap-3.3.7.min.js') }}")
-		script(src="{{ url_for('static_pillar', filename='assets/js/tutti.min.js') }}")
-		script.
-			pillar.utils.initCurrentUser({{ current_user | json | safe }});
-		script(src="{{ url_for('static_flamenco', filename='assets/js/generated/tutti.min.js') }}")
-		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/clipboard.min.js')}}")
+| {% block head %}
+script(src="{{ url_for('static_flamenco', filename='assets/js/generated/tutti.min.js') }}")
+script(src="{{ url_for('static_pillar', filename='assets/js/vendor/clipboard.min.js')}}")
+| {% endblock head %}
 
-		link(href="{{ url_for('static_flamenco', filename='assets/img/favicon.png') }}", rel="shortcut icon")
+| {% block body %}
+#app-main
+	#col_sidebar
+		nav.sidebar(role='navigation')
+			ul
+				li
+					a.navbar-item.flamenco(href="{{ url_for('flamenco.index') }}",
+						title='Flamenco')
+						i.pi-flamenco
+				li
+					a.navbar-item.managers(href="{{ url_for('flamenco.managers.index') }}",
+					title='Your Flamenco Managers') Mngrs
+				| {% if session.get('flamenco_last_project') %}
+				| {% set flamenco_last_project = session.get('flamenco_last_project') %}
+				li
+					a.navbar-item.jobs(href="{{ url_for('flamenco.jobs.perproject.index', project_url=flamenco_last_project.url) }}",
+					title='Jobs for project {{ flamenco_last_project.name }}') Jobs
+				li
+					a.navbar-item.archive(href="{{ url_for('flamenco.jobs.archive.perproject.index', project_url=flamenco_last_project.url) }}",
+					title='Jobs archive for project {{ flamenco_last_project.name }}') Archive
+				| {% endif %}
+			
+	| {% block flamencobody %}
+	| {% endblock flamencobody %}
+| {% endblock body %}
 
-		| {% block style %}{% endblock %}
-
-	body("{% block bodyattrs %}{% if project %}data-project-url='{{ project.url }}'{% endif %}{% endblock %}")
-		#app-main
-			#col_sidebar
-				nav.sidebar(role='navigation')
-					a.navbar-brand(
-						href="{{ url_for('main.homepage') }}",
-						title="Blender Cloud")
-						span.app-logo
-							i.pi-blender-cloud
-					ul
-						li
-							a.navbar-item.flamenco(href="{{ url_for('flamenco.index') }}",
-								title='Flamenco')
-								i.pi-flamenco
-						li
-							a.navbar-item.managers(href="{{ url_for('flamenco.managers.index') }}",
-							title='Your Flamenco Managers') Mngrs
-						| {% if session.get('flamenco_last_project') %}
-						| {% set flamenco_last_project = session.get('flamenco_last_project') %}
-						li
-							a.navbar-item.jobs(href="{{ url_for('flamenco.jobs.perproject.index', project_url=flamenco_last_project.url) }}",
-							title='Jobs for project {{ flamenco_last_project.name }}') Jobs
-						li
-							a.navbar-item.archive(href="{{ url_for('flamenco.jobs.archive.perproject.index', project_url=flamenco_last_project.url) }}",
-							title='Jobs archive for project {{ flamenco_last_project.name }}') Archive
-						// Task list is disabled until it is extended with filtering etc. (T51532)
-						//- li
-						//- 	a.navbar-item.tasks(href="{{ url_for('flamenco.tasks.perproject.index', project_url=flamenco_last_project.url) }}",
-						//- 		title='Tasks for project {{ flamenco_last_project.name }}') Tasks
-						| {% endif %}
-					ul.bottom
-
-						| {% include 'menus/notifications.html' %}
-						| {% include 'menus/user.html' %}
-
-			| {% block body %}
-			#col_left
-			#col_main
-				h1 Main
-			#col_right
-				h1 Right
-			| {% endblock %}
-
-		.modal#modal(role="dialog", tabindex="-1")
-			.modal-dialog(role="document")
-				.modal-content
-					.modal-header
-						span.modal-title.title
-						button.close(type="button", data-dismiss="modal", aria-label="Close")
-							i.pi-cancel
-					.modal-body
-
-		script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery.select2.min.js') }}", async=true)
-		script.
-			{% if project %}
-			$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
-			{% endif %}
-
-			$(document).ready(function() {
-				{% if current_user.is_authenticated %}
-					getNotificationsLoop(); // Check for new notifications in the background
-
-					// Resize #notifications and change overflow for scrollbars
-					$(window).on("resize", function() { notificationsResize(); });
-				{% endif %}
-			});
-
-			$(window).on('load resize', function(){
-				var window_height = $(window).height() - 55; // header is 55px
-				$('.col-scrollable').css({'height': window_height});
-			});
-
-		| {% block footer_scripts %}{% endblock %}
+| {% block footer_scripts_pre %}
+script(src="{{ url_for('static_pillar', filename='assets/js/vendor/jquery.select2.min.js') }}", async=true)
+| {% if project %}
+script.
+	ProjectUtils.setProjectAttributes({projectId: "{{project._id}}", projectUrl: "{{project.url}}"});
+| {% endif %}
+| {% endblock footer_scripts_pre %}

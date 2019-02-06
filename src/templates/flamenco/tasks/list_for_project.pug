@@ -1,7 +1,7 @@
 | {% extends 'flamenco/layout.html' %}
 | {% block bodyattrs %}{{ super() }} data-context='task'{% endblock %}
 | {% block page_title %}Tasks - {{ project.name }} {% endblock %}
-| {% block body %}
+| {% block flamencobody %}
 #col_main
 	.col_header.task-list-header
 		| Tasks ({{ tasks | count }})
