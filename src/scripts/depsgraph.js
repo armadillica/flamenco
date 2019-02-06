@@ -59,7 +59,8 @@ function depsgraph(canvas_id, elements, roots, focus_task_id) {
     .off('contextmenu')
     .click(function(evt) {
         evt.preventDefault();
-        focus_on_node(evt.delegateTarget.id);
+        // focus_on_node(evt.delegateTarget.id);
+        window.location.href = 'depsgraph?t=' + evt.delegateTarget.id;
     })
     .contextmenu(function(evt) {
         evt.preventDefault();
