@@ -10,15 +10,19 @@ body
 		nav.sidebar .navbar-item.flamenco
 			+sidebar-button-active
 	&[data-context="task"]
+		overflow: hidden // columns scroll independently
 		nav.sidebar .navbar-item.tasks
 			+sidebar-button-active
 	&[data-context="job"]
+		overflow: hidden // columns scroll independently
 		nav.sidebar .navbar-item.jobs
 			+sidebar-button-active
 	&[data-context="archive"]
+		overflow: hidden // columns scroll independently
 		nav.sidebar .navbar-item.archive
 			+sidebar-button-active
 	&[data-context="managers"]
+		overflow: hidden // columns scroll independently
 		nav.sidebar .navbar-item.managers
 			+sidebar-button-active
 
