@@ -197,7 +197,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
 
                 next_preview_images_tid, next_preview_video_tid = self._make_previews_tasks(
                     job, render_task_ids, next_preview_images_tid, next_preview_video_tid,
-                    exr_glob=exr_glob, task_priority=render_task_priority - 3)
+                    exr_glob=exr_glob, task_priority=render_task_priority + 1)
                 task_count += 2
                 next_merge_task_deps = render_task_ids
             else:
@@ -211,14 +211,14 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                     cycles_chunks_to1=prev_samples_to,
                     cycles_chunks_from2=cycles_chunk_start,
                     cycles_chunks_to2=cycles_chunk_end,
-                    task_priority=render_task_priority - 1,
+                    task_priority=1,
                 )
 
                 merge_out = self._merge_output(cycles_chunk_end)
                 exr_glob = merge_out.with_name(merge_out.name.replace('######', '*.exr'))
                 next_preview_images_tid, next_preview_video_tid = self._make_previews_tasks(
                     job, merge_task_ids, next_preview_images_tid, next_preview_video_tid,
-                    exr_glob=exr_glob, task_priority=render_task_priority - 3)
+                    exr_glob=exr_glob, task_priority=1)
 
                 task_count += len(merge_task_ids) + 2
                 next_merge_task_deps = merge_task_ids
@@ -228,17 +228,17 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         # This makes sure any previous high-quality render is only replaced by
         # another high-quality render.
         moow_tid = self._make_moow_task(job, next_merge_task_deps,
-                                        task_priority=render_task_priority - 10)
+                                        task_priority=1)
         self._make_publish_exr_task(
             job,
             [moow_tid],
             cycles_sample_count,
-            task_priority=render_task_priority - 11,
+            task_priority=1,
         )
         self._make_publish_jpeg_task(job, [next_preview_images_tid, moow_tid],
-                                     task_priority=render_task_priority - 11)
+                                     task_priority=1)
         self._make_publish_preview_video_task(job, [next_preview_video_tid, moow_tid],
-                                              task_priority=render_task_priority - 11)
+                                              task_priority=1)
 
         self._log.info('Created %i tasks for job %s', task_count, job['_id'])
 
