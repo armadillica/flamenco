@@ -16,19 +16,10 @@
 		padding: 10px 5px
 		color: $color-text-dark-primary
 
-	.dropdown button
-		height: 38px
-		margin-left: 10px
+	.dropdown-toggle i
+		margin: initial
 
 	.dropdown-menu
-		top: 36px
-		left: initial
-		right: 0
-		padding-top: 0
-		padding-bottom: 0
-		border: thin solid $color-background
-		box-shadow: 1px 1px 2px rgba(black, .1), 0 5px 25px rgba(black, .1)
-
 		li
 			display: flex
 			height: 100%
@@ -43,15 +34,14 @@
 				color: $color-danger
 
 			a
-				padding: 10px 15px 10px 12px
-				flex: 1
-				height: 100%
 				color: $color-text-dark-primary
-				i
-					position: relative
-					top: -1px
-					left: -4px
-					font-size: .9em
+				display: flex
+				flex: 1
+				padding: 10px 15px 10px 12px
+
+				&:hover
+					color: $primary
+					text-decoration: none
 
 	.table
 		&.item-properties
@@ -94,7 +84,6 @@
 
 		&.item-job-settings
 			margin-top: 15px
-
 
 .flamenco-box+.flamenco-box
 	margin-top: 0
