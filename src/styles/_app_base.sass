@@ -119,9 +119,7 @@ nav.sidebar
 	overflow-x: auto
 
 	.table
-		background-color: white
-	.table-row:hover
-		background-color: $color-background-light
+		background-color: $white
 
 	.table-cell
 		&.item-status
@@ -129,18 +127,16 @@ nav.sidebar
 			height: 100%
 			border-bottom: none
 
-	.table-head
-		.table-cell
+		&.item-priority
 			text-align: center
 
+	.table-head
+		.table-cell
 			&.highlight .collapser
 				color: $color-primary-dark
 
 			&.item-status
 				min-width: 60px
-
-			&.item-name, &.item-manager
-				text-align: left
 
 			&.item-name
 				padding-left: 5px
@@ -158,14 +154,27 @@ nav.sidebar
 	.table-body
 		.table-row
 			@include status-color-property(background-color, ' .item-status a', 'dark')
-			@include status-color-property(border-color, ' .item-status a', 'light')
+			box-shadow: inset 1px 1px 0 rgba(black, .05)
+
+			&:hover
+				background-color: $color-background-light
+
+				.table-cell
+					a
+						color: $primary
+						text-decoration: none
+
+					&.item-status a
+						color: $white
+						opacity: .7
+
+			/* Dim a bit the 'completed' label, green background is enough. */
+			&.status-completed .item-status a
+				color: rgba($white, .6)
 
 		.table-cell
-			text-align: center
-			font:
-				family: monospace
-				size: .95em
-			line-height: 1.2em
+			font-family: monospace
+			border: none
 
 			&.active
 				background-color: $color-background
@@ -177,20 +186,19 @@ nav.sidebar
 					transform: translate(-50%, -50%) scale(1.2)
 
 			&.item-name
-				text-align: left
 				position: relative
 				height: 100%
+
 				a
 					display: flex
-					padding: 3px 10px
+					padding: 4px 5px 3px 10px
 					color: $color-text-dark-primary
 
 					span
 						margin: auto 0
-						line-height: 1.1em
+						line-height: initial
 
 			&.item-type, &.item-manager
-				text-align: left
 				a
 					+text-overflow-ellipsis
 					color: $color-text-dark-primary
@@ -199,17 +207,14 @@ nav.sidebar
 				color: $color-text-dark-secondary
 
 			&.item-status
+				@extend .text-center
+
 				a
-					display: inline-block
-					color: $color-text-light
-					font-size: .75em
-					text-transform: uppercase
-					font-family: $font-body
-					padding: 1px 5px
-					border-radius: 3px
-					width: 100%
-					margin-left: 3px
 					background-color: $color-text-dark-secondary // fallback, gets overriden by individual status
+					color: $color-text-light
+					display: block
+					padding: 2px 10px
+					text-transform: uppercase
 
 
 .action-result-panel
