@@ -206,3 +206,16 @@ def unused_manager_owners():
 
 
 manager.add_command("flamenco", manager_flamenco)
+
+
+@manager_flamenco.command
+def runability_check():
+    """Schedules Celery background tasks for job runability check.
+
+    Creates a new celery archival task for each job that has status 'active'.
+    """
+
+    from flamenco.celery import job_runnability_check
+
+    log.info('Creating Celery background tasks for runability checks of jobs')
+    job_runnability_check.schedule_checks()

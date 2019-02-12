@@ -11,13 +11,13 @@ import pillarsdk
 from pillar.extension import PillarExtension
 from pillar.auth import current_user
 
-
 EXTENSION_NAME = 'flamenco'
 
 
 class FlamencoExtension(PillarExtension):
     celery_task_modules = [
         'flamenco.celery.job_archival',
+        'flamenco.celery.job_runnability_check',
     ]
     user_roles = {
         'flamenco-admin',
