@@ -99,6 +99,7 @@ def view_task(project, flamenco_props, task_id):
         raise wz_exceptions.Forbidden()
 
     task = Task.find(task_id, api=api)
+    task.parents = task.parents or []  # Make sure it's always iterable.
 
     from . import REQUEABLE_TASK_STATES, CANCELABLE_TASK_STATES
     project_id = bson.ObjectId(project['_id'])

@@ -59,6 +59,14 @@
 						#task-time-creation.collapse
 							| Created on {{ task._created | pretty_date_time }}
 				.table-row
+					.table-cell Parent Task{{ task.parents|pluralize}}
+					.table-cell
+						| {% for parent in task.parents %}
+						a(href='javascript:task_open("{{ parent }}")') {{ parent }}
+						| {% else %}
+						| -none-
+						| {% endfor %}
+				.table-row
 					.table-cell Priority
 					.table-cell {{ task.priority }}
 				//- .table-row
