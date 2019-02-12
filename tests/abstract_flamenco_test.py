@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+import typing
 
 import pillarsdk
 import pillar.tests
@@ -169,7 +169,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
                              task_id, task['status'], expected_status))
         return task
 
-    def force_task_status(self, task_idx_or_id, new_status):
+    def force_task_status(self, task_idx_or_id: typing.Union[int, str, ObjectId], new_status):
         """Sets the task status directly in MongoDB.
 
         This should only be used to set up a certain scenario.

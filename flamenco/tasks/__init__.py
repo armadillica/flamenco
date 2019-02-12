@@ -26,6 +26,7 @@ COLOR_FOR_TASK_STATUS = collections.defaultdict(
         'canceled': '#999',
         'cancel-requested': '#d0a46d',
         'failed': '#ff8080',
+        'fail-requested': '#bc8585',
         'claimed-by-manager': '#d1c5d3',
         'processing': '#ffbe00',
         'active': '#00ceff',
@@ -35,8 +36,10 @@ COLOR_FOR_TASK_STATUS = collections.defaultdict(
 
 REQUEABLE_TASK_STATES = {'completed', 'canceled', 'failed'}
 CANCELABLE_TASK_STATES = {'queued', 'claimed-by-manager', 'active'}
+FAILED_TASK_STATES = {'canceled', 'failed'}
+QUEUED_TASK_STATES = {'queued', 'claimed-by-manager'}
 LOG_UPLOAD_REQUESTABLE_TASK_STATES = {'canceled', 'cancel-requested', 'failed', 'completed',
-                                      'claimed-by-manager'}
+                                      'claimed-by-manager', 'fail-requested'}
 
 
 @attr.s

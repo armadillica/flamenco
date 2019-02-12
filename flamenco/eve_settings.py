@@ -209,6 +209,7 @@ jobs_schema = {
             'queued',   # The job is ready for execution.
             'requeued',  # The job is being re-queued, changing it tasks statuses too.
             'failed',
+            'fail-requested',
             'archiving',
             'archived',
         ],

@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-
 from bson import ObjectId
 
 from pillar.tests import common_test_data as ctd
@@ -266,6 +264,57 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
 
         # Without confirmation from the Manager, the job should go to canceled.
         self.assert_job_status('canceled')
+
+    def test_job_status_failed_after_fail_requested(self):
+        """When the last cancel-requested task goes to canceled, a failed-requested job should
+        go to failed status.
+        """
+
+        self.force_job_status('queued')
+        tasks = self.do_schedule_tasks()
+
+        # Mixture of statuses when we request failure of the job.
+        self.do_batch_update(tasks, [0, 2, 3],
+                             ['active', 'claimed-by-manager', 'queued'])
+        self.force_task_status(tasks[1]['_id'], 'failed')
+        self.assert_job_status('active')
+
+        self.set_job_status('fail-requested')
+
+        # This should have cancel-requested any Manager-owned tasks.
+        self.assert_task_status(tasks[0]['_id'], 'cancel-requested')
+        self.assert_task_status(tasks[1]['_id'], 'failed')
+        self.assert_task_status(tasks[2]['_id'], 'cancel-requested')
+        self.assert_task_status(tasks[3]['_id'], 'canceled')
+
+        # Once all tasks are confirmed to be canceled, the job should go to failed.
+        self.do_batch_update(tasks, [0, 2], 2 * ['canceled'])
+        self.assert_job_status('failed')
+
+    def test_job_status_failed_after_fail_requested_immediate(self):
+        """When there are no Manager-claimed tasks, a failed-requested job should
+        go to failed status immediately.
+        """
+
+        self.force_job_status('active')
+        tasks = self.do_schedule_tasks()
+
+        # Mixture of statuses when we request failure of the job.
+        self.do_batch_update(tasks, [0, 2, 3],
+                             ['queued', 'canceled', 'queued'])
+        self.force_task_status(tasks[1]['_id'], 'failed')
+        self.assert_job_status('active')
+
+        self.set_job_status('fail-requested')
+
+        # This should immediately cancel tasks.
+        self.assert_task_status(tasks[0]['_id'], 'canceled')
+        self.assert_task_status(tasks[1]['_id'], 'failed')
+        self.assert_task_status(tasks[2]['_id'], 'canceled')
+        self.assert_task_status(tasks[3]['_id'], 'canceled')
+
+        # Without waiting for any confirmation, the job should go to 'failed'
+        self.assert_job_status('failed')
 
     def test_nonmanager_access_fladmin(self):
         """Try sending batch updates as flamenco-admin instead of manager"""

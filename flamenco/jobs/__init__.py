@@ -184,16 +184,18 @@ class JobManager(object):
             return
 
         if new_task_status == 'canceled':
-            # Only trigger cancellation of the job if that was actually requested.
+            # Only trigger cancellation/failure of the job if that was actually requested.
             # A user can also cancel a single task from the Server web UI or API.
             job = jobs_coll.find_one(job_id, projection={'status': 1})
-            if job['status'] == 'cancel-requested':
+            job_status = job['status']
+            if job_status in {'cancel-requested', 'fail-requested'}:
                 # This could be the last cancel-requested task to go to 'canceled.
                 statuses = tasks_coll.distinct('status', {'job': job_id})
                 if 'cancel-requested' not in statuses:
-                    self._log.info('Last task %s of job %s went from cancel-requested to canceled.',
+                    self._log.info('Last task %s of job %s went from cancel-requested to canceled',
                                    task_id, job_id)
-                    self.api_set_job_status(job_id, 'canceled')
+                    next_status = job_status.replace('-requested', 'ed')
+                    self.api_set_job_status(job_id, next_status)
             return
 
         if new_task_status == 'failed':
@@ -290,7 +292,7 @@ class JobManager(object):
             # Nothing to do; this happens when a task gets started, which has nothing to
             # do with other tasks in the job.
             return
-        elif new_status in {'cancel-requested', 'failed'}:
+        elif new_status in {'cancel-requested', 'failed', 'fail-requested'}:
             return self._do_cancel_tasks(job_id, old_status, new_status)
         elif new_status == 'requeued':
             return self._do_requeue(job_id, old_status, new_status)
@@ -323,14 +325,15 @@ class JobManager(object):
              'activity': {'$exists': False}},
             'Server cancelled this task because the job got status %r.' % new_status
         )
-        # If the new status is cancel-requested, and no tasks were marked as cancel-requested,
-        # we can directly transition the job to 'canceled', without waiting for more task
+        # If the new status is xxx-requested, and no tasks were marked as cancel-requested,
+        # we can directly transition the job to 'xxx', without waiting for more task
         # updates.
-        if new_status == 'cancel-requested' and cancelreq_result.modified_count == 0:
+        if new_status.endswith('-requested') and cancelreq_result.modified_count == 0:
+            goto_status = new_status.replace('-requested', 'ed')
             self._log.info('handle_job_status_change(%s, %s, %s): no cancel-requested tasks, '
-                           'so transitioning directly to canceled',
-                           job_id, old_status, new_status)
-            return 'canceled'
+                           'so transitioning directly to %s',
+                           job_id, old_status, new_status, goto_status)
+            return goto_status
 
     def _do_requeue(self, job_id, old_status, new_status) -> typing.Optional[str]:
         """Re-queue all tasks of the job, and the job itself.
