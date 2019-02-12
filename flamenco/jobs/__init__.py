@@ -202,9 +202,10 @@ class JobManager(object):
             fail_count = tasks_coll.find({'job': job_id, 'status': 'failed'}).count()
             fail_perc = fail_count / float(total_count) * 100
             if fail_perc >= TASK_FAIL_JOB_PERCENTAGE:
-                self._log.info('Failing job %s because %i of its %i tasks (%i%%) failed',
-                               job_id, fail_count, total_count, fail_perc)
-                self.api_set_job_status(job_id, 'failed')
+                msg = f'Failing job {job_id} because {fail_count} of its {total_count} tasks ' \
+                    f'({int(fail_perc)}%) failed'
+                self._log.info(msg)
+                self.api_set_job_status(job_id, 'failed', reason=msg)
             else:
                 self._log.info('Task %s of job %s failed; '
                                'only %i of its %i tasks failed (%i%%), so ignoring for now',
@@ -246,19 +247,28 @@ class JobManager(object):
                    'status': new_status}, api=api)
 
     def api_set_job_status(self, job_id: bson.ObjectId, new_status: str,
-                           *, now: datetime.datetime = None) -> pymongo.results.UpdateResult:
+                           *,
+                           reason='',
+                           now: datetime.datetime = None) -> pymongo.results.UpdateResult:
         """API-level call to updates the job status."""
         assert new_status
-        self._log.debug('Setting job %s status to "%s"', job_id, new_status)
+        self._log.debug('Setting job %s status to "%s", reason: %r', job_id, new_status, reason)
 
         jobs_coll = current_flamenco.db('jobs')
         curr_job = jobs_coll.find_one({'_id': job_id}, projection={'status': 1})
         old_status = curr_job['status']
 
+        if reason:
+            extra_updates = {'status_reason': reason}
+        else:
+            extra_updates = None
+
         # Go through all necessary status transitions.
         result = None  # make sure that 'result' always has a value.
         while new_status:
-            result = current_flamenco.update_status('jobs', job_id, new_status, now=now)
+            result = current_flamenco.update_status('jobs', job_id, new_status,
+                                                    extra_updates=extra_updates, now=now)
+            extra_updates = None  # Only pass it to the first status update change.
             next_status = self.handle_job_status_change(job_id, old_status, new_status)
             old_status, new_status = new_status, next_status
 

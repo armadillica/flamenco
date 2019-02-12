@@ -11,6 +11,11 @@
 				.table-cell Status
 				.table-cell(class="status-{{ job.status }}")
 					| {{ job.status | undertitle }}
+			| {% if job.status_reason %}
+			.table-row
+				.table-cell Reason
+				.table-cell {{ job.status_reason }}
+			| {% endif %}
 			.table-row
 				.table-cell Created by
 				.table-cell

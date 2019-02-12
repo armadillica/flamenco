@@ -293,24 +293,30 @@ class FlamencoExtension(PillarExtension):
         """Returns a Flamenco-specific MongoDB collection."""
         return flask.current_app.db()['flamenco_%s' % collection_name]
 
-    def update_status(self, collection_name, document_id, new_status,
-                      *, now: datetime.datetime = None):
+    def update_status(self, collection_name, document_id, new_status, *,
+                      extra_updates: typing.Optional[dict] = None,
+                      now: datetime.datetime = None):
         """Updates a document's status, avoiding Eve.
 
         Doesn't use Eve patch_internal to avoid Eve's authorisation. For
         example, Eve doesn't know certain PATCH operations are allowed by
         Flamenco managers.
 
+        :param extra_updates: dictionary of extra updates for the document.
         :param now: the _updated field is set to this timestamp; use this to set multiple
             objects to the same _updated field.
         :rtype: pymongo.results.UpdateResult
         """
 
-        return self.update_status_q(collection_name, {'_id': document_id}, new_status, now=now)
+        return self.update_status_q(collection_name, {'_id': document_id}, new_status,
+                                    extra_updates=extra_updates, now=now)
 
-    def update_status_q(self, collection_name, query, new_status, *, now: datetime.datetime = None):
+    def update_status_q(self, collection_name, query, new_status, *,
+                        extra_updates: typing.Optional[dict] = None,
+                        now: datetime.datetime = None):
         """Updates the status for the queried objects.
 
+        :param extra_updates: dictionary of extra updates for the document(s).
         :param now: the _updated field is set to this timestamp; use this to set multiple
             objects to the same _updated field.
         :returns: the result of the collection.update_many() call
@@ -338,9 +344,11 @@ class FlamencoExtension(PillarExtension):
         collection = current_flamenco.db(collection_name)
         result = collection.update_many(
             query,
-            {'$set': {'status': new_status,
-                      '_updated': now,
-                      '_etag': etag}}
+            {'$set': {
+                **(extra_updates or {}),
+                'status': new_status,
+                '_updated': now,
+                '_etag': etag}}
         )
 
         self._log.debug('Updated status of %i %s %s to %s',

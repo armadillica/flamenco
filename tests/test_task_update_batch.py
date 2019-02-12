@@ -411,6 +411,13 @@ class LargeTaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
             expect_cancel_task_ids={t['_id'] for t in tasks[10:]})
         self.assert_job_status('failed')
 
+        with self.app.app_context():
+            jobs_coll = self.flamenco.db('jobs')
+            job = jobs_coll.find_one(self.job_id, projection={'status_reason': 1})
+        self.assertEqual(
+            f'Failing job {self.job_id} because 10 of its {self.TASK_COUNT} tasks (10%) failed',
+            job['status_reason'])
+
     def test_job_status_failed_with_mixture_of_canceled_and_failed_tasks(self):
         self.force_job_status('queued')
         tasks = self.do_schedule_tasks()

@@ -214,6 +214,12 @@ jobs_schema = {
         ],
         'default': 'queued'
     },
+    # Human-readable description of why the job is in the current status.
+    # Most important for reasons of cancellation/failure.
+    'status_reason': {
+        'type': 'string',
+        'required': False,
+    },
     # When True, after construction the job goes to 'paused' state instead of 'queued'.
     'start_paused': {
         'type': 'boolean',

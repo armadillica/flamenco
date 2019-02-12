@@ -6,7 +6,7 @@ import bson
 from flask import Blueprint
 import werkzeug.exceptions as wz_exceptions
 
-from pillar.api.utils.authentication import current_user_id
+from pillar.api.utils.authentication import current_user_id, current_user
 from pillar.api.utils import authorization, jsonify
 from pillar.api import patch_handler
 
@@ -28,10 +28,13 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
 
         new_status = patch['status']
 
+        user = current_user()
         log.info('User %s uses PATCH to set job %s status to "%s"',
-                 current_user_id(), job_id, new_status)
+                 user.user_id, job_id, new_status)
         try:
-            current_flamenco.job_manager.api_set_job_status(job_id, new_status)
+            current_flamenco.job_manager.api_set_job_status(
+                job_id, new_status,
+                reason=f'Set to {new_status} by {user.full_name} (@{user.username})')
         except ValueError as ex:
             log.debug('api_set_job_status(%s, %r) raised %s', job_id, new_status, ex)
             raise wz_exceptions.UnprocessableEntity(f'Status {new_status} is invalid')
