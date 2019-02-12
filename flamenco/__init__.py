@@ -380,7 +380,9 @@ class FlamencoExtension(PillarExtension):
 
         # Delete the tasks and revert the job to 'under-construction' status before recompiling it.
         self._log.info('Recreating job %s', job_id)
-        self.job_manager.api_set_job_status(job_id, 'under-construction')
+        self.job_manager.api_set_job_status(
+            job_id, 'under-construction',
+            reason=f'Recreated by {current_user.full_name} (@{current_user.username})')
         self.task_manager.api_delete_tasks_for_job(job_id)
 
         try:
