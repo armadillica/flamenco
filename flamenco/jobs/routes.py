@@ -135,9 +135,11 @@ def view_job(project, flamenco_props, job_id):
         manager = None
 
     users_coll = current_app.db('users')
-    user = users_coll.find_one(bson.ObjectId(job.user), projection={'username': 1})
+    user = users_coll.find_one(bson.ObjectId(job.user), projection={'username': 1, 'full_name': 1})
     if user:
-        user_name = user.get('username') or '-unknown-'
+        username = user.get('username', '')
+        full_name = user.get('full_name', '')
+        user_name = f'{full_name} (@{username})'.strip() or '-unknown-'
     else:
         user_name = '-unknown-'
 

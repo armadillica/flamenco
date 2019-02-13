@@ -19,18 +19,12 @@
 			.table-row
 				.table-cell Created by
 				.table-cell
-					| {{ user_name }}
+					='{{ user_name }} '
+					span(title="{{ job._created }}") {{ job._created | pretty_date_time }}
 			.table-row
 				.table-cell Last Update
 				.table-cell(title="{{ job._updated }}")
-					span(role='button',
-						data-toggle='collapse',
-						data-target='#task-time-creation',
-						aria-expanded='false',
-						aria-controls='#task-time-creation')
-						| {{ job._updated | pretty_date_time }}
-					#task-time-creation.collapse
-						| Created on {{ job._created | pretty_date_time }}
+					| {{ job._updated | pretty_date_time }}
 			.table-row
 				.table-cell Job Type
 				.table-cell
