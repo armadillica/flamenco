@@ -57,7 +57,7 @@
 			.table-row
 				.table-cell
 					| {{ set_key | undertitle }}
-				.table-cell
+				.table-cell.job-setting(data-setting-key="{{ set_key }}")
 					| {{ set_val }}
 			| {% endfor %}
 
@@ -138,6 +138,7 @@
 	)
 	| {% endif %}
 
+script(src="{{ url_for('static_flamenco', filename='assets/js/generated/vendor/bowser.js')}}")
 script.
 	/* Load correct task page; was stored at the bottom of _task_list.pug */
 	var sess_task_page = window.sessionStorage.getItem('flamenco-task-page');
@@ -156,3 +157,65 @@ script.
 
 	if (typeof openModalUrl == 'function')
 		$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
+
+	$.fn.managerVariableReplace = function() {
+		// Get OS name, defaulting to Linux.
+		let osName = bowser.getParser(window.navigator.userAgent).getOSName();
+		if (osName != 'Windows' && osName != 'macOS') osName = 'Linux'
+
+		let mngrVariables = {{ manager.variables.to_dict() | tojson }};
+		let mngrPathReplacement = {{ manager.path_replacement.to_dict() | tojson }};
+
+		// Convert the per-OS variables into a flat OS-specific structure.
+		var platformVars = {};
+		let osname = osName.toLowerCase();
+		for (varname in mngrVariables)
+			platformVars[varname] = mngrVariables[varname][osname];
+		for (varname in mngrPathReplacement)
+			platformVars[varname] = mngrPathReplacement[varname][osname];
+
+		// Some settings need some special treatment.
+		// Mapping from setting key to function that transforms the setting value.
+		let specials = {
+			render_output: function(value) {
+				/* Remove the trailing '####' and pop off the top directory.
+				 * During rendering the top dir won't exist yet, but rather
+				 * be an intermediate directory. */
+				let withoutHashes = value.replace(/\/#*$/, '');
+				let parts = withoutHashes.split(/[\\/]/);
+				parts.pop();
+				let sep = osName == 'Windows' ? '\\' : '/';
+				return parts.join(sep);
+			},
+		}
+
+		this.each(function(index, element) {
+			var text = element.innerText;
+
+			for (varname in platformVars) {
+				text = text.replace('{' + varname + '}', platformVars[varname]);
+			}
+
+			let transformer = specials[element.dataset.settingKey];
+			if (typeof transformer == 'function') {
+				text = transformer(text);
+			}
+
+			var expandedFor = "";
+			if (text != element.innerText) {
+				expandedFor = " (variables expanded for " + osName + ")";
+			}
+
+			element.dataset.clipboardText = text;
+			element.setAttribute('title', "Click to copy '" + text + "' to the clipboard" + expandedFor + ".");
+		});
+
+		return this;
+	};
+
+	$('.job-setting').managerVariableReplace();
+
+	new Clipboard('.job-setting[data-clipboard-text]')
+	.on('success', function(e) {
+		statusBarSet('info', 'Copied setting to clipboard, localised for your platform', 'pi-check');
+	});

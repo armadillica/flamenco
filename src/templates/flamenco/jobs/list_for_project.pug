@@ -1,6 +1,15 @@
 | {% extends 'flamenco/projects/view.html' %}
 | {% block bodyattrs %}{{ super() }} data-context='{{ page_context }}'{% endblock %}
 | {% block page_title %}Jobs - {{ project.name }}{% endblock %}
+
+| {% block head %}
+| {{ super() }}
+style.
+		.job-setting[data-clipboard-text] {
+				cursor: pointer;
+		}
+| {% endblock %}
+
 | {% block flamencobody %}
 #col_main
 	#col_main-overlay
