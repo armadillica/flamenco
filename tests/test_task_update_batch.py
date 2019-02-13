@@ -316,6 +316,26 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
         # Without waiting for any confirmation, the job should go to 'failed'
         self.assert_job_status('failed')
 
+    def test_job_status_active_after_fail_requested(self):
+        """When a task is active, a fail-requested job should stay fail-requested .
+        """
+
+        tasks = self.do_schedule_tasks()
+        self.force_task_status(tasks[0]['_id'], 'active')
+        self.force_task_status(tasks[1]['_id'], 'failed')
+        self.force_task_status(tasks[2]['_id'], 'claimed-by-manager')
+        self.force_task_status(tasks[3]['_id'], 'cancel-requested')
+        self.force_job_status('fail-requested')
+
+        # If now two tasks are updated with 'active' status, the job should stay in fail-requested.
+        self.do_batch_update(tasks, [0, 2], 2 * ['active'],
+                             expect_cancel_task_ids={tasks[3]['_id']})
+        self.assert_job_status('fail-requested')
+
+        # Later cancelling of those tasks should progress the job to 'failed'.
+        self.do_batch_update(tasks, [0, 2, 3], 3 * ['canceled'])
+        self.assert_job_status('failed')
+
     def test_nonmanager_access_fladmin(self):
         """Try sending batch updates as flamenco-admin instead of manager"""
 

@@ -217,7 +217,7 @@ class JobManager(object):
 
         if new_task_status in {'active', 'processing'}:
             job = jobs_coll.find_one(job_id, projection={'status': 1})
-            if job['status'] != 'active':
+            if job['status'] not in {'active', 'fail-requested', 'cancel-requested'}:
                 self._log.info('Job %s became active because one of its tasks %s changed '
                                'status to %s', job_id, task_id, new_task_status)
                 self.api_set_job_status(job_id, 'active')
