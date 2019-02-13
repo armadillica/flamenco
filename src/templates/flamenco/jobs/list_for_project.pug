@@ -120,9 +120,11 @@ script.
 		handleSelector: ".col-splitter",
 		resizeHeight: false
 	});
-
+	// Ugly hack to make scrollable column not overflow
+	// TODO: Remove this and write proper CSS!!
+	let headerHeight = 85;
 	$(window).on('load resize', function(){
-		var window_height = $(window).height() - 55; // header is 55px
+		var window_height = $(window).height() - headerHeight;
 		$('.col-scrollable').css({'height': window_height});
 	});
 
