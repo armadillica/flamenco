@@ -99,6 +99,8 @@ def _nonrunnable_tasks(job_oid: ObjectId) -> typing.List[ObjectId]:
         {"$match": {
             'parent_doc.status': {'$in': list(FAILED_TASK_STATES)},
         }},
+        # Prevent duplicate tasks (otherwise each task appears once for each of its failed parents).
+        {"$group": {"_id": "$_id"}},
         {"$project": {"_id": 1}},
     ]
     tasks_coll = current_flamenco.task_manager.collection()

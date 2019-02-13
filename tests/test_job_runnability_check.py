@@ -17,9 +17,7 @@ class JobRunnabilityTest(AbstractFlamencoTest):
         self.mngr_id = mngr_doc['_id']
         self.mngr_token = token['token']
 
-        self.job_id = self.create_job()
-
-    def create_job(self) -> ObjectId:
+    def create_job(self, job_type: str) -> ObjectId:
         from pillar.api.utils.authentication import force_cli_user
 
         # logging.basicConfig(level=logging.DEBUG)
@@ -29,7 +27,7 @@ class JobRunnabilityTest(AbstractFlamencoTest):
             job = self.jmngr.api_create_job(
                 'test job',
                 'Wörk wørk w°rk.',
-                'blender-render-progressive',
+                job_type,
                 {
                     'frames': '1-5',
                     'chunk_size': 3,
@@ -48,7 +46,9 @@ class JobRunnabilityTest(AbstractFlamencoTest):
             )
         return job['_id']
 
-    def test_runnability_check(self):
+    def test_progressive_render(self):
+        self.job_id = self.create_job('blender-render-progressive')
+
         tasks = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                          auth_token=self.mngr_token).json['depsgraph']
 
@@ -80,3 +80,29 @@ class JobRunnabilityTest(AbstractFlamencoTest):
         job_doc = self.flamenco.db('jobs').find_one(self.job_id)
         self.assertIn('tasks have a failed/cancelled parent and will not be able to run.',
                       job_doc['status_reason'])
+
+    def test_regular_render(self):
+        self.job_id = self.create_job('blender-render')
+
+        tasks = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json['depsgraph']
+
+        # Just check some things we assume in this test.
+        self.assertEqual('blender-render-1-3', tasks[0]['name'])
+        self.assertEqual('blender-render-4,5', tasks[1]['name'])
+        self.assertIn(tasks[0]['_id'], tasks[-1]['parents'])
+        self.assertIn(tasks[1]['_id'], tasks[-1]['parents'])
+
+        self.enter_app_context()
+
+        from flamenco.celery import job_runnability_check as jrc
+
+        # At first everything is runnable.
+        self.assertEqual([], jrc._nonrunnable_tasks(self.job_id))
+
+        # When we fail task 0 and 1, task -1 becomes unrunnable, and this should fail the job.
+        self.force_task_status(tasks[0]['_id'], 'failed')
+        self.force_task_status(tasks[1]['_id'], 'failed')
+
+        # The nonrunnable tasks shouldn't have any duplicates.
+        self.assertEqual([ObjectId(tasks[-1]['_id'])], jrc._nonrunnable_tasks(self.job_id))
