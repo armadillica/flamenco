@@ -90,17 +90,10 @@ gulp.task('scripts_tutti', function() {
 
 /* Simply copy these vendor scripts from node_modules. */
 gulp.task('scripts_copy_vendor', function(done) {
-    // I don't want to have a 'bundled.js' in our vendor directory,
-    // so first we have to rename-copy it.
-    gulp.src('node_modules/bowser/es5.js')
-        .pipe(rename("bowser.js"))
-        .pipe(gulp.dest("node_modules/bowser/dist"));
-
     let toCopy = [
         'node_modules/d3/build/d3.min.js',
         'node_modules/d3/build/d3.js',
         'node_modules/dagre-d3/dist/dagre-d3.min.js',
-        'node_modules/bowser/dist/bowser.js',
     ];
 
     gulp.src(toCopy)
