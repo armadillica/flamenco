@@ -144,7 +144,12 @@ def download_task_and_log(storage_path: str, task_id: str):
     log_path = spath / f'task-{task_id}.log.gz'
     with gzip.open(log_path, mode='wb') as outfile:
         for log_entry in logs:
-            outfile.write(log_entry['log'].encode())
+            try:
+                log_contents = log_entry['log']
+            except KeyError:
+                # No 'log' in this log entry. Bit weird, but we shouldn't crash on it.
+                continue
+            outfile.write(log_contents.encode())
 
 
 @current_app.celery.task(ignore_result=True)
