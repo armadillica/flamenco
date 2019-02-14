@@ -156,7 +156,6 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         next_preview_images_tid: typing.Optional[ObjectId] = None
         next_preview_video_tid: typing.Optional[ObjectId] = None
         prev_samples_to = 0
-        render_task_priority = 0
 
         self.chunk_generator = ChunkGenerator(cycles_sample_count, cycles_sample_cap,
                                               self._uncapped_chunk_count)
@@ -179,7 +178,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
 
             render_task_ids = self._make_progressive_render_tasks(
                 job,
-                f'render-smpl{cycles_chunk_start}-{cycles_chunk_end}-frm%s',
+                f'render-s_{cycles_chunk_start}-{cycles_chunk_end}-f_%s',
                 render_parent_task_id,
                 cycles_sample_count,  # We use 1 chunk = 1 sample
                 cycles_chunk_start,
@@ -201,7 +200,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                 task_count += 2
                 next_merge_task_deps = render_task_ids
             else:
-                output_pattern = f'merge-to-smpl{cycles_chunk_end}-frm%s'
+                output_pattern = f'merge-to-s_{cycles_chunk_end}-f_%s'
                 merge_task_ids = self._make_merge_tasks(
                     job,
                     output_pattern,
