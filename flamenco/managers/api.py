@@ -17,10 +17,10 @@ log = logging.getLogger(__name__)
 # TODO: maybe move allowed task transition handling to a different bit of code.
 ACCEPTED_AFTER_CANCEL_REQUESTED = {'canceled', 'failed', 'completed'}
 
-DEPSGRAPH_RUNNABLE_JOB_STATUSES = ['queued', 'active', 'cancel-requested']
+DEPSGRAPH_RUNNABLE_JOB_STATUSES = ['queued', 'active', 'cancel-requested', 'soft-failed']
 DEPSGRAPH_CLEAN_SLATE_TASK_STATUSES = ['queued', 'claimed-by-manager',
-                                       'active', 'cancel-requested']
-DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES = ['queued', 'claimed-by-manager']
+                                       'active', 'cancel-requested', 'soft-failed']
+DEPSGRAPH_MODIFIED_SINCE_TASK_STATUSES = ['queued', 'claimed-by-manager', 'soft-failed']
 
 # Number of lines of logging to keep on the task itself.
 LOG_TAIL_LINES = 10

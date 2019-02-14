@@ -47,6 +47,13 @@
 				#{$property}: $color-status-fail-requested-dark
 			@else
 				#{$property}: $color-status-fail-requested
+		&-soft-failed#{$where}
+			@if ($variation == 'light')
+				#{$property}: $color-status-soft-failed-light
+			@else if ($variation == 'dark')
+				#{$property}: $color-status-soft-failed-dark
+			@else
+				#{$property}: $color-status-soft-failed
 		&-claimed-by-manager#{$where}
 			@if ($variation == 'light')
 				#{$property}: $color-status-claimedbymanager-light

@@ -204,6 +204,25 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
             expect_cancel_task_ids={tasks[0]['_id'], tasks[2]['_id'], tasks[3]['_id']})
         self.assert_job_status('failed')
 
+    def test_job_status_not_failed_due_to_task_soft_failure(self):
+        self.force_job_status('active')
+        tasks = self.do_schedule_tasks()
+
+        # After setting a single task to 'failed', the job should be 'failed', and the remaining
+        # tasks should be canceled. This is only true in this test because a single task is more
+        # than the threshold of nr of tasks that are allowed to fail.
+        self.maxDiff = None
+        self.do_batch_update(tasks, [1], ['soft-failed'])
+        self.assert_job_status('active')
+
+        self.do_batch_update(tasks, [1], ['soft-failed'])
+        self.assert_job_status('active')
+
+        self.do_batch_update(
+            tasks, [1], ['failed'],
+            expect_cancel_task_ids={tasks[0]['_id'], tasks[2]['_id'], tasks[3]['_id']})
+        self.assert_job_status('failed')
+
     def test_job_status_active_after_task_update(self):
         """A job should go to active when its tasks are being updated.
         """

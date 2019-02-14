@@ -304,7 +304,9 @@ tasks_schema = {
             'active',
             'cancel-requested',
             'canceled',
-            'failed'],
+            'failed',  # Failed and will not be re-tried.
+            'soft-failed',  # Failed but will be re-tried and should not fail the job.
+        ],
         'default': 'queued'
     },
     'priority': {

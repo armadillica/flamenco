@@ -89,7 +89,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
                     'filepath': '/my/file.blend',
                     # Frames and chunk size chosen to produce as many tasks
                     # as there are task statuses - 1 (we don't test 'under-construction')
-                    'frames': '12-18, 20-27',
+                    'frames': '12-18, 20-29',
                     'chunk_size': 2,
                     'time_in_seconds': 3,
                     'render_output': '/not-relevant-now/####',
@@ -121,6 +121,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.force_task_status(5, 'failed')
         self.force_task_status(6, 'cancel-requested')
         self.force_task_status(7, 'paused')
+        self.force_task_status(8, 'soft-failed')
 
     def assert_task_status(self, task_idx, expected_status):
         with self.app.test_request_context():
@@ -146,6 +147,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
         self.assert_task_status(7, 'paused')  # was: paused
+        self.assert_task_status(8, 'soft-failed')  # was: soft-failed
 
     def test_status_from_paused_to_queued(self):
         # This shouldn't change any of the tasks.
@@ -162,6 +164,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
         self.assert_task_status(7, 'queued')  # was: paused
+        self.assert_task_status(8, 'queued')  # was: soft-failed
 
         self.assert_job_status('queued')
 
@@ -178,6 +181,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
         self.assert_task_status(7, 'paused')  # was: paused
+        self.assert_task_status(8, 'cancel-requested')  # was: soft-failed
 
     def test_status_from_canceled_to_queued(self):
         # This should not change any task status what so ever.
@@ -190,10 +194,9 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(3, 'active')  # was: active
         self.assert_task_status(4, 'canceled')  # was: canceled
         self.assert_task_status(5, 'failed')  # was: failed
-
-        # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
         self.assert_task_status(7, 'paused')  # was: paused
+        self.assert_task_status(8, 'soft-failed')  # was: soft-failed
 
     def test_status_from_canceled_to_requeued(self):
         # This should re-queue all non-completed tasks.
@@ -211,6 +214,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
         self.assert_task_status(7, 'queued')  # was: paused
+        self.assert_task_status(8, 'queued')  # was: soft-failed
 
         self.assert_job_status('queued')
 
@@ -249,6 +253,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         # Cancel-requested tasks are not allowed to be re-queued; it would create race conditions.
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
         self.assert_task_status(7, 'queued')  # was: paused
+        self.assert_task_status(8, 'queued')  # was: soft-failed
 
     def test_status_from_active_to_failed(self):
         # If the job fails, it cancels all remaining tasks.
@@ -263,6 +268,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
         self.assert_task_status(7, 'paused')  # was: paused
+        self.assert_task_status(8, 'cancel-requested')  # was: soft-failed
 
     def test_status_from_active_to_completed(self):
         # Shouldn't do anything, as going to completed is a result of all tasks being completed.
@@ -277,14 +283,16 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'cancel-requested')  # was: cancel-requested
         self.assert_task_status(7, 'paused')  # was: paused
+        self.assert_task_status(8, 'soft-failed')  # was: soft-failed
 
     def test_status_from_active_to_canceled(self):
         self.force_job_status('active')
 
         # Force any task that would ordinarily go to 'cancel-requested' to something that won't.
-        self.force_task_status(1, 'queued')
-        self.force_task_status(3, 'completed')
-        self.force_task_status(6, 'failed')
+        self.force_task_status(1, 'queued')  # was: claimed-by-manager
+        self.force_task_status(3, 'completed')  # was: active
+        self.force_task_status(6, 'failed')  # was: cancel-requested
+        self.force_task_status(8, 'failed')  # was: soft-failed
 
         # This should immediately go to canceled, since
         # there are no tasks to request cancellation of.
@@ -298,6 +306,7 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(5, 'failed')  # was: failed
         self.assert_task_status(6, 'failed')  # was: also failed
         self.assert_task_status(7, 'paused')  # was: paused
+        self.assert_task_status(8, 'failed')  # was: also failed
 
         self.assert_job_status('canceled')
 

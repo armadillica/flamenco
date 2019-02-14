@@ -215,7 +215,7 @@ class JobManager(object):
                 __job_status_if_a_then_b('queued', 'active')
             return
 
-        if new_task_status in {'active', 'processing'}:
+        if new_task_status in {'active', 'processing', 'soft-failed'}:
             job = jobs_coll.find_one(job_id, projection={'status': 1})
             if job['status'] not in {'active', 'fail-requested', 'cancel-requested'}:
                 self._log.info('Job %s became active because one of its tasks %s changed '
@@ -315,7 +315,7 @@ class JobManager(object):
         # Request cancel of any task that might run on the manager.
         cancelreq_result = current_flamenco.update_status_q(
             'tasks',
-            {'job': job_id, 'status': {'$in': ['active', 'claimed-by-manager']}},
+            {'job': job_id, 'status': {'$in': ['active', 'claimed-by-manager', 'soft-failed']}},
             'cancel-requested')
         # Update the activity of all the tasks we just cancelled (or requested cancellation),
         # so that users can tell why they were cancelled.
