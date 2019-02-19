@@ -35,6 +35,25 @@ log = logging.getLogger(__name__)
 # The job statuses that can be set from the web-interface.
 ALLOWED_JOB_STATUSES_FROM_WEB = {'cancel-requested', 'queued', 'requeued'}
 
+# Help text explaining job statuses, for in a tooltip in the web interface.
+HELP_FOR_STATUS = {
+    'under-construction': 'Job is still being compiled, tasks are ignored by Manager.',
+    'construction-failed': 'There was an error compiling this job.',
+    'paused': 'Job can go to queued, tasks are ignored by Manager until then.',
+    'completed': 'All tasks of this job have been completed',
+    'active': 'A task of this job has been assigned to a worker.',
+    'canceled': 'This job used to be active, but was aborted.',
+    'cancel-requested': 'This job used to be active, and cancellation is pending '
+                        'until the Manager confirms.',
+    'queued': 'The job is ready for execution.',
+    'requeued': 'The job is being re-queued, changing it tasks statuses too.',
+    'failed': 'The job failed because some of its tasks failed.',
+    'fail-requested': 'The job failed because some of its tasks failed, and failure '
+                      'is pending until the Manager confirms.',
+    'archiving': 'The job is queued for archiving, or the archiving is currently happening.',
+    'archived': 'The job has been archived and is in a read-only state.',
+}
+
 
 @perproject_blueprint.route('/', endpoint='index')
 @perproject_archive_blueprint.route('/', endpoint='index')
@@ -179,6 +198,7 @@ def view_job(project, flamenco_props, job_id):
         write_access=write_access,
         archive_available=archive_available,
         job_settings=job_settings,
+        job_status_help=HELP_FOR_STATUS.get(status, ''),
     )
 
 

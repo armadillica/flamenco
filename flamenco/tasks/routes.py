@@ -26,6 +26,21 @@ TASK_LOG_PAGE_SIZE = 10
 # The task statuses that can be set from the web-interface.
 ALLOWED_TASK_STATUSES_FROM_WEB = {'cancel-requested', 'queued'}
 
+# Help text explaining task statuses, for in a tooltip in the web interface.
+HELP_FOR_STATUS = {
+    'under-construction': 'Job is still being compiled, task are ignored by Manager.',
+    'paused': 'Job can go to queued, tasks must be ignored by Manager until then.',
+    'queued': 'The task is queued for sending to the Manager.',
+    'claimed-by-manager': 'The task is queued on the Manager for execution by a Worker.',
+    'completed': 'The task has been completed successfully.',
+    'active': 'A worker is currently working on this task.',
+    'cancel-requested': 'The task will be cancelled by the Manager.',
+    'canceled': 'The task has been cancelled and will not be re-tried until it has been re-queued.',
+    'failed': 'The task has failed and will not be re-tried until it has been re-queued.',
+    'soft-failed': 'The task has failed on at least one worker and is still queued '
+                   'for other workers.',
+}
+
 global_blueprint = Blueprint('flamenco.tasks', __name__,
                              url_prefix='/tasks')
 
@@ -146,7 +161,9 @@ def view_task(project, flamenco_props, task_id):
                            may_request_log_file=may_request_log_file,
                            can_requeue_task=can_requeue_task,
                            can_requeue_task_and_successors=can_requeue_successors,
-                           can_cancel_task=can_cancel_task)
+                           can_cancel_task=can_cancel_task,
+                           job_status_help=HELP_FOR_STATUS.get(task['status'], ''),
+                           )
 
 
 @perproject_blueprint.route('/<task_id>/set-status', methods=['POST'])
