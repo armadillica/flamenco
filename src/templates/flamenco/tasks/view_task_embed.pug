@@ -39,8 +39,7 @@
 
 		.table.item-properties
 			.table-body
-				.table-row.properties-status.js-help(
-					data-url="{{ url_for('flamenco.help', project_url=project.url) }}")
+				.table-row.properties-status
 					.table-cell Status
 					.table-cell(class="status-{{ task.status }}")
 						| {{ task.status | undertitle }}
@@ -170,8 +169,6 @@ script.
 	.on('success', function(e) {
 		statusBarSet('info', 'Copied task ID to clipboard', 'pi-check');
 	});
-
-	$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
 
 	// Notify the rest of the page that this task is showing.
 	document.body.dataset.taskId = '{{ task._id }}';

@@ -157,12 +157,6 @@ def project_index(project):
     return redirect(url_for('flamenco.jobs.perproject.index', project_url=project.url))
 
 
-@blueprint.route('/<project_url>/help')
-@flamenco_project_view(extension_props=False)
-def help(project):
-    return render_template('flamenco/help.html', statuses=[])
-
-
 @blueprint.route('/<project_url>/setup-for-flamenco', methods=['POST'])
 @login_required
 @project_view()

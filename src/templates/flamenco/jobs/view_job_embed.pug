@@ -6,8 +6,7 @@
 
 	.table.item-properties
 		.table-body
-			.table-row.properties-status.js-help(
-				data-url="{{ url_for('flamenco.help', project_url=project.url) }}")
+			.table-row.properties-status
 				.table-cell Status
 				.table-cell(class="status-{{ job.status }}")
 					| {{ job.status | undertitle }}
@@ -148,9 +147,6 @@ script.
 		}
 		loadTasks(tasks_url);
 	}
-
-	if (typeof openModalUrl == 'function')
-		$('.js-help').openModalUrl('Help', "{{ url_for('flamenco.help', project_url=project.url) }}");
 
 	$.fn.managerVariableReplace = function() {
 		// Get OS name, defaulting to Linux.

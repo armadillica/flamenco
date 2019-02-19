@@ -50,16 +50,6 @@
         return this;
     }
 
-    $.fn.openModalUrl = function(title, url) {
-        this.on('click', function(e){
-            e.preventDefault();
-
-            $('#modal').modal();
-            $("#modal .modal-header span.title").html(title);
-            $("#modal .modal-body").load(url);
-        });
-    };
-
     /*
      * jQuery autoResize (textarea auto-resizer)
      * @copyright James Padolsey http://james.padolsey.com
