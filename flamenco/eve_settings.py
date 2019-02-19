@@ -394,6 +394,27 @@ tasks_schema = {
     'worker': {
         'type': 'string',
     },
+
+    # List of worker IDs (with human-readable identifiers) of workers that tried
+    # this task and failed it.
+    'failed_by_workers': {
+        'type': 'list',
+        'schema': {
+            'type': 'dict',
+            'schema': {
+                # The Worker ID of the failed worker. Defined by the Manager, so doesn't
+                # reference any entity in the Server database.
+                'id': {
+                    'type': 'objectid',
+                    'required': True,
+                },
+                'identifier': {
+                    'type': 'string',
+                    'required': True,
+                },
+            },
+        },
+    },
     'task_progress_percentage': {
         'type': 'integer',
     },

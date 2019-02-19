@@ -76,8 +76,16 @@
 					.table-cell Activity
 					.table-cell {{ task.activity }}
 				.table-row
-					.table-cell Worker
+					.table-cell {% if task.status != 'active' %}Last {% endif%} Worker
 					.table-cell {{ task.worker }}
+				| {% if task.failed_by_workers %}
+				.table-row
+					.table-cell Failed by:
+					.table-cell
+							| {% for fbw in task.failed_by_workers %}
+							| {{ fbw.identifier }}<br>
+							| {% endfor %}
+				| {% endif %}
 
 | {% if can_view_log %}
 .flamenco-box.task

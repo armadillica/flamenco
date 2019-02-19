@@ -248,6 +248,10 @@ def handle_task_update_batch(manager_id, task_updates):
         if worker:
             updates['worker'] = worker
 
+        fbw = task_update.get('failed_by_workers')
+        if fbw is not None:
+            updates['failed_by_workers'] = fbw
+
         # Store the last lines of logging on the task itself.
         task_log_tail: str = task_update.get('log_tail')
         if not task_log_tail and task_log:
