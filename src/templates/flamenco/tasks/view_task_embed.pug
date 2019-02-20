@@ -62,6 +62,7 @@
 					.table-cell
 						| {% for parent in task.parents %}
 						a(href='javascript:task_open("{{ parent }}")') {{ parent }}
+						=' '
 						| {% else %}
 						| -none-
 						| {% endfor %}
