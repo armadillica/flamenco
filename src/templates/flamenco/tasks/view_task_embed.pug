@@ -86,6 +86,17 @@
 							| {{ fbw.identifier }}<br>
 							| {% endfor %}
 				| {% endif %}
+				| {% if timing_metrics %}
+				.table-row
+					.table-cell Timing:
+					.table-cell
+						table.table.timing-table
+							| {% for name, duration in timing_metrics.items() %}
+							tr
+								td {{ name }}:
+								td(title='MM:SS.msec or HH:MM:SS.msec format', style='cursor: help') {{ duration|pretty_duration_fractional }}
+							| {% endfor %}
+				| {% endif %}
 
 | {% if can_view_log %}
 .flamenco-box.task

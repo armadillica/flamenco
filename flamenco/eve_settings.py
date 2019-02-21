@@ -424,6 +424,15 @@ tasks_schema = {
     'command_progress_percentage': {
         'type': 'integer',
     },
+    'metrics': {
+        'type': 'dict',
+        'schema': {
+            'timing': {
+                'type': 'dict',
+                'allow_unknown': True,
+            },
+        },
+    },
 }
 
 task_logs_schema = {

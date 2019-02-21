@@ -247,6 +247,9 @@ def handle_task_update_batch(manager_id, task_updates):
         worker = task_update.get('worker')
         if worker:
             updates['worker'] = worker
+        metrics_timing = task_update.get('metrics', {}).get('timing')
+        if metrics_timing:
+            updates['metrics.timing'] = metrics_timing
 
         fbw = task_update.get('failed_by_workers')
         if fbw is not None:

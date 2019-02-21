@@ -149,6 +149,8 @@ def view_task(project, flamenco_props, task_id):
         # This means the Manager supports sending us the log file, but hasn't yet.
         may_request_log_file = can_request_log_file
 
+    timing_metrics = task.to_dict().get('metrics', {}).get('timing') or {}  # ensure iterability
+
     return render_template('flamenco/tasks/view_task_embed.html',
                            task=task,
                            project=project,
@@ -163,6 +165,7 @@ def view_task(project, flamenco_props, task_id):
                            can_requeue_task_and_successors=can_requeue_successors,
                            can_cancel_task=can_cancel_task,
                            job_status_help=HELP_FOR_STATUS.get(task['status'], ''),
+                           timing_metrics=timing_metrics,
                            )
 
 

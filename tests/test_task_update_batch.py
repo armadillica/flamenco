@@ -97,6 +97,39 @@ class TaskBatchUpdateTest(AbstractTaskBatchUpdateTest):
                          dateutil.parser.parse('2018-03-04T3:27:47+02:00'))
         self.assertNotEqual(db_task['_etag'], etag_before)
 
+    def test_metrics_timing(self):
+        chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json['depsgraph']
+        task = chunk[0]
+
+        task_update_id1 = 24 * '1'
+        task_update_id2 = 24 * '2'
+        timing_info = {
+            'total': 3.1,
+            'flapping in the breeze': 2.0145,
+        }
+        resp = self.post('/api/flamenco/managers/%s/task-update-batch' % self.mngr_id,
+                         auth_token=self.mngr_token,
+                         json=[{
+                             '_id': task_update_id1,
+                             'task_id': task['_id'],
+                             'task_status': 'active',
+                             'activity': 'testing stuff',
+                             'received_on_manager': '2018-03-04T3:27:47+02:00',
+                             'metrics': {'timing': timing_info},
+                         }, {
+                             '_id': task_update_id2,
+                             'task_id': task['_id'],
+                             'task_status': 'active',
+                             'activity': 'testing more',
+                             'received_on_manager': '2018-03-05T3:27:47+02:00',
+                         }])
+        self.assertEqual(resp.json['handled_update_ids'], [task_update_id1, task_update_id2])
+
+        db_task = self.assert_task_status(task['_id'], 'active')
+        # The timing info should remain after an update that doesn't include it.
+        self.assertEqual(timing_info, db_task['metrics']['timing'])
+
     def test_set_task_invalid_status(self):
         chunk = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
                          auth_token=self.mngr_token).json['depsgraph']
