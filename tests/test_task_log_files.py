@@ -125,6 +125,30 @@ class TaskLogTest(AbstractFlamencoTest):
             manager = self.mmngr.collection().find_one({'_id': self.mngr_id})
         self.assertFalse(manager['upload_task_file_queue'])
 
+    def test_dequeue_nonexistent_task(self):
+        self.patch(f'/api/flamenco/tasks/{self.tid}', json={'op': 'request-task-log-file'},
+                   auth_token='owner-token', expected_status=204)
+
+        with self.app.app_context():
+            tasks_coll = self.flamenco.db('tasks')
+            tasks_coll.delete_one({'_id': self.tid})
+
+        log_contents = 'hello there\nsecond line²'
+        gzipped = gzip.compress(log_contents.encode('utf8'))
+
+        url = self.url_for('flamenco.managers.api.attach_task_log',
+                           manager_id=str(self.mngr_id), task_id=str(self.tid))
+        self.post(url,
+                  files={'logfile': (io.BytesIO(gzipped), 'task-123.log.gz')},
+                  headers={'Content-Encoding': 'gzip'},
+                  auth_token=self.mngr_token,
+                  expected_status=404)
+
+        # Now that a log file has been sent, it should be un-queued from the Manager.
+        with self.app.app_context():
+            manager = self.mmngr.collection().find_one({'_id': self.mngr_id})
+        self.assertFalse(manager['upload_task_file_queue'])
+
     def test_unlink_after_reclaim(self):
         _, resp = self.attach_log()
         download_task_url = resp.headers['Location']

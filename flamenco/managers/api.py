@@ -430,9 +430,12 @@ def attach_task_log(manager_id: ObjectId, _, task_id: str):
         # The test HTTP client doesn't support setting per-part headers.
         raise wz_exceptions.BadRequest(f'GZIP your file!')
 
+    # De-queue now; if the task or project doesn't exist, the Manager shouldn't be asked again.
+    task_oid = str2id(task_id)
+    current_flamenco.manager_manager.dequeue_task_log_request(manager_id, task_oid)
+
     # Check whether this Manager may attach to this Task.
     tasks_coll = current_flamenco.db('tasks')
-    task_oid = str2id(task_id)
     task = tasks_coll.find_one({'_id': task_oid, 'manager': manager_id})
     if not task:
         raise wz_exceptions.NotFound(f'No such task exists')
@@ -446,9 +449,6 @@ def attach_task_log(manager_id: ObjectId, _, task_id: str):
         raise wz_exceptions.NotFound(f'Project for task {task_oid} does not exist')
 
     preexisting = current_flamenco.task_manager.api_attach_log(task, uploaded_file)
-
-    current_flamenco.manager_manager.dequeue_task_log_request(
-        task['manager'], task['job'], task['_id'])
 
     resp = jsonify({'_message': 'ok'}, status=200 if preexisting else 201)
     resp.headers['Location'] = url_for(

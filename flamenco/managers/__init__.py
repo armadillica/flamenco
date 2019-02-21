@@ -418,18 +418,19 @@ class ManagerManager(object):
             {'$addToSet': {'upload_task_file_queue': {'job': job_id, 'task': task_id}}}
         )
 
-    def dequeue_task_log_request(self, manager_id: bson.ObjectId, job_id: bson.ObjectId,
+    def dequeue_task_log_request(self, manager_id: bson.ObjectId,
                                  task_id: bson.ObjectId):
         """De-queue a request to the Manager to upload this task's log file.
 
         This is what's called when the Manager has actually uploaded this task's file.
         """
 
-        self._log.info('De-queueing task log file request for Manager %s, job %s task %s',
-                       manager_id, job_id, task_id)
+        self._log.info('De-queueing task log file request for Manager %s, task %s',
+                       manager_id, task_id)
+
         self._task_log_request(
             manager_id,
-            {'$pullAll': {'upload_task_file_queue': [{'job': job_id, 'task': task_id}]}}
+            {'$pull': {'upload_task_file_queue': {'task': task_id}}}
         )
 
     def _task_log_request(self, manager_id: bson.ObjectId, operation: dict):
