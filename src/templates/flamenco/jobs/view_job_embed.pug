@@ -55,7 +55,26 @@
 			| {% endfor %}
 
 #item-action-panel
-	.pull-right
+	.mr-auto
+		| {% if not is_archived %}
+		| {%     if can_cancel_job %}
+		button.btn.btn-danger(onclick="setJobStatus('{{ job._id }}', 'cancel-requested')")
+			i.pi-cancel
+			| Cancel Job
+		| {%     endif %}
+		| {%     if can_archive_job %}
+		button.btn.archive-job(onclick="archiveJob('{{ job._id }}')")
+			i.pi-file-archive
+			| Archive Job
+		| {%     endif %}
+		| {%     if can_edit_rna_overrides %}
+		a.btn.edit-rna-overrides(href="{{ url_for('flamenco.jobs.perproject.edit_rna_overrides', project_url=project.url, job_id=job._id) }}")
+			i.pi-blender
+			| Edit RNA Overrides
+			| {%     endif %}
+		| {% endif %}
+
+	.ml-auto
 		| {% if is_archived %}
 		|     {% if write_access %}
 		|         {% if archive_available %}
@@ -68,12 +87,8 @@
 		button.btn(disabled) Job archive not (yet) available
 		|         {% endif %}
 		|     {% endif %}
-		| {% else %}
-		| {%     if can_cancel_job %}
-		button.btn.btn-danger(onclick="setJobStatus('{{ job._id }}', 'cancel-requested')")
-			i.pi-cancel
-			| Cancel Job
-		| {%     endif %}
+		| {% endif %}
+
 		| {%     if can_requeue_failed_tasks %}
 		button.btn.btn-success.requeue-failed-tasks(onclick="requeueFailedTasks('{{ job._id }}')",
 			title='Note that seeing this button does not mean there are actually any failed tasks. It is always shown when the job is active/queued.')
@@ -96,17 +111,6 @@
 			i.pi-fire
 			| Re-create Job
 		| {%     endif %}
-		| {%     if can_archive_job %}
-		button.btn.btn-success.archive-job(onclick="archiveJob('{{ job._id }}')")
-			i.pi-file-archive
-			| Archive Job
-		| {%     endif %}
-		| {%     if can_edit_rna_overrides %}
-		a.btn.btn-success.edit-rna-overrides(href="{{ url_for('flamenco.jobs.perproject.edit_rna_overrides', project_url=project.url, job_id=job._id) }}")
-			i.pi-blender
-			| Edit RNA Overrides
-			| {%     endif %}
-		| {% endif %}
 		.action-result-panel
 
 #item-view-feed
