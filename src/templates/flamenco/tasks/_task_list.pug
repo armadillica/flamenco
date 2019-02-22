@@ -1,7 +1,10 @@
 | {% macro task_list(job_id, task_count, tasks, project, page_idx, page_count) -%}
 .col_header.task-list-header
 	| Tasks ({{ task_count }})
-	.task-navigation
+
+	i.pi-spin.spin.ml-2#task-navigation-loader(style='display: none')
+
+	.task-navigation.ml-auto
 		span.page Page {{ page_idx }}
 
 		a.page-navigate(
@@ -24,7 +27,6 @@
 			href="javascript:loadTaskPage({{ page_count }})")
 			| last
 
-		i.pi-spin.spin#task-navigation-loader(style='display: none')
 
 
 #task-list.col-list
