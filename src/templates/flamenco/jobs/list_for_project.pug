@@ -20,10 +20,10 @@ style.
 		#col_main-overlay-content.col-scrollable
 
 	#col_main-content
-		.col_header.item-list-header
-			// TODO: implement the stats
-			span.header_text(title='In the current project') {{ stats.nr_of_jobs }} jobs | {{ stats.nr_of_tasks }} tasks
-			a.item-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
+		//- // TODO: Implement stats and filtering
+		//- .col_header.item-list-header
+		//- 	span.header_text(title='In the current project') {{ stats.nr_of_jobs }} jobs | {{ stats.nr_of_tasks }} tasks
+		//- 	a.item-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
 
 		.item-list.col-scrollable
 			.table
