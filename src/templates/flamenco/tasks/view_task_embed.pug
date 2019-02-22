@@ -107,40 +107,48 @@
 | {% endif %}
 
 #item-action-panel
-	| {% if log_file_download_url %}
-	//- This means new-style on-manager logging is used, and the Manager sent us the compressed log file.
-	a.btn.btn-success.item-log-link(
-			href="{{ log_file_download_url }}",
-			target="_blank")
-		i.pi-download
-		| Download Log File
-	| {% endif %}
-	| {% if may_request_log_file %}
-	//- This means new-style on-manager logging is used, and the Manager could sent us the compressed log file but hasn't.
-	button.btn.btn-success.item-log-link(onclick="requestTaskLogFileUpload('{{ task._id }}')")
-		i.pi-list
-		| Request Log File from Manager
-	| {% endif %}
+	.mr-auto
+		| {% if can_cancel_task %}
+		button.btn.btn-danger.cancel-task(onclick="setTaskStatus('{{ task._id }}', 'cancel-requested')")
+			i.pi-cancel
+			| Cancel Single Task
+		| {% endif %}
 
-	| {% if can_view_log %}
-	| {% if task.log %}
-	//- This means new-style on-manager logging is used (task.log is only the last few lines).
-	a.btn.btn-success.item-log-link(
-			href="{{ log_download_url }}",
-			target="_blank",
-			title="Note that this requires you to be able to access this Flamenco Manager directly")
-		i.pi-list
-		| View Log on Manager
-	| {% else %}
-	//- This means old-style on-server logging is used.
-	button.btn.item-log-load.js-log-load(
-		data-url="{{ url_for('flamenco.tasks.perproject.view_task_log', project_url=project.url, task_id=task._id) }}")
-		i.pi-list
-		| View Log
-	| {% endif %}
-	| {% endif %}
+		| {% if log_file_download_url %}
+		//- This means new-style on-manager logging is used, and the Manager sent us the compressed log file.
+		a.btn.btn-success.item-log-link(
+				href="{{ log_file_download_url }}",
+				target="_blank")
+			i.pi-download
+			| Download Log File
+		| {% endif %}
+		| {% if may_request_log_file %}
+		//- This means new-style on-manager logging is used, and the Manager could sent us the compressed log file but hasn't.
+		button.btn.btn-success.item-log-link(onclick="requestTaskLogFileUpload('{{ task._id }}')")
+			i.pi-list
+			| Request Log File from Manager
+		| {% endif %}
 
-	.pull-right
+		| {% if can_view_log %}
+		| {% if task.log %}
+		//- This means new-style on-manager logging is used (task.log is only the last few lines).
+		a.btn.item-log-link(
+				href="{{ log_download_url }}",
+				target="_blank",
+				title="Note that this requires you to be able to access this Flamenco Manager directly")
+			i.pi-list
+			| View Log on Manager
+		| {% else %}
+		//- This means old-style on-server logging is used.
+		button.btn.item-log-load.js-log-load(
+			data-url="{{ url_for('flamenco.tasks.perproject.view_task_log', project_url=project.url, task_id=task._id) }}")
+			i.pi-list
+			| View Log
+		| {% endif %}
+		| {% endif %}
+
+
+	.ml-auto
 		| {% if can_requeue_task %}
 		button.btn.btn-success.requeue-task(onclick="setTaskStatus('{{ task._id }}', 'queued')")
 			i.pi-refresh
@@ -150,11 +158,6 @@
 		button.btn.btn-success.requeue-task(onclick="requeueTaskAndSuccessors('{{ task._id }}')")
 			i.pi-refresh
 			| Re-queue Task + Successors
-		| {% endif %}
-		| {% if can_cancel_task %}
-		button.btn.btn-danger.cancel-task(onclick="setTaskStatus('{{ task._id }}', 'cancel-requested')")
-			i.pi-refresh
-			| Cancel Single Task
 		| {% endif %}
 		.action-result-panel
 
