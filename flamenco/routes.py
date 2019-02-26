@@ -38,9 +38,15 @@ def index():
         for proj in projects['_items']
     ]
 
-    project = Project(session.get('flamenco_last_project'))
-    navigation_links = project_navigation_links(project, pillar_api())
-    extension_sidebar_links = current_app.extension_sidebar_links(project)
+    last_project = session.get('flamenco_last_project')
+    if last_project:
+        project = Project(last_project)
+        navigation_links = project_navigation_links(project, pillar_api())
+        extension_sidebar_links = current_app.extension_sidebar_links(project)
+    else:
+        project = None
+        navigation_links = []
+        extension_sidebar_links = []
 
     return render_template('flamenco/index.html',
                            projs_with_summaries=projs_with_summaries,
