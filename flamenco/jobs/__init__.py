@@ -6,7 +6,7 @@ import copy
 import datetime
 
 import attr
-import bson
+from bson import ObjectId
 from flask import current_app
 import pymongo.results
 import werkzeug.exceptions as wz_exceptions
@@ -248,7 +248,7 @@ class JobManager(object):
         job.patch({'op': 'set-job-status',
                    'status': new_status}, api=api)
 
-    def api_set_job_status(self, job_id: bson.ObjectId, new_status: str,
+    def api_set_job_status(self, job_id: ObjectId, new_status: str,
                            *,
                            reason='',
                            now: datetime.datetime = None) -> pymongo.results.UpdateResult:
@@ -276,7 +276,7 @@ class JobManager(object):
 
         return result
 
-    def handle_job_status_change(self, job_id: bson.ObjectId,
+    def handle_job_status_change(self, job_id: ObjectId,
                                  old_status: str, new_status: str) -> typing.Optional[str]:
         """Updates task statuses based on this job status transition.
 
@@ -409,7 +409,7 @@ class JobManager(object):
         self._log.info('Creating Celery background task for archival of job %s', job_id)
         job_archival.archive_job.delay(str(job_id))
 
-    def api_set_job_priority(self, job_id: bson.ObjectId, new_priority: int):
+    def api_set_job_priority(self, job_id: ObjectId, new_priority: int):
         """API-level call to updates the job priority."""
         assert isinstance(new_priority, int)
         self._log.debug('Setting job %s priority to %r', job_id, new_priority)
@@ -443,7 +443,7 @@ class JobManager(object):
         self._log.debug('Matched %d tasks while setting job %s to priority %r',
                         result.matched_count, job_id, new_priority)
 
-    def api_update_rna_overrides(self, job_id: bson.ObjectId, rna_overrides: typing.List[str]):
+    def api_update_rna_overrides(self, job_id: ObjectId, rna_overrides: typing.List[str]):
         """API-level call to create or update an RNA override task of a Blender Render job."""
 
         new_etag = random_etag()
