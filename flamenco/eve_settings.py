@@ -191,6 +191,7 @@ jobs_schema = {
     # job we can convert this to a list.
     'manager': {
         'type': 'objectid',
+        'required': True,
         'data_relation': {
             'resource': 'flamenco_managers',
             'field': '_id',
@@ -198,7 +199,13 @@ jobs_schema = {
     },
     'status': {
         'type': 'string',
+
+        # Be sure to update flamenco.jobs.routes.HELP_FOR_STATUS too.
         'allowed': [
+            # Job is created, tasks are not. PATCH with {'op': 'construct'} to signal
+            # that the files are there and the job can be constructed.
+            'waiting-for-files',
+
             'under-construction',  # Job is still being compiled, tasks must be ignored by Manager.
             'construction-failed',  # There was an error compiling this job.
             'paused',  # Job can go to queued, tasks must be ignored by Manager until then.
@@ -219,12 +226,10 @@ jobs_schema = {
     # Most important for reasons of cancellation/failure.
     'status_reason': {
         'type': 'string',
-        'required': False,
     },
     # When True, after construction the job goes to 'paused' state instead of 'queued'.
     'start_paused': {
         'type': 'boolean',
-        'required': False,
     },
     # Higher number means higher priority.
     'priority': {

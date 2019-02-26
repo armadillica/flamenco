@@ -16,8 +16,8 @@ from pillar import attrs_extra
 from pillar.api.utils import random_etag, utcnow
 from pillar.web.system_util import pillar_api
 
-from flamenco import current_flamenco
-from flamenco.job_compilers import blender_render, construct_job_compiler
+from flamenco import current_flamenco, job_compilers
+from flamenco.job_compilers import blender_render
 
 CANCELABLE_JOB_STATES = {'active', 'queued', 'failed'}
 REQUEABLE_JOB_STATES = {'completed', 'canceled', 'failed', 'paused'}
@@ -456,7 +456,7 @@ class JobManager(object):
             self._log.warning('Unable to update RNA overrides of non-existing job %s', job_id)
             return None
 
-        compiler = construct_job_compiler(job)
+        compiler = job_compilers.construct_job_compiler(job)
         if not isinstance(compiler, blender_render.AbstractBlenderJobCompiler):
             self._log.warning('Job compiler %r is not an AbstractBlenderJobCompiler, unable '
                               'to update RNA overrides for job %s of type %r',
@@ -477,6 +477,35 @@ class JobManager(object):
                               result.matched_count, job_id)
 
         compiler.update_rna_overrides_task(job)
+
+    def api_construct_job(self,
+                          job_id: ObjectId,
+                          new_job_settings: typing.Optional[typing.Dict[str, typing.Any]]=None,
+                          *, reason: str):
+        """Construct the tasks for a job."""
+
+        jobs_coll = current_flamenco.db('jobs')
+        job = jobs_coll.find_one({'_id': job_id})
+        if not job:
+            raise ValueError(f'Job {job_id} does not exist')
+
+        if new_job_settings:
+            self._log.info('Updating settings for job %s: %s', job_id, new_job_settings)
+            job_settings = job.setdefault('settings', {})
+            job_settings.update(new_job_settings)
+            result = jobs_coll.update_one({'_id': job_id}, {'$set': {'settings': job_settings}})
+            if result.matched_count != 1:
+                raise ValueError(f'Could not find job {job_id} for updating new settings')
+
+        self.api_set_job_status(job_id, 'under-construction', reason=reason)
+        self._log.info('Generating tasks for job %s', job_id)
+
+        try:
+            job_compilers.compile_job(job)
+        except Exception as ex:
+            self._log.exception('Compiling job %s failed', job_id)
+            current_flamenco.job_manager.api_set_job_status(
+                job_id, 'construction-failed', reason=f'{reason}; compilation failed: {ex}')
 
 
 def setup_app(app):

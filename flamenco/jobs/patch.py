@@ -13,7 +13,6 @@ from pillar.api import patch_handler
 from flamenco import current_flamenco
 from . import rna_overrides as rna_overrides_mod
 
-
 log = logging.getLogger(__name__)
 patch_api_blueprint = Blueprint('flamenco.jobs.patch', __name__)
 
@@ -69,6 +68,31 @@ class JobPatchHandler(patch_handler.AbstractPatchHandler):
         log.info('User %s uses PATCH to requeue failed tasks of job %s', current_user_id(), job_id)
         current_flamenco.task_manager.api_set_task_status_for_job(
             job_id, from_status='failed', to_status='queued')
+
+    @authorization.require_login(require_cap='flamenco-use')
+    def patch_construct(self, job_id: bson.ObjectId, patch: dict):
+        """Send job to 'under-construction' status and compile its tasks.
+
+        The patch can contain extra settings for the job, such as 'filepath'
+        for Blender render jobs.
+        """
+        job = self.assert_job_access(job_id)
+
+        job_status = job.get('status', '-unset-')
+        if job_status != 'waiting-for-files':
+            log.info('User %s wants to PATCH to construct job %s; rejecting because it is in '
+                     'status %r', current_user_id(), job_id, job_status)
+            raise wz_exceptions.UnprocessableEntity(
+                f'Current job status {job_status} does not allow job construction')
+
+        # TODO(Sybren): add job settings handling.
+        user = current_user()
+        new_job_settings = patch.get('settings')
+        log.info('User %s uses PATCH to construct job %s with settings %s',
+                 user.user_id, job_id, new_job_settings)
+        current_flamenco.job_manager.api_construct_job(
+            job_id, new_job_settings,
+            reason=f'Construction initiated by {user.full_name} (@{user.username})')
 
     @authorization.require_login(require_cap='flamenco-use')
     def patch_rna_overrides(self, job_id: bson.ObjectId, patch: dict):

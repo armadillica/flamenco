@@ -10,14 +10,19 @@ from flamenco import current_flamenco
 
 log = logging.getLogger(__name__)
 
+VALID_CREATION_STATUS = {'waiting-for-files', 'under-construction'}
+
 
 def before_inserting_jobs(jobs):
     from flamenco import job_compilers, exceptions
 
     for job in jobs:
-        # Jobs are forced to be 'under construction' when they are created.
-        # This is set to 'queued' when job compilation is finished.
-        job['status'] = 'under-construction'
+        job_status = job.get('status')
+
+        if job_status not in VALID_CREATION_STATUS:
+            # Jobs are forced to be 'under construction' when they are created.
+            # This will be set to 'queued' when job compilation is finished.
+            job['status'] = 'under-construction'
 
         try:
             job_compilers.validate_job(job)
@@ -27,20 +32,18 @@ def before_inserting_jobs(jobs):
 
 
 def after_inserting_jobs(jobs):
-    from flamenco import job_compilers, current_flamenco
+    from flamenco import current_flamenco
 
+    reason = f'Job submitted by {current_user.full_name} (@{current_user.username})'
     for job in jobs:
         job_id = job['_id']
-        # Prepare storage dir for the job files?
-        # Generate tasks
-        log.info(f'Generating tasks for job {job_id}')
 
-        try:
-            job_compilers.compile_job(job)
-        except Exception:
-            log.exception('Compiling job %s failed', job_id)
-            job['status'] = 'construction-failed'
-            current_flamenco.job_manager.api_set_job_status(job_id, job['status'])
+        job_status = job.get('status')
+        if job_status == 'waiting-for-files':
+            log.info('Not generating tasks for job %s, it is in status %r', job_id, job_status)
+            continue
+
+        current_flamenco.job_manager.api_construct_job(job_id, reason=reason)
 
 
 def check_job_permission_fetch(job_doc):

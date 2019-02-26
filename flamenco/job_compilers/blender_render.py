@@ -69,6 +69,22 @@ class AbstractBlenderJobCompiler(AbstractJobCompiler, metaclass=abc.ABCMeta):
     """Blender Render job compiler with support for RNA Overrides."""
     _log = attrs_extra.log('%s.AbstractBlenderJobCompiler' % __name__)
 
+    # noinspection PyMethodOverriding
+    def validate_job_settings(self, job: dict, *, _must_have_filepath=False):
+        super().validate_job_settings(job)
+
+        # For compilation we really need to have the filepath setting.
+        # Missing it is only valid when status='waiting-for-files'.
+        if 'filepath' in job['settings']:
+            filepath = job['settings']['filepath']
+            if not isinstance(filepath, str):
+                raise exceptions.JobSettingError(f'filepath should be a string, not {filepath!r}')
+            if not filepath.lower().endswith('.blend'):
+                raise exceptions.JobSettingError(
+                    f'filepath should end in .blend, but is {filepath!r}')
+        elif job['status'] != 'waiting-for-files' or _must_have_filepath:
+            raise exceptions.JobSettingError("missing setting 'filepath'")
+
     def _make_rna_overrides_task(self,
                                  job: dict,
                                  parent_task_id: typing.Optional[bson.ObjectId] = None) \
@@ -159,17 +175,14 @@ class BlenderRender(AbstractBlenderJobCompiler):
     """Basic Blender render job."""
     _log = attrs_extra.log('%s.BlenderRender' % __name__)
 
-    REQUIRED_SETTINGS = ('filepath', 'render_output', 'frames', 'chunk_size')
+    REQUIRED_SETTINGS = ('render_output', 'frames', 'chunk_size')
 
-    def validate_job_settings(self, job: dict):
-        super().validate_job_settings(job)
+    # noinspection PyMethodOverriding
+    def validate_job_settings(self, job: dict, *, _must_have_filepath=False):
+        super().validate_job_settings(job, _must_have_filepath=_must_have_filepath)
 
         if not isinstance(job, dict):
             raise TypeError('job should be a dict, not %s' % type(job))
-
-        filepath = job['settings']['filepath']
-        if not filepath.lower().endswith('.blend'):
-            raise exceptions.JobSettingError(f'filepath should end in .blend, but is {filepath!r}')
 
         fps = job['settings'].get('fps')
         if fps is not None and not isinstance(fps, (int, float)):
@@ -184,7 +197,7 @@ class BlenderRender(AbstractBlenderJobCompiler):
 
     def _compile(self, job):
         self._log.info('Compiling job %s', job['_id'])
-        self.validate_job_settings(job)
+        self.validate_job_settings(job, _must_have_filepath=True)
 
         rna_overrides_task_id = self._make_rna_overrides_task(job)
 

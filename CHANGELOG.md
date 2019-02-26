@@ -36,6 +36,8 @@ Flamenco Server Changelog
 - The EXR merging of Progressive Rendering jobs is now done in one task per render iteration
   (instead of one task per frame chunk). The entire EXR sequence is now merged in one run of
   Blender.
+- New job status `waiting-for-files` allows a job to be created before the job's files are put into
+  place.
 
 
 ## Version 2.1 (released 2018-12-04)

@@ -21,12 +21,12 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
     """
 
     _log = attrs_extra.log('%s.BlenderVideoChunks' % __name__)
-    REQUIRED_SETTINGS = ('filepath', 'render_output', 'frames', 'chunk_size',
+    REQUIRED_SETTINGS = ('render_output', 'frames', 'chunk_size',
                          'output_file_extension', 'images_or_video', 'fps',
                          'extract_audio')
 
-    def validate_job_settings(self, job: dict):
-        super().validate_job_settings(job)
+    def validate_job_settings(self, job: dict, *, _must_have_filepath=False):
+        super().validate_job_settings(job, _must_have_filepath=_must_have_filepath)
 
         img_or_vid = job['settings']['images_or_video']
         if img_or_vid != 'video':
@@ -41,7 +41,7 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
 
     def _compile(self, job: dict):
         self._log.info('Compiling job %s', job['_id'])
-        self.validate_job_settings(job)
+        self.validate_job_settings(job, _must_have_filepath=True)
 
         # For this job type, the filename in the render output is irrelevant.
         self.final_output_dir = PurePath(job['settings']['render_output']).parent

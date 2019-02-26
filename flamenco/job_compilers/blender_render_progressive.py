@@ -104,7 +104,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
 
     _log = attrs_extra.log('%s.BlenderRenderProgressive' % __name__)
 
-    REQUIRED_SETTINGS = ('blender_cmd', 'filepath', 'render_output', 'frames', 'chunk_size',
+    REQUIRED_SETTINGS = ('blender_cmd', 'render_output', 'frames', 'chunk_size',
                          'format', 'cycles_sample_count', 'cycles_sample_cap', 'fps')
 
     # So that unit tests can override this value and produce smaller jobs.
@@ -134,7 +134,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         from .blender_render import intermediate_path
 
         self._log.info('Compiling job %s', job['_id'])
-        self.validate_job_settings(job)
+        self.validate_job_settings(job, _must_have_filepath=True)
         self.job_settings = job['settings']
 
         # The render output contains a filename pattern, most likely '######' or
@@ -241,7 +241,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
 
         self._log.info('Created %i tasks for job %s', task_count, job['_id'])
 
-    def validate_job_settings(self, job):
+    def validate_job_settings(self, job, *, _must_have_filepath=False):
         """Ensure that the job uses format=EXR."""
         from flamenco import exceptions
 
@@ -255,7 +255,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
             raise exceptions.JobSettingError(
                 f'Job {job_id_str}was created using outdated Blender Cloud add-on, please upgrade.')
 
-        super().validate_job_settings(job)
+        super().validate_job_settings(job, _must_have_filepath=_must_have_filepath)
 
         render_format = job['settings']['format']
         if render_format.upper() != 'EXR':

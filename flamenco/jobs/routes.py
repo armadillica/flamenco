@@ -37,6 +37,7 @@ ALLOWED_JOB_STATUSES_FROM_WEB = {'cancel-requested', 'queued', 'requeued'}
 
 # Help text explaining job statuses, for in a tooltip in the web interface.
 HELP_FOR_STATUS = {
+    'waiting-for-files': 'Job has been created, but is waiting for files to be sent to the farm.',
     'under-construction': 'Job is still being compiled, tasks are ignored by Manager.',
     'construction-failed': 'There was an error compiling this job.',
     'paused': 'Job can go to queued, tasks are ignored by Manager until then.',
