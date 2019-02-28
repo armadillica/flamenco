@@ -17,6 +17,7 @@ EXTENSION_NAME = 'flamenco'
 class FlamencoExtension(PillarExtension):
     celery_task_modules = [
         'flamenco.celery.job_archival',
+        'flamenco.celery.job_cleanup',
         'flamenco.celery.job_runnability_check',
     ]
     user_roles = {
@@ -64,7 +65,10 @@ class FlamencoExtension(PillarExtension):
         # Just so that it registers the management commands.
         from . import cli
 
-        return {'FLAMENCO_RESUME_ARCHIVING_AGE': datetime.timedelta(days=1)}
+        return {
+            'FLAMENCO_RESUME_ARCHIVING_AGE': datetime.timedelta(days=1),
+            'FLAMENCO_WAITING_FOR_FILES_MAX_AGE': datetime.timedelta(days=1),
+        }
 
     def eve_settings(self):
         """Returns extensions to the Eve settings.

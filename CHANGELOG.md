@@ -37,7 +37,9 @@ Flamenco Server Changelog
   (instead of one task per frame chunk). The entire EXR sequence is now merged in one run of
   Blender.
 - New job status `waiting-for-files` allows a job to be created before the job's files are put into
-  place.
+  place. A `PATCH` with `{op: construct}` can be sent to the job to signal that the job can be
+  compiled and queued. Jobs that are not updated for 24h and still in `waiting-for-files` status
+  are automatically and irrevocably deleted.
 
 
 ## Version 2.1 (released 2018-12-04)
