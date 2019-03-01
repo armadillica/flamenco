@@ -86,8 +86,8 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 [commands.BlenderRender(
                     blender_cmd='{blender}',
                     filepath='/spring/edit/sprloing.blend',
-                    render_output=f'{frames}/chunk-00100-00199/######.png',
-                    format='PNG',
+                    render_output=f'{frames}/chunk-00100-00199/######.jpg',
+                    format='JPEG',
                     frames='100..199')],
                 'frame-chunk-100-199',
                 status='under-construction',
@@ -98,7 +98,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 job_doc,
                 [commands.CreateVideo(
                     ffmpeg_cmd='{ffmpeg}',
-                    input_files=f'{frames}/chunk-00100-00199/*.png',
+                    input_files=f'{frames}/chunk-00100-00199/*.jpg',
                     output_file=f'{frames}/chunk-00100-00199{extension}',
                     fps=24)],
                 'video-chunk-100-199',
@@ -111,8 +111,8 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 [commands.BlenderRender(
                     blender_cmd='{blender}',
                     filepath='/spring/edit/sprloing.blend',
-                    render_output=f'{frames}/chunk-00200-00250/######.png',
-                    format='PNG',
+                    render_output=f'{frames}/chunk-00200-00250/######.jpg',
+                    format='JPEG',
                     frames='200..250')],
                 'frame-chunk-200-250',
                 status='under-construction',
@@ -123,7 +123,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 job_doc,
                 [commands.CreateVideo(
                     ffmpeg_cmd='{ffmpeg}',
-                    input_files=f'{frames}/chunk-00200-00250/*.png',
+                    input_files=f'{frames}/chunk-00200-00250/*.jpg',
                     output_file=f'{frames}/chunk-00200-00250{extension}',
                     fps=24)],
                 'video-chunk-200-250',
@@ -268,8 +268,8 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 [commands.BlenderRender(
                     blender_cmd='{blender}',
                     filepath='/spring/edit/sprloing.blend',
-                    render_output=f'{frames}/chunk-00100-00199/######.png',
-                    format='PNG',
+                    render_output=f'{frames}/chunk-00100-00199/######.jpg',
+                    format='JPEG',
                     frames='100..199')],
                 'frame-chunk-100-199',
                 status='under-construction',
@@ -280,7 +280,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 job_doc,
                 [commands.CreateVideo(
                     ffmpeg_cmd='{ffmpeg}',
-                    input_files=f'{frames}/chunk-00100-00199/*.png',
+                    input_files=f'{frames}/chunk-00100-00199/*.jpg',
                     output_file=f'{frames}/chunk-00100-00199{extension}',
                     fps=24)],
                 'video-chunk-100-199',
@@ -293,8 +293,8 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 [commands.BlenderRender(
                     blender_cmd='{blender}',
                     filepath='/spring/edit/sprloing.blend',
-                    render_output=f'{frames}/chunk-00200-00250/######.png',
-                    format='PNG',
+                    render_output=f'{frames}/chunk-00200-00250/######.jpg',
+                    format='JPEG',
                     frames='200..250')],
                 'frame-chunk-200-250',
                 status='under-construction',
@@ -305,7 +305,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 job_doc,
                 [commands.CreateVideo(
                     ffmpeg_cmd='{ffmpeg}',
-                    input_files=f'{frames}/chunk-00200-00250/*.png',
+                    input_files=f'{frames}/chunk-00200-00250/*.jpg',
                     output_file=f'{frames}/chunk-00200-00250{extension}',
                     fps=24)],
                 'video-chunk-200-250',

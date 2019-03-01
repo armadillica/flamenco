@@ -103,14 +103,14 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
             first_frame = chunk_frames[0]
             last_frame = chunk_frames[-1]
             chunk_name = 'chunk-%05d-%05d' % (first_frame, last_frame)
-            render_output = self.frames_dir / chunk_name / '######.png'
+            render_output = self.frames_dir / chunk_name / '######.jpg'
 
-            # Export to PNG frames.
+            # Export to frames.
             task_cmds = [
                 commands.BlenderRender(
                     blender_cmd=job_settings.get('blender_cmd', '{blender}'),
                     filepath=job_settings['filepath'],
-                    format='PNG',
+                    format='JPEG',
                     render_output=str(render_output),
                     frames=frame_range_bstyle,
                 )
@@ -120,11 +120,11 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
                                                parents=[render_parent_tid])
             task_ids.append(render_task_id)
 
-            # Encode PNG frames to video.
+            # Encode frames to video.
             file_extension = job_settings['output_file_extension']
             task_cmds = [
                 commands.CreateVideo(
-                    input_files=str(render_output.with_name('*.png')),
+                    input_files=str(render_output.with_name('*.jpg')),
                     output_file=str(self.frames_dir / (chunk_name + file_extension)),
                     fps=job_settings['fps'],
                 )
