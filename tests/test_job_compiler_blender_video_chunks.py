@@ -22,6 +22,9 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
     def test_mkv(self):
         self._test_for_extension('.mkv')
 
+    def mkvtest_mp4(self):
+        self._test_for_extension('.mp4')
+
     def test_mov(self):
         self._test_for_extension('.mov')
 
@@ -167,7 +170,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 [commands.ConcatenateVideos(
                     ffmpeg_cmd='{ffmpeg}',
                     input_files=f'{frames}/chunk-*{extension}',
-                    output_file=f'{frames}/video.mkv',
+                    output_file=f'{frames}/video{extension}',
                 )],
                 'concatenate-videos',
                 status='under-construction',
@@ -181,8 +184,8 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
                 [commands.MuxAudio(
                     ffmpeg_cmd='{ffmpeg}',
                     audio_file=f'{frames}/audio.aac',
-                    video_file=f'{frames}/video.mkv',
-                    output_file=f'{frames}/muxed.mkv',
+                    video_file=f'{frames}/video{extension}',
+                    output_file=f'{frames}/muxed{extension}',
                 )],
                 'mux-audio-video',
                 status='under-construction',
@@ -194,7 +197,7 @@ class BlenderVideoChunksTest(AbstractFlamencoTest):
             mock.call(  # 9
                 job_doc,
                 [commands.MoveWithCounter(
-                    src=f'{frames}/muxed.mkv',
+                    src=f'{frames}/muxed{extension}',
                     dest=expected_final_output,
                 )],
                 'move-with-counter',

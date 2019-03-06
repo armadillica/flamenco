@@ -47,9 +47,10 @@ class BlenderVideoChunks(blender_render.AbstractBlenderJobCompiler):
         self.final_output_dir = PurePath(job['settings']['render_output']).parent
         self.frames_dir = self.final_output_dir / 'frames'
 
+        ext = job['settings']['output_file_extension']
         self.audio_path = self.frames_dir / 'audio.aac'
-        self.video_path = self.frames_dir / 'video.mkv'
-        self.muxed_path = self.frames_dir / 'muxed.mkv'
+        self.video_path = self.frames_dir / f'video{ext}'
+        self.muxed_path = self.frames_dir / f'muxed{ext}'
 
         # Determine final output file.
         blendfile = PurePath(job['settings']['filepath'])
