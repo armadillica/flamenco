@@ -1,3 +1,4 @@
+import pathlib
 import typing
 
 import pillarsdk
@@ -17,6 +18,10 @@ class FlamencoTestServer(PillarTestServer):
     def __init__(self, *args, **kwargs):
         PillarTestServer.__init__(self, *args, **kwargs)
 
+        jwt_test_path = pathlib.Path(__file__).with_name('jwt_keys')
+        self.config['FLAMENCO_JWT_PRIVATE_KEY_PATH'] = str(jwt_test_path / 'test-private-2.pem')
+        self.config['FLAMENCO_JWT_PUBLIC_KEYS_PATH'] = str(jwt_test_path / 'test-public-2.pem')
+
         from flamenco import FlamencoExtension
         self.load_extension(FlamencoExtension(), '/flamenco')
 
@@ -29,10 +34,12 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
         from flamenco.tasks import TaskManager
         from flamenco.jobs import JobManager
+        from flamenco.jwt import JWTKeyStore
 
         self.tmngr: TaskManager = self.flamenco.task_manager
         self.jmngr: JobManager = self.flamenco.job_manager
         self.mmngr: ManagerManager = self.flamenco.manager_manager
+        self.jwt: JWTKeyStore = self.flamenco.jwt
 
         self.proj_id, self.project = self.ensure_project_exists()
 

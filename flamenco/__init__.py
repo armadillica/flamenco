@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os.path
+import pathlib
 import typing
 
 import bson
@@ -43,11 +44,13 @@ class FlamencoExtension(PillarExtension):
         import flamenco.tasks
         import flamenco.managers
         import flamenco.auth
+        import flamenco.jwt
 
         self.job_manager = flamenco.jobs.JobManager()
         self.task_manager = flamenco.tasks.TaskManager()
         self.manager_manager = flamenco.managers.ManagerManager()
         self.auth = flamenco.auth.Auth()
+        self.jwt = flamenco.jwt.JWTKeyStore()
 
     @property
     def name(self):
@@ -68,6 +71,7 @@ class FlamencoExtension(PillarExtension):
         return {
             'FLAMENCO_RESUME_ARCHIVING_AGE': datetime.timedelta(days=1),
             'FLAMENCO_WAITING_FOR_FILES_MAX_AGE': datetime.timedelta(days=1),
+            'FLAMENCO_JWT_TOKEN_EXPIRY': datetime.timedelta(hours=4),
         }
 
     def eve_settings(self):
@@ -127,11 +131,22 @@ class FlamencoExtension(PillarExtension):
         with app.app_context():
             self._create_collections(app.db())
 
-        from . import managers, jobs, tasks
+        from . import managers, jobs, tasks, jwt
 
         managers.setup_app(app)
         jobs.setup_app(app)
         tasks.setup_app(app)
+        jwt.setup_app(app)
+
+        private_path = app.config.get('FLAMENCO_JWT_PRIVATE_KEY_PATH')
+        public_path = app.config.get('FLAMENCO_JWT_PUBLIC_KEYS_PATH')
+        if private_path and public_path:
+            self.jwt.token_expiry = app.config.get('FLAMENCO_JWT_TOKEN_EXPIRY')
+            self.jwt.load_keys(pathlib.Path(private_path),
+                               pathlib.Path(public_path)),
+        else:
+            self._log.warning('Unable to load JWT keys, configure FLAMENCO_JWT_PRIVATE_KEY_PATH '
+                              'and FLAMENCO_JWT_PUBLIC_KEYS_PATH')
 
     def _setup_orphan_finder(self):
         """Registers a few MongoDB collections to be skipped by the orphan finder."""
