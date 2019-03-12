@@ -40,6 +40,7 @@ Flamenco Server Changelog
   place. A `PATCH` with `{op: construct}` can be sent to the job to signal that the job can be
   compiled and queued. Jobs that are not updated for 24h and still in `waiting-for-files` status
   are automatically and irrevocably deleted.
+- Blender Render jobs no longer create preview videos for single-frame render jobs.
 
 
 ## Version 2.1 (released 2018-12-04)
