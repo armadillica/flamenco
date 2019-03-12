@@ -250,6 +250,7 @@ class BlenderRender(AbstractBlenderJobCompiler):
         :returns: the ObjectId of the created task, or None if this task should not
             be created for this job.
         """
+        from flamenco import utils
 
         if not isinstance(job, dict):
             raise TypeError('job should be a dict, not %s' % type(job))
@@ -262,6 +263,12 @@ class BlenderRender(AbstractBlenderJobCompiler):
         if images_or_video != 'images':
             self._log.debug('Not creating create-video task for job %s with images_or_video=%s',
                             job_id, images_or_video)
+            return None
+
+        frame_count = utils.frame_range_count(job_settings['frames'])
+        if frame_count < 2:
+            self._log.debug('Not creating create-video task for job %s with only %d frames',
+                            job_id, frame_count)
             return None
 
         # Check whether we can use the render output to feed to FFmpeg.

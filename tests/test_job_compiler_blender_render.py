@@ -446,6 +446,87 @@ class BlenderRenderTest(AbstractFlamencoTest):
             job_doc['_id'], 'under-construction', 'queued', now=mock.ANY)
         job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock.ANY)
 
+    def test_no_create_video_single_frame(self):
+        from flamenco.job_compilers import blender_render, commands
+
+        with self.app.app_context():
+            self.flamenco.db('managers').update_one(
+                {'_id': self.mngr_id},
+                {'$set': {'worker_task_types': ['blender-render', 'video-encoding']}}
+            )
+
+        job_doc = JobDocForTesting({
+            '_id': ObjectId(24 * 'f'),
+            '_created': self.created,
+            'manager': self.mngr_id,
+            'settings': {
+                'frames': '3',
+                'chunk_size': 3,
+                'render_output': '/render/out/frames-######',
+                'format': 'PNG',
+                'filepath': '/agent327/scenes/someshot/somefile.flamenco.blend',
+                'blender_cmd': '/path/to/blender --enable-new-depsgraph',
+
+                # On top of pretty much the same settings as test_small_job(),
+                # we add those settings that trigger the creation of the
+                # create_video task, which shouldn't happen because we only
+                # render a single frame.
+                'fps': 24,
+                'images_or_video': 'images',
+                'output_file_extension': '.png',
+            },
+            'job_type': 'blender-render',
+        })
+
+        task_manager = mock.Mock()
+        job_manager = mock.Mock()
+
+        # We expect:
+        # - 1 chunk of 1 frame.
+        # - 1 move-to-final task.
+        # so that's 2 tasks in total.
+        task_ids = [ObjectId() for _ in range(2)]
+        task_manager.api_create_task.side_effect = task_ids
+
+        compiler = blender_render.BlenderRender(
+            task_manager=task_manager, job_manager=job_manager)
+
+        with self.app.app_context():
+            compiler.compile(job_doc)
+
+        task_manager.api_create_task.assert_has_calls([
+            # Render tasks
+            mock.call(
+                job_doc,
+                [commands.BlenderRender(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.flamenco.blend',
+                    format='PNG',
+                    render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
+                    frames='3')],
+                'blender-render-3',
+                status='under-construction',
+                task_type='blender-render',
+                parents=None,
+            ),
+
+            # Move to final location
+            mock.call(
+                job_doc,
+                [commands.MoveToFinal(
+                    src='/render/out__intermediate-2018-07-06_115233',
+                    dest='/render/out')],
+                'move-to-final',
+                parents=task_ids[0:1],
+                status='under-construction',
+                task_type='file-management',
+            ),
+        ])
+
+        task_manager.api_set_task_status_for_job.assert_called_with(
+            job_doc['_id'], 'under-construction', 'queued', now=mock.ANY)
+        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock.ANY)
+
     def create_video_without_proper_task_type_support(self):
         from flamenco.job_compilers import blender_render, commands
 
