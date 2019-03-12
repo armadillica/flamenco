@@ -136,6 +136,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         self._log.info('Compiling job %s', job['_id'])
         self.validate_job_settings(job, _must_have_filepath=True)
         self.job_settings = job['settings']
+        self.do_render_video: bool = utils.frame_range_count(self.job_settings['frames']) > 1
 
         # The render output contains a filename pattern, most likely '######' or
         # something similar. This has to be removed, so that we end up with
@@ -327,7 +328,10 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                                          job: dict,
                                          parents: typing.List[ObjectId],
                                          task_priority: int) -> ObjectId:
-        """Publish the JPEG previews to the output directory."""
+        """Publish the MKV preview to the output directory."""
+
+        if not self.do_render_video:
+            return None
 
         cmds = [commands.CopyFile(
             src=str(self.intermediate_path / 'preview.mkv'),
@@ -343,13 +347,14 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
                              parent_images_tid: typing.Optional[ObjectId],
                              parent_video_tid: typing.Optional[ObjectId],
                              exr_glob: PurePath,
-                             task_priority: int) -> typing.Tuple[ObjectId, ObjectId]:
+                             task_priority: int) \
+            -> typing.Tuple[ObjectId, typing.Optional[ObjectId]]:
         """Converts EXR files in the render output directory to JPEG files.
 
-        This constructs two tasks, one of type 'blender-render' and one of
-        type 'video-encoding'.
+        This constructs one or two tasks, one of type 'blender-render' and
+        optionally one of type 'video-encoding'.
 
-        :return: (images task ID, video task ID)
+        :return: (images task ID, video task ID or None)
         """
         assert isinstance(parents, list)
         assert isinstance(parents[0], ObjectId)
@@ -371,6 +376,9 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
             image_parents.insert(0, parent_images_tid)
         images_task_id = self._create_task(job, cmds, 'create-preview-images', 'blender-render',
                                            parents=image_parents, priority=task_priority)
+
+        if not self.do_render_video:
+            return images_task_id, None
 
         cmds = [
             commands.CreateVideo(

@@ -487,6 +487,249 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
             job_doc['_id'], 'under-construction', 'queued', now=mock_now)
         job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock_now)
 
+    @mock.patch('datetime.datetime')
+    def test_single_frame(self, mock_datetime):
+        from flamenco.job_compilers import blender_render_progressive, commands
+
+        logging.basicConfig(level=logging.DEBUG)
+
+        job_doc = JobDocForTesting({
+            '_id': ObjectId(24 * 'f'),
+            '_created': self.created,
+            'settings': {
+                'frames': '5',
+                'chunk_size': 3,
+                'render_output': '/render/out/frames-######',
+                'fps': 5.3,
+                'format': 'OPEN_EXR',
+                'filepath': '/agent327/scenes/someshot/somefile.blend',
+                'blender_cmd': '/path/to/blender --enable-new-depsgraph',
+                'cycles_sample_count': 30,
+
+                # Effectively uncapped so that the number of tasks stays small.
+                # The actual capping is tested in test_chunk_generator() anyway.
+                'cycles_sample_cap': 30,
+            },
+            'job_type': 'blender-render-progressive',
+        })
+        task_manager = mock.Mock()
+        job_manager = mock.Mock()
+
+        # Create a stable 'now' for testing.
+        mock_now = datetime.datetime.now(tz=tz_util.utc)
+        mock_datetime.now.side_effect = [mock_now]
+
+        task_ids = [ObjectId() for _ in range(17)]
+        task_manager.api_create_task.side_effect = task_ids
+
+        compiler = blender_render_progressive.BlenderRenderProgressive(
+            task_manager=task_manager, job_manager=job_manager)
+        compiler._uncapped_chunk_count = 3  # Reduce to a testable number of tasks.
+        compiler.compile(job_doc)
+
+        task_manager.api_create_task.assert_has_calls([
+            # Pre-existing intermediate directory is destroyed.
+            mock.call(  # task 0
+                job_doc,
+                [commands.RemoveTree(path='/render/out__intermediate-2018-07-06_115233')],
+                'destroy-preexisting-intermediate',
+                status='under-construction',
+                task_type='file-management',
+            ),
+
+            # First Cycles chunk goes into intermediate directory
+            mock.call(  # task 1
+                job_doc,
+                [commands.BlenderRenderProgressive(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    format='OPEN_EXR',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-######',
+                    frames='5',
+                    cycles_num_chunks=30,
+                    cycles_chunk_start=1,
+                    cycles_chunk_end=1)],
+                'render-s_1-1-f_5',
+                priority=0,
+                parents=[task_ids[0]],
+                status='under-construction',
+                task_type='blender-render',
+            ),
+
+            mock.call(  # task 2
+                job_doc,
+                [commands.ExrSequenceToJpeg(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    exr_glob='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-*.exr',
+                    output_pattern='preview-######',
+                )],
+                'create-preview-images',
+                priority=1,
+                parents=[task_ids[1]],
+                status='under-construction',
+                task_type='blender-render',
+            ),
+
+            # Second Cycles chunk renders to intermediate directory.
+            mock.call(  # task 3
+                job_doc,
+                [commands.BlenderRenderProgressive(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    format='OPEN_EXR',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0002-0010-######',
+                    frames='5',
+                    cycles_num_chunks=30,
+                    cycles_chunk_start=2,
+                    cycles_chunk_end=10)],
+                'render-s_2-10-f_5',
+                priority=-10,
+                parents=[task_ids[0]],
+                status='under-construction',
+                task_type='blender-render',
+            ),
+
+            # First merge pass, outputs to intermediate directory and copies to output dir
+            mock.call(  # task 4
+                job_doc,
+                [
+                    commands.MergeProgressiveRenderSequence(
+                        blender_cmd='/path/to/blender --enable-new-depsgraph',
+                        input1='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-000005.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0002-0010-000005.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0010-######',
+                        weight1=1,
+                        weight2=9,
+                        frame_start=5,
+                        frame_end=5,
+                    ),
+                ],
+                'merge-to-s_10-f_5-5',
+                parents=[task_ids[1], task_ids[3]],
+                priority=1,
+                status='under-construction',
+                task_type='exr-merge',
+            ),
+            mock.call(  # task 5
+                job_doc,
+                [commands.ExrSequenceToJpeg(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    exr_glob='/render/out__intermediate-2018-07-06_115233/merge-smpl-0010-*.exr',
+                    output_pattern='preview-######',
+                )],
+                'create-preview-images',
+                priority=1,
+                parents=[task_ids[2], task_ids[4]],
+                status='under-construction',
+                task_type='blender-render',
+            ),
+
+            # Third Cycles chunk renders to intermediate directory.
+            mock.call(  # task 6
+                job_doc,
+                [commands.BlenderRenderProgressive(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    format='OPEN_EXR',
+                    render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0030-######',
+                    frames='5',
+                    cycles_num_chunks=30,
+                    cycles_chunk_start=11,
+                    cycles_chunk_end=30)],
+                'render-s_11-30-f_5',
+                priority=-20,
+                parents=[task_ids[0]],
+                status='under-construction',
+                task_type='blender-render',
+            ),
+
+            # Final merge pass. Could happen directly to the output directory, but to ensure the
+            # intermediate directory shows a complete picture (pun intended), we take a similar
+            # approach as earlier merge passes.
+            mock.call(  # task 7
+                job_doc,
+                [
+                    commands.MergeProgressiveRenderSequence(
+                        blender_cmd='/path/to/blender --enable-new-depsgraph',
+                        input1='/render/out__intermediate-2018-07-06_115233/merge-smpl-0010-000005.exr',
+                        input2='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0030-000005.exr',
+                        output='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-######',
+                        weight1=10,
+                        weight2=20,
+                        frame_start=5,
+                        frame_end=5,
+                    ),
+                ],
+                'merge-to-s_30-f_5-5',
+                parents=[task_ids[4], task_ids[6]],
+                priority=1,
+                status='under-construction',
+                task_type='exr-merge',
+            ),
+
+            mock.call(  # task 8
+                job_doc,
+                [commands.ExrSequenceToJpeg(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.blend',
+                    exr_glob='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-*.exr',
+                    output_pattern='preview-######',
+                )],
+                'create-preview-images',
+                priority=1,
+                parents=[task_ids[5], task_ids[7]],
+                status='under-construction',
+                task_type='blender-render',
+            ),
+
+            mock.call(  # task 9
+                job_doc,
+                [
+                    commands.MoveOutOfWay(src='/render/out'),
+                ],
+                'move-outdir-out-of-way',
+                priority=1,
+                parents=[task_ids[7]],
+                status='under-construction',
+                task_type='file-management',
+            ),
+
+            mock.call(  # task 10
+                job_doc,
+                [
+                    commands.CopyFile(
+                        src='/render/out__intermediate-2018-07-06_115233/merge-smpl-0030-000005.exr',
+                        dest='/render/out/frames-000005.exr',
+                    ),
+                ],
+                'publish-exr-to-output',
+                priority=1,
+                parents=[task_ids[9]],
+                status='under-construction',
+                task_type='file-management',
+            ),
+            mock.call(  # task 11
+                job_doc,
+                [
+                    commands.CopyFile(
+                        src='/render/out__intermediate-2018-07-06_115233/preview-000005.jpg',
+                        dest='/render/out/frames-000005.jpg',
+                    ),
+                ],
+                'publish-jpeg-to-output',
+                priority=1,
+                parents=[task_ids[8], task_ids[9]],
+                status='under-construction',
+                task_type='file-management',
+            ),
+        ])
+
+        task_manager.api_set_task_status_for_job.assert_called_with(
+            job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock_now)
+
 
 class CreateDeferredTest(AbstractFlamencoTest):
     def setUp(self):
