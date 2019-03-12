@@ -23,6 +23,13 @@ RNA_OVERRIDES_HEADER = """\
 import bpy
 """
 
+# Set of scene.render.image_settings.file_format values that produce
+# files which FFmpeg is known not to handle as input.
+FFMPEG_INCOMPATIBLE_IMAGE_FORMATS = {
+    'EXR', 'MULTILAYER',  # Old CLI-style format indicators
+    'OPEN_EXR', 'OPEN_EXR_MULTILAYER',  # DNA values for these formats.
+}
+
 
 @functools.lru_cache(maxsize=1)
 def job_types() -> typing.Set[str]:
@@ -255,6 +262,12 @@ class BlenderRender(AbstractBlenderJobCompiler):
         if images_or_video != 'images':
             self._log.debug('Not creating create-video task for job %s with images_or_video=%s',
                             job_id, images_or_video)
+            return None
+
+        # Check whether we can use the render output to feed to FFmpeg.
+        if job_settings['format'] in FFMPEG_INCOMPATIBLE_IMAGE_FORMATS:
+            self._log.debug('Not creating create-video task for job %s with format=%s',
+                            job_id, job_settings['format'])
             return None
 
         try:

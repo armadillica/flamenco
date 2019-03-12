@@ -261,7 +261,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 'frames': '1-5',
                 'chunk_size': 3,
                 'render_output': '/render/out/frames-######',
-                'format': 'EXR',
+                'format': 'PNG',
                 'filepath': '/agent327/scenes/someshot/somefile.flamenco.blend',
                 'blender_cmd': '/path/to/blender --enable-new-depsgraph',
 
@@ -270,7 +270,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 # create_video task.
                 'fps': 24,
                 'images_or_video': 'images',
-                'output_file_extension': '.exr',
+                'output_file_extension': '.png',
             },
             'job_type': 'blender-render',
         })
@@ -299,7 +299,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 [commands.BlenderRender(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.flamenco.blend',
-                    format='EXR',
+                    format='PNG',
                     render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
                     frames='1..3')],
                 'blender-render-1-3',
@@ -312,7 +312,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
                 [commands.BlenderRender(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.flamenco.blend',
-                    format='EXR',
+                    format='PNG',
                     render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
                     frames='4,5')],
                 'blender-render-4,5',
@@ -325,7 +325,7 @@ class BlenderRenderTest(AbstractFlamencoTest):
             mock.call(
                 job_doc,
                 [commands.CreateVideo(
-                    input_files='/render/out__intermediate-2018-07-06_115233/*.exr',
+                    input_files='/render/out__intermediate-2018-07-06_115233/*.png',
                     output_file='/render/out__intermediate-2018-07-06_115233/somefile-1-5.mkv',
                     fps=24,
                     ffmpeg_cmd='{ffmpeg}',
@@ -344,6 +344,99 @@ class BlenderRenderTest(AbstractFlamencoTest):
                     dest='/render/out')],
                 'move-to-final',
                 parents=[task_ids[2]],
+                status='under-construction',
+                task_type='file-management',
+            ),
+        ])
+
+        task_manager.api_set_task_status_for_job.assert_called_with(
+            job_doc['_id'], 'under-construction', 'queued', now=mock.ANY)
+        job_manager.api_set_job_status(job_doc['_id'], 'under-construction', 'queued', now=mock.ANY)
+
+    def test_no_create_video_exr(self):
+        from flamenco.job_compilers import blender_render, commands
+
+        with self.app.app_context():
+            self.flamenco.db('managers').update_one(
+                {'_id': self.mngr_id},
+                {'$set': {'worker_task_types': ['blender-render', 'video-encoding']}}
+            )
+
+        job_doc = JobDocForTesting({
+            '_id': ObjectId(24 * 'f'),
+            '_created': self.created,
+            'manager': self.mngr_id,
+            'settings': {
+                'frames': '1-5',
+                'chunk_size': 3,
+                'render_output': '/render/out/frames-######',
+                'format': 'OPEN_EXR',
+                'filepath': '/agent327/scenes/someshot/somefile.flamenco.blend',
+                'blender_cmd': '/path/to/blender --enable-new-depsgraph',
+
+                # On top of pretty much the same settings as test_small_job(),
+                # we add those settings that trigger the creation of the
+                # create_video task.
+                'fps': 24,
+                'images_or_video': 'images',
+                'output_file_extension': '.exr',
+            },
+            'job_type': 'blender-render',
+        })
+
+        task_manager = mock.Mock()
+        job_manager = mock.Mock()
+
+        # We expect:
+        # - 2 chunk of 3 resp 2 frames.
+        # - 1 move-to-final task.
+        # so that's 3 tasks in total.
+        task_ids = [ObjectId() for _ in range(4)]
+        task_manager.api_create_task.side_effect = task_ids
+
+        compiler = blender_render.BlenderRender(
+            task_manager=task_manager, job_manager=job_manager)
+
+        with self.app.app_context():
+            compiler.compile(job_doc)
+
+        task_manager.api_create_task.assert_has_calls([
+            # Render tasks
+            mock.call(
+                job_doc,
+                [commands.BlenderRender(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.flamenco.blend',
+                    format='OPEN_EXR',
+                    render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
+                    frames='1..3')],
+                'blender-render-1-3',
+                status='under-construction',
+                task_type='blender-render',
+                parents=None,
+            ),
+            mock.call(
+                job_doc,
+                [commands.BlenderRender(
+                    blender_cmd='/path/to/blender --enable-new-depsgraph',
+                    filepath='/agent327/scenes/someshot/somefile.flamenco.blend',
+                    format='OPEN_EXR',
+                    render_output='/render/out__intermediate-2018-07-06_115233/frames-######',
+                    frames='4,5')],
+                'blender-render-4,5',
+                status='under-construction',
+                task_type='blender-render',
+                parents=None,
+            ),
+
+            # Move to final location
+            mock.call(
+                job_doc,
+                [commands.MoveToFinal(
+                    src='/render/out__intermediate-2018-07-06_115233',
+                    dest='/render/out')],
+                'move-to-final',
+                parents=task_ids[0:2],
                 status='under-construction',
                 task_type='file-management',
             ),
