@@ -242,7 +242,7 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         self._log.info('Created %i tasks for job %s', task_count, job['_id'])
 
     def validate_job_settings(self, job, *, _must_have_filepath=False):
-        """Ensure that the job uses format=EXR."""
+        """Ensure that the job uses format=OPEN_EXR."""
         from flamenco import exceptions
 
         job_id_str = job.get('_id', '')
@@ -258,9 +258,9 @@ class BlenderRenderProgressive(blender_render.AbstractBlenderJobCompiler):
         super().validate_job_settings(job, _must_have_filepath=_must_have_filepath)
 
         render_format = job['settings']['format']
-        if render_format.upper() != 'EXR':
+        if render_format.upper() not in {'OPEN_EXR', 'EXR'}:
             raise exceptions.JobSettingError(
-                f'Job {job_id_str}must use format="EXR", not {render_format!r}')
+                f'Job {job_id_str}must use format="OPEN_EXR", not {render_format!r}')
 
         # This is quite a limitation, but makes our code to predict the
         # filename that Blender will use a lot simpler.

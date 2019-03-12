@@ -156,7 +156,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 'chunk_size': 3,
                 'render_output': '/render/out/frames-######',
                 'fps': 5.3,
-                'format': 'EXR',
+                'format': 'OPEN_EXR',
                 'filepath': '/agent327/scenes/someshot/somefile.blend',
                 'blender_cmd': '/path/to/blender --enable-new-depsgraph',
                 'cycles_sample_count': 30,
@@ -198,7 +198,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
-                    format='EXR',
+                    format='OPEN_EXR',
                     render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0001-0001-######',
                     frames='1..5',
                     cycles_num_chunks=30,
@@ -245,7 +245,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
-                    format='EXR',
+                    format='OPEN_EXR',
                     render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0002-0010-######',
                     frames='1..5',
                     cycles_num_chunks=30,
@@ -313,7 +313,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
-                    format='EXR',
+                    format='OPEN_EXR',
                     render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0030-######',
                     frames='1..3',
                     cycles_num_chunks=30,
@@ -330,7 +330,7 @@ class BlenderRenderProgressiveTest(unittest.TestCase):
                 [commands.BlenderRenderProgressive(
                     blender_cmd='/path/to/blender --enable-new-depsgraph',
                     filepath='/agent327/scenes/someshot/somefile.blend',
-                    format='EXR',
+                    format='OPEN_EXR',
                     render_output='/render/out__intermediate-2018-07-06_115233/render-smpl-0011-0030-######',
                     frames='4,5',
                     cycles_num_chunks=30,
@@ -515,7 +515,7 @@ class CreateDeferredTest(AbstractFlamencoTest):
                 'chunk_size': 3,
                 'render_output': '/render/out/frames-######',
                 'fps': 5.3,
-                'format': 'EXR',
+                'format': 'OPEN_EXR',
                 'blender_cmd': '/path/to/blender --enable-new-depsgraph',
                 'cycles_sample_count': 30,
 

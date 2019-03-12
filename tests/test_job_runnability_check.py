@@ -26,7 +26,7 @@ class JobRunnabilityTest(AbstractFlamencoTest):
                     'chunk_size': 3,
                     'render_output': '/render/out/frames-######',
                     'fps': 5.3,
-                    'format': 'EXR',
+                    'format': 'OPEN_EXR',
                     'filepath': '/agent327/scenes/someshot/somefile.blend',
                     'blender_cmd': '/path/to/blender --enable-new-depsgraph',
                     'cycles_sample_count': 30,
