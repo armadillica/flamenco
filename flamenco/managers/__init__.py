@@ -200,8 +200,6 @@ class ManagerManager(object):
 
         Usage implies things like requeuing tasks and jobs, creating new jobs, etc.
         """
-
-        import flask
         from flamenco import current_flamenco
 
         # Flamenco Admins always have access.
