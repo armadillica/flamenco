@@ -277,29 +277,30 @@ class JobManager(object):
         return result
 
     def handle_job_status_change(self, job_id: ObjectId,
-                                 old_status: str, new_status: str) -> typing.Optional[str]:
+                                 old_status: str, new_status: str) -> str:
         """Updates task statuses based on this job status transition.
 
         :returns: the new job status, if this status transition should be
-            followed by another one.
+            followed by another one, otherwise an empty string.
         """
         self._log.info('status transition job_id %s from %r to %r', job_id, old_status, new_status)
 
         if new_status in {'completed', 'canceled'}:
             # Nothing to do; this will happen as a response to all tasks receiving this status.
-            return
+            return ''
         elif new_status == 'active':
             # Nothing to do; this happens when a task gets started, which has nothing to
             # do with other tasks in the job.
-            return
+            return ''
         elif new_status in {'cancel-requested', 'failed', 'fail-requested'}:
             return self._do_cancel_tasks(job_id, old_status, new_status)
         elif new_status == 'requeued':
             return self._do_requeue(job_id, old_status, new_status)
         elif new_status == 'queued':
             return self._do_check_completion(job_id, new_status)
+        return ''
 
-    def _do_cancel_tasks(self, job_id, old_status, new_status) -> typing.Optional[str]:
+    def _do_cancel_tasks(self, job_id, old_status, new_status) -> str:
         """Directly cancel any task that might run in the future.
 
         Only cancels tasks that haven't been touched by a manager yet;
@@ -334,8 +335,9 @@ class JobManager(object):
                            'so transitioning directly to %s',
                            job_id, old_status, new_status, goto_status)
             return goto_status
+        return ''
 
-    def _do_requeue(self, job_id, old_status, new_status) -> typing.Optional[str]:
+    def _do_requeue(self, job_id, old_status, new_status) -> str:
         """Re-queue all tasks of the job, and the job itself.
 
         :returns: the new job status, if this status transition should be
@@ -345,13 +347,13 @@ class JobManager(object):
             # Nothing to do, the job compiler has just finished its work; the tasks have
             # already been set to 'queued' status.
             self._log.debug('Ignoring job status change %r -> %r', old_status, new_status)
-            return
+            return ''
 
         if old_status == 'completed':
             # Re-queue all tasks except cancel-requested; those should remain
             # untouched; changing their status is only allowed by managers, to avoid
             # race conditions.
-            query = {'status': {'$ne': 'cancel-requested'}}
+            query = {'status': {'$ne': 'cancel-requested'}}  # type: typing.Dict[str, typing.Any]
         else:
             # Re-queue any non-completed task. Cancel-requested tasks should also be
             # untouched; changing their status is only allowed by managers, to avoid
@@ -363,7 +365,7 @@ class JobManager(object):
         current_flamenco.update_status_q('tasks', query, 'queued')
         return 'queued'
 
-    def _do_check_completion(self, job_id, new_status) -> typing.Optional[str]:
+    def _do_check_completion(self, job_id, new_status) -> str:
         """Completes the job if all tasks are completed.
 
         :returns: the new job status, if this status transition should be
@@ -377,7 +379,7 @@ class JobManager(object):
             # Not yet completed, so just stay at current status.
             self._log.debug('Job %s has %d of %d tasks completed, staying at status %r',
                             job_id, completed_tasks, total_tasks, new_status)
-            return
+            return ''
 
         self._log.info("Job %s has all %d tasks completed, transition from %r to 'completed'",
                        job_id, total_tasks, new_status)
