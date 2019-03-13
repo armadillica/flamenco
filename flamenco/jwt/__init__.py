@@ -5,10 +5,11 @@ import logging
 import pathlib
 import typing
 
-from bson import ObjectId
+from bson import ObjectId, tz_util
 
 import jwt.exceptions
 
+HTTP_DATE_FORMAT = '%a, %d %b %Y %H:%M:%S GMT'
 log = logging.getLogger(__name__)
 
 
@@ -50,8 +51,8 @@ class JWTKeyStore:
         self._public_keys_path = public_keys_path
 
         st_mtime = public_keys_path.stat().st_mtime
-        mtime = datetime.datetime.fromtimestamp(st_mtime)
-        self._public_keys_mtime = mtime.isoformat(timespec='seconds')
+        mtime = datetime.datetime.fromtimestamp(st_mtime).astimezone(tz_util.utc)
+        self._public_keys_mtime = mtime.strftime(HTTP_DATE_FORMAT)
         log.info('Public keys mtime is %s', self._public_keys_mtime)
 
         self._usable = bool(self.token_expiry is not None
