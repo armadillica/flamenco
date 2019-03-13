@@ -95,6 +95,8 @@ def frame_range_start_end(frame_range: typing.Optional[str]) \
         min_start = min(min_start, part_start)
         max_end = max(max_end, part_end)
 
+    assert isinstance(min_start, int)
+    assert isinstance(max_end, int)
     return min_start, max_end
 
 

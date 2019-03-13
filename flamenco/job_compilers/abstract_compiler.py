@@ -1,4 +1,5 @@
 import abc
+import typing
 
 import attr
 import bson
@@ -11,7 +12,7 @@ class AbstractJobCompiler(object, metaclass=abc.ABCMeta):
     job_manager = attr.ib(cmp=False, hash=False)
     _log = attrs_extra.log('%s.AbstractJobCompiler' % __name__)
 
-    REQUIRED_SETTINGS = []
+    REQUIRED_SETTINGS = []  # type: typing.List[str]
 
     def compile(self, job: dict):
         """Compiles the job into a list of tasks.

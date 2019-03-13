@@ -277,7 +277,7 @@ class ManagerManager(object):
                 ', '.join(f"'{gid}'" for gid in user_groups),
             )
 
-        update = defaultdict(dict)
+        update = defaultdict(dict)  # type: typing.DefaultDict[str, typing.Any]
         if projects:
             update['$set']['projects'] = projects
         else:

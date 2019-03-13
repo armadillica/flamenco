@@ -128,7 +128,7 @@ class JWTKeyStore:
             'iat': now.timestamp(),
         }
         token = jwt.encode(claims, self._private_key, algorithm='ES256')
-        return token
+        return token.decode('ascii')
 
 
 def setup_app(app):

@@ -261,7 +261,7 @@ class JobManager(object):
         old_status = curr_job['status']
 
         if reason:
-            extra_updates = {'status_reason': reason}
+            extra_updates = {'status_reason': reason}  # type: typing.Optional[dict]
         else:
             extra_updates = None
 
