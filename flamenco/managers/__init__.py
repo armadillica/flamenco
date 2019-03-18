@@ -2,12 +2,15 @@
 
 import datetime
 import enum
+import hashlib
+import hmac
 import logging
 import typing
 
 import attr
 import bson
 import pymongo.cursor
+import pymongo.results
 
 import werkzeug.exceptions as wz_exceptions
 
@@ -311,13 +314,23 @@ class ManagerManager(object):
             raise wz_exceptions.NotFound()
         return service_account_id
 
+    def hasher(self, manager_id: bson.ObjectId) -> typing.Optional[hmac.HMAC]:
+        """Return an HMAC hasher for this Manager."""
+
+        service_account_id = self.find_service_account_id(manager_id)
+        tokens_coll = current_app.db('tokens')
+        token_dict = tokens_coll.find_one({'user': service_account_id})
+        if token_dict is None:
+            return None
+        secret = token_dict['token']
+        hasher = hmac.new(secret.encode('utf8'), digestmod=hashlib.sha256)
+        return hasher
+
     def revoke_auth_token(self, manager_id: bson.ObjectId) -> bson.ObjectId:
         """Deletes all existing authentication tokens of the Manager.
 
         Returns the service account ID.
         """
-
-        import pymongo.results
 
         self._log.info('Revoking authentication tokens for Manager %s on behalf of user %s',
                        manager_id, current_user.user_id)
