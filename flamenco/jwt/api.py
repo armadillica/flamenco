@@ -62,8 +62,13 @@ def generate_token(manager_id: str):
 
         # Only parse the timestamp after we learned we can trust it.
         expire_timestamp = dateutil.parser.parse(expires)
-        if utcnow() > expire_timestamp:
+        validity_seconds_left = (expire_timestamp - utcnow()).total_seconds()
+        if validity_seconds_left < 0:
             raise wz_exceptions.Unauthorized('Link expired')
+        if validity_seconds_left > 900:
+            # Flamenco Manager generates links that are valid for less than a minute, so
+            # if it's more than 15 minutes in the future, it's bad.
+            raise wz_exceptions.Unauthorized('Link too far in the future')
 
     user = authentication.current_user()
 
