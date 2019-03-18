@@ -85,12 +85,15 @@ def generate_token(manager_id: str):
     log.info('Generating JWT key for user_id=%s manager_id=%s remote_addr=%s',
              user.user_id, manager_id, request.remote_addr)
     key_for_manager = jwt.generate_key_for_manager(manager_oid, user.user_id)
-    return Response(key_for_manager,
-                    content_type='text/plain',
-                    headers={
-                        **CORS_RESPONSE_HEADERS,
-                        'Access-Control-Allow-Origin': request.headers.get('Origin', ''),
-                    })
+
+    if request.headers.get('Origin'):
+        headers = {
+            **CORS_RESPONSE_HEADERS,
+            'Access-Control-Allow-Origin': request.headers['Origin'],
+        }
+    else:
+        headers = {}
+    return Response(key_for_manager, content_type='text/plain', headers=headers)
 
 
 def setup_app(app):
