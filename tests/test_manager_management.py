@@ -15,13 +15,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
         from pillar.api.utils.authentication import force_cli_user
 
-        owner_email = "jemoeder"
-        self.mngr_owner = self.create_user(user_id=bson.ObjectId(), email=owner_email)
-        mngr_doc, account, token = self.create_manager_service_account(owner_email)
-        self.mngr_id = mngr_doc['_id']
-        self.mngr_doc = mngr_doc
-        self.mngr_token = token['token']
-
+        self.create_manager()
         self.create_user(user_id=24 * 'f', roles={'flamenco-admin'}, token='fladmin-token')
 
         with self.app.test_request_context():

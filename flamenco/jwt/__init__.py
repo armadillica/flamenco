@@ -91,7 +91,9 @@ class JWTKeyStore:
 
         manager_id = 24 * '1'
         token = self.generate_key_for_manager(ObjectId(manager_id), ObjectId(24 * '2'))
+        return self._test_token(manager_id, token)
 
+    def _test_token(self, manager_id: str, token: str):
         # Split the public key bytes into separate keys.
         sep = b'-----END PUBLIC KEY-----\n'
         keyparts = self._public_keys.split(sep)

@@ -84,7 +84,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
             owner_email=ctd.EXAMPLE_USER['email'],
             name='tēst mānēgūr',
             *,
-            assign_to_project_id: ObjectId=None):
+            assign_to_project_id: ObjectId = None):
         from flamenco.setup import create_manager
         from pillar.api.utils.authentication import force_cli_user
 
@@ -106,6 +106,14 @@ class AbstractFlamencoTest(AbstractPillarTest):
                 self.assign_manager_to_project(mngr_doc['_id'], assign_to_project_id)
 
         return mngr_doc, account, token
+
+    def create_manager(self):
+        owner_email = "jemoeder"
+        self.mngr_owner = self.create_user(user_id=ObjectId(), email=owner_email)
+        mngr_doc, account, token = self.create_manager_service_account(owner_email)
+        self.mngr_id = mngr_doc['_id']
+        self.mngr_doc = mngr_doc
+        self.mngr_token = token['token']
 
     def create_project_member(self, user_id: str, *,
                               token: str,
