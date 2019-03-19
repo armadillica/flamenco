@@ -89,6 +89,8 @@ class JWTKeyStore:
             if we have no public key or none of them match our private key.
         """
 
+        if self.token_expiry.total_seconds() <= 0:
+            log.error('FLAMENCO_JWT_TOKEN_EXPIRY is a non-positive duration: %s', self.token_expiry)
         manager_id = 24 * '1'
         token = self.generate_key_for_manager(ObjectId(manager_id), ObjectId(24 * '2'))
         return self._test_token(manager_id, token)
@@ -121,7 +123,7 @@ class JWTKeyStore:
     def generate_key_for_manager(self, manager_id: ObjectId, user_id: ObjectId) -> str:
         """Generates a key for the current user and the given Manager."""
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(tz=tz_util.utc)
         expiry = now + self.token_expiry
 
         claims = {
