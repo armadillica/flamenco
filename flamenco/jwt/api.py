@@ -6,14 +6,9 @@ from flask import Blueprint, Response, request
 import werkzeug.exceptions as wz_exceptions
 
 from pillar.api.utils import authorization, authentication, str2id, mongo, utcnow
+from pillar.auth import cors
 
 from flamenco import current_flamenco
-
-CORS_RESPONSE_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'x-requested-with',
-    'Access-Control-Allow-Credentials': 'true',
-}
 
 api_blueprint = Blueprint('flamenco.jwt.api', __name__)
 log = logging.getLogger(__name__)
@@ -36,8 +31,8 @@ def public_keys():
 
 
 @api_blueprint.route('/generate-token/<manager_id>')
-@authorization.require_login(require_cap='flamenco-use',
-                             error_headers=CORS_RESPONSE_HEADERS)
+@cors.allow(allow_credentials=True)
+@authorization.require_login(require_cap='flamenco-use')
 def generate_token(manager_id: str):
     manager_oid = str2id(manager_id)
     manager = mongo.find_one_or_404('flamenco_managers', manager_oid)
@@ -86,14 +81,7 @@ def generate_token(manager_id: str):
              user.user_id, manager_id, request.remote_addr)
     key_for_manager = jwt.generate_key_for_manager(manager_oid, user.user_id)
 
-    if request.headers.get('Origin'):
-        headers = {
-            **CORS_RESPONSE_HEADERS,
-            'Access-Control-Allow-Origin': request.headers['Origin'],
-        }
-    else:
-        headers = {}
-    return Response(key_for_manager, content_type='text/plain', headers=headers)
+    return Response(key_for_manager, content_type='text/plain')
 
 
 def setup_app(app):
