@@ -37,11 +37,12 @@ def generate_token(manager_id: str):
     manager_oid = str2id(manager_id)
     manager = mongo.find_one_or_404('flamenco_managers', manager_oid)
 
-    # There are two ways in which a user can get here. One is authenticated via
-    # Bearer token, and the other is via an already-existing browser session.
+    # There are three ways in which a user can get here. One is authenticated via
+    # Authorization header (either Bearer token or Basic token:subtoken), and the
+    # other is via an already-existing browser session.
     # In the latter case it's a redirect from a Flamenco Manager and we need to
     # check the timeout and HMAC.
-    if not request.headers.get('Authorization', '').startswith('Bearer '):
+    if not request.headers.get('Authorization'):
         hasher = current_flamenco.manager_manager.hasher(manager_oid)
         if hasher is None:
             raise wz_exceptions.InternalServerError('Flamenco Manager not linked to this server')
