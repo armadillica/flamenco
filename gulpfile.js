@@ -13,6 +13,13 @@ var rename       = require('gulp-rename');
 var sass         = require('gulp-sass');
 var sourcemaps   = require('gulp-sourcemaps');
 var uglify       = require('gulp-uglify-es').default;
+var browserify   = require('browserify');
+var babelify     = require('babelify');
+var sourceStream = require('vinyl-source-stream');
+var glob         = require('glob');
+var es           = require('event-stream');
+var path         = require('path');
+var buffer 		 = require('vinyl-buffer');
 
 var enabled = {
     chmod: argv.production,
@@ -73,11 +80,50 @@ gulp.task('scripts', function() {
         .pipe(gulpif(enabled.liveReload, livereload()));
 });
 
+function browserify_base(entry) {
+    let pathSplited = path.dirname(entry).split(path.sep);
+    let moduleName = pathSplited[pathSplited.length - 1];
+    return browserify({
+        entries: [entry],
+        standalone: 'flamenco.' + moduleName,
+    })
+    .transform(babelify, { "presets": ["@babel/preset-env"] })
+    .bundle()
+    .pipe(gulpif(enabled.failCheck, plumber()))
+    .pipe(sourceStream(path.basename(entry)))
+    .pipe(buffer())
+    .pipe(rename({
+        basename: moduleName,
+        extname: '.min.js'
+    }));
+}
+
+function browserify_common() {
+    return glob.sync('src/scripts/js/es6/common/**/init.js').map(browserify_base);
+}
+
+gulp.task('scripts_browserify', function(done) {
+    glob('src/scripts/js/es6/individual/**/init.js', function(err, files) {
+        if(err) done(err);
+
+        var tasks = files.map(function(entry) {
+            return browserify_base(entry)
+            .pipe(gulpif(enabled.maps, sourcemaps.init()))
+            .pipe(gulpif(enabled.uglify, uglify()))
+            .pipe(gulpif(enabled.maps, sourcemaps.write(".")))
+            .pipe(gulp.dest(destination.js));
+        });
+
+        es.merge(tasks).on('end', done);
+    })
+});
 
 /* Collection of scripts in src/scripts/tutti/ to merge into tutti.min.js */
 /* Since it's always loaded, it's only for functions that we want site-wide */
-gulp.task('scripts_tutti', function() {
-    gulp.src('src/scripts/tutti/**/*.js')
+gulp.task('scripts_tutti', function(done) {
+	let toUglify = ['src/scripts/tutti/**/*.js']
+
+	es.merge(gulp.src(toUglify), ...browserify_common())
         .pipe(gulpif(enabled.failCheck, plumber()))
         .pipe(gulpif(enabled.maps, sourcemaps.init()))
         .pipe(concat("tutti.min.js"))
@@ -86,6 +132,7 @@ gulp.task('scripts_tutti', function() {
         .pipe(gulpif(enabled.chmod, chmod(0o644)))
         .pipe(gulp.dest(destination.js))
         .pipe(gulpif(enabled.liveReload, livereload()));
+    done();
 });
 
 /* Simply copy these vendor scripts from node_modules. */
@@ -103,7 +150,7 @@ gulp.task('scripts_copy_vendor', function(done) {
 
 
 // While developing, run 'gulp watch'
-gulp.task('watch',function() {
+gulp.task('watch',function(done) {
     // Only listen for live reloads if ran with --livereload
     if (argv.livereload){
         livereload.listen();
@@ -113,6 +160,8 @@ gulp.task('watch',function() {
     gulp.watch('src/templates/**/*.pug',['templates']);
     gulp.watch('src/scripts/*.js',['scripts']);
     gulp.watch('src/scripts/tutti/*.js',['scripts_tutti']);
+    gulp.watch('src/scripts/js/**/*.js', ['scripts_browserify', 'scripts_tutti']);
+    done();
 });
 
 // Erases all generated files in output directories.

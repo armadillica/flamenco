@@ -7,6 +7,12 @@
 		"url": "git://git.blender.org/flamenco.git"
 	},
 	"devDependencies": {
+		"@babel/core": "^7.1.6",
+		"@babel/preset-env": "^7.1.6",
+		"acorn": "^5.7.3",
+		"babel-core": "^7.0.0-bridge.0",
+		"babelify": "^10.0.0",
+		"browserify": "^16.2.3",
 		"gulp": "^3.9.1",
 		"gulp-autoprefixer": "^6.0.0",
 		"gulp-cached": "^1.1.1",
@@ -21,7 +27,9 @@
 		"gulp-sass": "^4.0.1",
 		"gulp-sourcemaps": "^2.6.4",
 		"gulp-uglify-es": "^1.0.4",
-		"minimist": "^1.2.0"
+		"minimist": "^1.2.0",
+		"vinyl-buffer": "^1.0.1",
+    	"vinyl-source-stream": "^2.0.0"
 	},
 	"dependencies": {
 		"bootstrap": "^4.1.3",
