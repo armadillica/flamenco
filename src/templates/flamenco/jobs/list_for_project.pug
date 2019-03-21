@@ -19,49 +19,7 @@ style.
 			span.header_text Task Details
 		#col_main-overlay-content.col-scrollable
 
-	#col_main-content
-		//- // TODO: Implement stats and filtering
-		//- .col_header.item-list-header
-		//- 	span.header_text(title='In the current project') {{ stats.nr_of_jobs }} jobs | {{ stats.nr_of_tasks }} tasks
-		//- 	a.item-project(href="{{url_for('projects.view', project_url=project.url)}}") {{ project.name }}
-
-		.item-list.col-scrollable
-			.table
-				.table-head
-					.table-row
-						.table-cell.item-status
-							span.collapser(title="Collapse status column") Status
-						.table-cell.item-name
-							span.collapser(title="Collapse name column") Name
-						.table-cell.item-manager
-							span.collapser(title="Collapse manager column") Manager
-						.table-cell.item-priority
-							span.collapser(title="Collapse priority column") Priority
-
-				.table-body
-					| {% for job in jobs %}
-					.table-row(
-						id="job-{{ job._id }}",
-						class="status-{{ job.status }}{% if job._id == open_job_id %} active{% endif %}")
-						.table-cell.item-status
-							a(data-job-id="{{ job._id }}",
-								href="{{ job.url }}",
-								class="job-link")
-								| {{ job.status | undertitle }}
-						.table-cell.item-name
-							a(data-job-id="{{ job._id }}",
-								href="{{ job.url }}",
-								class="job-link")
-								span(class="job-name-{{ job._id }}") {{ job.name }}
-						.table-cell.item-manager
-							a(data-job-id="{{ job._id }}",
-								href="{{ job.url }}")
-								| {{ job.manager_name }}
-						.table-cell.item-priority
-							a(data-job-id="{{ job._id }}",
-								href="{{ job.url }}")
-								span(class="job-priority-{{ job._id }}") {{ job.priority }}
-					| {% endfor %}
+	| <flamenco-app project-id="{{ project._id }}" {%if open_job_id %}:selected-ids=["{{ open_job_id }}"] {% endif %} id="table" context="{{ page_context }}"/>
 
 .col-splitter
 
@@ -77,50 +35,12 @@ style.
 | {% endblock %}
 | {% block footer_scripts %}
 script.
-	{% if open_task_id %}
-		$(function() { item_open('{{ open_task_id }}', 'task', false); });
-	{% endif %}
 	{% if open_job_id %}
 		$(function() { item_open('{{ open_job_id }}', 'job', false); });
 	{% endif %}
-
-	var same_cells;
-
-	/* Collapse columns by clicking on the title */
-	$('.table-head .table-cell span.collapser').on('click', function(e){
-		e.stopPropagation();
-
-		/* We need to find every cell matching the same classes */
-		same_cells = '.' + $(this).parent().attr('class').split(' ').join('.');
-		$(same_cells).hide();
-		/* Add the spacer which we later click to expand  */
-		$('<div class="table-cell-spacer ' + $(this).text() + '" title="Expand ' + $(this).text() + '"></div>').insertAfter(same_cells);
-	});
-
-	$('body').on('click', '.table-cell-spacer', function(){
-		/* We need to find every cell matching the same classes */
-		same_cells = '.' + $(this).prev().attr('class').split(' ').join('.');
-		$(same_cells).show();
-		$(same_cells).next().remove();
-	});
-
-	/* Highlight the corresponding cell type in the header */
-	$('.table-body .table-cell').mouseenter(function(){
-		same_cells = '.' + $(this).attr('class').split(' ').join('.');
-		$('.table-head ' + same_cells).addClass('highlight');
-	}).mouseleave(function(){
-		same_cells = '.' + $(this).attr('class').split(' ').join('.');
-		$('.table-head ' + same_cells).removeClass('highlight');
-	});
-
-	/* Highlight the corresponding cell type in the body */
-	$('.table-head .table-cell').mouseenter(function(){
-		same_cells = '.' + $(this).attr('class').split(' ').join('.');
-		$('.table-body ' + same_cells).addClass('highlight');
-	}).mouseleave(function(){
-		same_cells = '.' + $(this).attr('class').split(' ').join('.');
-		$('.table-body ' + same_cells).removeClass('highlight');
-	});
+	{% if open_task_id %}
+		$(function() { item_open('{{ open_task_id }}', 'task', false); });
+	{% endif %}
 
 script(src="{{ url_for('static_flamenco', filename='assets/js/vendor/clipboard.min.js')}}")
 script(src="{{ url_for('static_flamenco', filename='assets/js/vendor/jquery-resizable.min.js')}}")
@@ -136,5 +56,6 @@ script.
 		var window_height = $(window).height() - headerHeight;
 		$('.col-scrollable').css({'height': window_height});
 	});
+	new Vue({el: '#table'});
 
 | {% endblock footer_scripts %}

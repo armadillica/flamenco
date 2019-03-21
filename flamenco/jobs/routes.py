@@ -76,37 +76,11 @@ def for_project(project, job_id=None, task_id=None):
             new_url = url_for(f'{target_blueprint.name}.{target_endpoint}', **request.view_args)
             return redirect(new_url, code=307)
 
-    jobs = current_flamenco.job_manager.jobs_for_project(project['_id'],
-                                                         archived=is_archive)
-
-    @functools.lru_cache()
-    def manager_name(manager_id: str) -> str:
-        from ..managers.sdk import Manager
-
-        try:
-            manager = Manager.find(manager_id, api=api)
-        except pillarsdk.ForbiddenAccess:
-            # It's possible that the user doesn't have access to this Manager.
-            return '-unknown-'
-        except pillarsdk.ResourceNotFound:
-            log.warning('Unable to find manager %r for job list of project %s',
-                        manager_id, project['_id'])
-            return '-unknown-'
-        return manager['name'] or '-unknown-'
-
-    # Find the link URL and Manager name for each job.
-    for job in jobs['_items']:
-        target_blueprint = blueprint_for_archived[job.status == 'archived']
-        job.url = url_for(f'{target_blueprint.name}.view_job',
-                          project_url=project.url, job_id=job._id)
-        job.manager_name = manager_name(job['manager'])
-
     navigation_links = project_navigation_links(project, pillar_api())
     extension_sidebar_links = current_app.extension_sidebar_links(project)
 
     return render_template('flamenco/jobs/list_for_project.html',
                            stats={'nr_of_jobs': '∞', 'nr_of_tasks': '∞'},
-                           jobs=jobs['_items'],
                            open_job_id=job_id,
                            open_task_id=task_id,
                            project=project,

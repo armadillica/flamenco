@@ -1,0 +1,19 @@
+.flamenco-app
+	height: 100%
+
+	.job-status
+		flex: 0
+		flex-basis: 7em
+
+	.job-priority
+		flex-grow: 0.2
+	
+	.job-manager
+		flex-grow: 0.5
+	
+	.pillar-table-row
+		.job-status
+			text-transform: uppercase
+			background-color: $color-text-dark-secondary // fallback, gets overriden by individual status
+			color: $color-text-light
+			@include status-color-property(background-color, '', '')

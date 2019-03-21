@@ -1,6 +1,10 @@
 /**
  * Open an item such as tasks/jobs in the corresponding div
  * Jobs load on #item-details, Tasks load on #col_main-overlay-content
+ * @param {String} item_id 
+ * @param {String} item_type job, task or manager
+ * @param {Boolean} pushState If true: push new browser state, else replace browser state
+ * @param {String} project_url
  */
 function item_open(item_id, item_type, pushState, project_url)
 {
@@ -82,17 +86,21 @@ function item_open(item_id, item_type, pushState, project_url)
         }
     });
 
-    // Determine whether we should push the new state or not.
-    if (typeof pushState == 'undefined' || !pushState) return;
-
-    // Push the correct URL onto the history.
+    // Push/replace the current state into the history.
     var push_state = {itemId: item_id, itemType: item_type};
-
-    window.history.pushState(
+    if(pushState) {
+        window.history.pushState(
             push_state,
             item_type + ': ' + item_id,
             push_url
-    );
+        );
+    } else {
+        window.history.replaceState(
+            push_state,
+            item_type + ': ' + item_id,
+            push_url
+        );
+    }
 }
 
 // Fine if project_url is undefined, but that requires ProjectUtils.projectUrl().
@@ -109,22 +117,18 @@ function manager_open(manager_id)
     item_open(manager_id, 'manager', true);
 }
 
-
-window.onpopstate = function(event)
+/**
+ * @param {PopStateEvent} event 
+ */
+function defaultFlamencoPopstate(event)
 {
     var state = event.state;
-    if (state == null) {
-        // We're going back to the first time this page was opened, which
-        // means we should show the first Job/Task/Manager.
-        ctx = ProjectUtils.context();
-        state = {
-            itemId: $('.item-list a[data-' + ctx + '-id]').first().data(ctx + '-id'),
-            itemType: ctx,
-        }
+    if (state) {
+        item_open(state.itemId, state.itemType, false);
     }
-    item_open(state.itemId, state.itemType, false);
 }
 
+window.onpopstate = defaultFlamencoPopstate;
 
 function loadActivities(url)
 {
