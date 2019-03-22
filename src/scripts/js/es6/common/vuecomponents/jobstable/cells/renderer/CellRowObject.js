@@ -5,6 +5,7 @@ const TEMPLATE =`
     <a
         @click="ignoreDefault" 
         :href="cellLink"
+        :title="cellValue"
     >
         {{ cellValue }}
     </a>
