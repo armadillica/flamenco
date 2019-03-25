@@ -29,6 +29,7 @@ pages:
     - 'user_manual/introduction.md'
     - 'user_manual/terminology.md'
     - 'user_manual/installation.md'
+    - 'user_manual/shaman.md'
     - 'user_manual/blender_render.md'
     - 'user_manual/testing.md'
   - Developer Docs:
