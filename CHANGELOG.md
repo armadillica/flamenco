@@ -1,7 +1,7 @@
 Flamenco Server Changelog
 =========================
 
-## Version 2.2 (in development)
+## Version 2.2 (released 2019-03-25)
 
 - Requires Flamenco Worker 2.3 or newer.
 - Requires Blender Cloud add-on 2.1 or newer.
@@ -41,6 +41,8 @@ Flamenco Server Changelog
   compiled and queued. Jobs that are not updated for 24h and still in `waiting-for-files` status
   are automatically and irrevocably deleted.
 - Blender Render jobs no longer create preview videos for single-frame render jobs.
+- New interface for the job list overview, based on Vue.js. It now allows filtering and
+  sorting jobs.
 
 
 ## Version 2.1 (released 2018-12-04)
