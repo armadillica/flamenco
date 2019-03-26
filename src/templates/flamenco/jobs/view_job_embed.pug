@@ -211,5 +211,5 @@ script.
 
 	new Clipboard('.job-setting[data-clipboard-text]')
 	.on('success', function(e) {
-		statusBarSet('info', 'Copied setting to clipboard, localised for your platform', 'pi-check');
+		toastr.success('Copied setting to clipboard, localised for your platform');
 	});
