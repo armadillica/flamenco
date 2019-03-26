@@ -29,7 +29,7 @@
 		"gulp-uglify-es": "^1.0.4",
 		"minimist": "^1.2.0",
 		"vinyl-buffer": "^1.0.1",
-    	"vinyl-source-stream": "^2.0.0"
+		"vinyl-source-stream": "^2.0.0"
 	},
 	"dependencies": {
 		"bootstrap": "^4.1.3",
