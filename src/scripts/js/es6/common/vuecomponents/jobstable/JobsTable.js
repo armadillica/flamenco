@@ -1,7 +1,7 @@
 let PillarTable = pillar.vuecomponents.table.PillarTable;
 import {JobsColumnFactory} from './columns/JobsColumnFactory'
 import {JobRowsSource} from './rows/JobRowsSource'
-import {RowFilter} from './filter/RowFilter'
+import {RowFilter} from './rows/filter/RowFilter'
 
 /**
  * Flamenco jobs table
