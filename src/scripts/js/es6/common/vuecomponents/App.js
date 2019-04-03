@@ -17,7 +17,7 @@ const TEMPLATE =`
 class ComponentState {
     /**
      * Serializable state of this component.
-     * 
+     *
      * @param {Object} tableState
      */
     constructor(tableState) {
@@ -89,7 +89,7 @@ Vue.component('flamenco-app', {
         },
         /**
          * Save table state to localStorage per project and context
-         * @param {Object} newState 
+         * @param {Object} newState
          */
         onTableStateChanged(newState) {
             let appState = new ComponentState(newState);
@@ -97,13 +97,13 @@ Vue.component('flamenco-app', {
             try {
                 localStorage.setItem(this.stateStorageKey, stateJsonStr);
             } catch (error) {
-                // Log and ignore. 
+                // Log and ignore.
                 console.warn('Unable to save state:', error);
             }
         },
         /**
          * Called when user clicks back/forward in browser.
-         * @param {PopStateEvent} event 
+         * @param {PopStateEvent} event
          */
         onPopState(event) {
             let state = event.state;
