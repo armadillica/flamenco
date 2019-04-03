@@ -37,7 +37,7 @@ Vue.component('flamenco-app', {
         projectId: String,
         selectedIds: {
             type: Array,
-            default: []
+            default: () => {return []}
         },
         context: { // job or archive
             type: String,
