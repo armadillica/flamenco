@@ -6,7 +6,7 @@ const TEMPLATE =`
     <component
         :is="tableComponentName"
         :projectId="projectId"
-        :selectedIds="selectedIds"
+        :selectedIds="currentSelectedIds"
         :componentState="initialTableState"
         @selectItemsChanged="onSelectItemsChanged"
         @componentStateChanged="onTableStateChanged"
@@ -44,6 +44,11 @@ Vue.component('flamenco-app', {
             default: 'job'
         }
     },
+    data() {
+        return {
+            currentSelectedIds: this.selectedIds,
+        };
+    },
     created() {
         window.onpopstate = this.onPopState;
     },
@@ -78,13 +83,13 @@ Vue.component('flamenco-app', {
         onSelectItemsChanged(selectedJobs) {
             let job = selectedJobs[0];
             if (job) {
-                let userClickedInTable = this.selectedIds[0] !== job._id;
+                let userClickedInTable = this.currentSelectedIds[0] !== job._id;
                 if (userClickedInTable) {
                     item_open(job._id, 'job', true); // defined in 10_tasks.js
                 } else {
                     // item is already open
                 }
-                this.selectedIds = [job._id];
+                this.currentSelectedIds = [job._id];
             }
         },
         /**
@@ -108,7 +113,7 @@ Vue.component('flamenco-app', {
         onPopState(event) {
             let state = event.state;
             if (state && state.itemType === 'job') {
-                this.selectedIds = [state.itemId];
+                this.currentSelectedIds = [state.itemId];
             }
             defaultFlamencoPopstate(event);
         }
