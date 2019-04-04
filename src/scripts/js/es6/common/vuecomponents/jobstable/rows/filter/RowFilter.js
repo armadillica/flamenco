@@ -3,7 +3,7 @@ let StatusFilter = pillar.vuecomponents.table.rows.filter.StatusFilter;
 
 const TEMPLATE =`
 <div class="pillar-table-row-filter">
-    <name-filter 
+    <name-filter
         :rowObjects="rowObjects"
         :componentState="(componentState || {}).nameFilter"
         @visible-row-objects-changed="onNameFiltered"
