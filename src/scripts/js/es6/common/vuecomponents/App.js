@@ -8,8 +8,8 @@ const TEMPLATE =`
         :projectId="projectId"
         :selectedIds="currentSelectedIds"
         :componentState="initialTableState"
-        @selectItemsChanged="onSelectItemsChanged"
-        @componentStateChanged="onTableStateChanged"
+        @selected-items-changed="onSelectItemsChanged"
+        @component-state-changed="onTableStateChanged"
     />
 </div>
 `;

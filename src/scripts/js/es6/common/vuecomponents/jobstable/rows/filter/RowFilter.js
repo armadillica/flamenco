@@ -6,15 +6,15 @@ const TEMPLATE =`
     <name-filter 
         :rowObjects="rowObjects"
         :componentState="(componentState || {}).nameFilter"
-        @visibleRowObjectsChanged="onNameFiltered"
-        @componentStateChanged="onNameFilterStateChanged"
+        @visible-row-objects-changed="onNameFiltered"
+        @component-state-changed="onNameFilterStateChanged"
     />
     <status-filter
         :availableStatuses="availableStatuses"
         :rowObjects="nameFilteredRowObjects"
         :componentState="(componentState || {}).statusFilter"
-        @visibleRowObjectsChanged="$emit('visibleRowObjectsChanged', ...arguments)"
-        @componentStateChanged="onStatusFilterStateChanged"
+        @visible-row-objects-changed="$emit('visible-row-objects-changed', ...arguments)"
+        @component-state-changed="onStatusFilterStateChanged"
     />
 </div>
 `;
@@ -72,7 +72,7 @@ let RowFilter = {
     },
     watch: {
         currentComponentState(newValue) {
-            this.$emit('componentStateChanged', newValue);
+            this.$emit('component-state-changed', newValue);
         }
     },
     components: {
