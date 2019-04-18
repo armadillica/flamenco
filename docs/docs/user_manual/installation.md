@@ -61,45 +61,93 @@ To run Flamenco Manager for the first time, follow these steps:
 ### Manager configuration
 
 Flamenco Manager can be configured via the web interface. Update the variables and path replacement
-variables for your render farm. The `blender` and `ffmpeg` variables should point to respectively
-the Blender and FFmpeg executables where they can be found *on the workers*. If the path contains a
-space, it should be enclosed in double quotes. Example:
+variables for your render farm. If a path contains a space, it should be enclosed in double quotes.
+Paths should **not** end in a slash:
+
+- **YES**: `R:` or `/Volumes/render`
+- **NO**: `R:/` or `/Volumes/render/`
+
+The following variables should be defined.:
+
+- `blender`: should point to the Blender executable.
+- `ffmpeg`: should point to the FFmpeg executable.
+- `job_storage`: a two-way variable that should point to the Shaman checkout directory. In other
+   words, it should point to the same directory as the `shaman.checkout` setting.
+- `shaman`: a one-way variable that should point to the same directory as the `shaman.checkout`
+  setting. Since the [Shaman](shaman) is a recent addition, we decided to keep it fully optional and
+  not as integrated as it could be, hence the two variables that basically do the same thing.
+- `render`: a two-way variable that should point to where rendered output should be saved.
+
+!!! note
+    We recommend using forward slashes everywhere, also on Windows.
+
+
+#### Example variables
 
     variables:
         blender:
-            darwin: /Applications/blender-2.80/blender.app/Contents/MacOS/blender
-            linux: /home/sybren/bin/blender
-            windows: "C:/Program Files/Blender Foundation/Blender-2.80/blender.exe" --factory-startup
+            direction: oneway
+            values:
+            - audience: all
+              platform: darwin
+              value: /Applications/blender-2.80/blender.app/Contents/MacOS/blender
+            - audience: all
+              platform: linux
+              value: /home/sybren/bin/blender
+            - audience: all
+              platform: windows
+              value: "C:/Program Files/Blender Foundation/Blender-2.80/blender.exe" --factory-startup
         ffmpeg:
-            windows: "C:/Program Files/FFmpeg/ffmpeg.exe"
-            linux: /usr/bin/ffmpeg
-            darwin: /usr/bin/ffmpeg
+            direction: oneway
+            values:
+            - audience: all
+              platform: windows
+              value: "C:/Program Files/FFmpeg/ffmpeg.exe"
+            - audience: all
+              platform: linux
+              value: /usr/bin/ffmpeg
+            - audience: all
+              platform: darwin
+              value: /usr/bin/ffmpeg
+        shaman:
+            direction: oneway
+            values:
+            - audience: all
+              platform: linux
+              value: /shared/flamenco-jobs
+        job_storage:
+            direction: twoway
+            values:
+            - audience: all
+              platform: linux
+              value: /shared/flamenco-jobs
+            - audience: all
+              platform: windows
+              value: 'S:/flamenco-jobs'
+            - audience: all
+              platform: darwin
+              value: /Volume/shared/flamenco-jobs
+        render:
+            direction: twoway
+            values:
+            - audience: all
+              platform: darwin
+              value: /Volume/render
+            - audience: all
+              platform: linux
+              value: /render
+            - audience: all
+              platform: windows
+              value: 'R:'
+
+Two-way variables work as follows. When creating a render job for
+`/shared/flamenco-jobs/projectX/thefile.blend`, Flamenco will internally change that to
+`{job_storage}/projectX/thefile.blend`. When sending that job to a worker running on Windows, it'll
+change it to `S:/flamenco-jobs/projectX/thefile.blend`. In other words, it goes from value to
+variable, and from variable to value, hence the name "two-way".
 
 !!! note
     We recommend using forward slashes everywhere, also on Windows.
-
-
-The **path replacement variables** allow you to run different platforms, e.g. use a Windows desktop
-to create render jobs, and render them on Linux workers, or vice versa. For example, you can declare
-that "`/shared/flamencofiles` on Linux is `E:/flamencofiles` on Windows and
-`/Volumes/Shared/flamencofiles` on MacOS" like this:
-
-    path_replacement:
-        flamencofiles:
-            linux: /shared/flamencofiles
-            windows: E:/flamencofiles
-            darwin: /Volumes/Shared/flamencofiles
-
-When creating a render job for `/shared/flamencofiles/projectX/thefile.blend`, Flamenco will
-internally change that to `{flamencofiles}/projectX/thefile.blend`. When sending that job to a
-worker running on Windows, it'll change it to `E:/flamencofiles/projectX/thefile.blend`.
-
-!!! note
-    We recommend using forward slashes everywhere, also on Windows.
-
-Note that `variables` and `path_replacement` share a namespace -- variable names have to be unique,
-and cannot be used in both `variables` and `path_replacement` sections. If this happens, Flamenco
-Manager will log the offending name, and refuse to start.
 
 
 ### Linking the Manager to a Server
