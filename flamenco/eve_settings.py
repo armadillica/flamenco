@@ -101,7 +101,12 @@ managers_schema = {
         }
     },
 
-    # Received from the manager itself at startup.
+    # Received from the manager itself at startup in {'_meta': {'version': N}}.
+    'settings_version': {
+        'type': 'integer',
+        'default': 1,
+    },
+    # 'variables' is used both versions 1 and 2, 'path_replacement' only version 1.
     'variables': {
         'type': 'dict',
         'allow_unknown': True,

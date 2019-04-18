@@ -1,6 +1,11 @@
 Flamenco Server Changelog
 =========================
 
+## Version 2.3 (in development)
+
+- Support for Flamenco Manager settings version 2; this is introduced in Flamenco Manager 2.5.
+
+
 ## Version 2.2 (released 2019-03-25)
 
 - Requires Flamenco Worker 2.3 or newer.

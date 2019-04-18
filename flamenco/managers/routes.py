@@ -95,7 +95,7 @@ def view_embed(manager_id: str):
     csrf = flask_wtf.csrf.generate_csrf()
 
     return render_template('flamenco/managers/view_manager_embed.html',
-                           manager=manager,
+                           manager=manager.to_dict(),
                            can_edit=can_edit,
                            available_projects=available_projects,
                            linked_projects=linked_projects,

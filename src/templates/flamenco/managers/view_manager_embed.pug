@@ -1,3 +1,4 @@
+| {% from "flamenco/managers/_variables.html" import variables_view %}
 .flamenco-box.manager
 	form#item_form(onsubmit="return editManager()")
 		| {% if can_edit %}
@@ -56,33 +57,7 @@
 					| never sent by Manager
 					| {% endif %}
 
-	| {% if manager.variables %}
-	h4 Variables
-	| {% for var_key, var_values in manager.variables.to_dict().items()  %}
-	.table.item-properties
-		.table-body(title='Unable to edit, set by Manager')
-			| {% for v in var_values %}
-			.table-row.properties-variables
-				.table-cell.variable-name {% if loop.first %}{{ var_key }}{% endif %}
-				.table-cell.variable-key {{ v }}
-				.table-cell.variable-value {{ var_values[v] }}
-			| {% endfor %}
-	| {% endfor %}
-	| {% endif %}
-
-	| {% if manager.path_replacement %}
-	h4 Path Replacement Variables
-	| {% for pathrep_key, pathrep_values in manager.path_replacement.to_dict().items()  %}
-	.table.item-properties
-		.table-body(title='Unable to edit, set by Manager')
-			| {% for v in pathrep_values %}
-			.table-row.properties-path-replacement
-				.table-cell.variable-name {% if loop.first %}{{ pathrep_key }}{% endif %}
-				.table-cell.variable-key {{ v }}
-				.table-cell.variable-value {{ pathrep_values[v] }}
-			| {% endfor %}
-	| {% endfor %}
-	| {% endif %}
+	| {{ variables_view(manager) }}
 
 .flamenco-box.manager
 	h4 Projects linked to this Manager
@@ -219,7 +194,7 @@
 			| Debug Info
 		#debug-content-manager.collapse
 			pre.
-				{{ manager.to_dict() | pprint }}
+				{{ manager | pprint }}
 	| {% endif %}
 
 | {% block footer_scripts %}

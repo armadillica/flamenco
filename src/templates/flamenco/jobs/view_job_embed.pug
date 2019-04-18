@@ -157,16 +157,33 @@ script.
 		let osName = bowser.getParser(window.navigator.userAgent).getOSName();
 		if (osName != 'Windows' && osName != 'macOS') osName = 'Linux'
 
-		let mngrVariables = {{ manager.variables.to_dict() | tojson }};
-		let mngrPathReplacement = {{ manager.path_replacement.to_dict() | tojson }};
+		let platformVars = {};
+		let osname = osName.toLowerCase();
+	{% if manager.settings_version < 2 %}
+		let mngrVariables = {{ manager.variables | tojson }};
+		let mngrPathReplacement = {{ manager.path_replacement | tojson }};
 
 		// Convert the per-OS variables into a flat OS-specific structure.
-		var platformVars = {};
-		let osname = osName.toLowerCase();
 		for (varname in mngrVariables)
 			platformVars[varname] = mngrVariables[varname][osname];
 		for (varname in mngrPathReplacement)
 			platformVars[varname] = mngrPathReplacement[varname][osname];
+	{% elif manager.settings_version == 2 %}
+		let mngrVariables = {{ manager.variables | tojson }};
+		//- A variable's 'audience' is either "all", "workers", or "users",
+		//-  and not all are interesting to the user.
+		let userAudience = {all: true, user: true};
+
+		// Convert the per-OS variables into a flat OS-specific structure.
+		for (varName in mngrVariables) {
+			for (valueDef of mngrVariables[varName].values) {
+				if (valueDef.platform.toLowerCase() != osname) continue;
+				if (userAudience[valueDef.audience.toLowerCase()] !== true) continue;
+
+				platformVars[varName] = valueDef.value;
+			}
+		}
+	{% endif %}
 
 		// Some settings need some special treatment.
 		// Mapping from setting key to function that transforms the setting value.

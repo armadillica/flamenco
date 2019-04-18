@@ -157,7 +157,7 @@ def view_job(project, flamenco_props, job_id):
         'flamenco/jobs/view_job_embed.html',
         job=job,
         user_name=user_name,
-        manager=manager,
+        manager=manager.to_dict(),
         project=project,
         flamenco_props=flamenco_props.to_dict(),
         flamenco_context=request.args.get('context'),

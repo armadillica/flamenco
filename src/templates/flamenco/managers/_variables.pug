@@ -1,0 +1,59 @@
+| {% macro variables_view(manager) -%}
+| {% if manager.settings_version < 2 %}
+//- ---------- SETTINGS version 1 --------------
+| {% if manager.variables %}
+h4 Variables
+| {% for var_key, var_values in manager.variables.items()  %}
+.table.item-properties
+    .table-body(title='Unable to edit, set by Manager')
+        | {% for v in var_values %}
+        .table-row.properties-variables
+            .table-cell.variable-name {% if loop.first %}{{ var_key }}{% endif %}
+            .table-cell.variable-key {{ v }}
+            .table-cell.variable-value {{ var_values[v] }}
+        | {% endfor %}
+| {% endfor %}
+| {% endif %}
+
+| {% if manager.path_replacement %}
+h4 Path Replacement Variables
+| {% for pathrep_key, pathrep_values in manager.path_replacement.items()  %}
+.table.item-properties
+    .table-body(title='Unable to edit, set by Manager')
+        | {% for v in pathrep_values %}
+        .table-row.properties-path-replacement
+            .table-cell.variable-name {% if loop.first %}{{ pathrep_key }}{% endif %}
+            .table-cell.variable-key {{ v }}
+            .table-cell.variable-value {{ pathrep_values[v] }}
+        | {% endfor %}
+| {% endfor %}
+| {% endif %}
+
+//- ---------- SETTINGS version 2 --------------
+| {% elif manager.settings_version == 2 %}
+| {% if manager.variables %}
+h4 Variables
+
+.table.item-properties
+    .table-body(title='Unable to edit, set by Manager')
+        | {% for var_key, var_definition in manager.variables.items()  %}
+        | {% set evenodd = loop.cycle('odd', 'even') %}
+        | {% for v in var_definition['values'] %}
+        .table-row.properties-variables(class="{{ evenodd }}")
+            .table-cell.variable-name {% if loop.first %}{{ var_key }}{% endif %}
+            .table-cell.variable-direction(title="{% if var_definition.direction == 'twoway' %}Two-way, values are replaced by variables and vice versa{%else%}One-way, variables are replaced with values{%endif%}")
+                | {% if loop.first %}{% if var_definition.direction == "twoway" %}⇄{% else %}→{% endif %}{% endif %}
+            .table-cell.variable-value {{ v.value }}
+            .table-cell.variable-platform {{ v.platform }} {{ v.platforms|join(' ') }}
+            .table-cell.variable-audience {{ v.audience }}
+        | {% endfor %}
+        | {% endfor %}
+
+
+| {% endif %}
+
+| {% else %}
+h4 Unsupported version
+p This manager has settings version {{ manager.settings_version }}, which we don't support.
+| {% endif %}
+| {%- endmacro %}

@@ -92,28 +92,35 @@ def handle_notification(manager_id: str, notification: dict):
     if not notification:
         raise wz_exceptions.BadRequest('no JSON payload received')
 
+    settings_version = notification.get('_meta', {}).get('version', 1)
+    updates_unset = {}
     try:
-        updates = {
+        updates_set = {
             '_updated': datetime.datetime.utcnow(),
             '_etag': uuid.uuid4().hex,
             'url': notification['manager_url'],
+            'settings_version': settings_version,
             'variables': notification['variables'],
-            'path_replacement': notification['path_replacement'],
             'stats.nr_of_workers': notification['nr_of_workers'],
         }
+        if settings_version <= 1:
+            updates_set['path_replacement'] = notification['path_replacement']
+        else:
+            updates_unset['path_replacement'] = True
     except KeyError as ex:
         raise wz_exceptions.BadRequest(f'Missing key {ex}')
 
     try:
-        updates['worker_task_types'] = notification['worker_task_types']
+        updates_set['worker_task_types'] = notification['worker_task_types']
     except KeyError:
         pass
 
     mngr_coll = current_flamenco.db('managers')
-    update_res = mngr_coll.update_one(
-        {'_id': manager_id},
-        {'$set': updates}
-    )
+    updates = {'$set': updates_set}
+    if updates_unset:
+        updates['$unset'] = updates_unset
+
+    update_res = mngr_coll.update_one({'_id': manager_id}, updates)
     if update_res.matched_count != 1:
         log.warning('Updating manager %s matched %i documents.',
                     manager_id, update_res.matched_count)
