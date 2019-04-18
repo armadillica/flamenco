@@ -43,9 +43,14 @@ def index(manager_id: str = None):
     can_create_manager = may_use_flamenco and (
             not manager_limit_reached or current_user.has_cap('admin'))
 
-    project = Project(session.get('flamenco_last_project'))
-    navigation_links = project_navigation_links(project, pillar_api())
-    extension_sidebar_links = current_app.extension_sidebar_links(project)
+    if session.get('flamenco_last_project'):
+        project = Project(session.get('flamenco_last_project'))
+        navigation_links = project_navigation_links(project, pillar_api())
+        extension_sidebar_links = current_app.extension_sidebar_links(project)
+    else:
+        project = None
+        navigation_links = []
+        extension_sidebar_links = []
 
     return render_template('flamenco/managers/index.html',
                            manager_limit_reached=manager_limit_reached,
