@@ -84,7 +84,11 @@ def rewrite_manager_settings(doc: dict):
     """
 
     # Make sure the version is always explicit.
-    doc.setdefault('settings_version', 1)
+    settings_version = doc.setdefault('settings_version', 1)
+
+    if settings_version < 2:
+        # The settings are old enough to be handled by an older Blender Cloud add-on.
+        return
 
     addon_version = blender_cloud_addon.requested_by_version()
     if not addon_version or addon_version >= (1, 12, 2):
