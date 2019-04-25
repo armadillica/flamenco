@@ -17,17 +17,11 @@ manager_flamenco = Manager(current_app, usage="Perform Flamenco operations")
 
 
 @manager_flamenco.command
-@manager_flamenco.option('-r', '--replace', dest='replace', action='store_true',
-                         default=False)
-def setup_for_flamenco(project_url, replace=False):
-    """Adds Flamenco node types to the project.
-
-    Use --replace to replace pre-existing Flamenco node types
-    (by default already existing Flamenco node types are skipped).
-    """
+def setup_for_flamenco(project_url):
+    """Adds Flamenco node types to the project."""
 
     authentication.force_cli_user()
-    flamenco.setup.setup_for_flamenco(project_url, replace=replace)
+    flamenco.setup.setup_for_flamenco(project_url)
 
 
 @manager_flamenco.command

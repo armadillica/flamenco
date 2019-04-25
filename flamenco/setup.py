@@ -1,8 +1,4 @@
-"""Setting up projects for Flamenco.
-
-This is intended to be used by the CLI and unittests only, not tested
-for live/production situations.
-"""
+"""Setting up projects for Flamenco."""
 
 import logging
 
@@ -14,17 +10,12 @@ from pillar.api.projects.utils import get_project, put_project
 log = logging.getLogger(__name__)
 
 
-def setup_for_flamenco(project_url, replace=False):
-    """Adds Flamenco node types to the project.
+def setup_for_flamenco(project_url):
+    """Add extension properties for Flamenco.
 
-    Use --replace to replace pre-existing Flamenco node types
-    (by default already existing Flamenco node types are skipped).
-
-    Returns the updated project.
+    :return: The updated project.
     """
 
-    # Copy permissions from the project, then give everyone with PUT
-    # access also DELETE access.
     project = get_project(project_url)
 
     # Set default extension properties. Be careful not to overwrite any

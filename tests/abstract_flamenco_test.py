@@ -74,8 +74,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
         with self.app.test_request_context():
             force_cli_user()
-            flamenco_project = setup_for_flamenco(
-                project['url'], replace=True)
+            flamenco_project = setup_for_flamenco(project['url'])
 
         return proj_id, flamenco_project
 
