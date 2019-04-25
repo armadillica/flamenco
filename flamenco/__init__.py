@@ -314,6 +314,7 @@ class FlamencoExtension(PillarExtension):
 
     def update_status(self, collection_name, document_id, new_status, *,
                       extra_updates: typing.Optional[dict] = None,
+                      extra_unset: typing.Optional[typing.Set[str]] = None,
                       now: datetime.datetime = None):
         """Updates a document's status, avoiding Eve.
 
@@ -321,21 +322,26 @@ class FlamencoExtension(PillarExtension):
         example, Eve doesn't know certain PATCH operations are allowed by
         Flamenco managers.
 
-        :param extra_updates: dictionary of extra updates for the document.
+        :param extra_updates: dictionary of extra updates to set on the document(s).
+        :param extra_unset: set of fields to unset.
         :param now: the _updated field is set to this timestamp; use this to set multiple
             objects to the same _updated field.
         :rtype: pymongo.results.UpdateResult
         """
 
         return self.update_status_q(collection_name, {'_id': document_id}, new_status,
-                                    extra_updates=extra_updates, now=now)
+                                    extra_updates=extra_updates,
+                                    extra_unset=extra_unset,
+                                    now=now)
 
     def update_status_q(self, collection_name, query, new_status, *,
                         extra_updates: typing.Optional[dict] = None,
+                        extra_unset: typing.Optional[typing.Set[str]] = None,
                         now: datetime.datetime = None):
         """Updates the status for the queried objects.
 
-        :param extra_updates: dictionary of extra updates for the document(s).
+        :param extra_updates: dictionary of extra updates to set on the document(s).
+        :param extra_unset: set of fields to unset.
         :param now: the _updated field is set to this timestamp; use this to set multiple
             objects to the same _updated field.
         :returns: the result of the collection.update_many() call
@@ -361,15 +367,16 @@ class FlamencoExtension(PillarExtension):
             now = datetime.datetime.now(tz=tz_util.utc)
 
         collection = current_flamenco.db(collection_name)
-        result = collection.update_many(
-            query,
-            {'$set': {
-                **(extra_updates or {}),
-                'status': new_status,
-                '_updated': now,
-                '_etag': etag}}
-        )
+        update = {'$set': {
+            **(extra_updates or {}),
+            'status': new_status,
+            '_updated': now,
+            '_etag': etag,
+        }}
+        if extra_unset:
+            update['$unset'] = {field_name: True for field_name in extra_unset}
 
+        result = collection.update_many(query, update)
         self._log.debug('Updated status of %i %s %s to %s',
                         result.modified_count, singular_name, query, new_status)
 

@@ -362,7 +362,8 @@ class JobManager(object):
 
         # Update the tasks.
         query['job'] = job_id
-        current_flamenco.update_status_q('tasks', query, 'queued')
+        current_flamenco.update_status_q('tasks', query, 'queued',
+                                         extra_unset={'failed_by_workers'})
         return 'queued'
 
     def _do_check_completion(self, job_id, new_status) -> str:

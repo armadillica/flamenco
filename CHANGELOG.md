@@ -4,6 +4,9 @@ Flamenco Server Changelog
 ## Version 2.3 (in development)
 
 - Support for Flamenco Manager settings version 2; this is introduced in Flamenco Manager 2.5.
+- Re-queueing a task erases the `failed_by_workers` list, so that workers that previously failed
+  the task can try again. This is essential when the task was failing due to external conditions,m
+  for example failure due to a crash that was fixed by upgrading Blender.
 
 
 ## Version 2.2 (released 2019-03-25)

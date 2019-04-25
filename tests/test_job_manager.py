@@ -199,6 +199,17 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(8, 'soft-failed')  # was: soft-failed
 
     def test_status_from_canceled_to_requeued(self):
+        # Add a list of failed workers to the failed task.
+        with self.app.app_context():
+            tasks_coll = self.app.db('flamenco_tasks')
+            tasks_coll.update_one({'_id': self.task_ids[5]},
+                                  {'$set': {
+                                      'failed_by_workers': [
+                                          {'id': 'je moeder',
+                                           'identifier': 'op je hoofd'},
+                                      ],
+                                  }})
+
         # This should re-queue all non-completed tasks.
         self.force_job_status('canceled')
         self.set_job_status('requeued')
@@ -217,6 +228,10 @@ class JobStatusChangeTest(AbstractFlamencoTest):
         self.assert_task_status(8, 'queued')  # was: soft-failed
 
         self.assert_job_status('queued')
+
+        # Check that the previously-failed task had its failed_by_workers list cleared.
+        task5 = tasks_coll.find_one({'_id': self.task_ids[5]})
+        self.assertNotIn('failed_by_workers', task5)
 
     def test_status_from_canceled_job_but_completed_tasks_to_requeued(self):
         # Force the job to be cancelled with all tasks at 'completed'.

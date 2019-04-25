@@ -2,6 +2,7 @@
 
 from bson import ObjectId
 
+from pillar.api.utils import remove_private_keys
 from pillar.tests import common_test_data as ctd
 from abstract_flamenco_test import AbstractFlamencoTest
 
@@ -16,7 +17,8 @@ class TaskPatchingTest(AbstractFlamencoTest):
         self.mngr_id = self.mngr_doc['_id']
         self.mngr_token = token['token']
 
-        uid = self.create_user(user_id=24 * 'f', roles={'flamenco-admin'})
+        uid = self.create_user(user_id=24 * 'f', roles={'flamenco-admin'},
+                               groups=[self.mngr_doc['owner'], ctd.EXAMPLE_ADMIN_GROUP_ID])
         self.create_valid_auth_token(uid, 'fladmin-token')
 
         with self.app.test_request_context():
@@ -115,6 +117,47 @@ class TaskPatchingTest(AbstractFlamencoTest):
             expected_status=204,
         )
         self.assert_job_status('queued')
+
+    def test_requeue_clears_failed_by(self):
+        """The 'failed by workers' list should be emptied when a task is re-queued."""
+
+        self.assert_job_status('queued')
+
+        # The test job consists of 4 tasks; get their IDs through the scheduler.
+        # This should set the job status to active.
+        tasks = self.get('/api/flamenco/managers/%s/depsgraph' % self.mngr_id,
+                         auth_token=self.mngr_token).json['depsgraph']
+        self.assertEqual(4, len(tasks))
+
+        # Mark a task as failed by a few workers.
+        task = {
+            **tasks[0],
+            "failed_by_workers": [
+                {"id": "5cc05ee49fbac13c12dee430",
+                 "identifier": "40.68.245.202 (82f813d38f594bcc86913bfb15db1f07000001)"},
+                {"id": "5cc06df19fbac16ca117c40d",
+                 "identifier": "40.68.245.202 (82f813d38f594bcc86913bfb15db1f07000003)"},
+            ]
+        }
+        task_url = f'/api/flamenco/tasks/{task["_id"]}'
+        self.put(
+            task_url,
+            etag=task['_etag'],
+            json=remove_private_keys(task),
+            auth_token='fladmin-token',
+            expected_status=200,
+        )
+
+        # Re-queueing the task should clear the `failed_by_workers` list.
+        self.patch(
+            task_url,
+            json={'op': 'set-task-status', 'status': 'queued'},
+            auth_token='fladmin-token',
+            expected_status=204,
+        )
+
+        requeued_task = self.get(task_url, auth_token='fladmin-token')
+        self.assertNotIn('failed_by_workers', requeued_task.json)
 
     def test_requeue_task_of_completed_job(self):
         """Re-queueing a single task of a completed job should keep the other tasks completed."""

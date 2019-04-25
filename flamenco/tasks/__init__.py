@@ -135,6 +135,28 @@ class TaskManager(object):
 
         return tasks
 
+    def api_set_task_status(self, task: dict, new_status: str):
+        """Update the task with the new status + other status-dependent changes.
+
+        Also updates the job status to reflect the new task status.
+        """
+
+        extra_unset = set()  # type: typing.Set[str]
+        if new_status == 'queued' and task['status'] != 'queued':
+            # The task was requeued, so clear out the 'failed_by_workers' list.
+            # There is a reason this task was requeued, which could include a fix
+            # for the reason those workers failed.
+            self._log.debug('Task %s was requeued, clearing out failed_by_workers', task['_id'])
+            extra_unset.add('failed_by_workers')
+
+        from flamenco import current_flamenco
+        current_flamenco.update_status('tasks', task['_id'], new_status,
+                                       extra_unset=extra_unset)
+
+        # Also inspect other tasks of the same job, and possibly update the job status as well.
+        current_flamenco.job_manager.update_job_after_task_status_change(
+            task['job'], task['_id'], new_status)
+
     def web_set_task_status(self, task_id, new_status):
         """Web-level call to updates the task status."""
         from .sdk import Task
