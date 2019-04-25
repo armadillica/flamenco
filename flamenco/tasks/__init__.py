@@ -135,10 +135,15 @@ class TaskManager(object):
 
         return tasks
 
-    def api_set_task_status(self, task: dict, new_status: str):
+    def api_set_task_status(self, task: dict, new_status: str, *, now: datetime.datetime = None):
         """Update the task with the new status + other status-dependent changes.
 
         Also updates the job status to reflect the new task status.
+
+        :param task: The task itself.
+        :param new_status: The status to set on the task.
+        :param now: If given, it is used to set _updated on the task. This allows
+            settings _updated on several tasks to the same timestamp.
         """
 
         extra_unset = set()  # type: typing.Set[str]
@@ -151,7 +156,8 @@ class TaskManager(object):
 
         from flamenco import current_flamenco
         current_flamenco.update_status('tasks', task['_id'], new_status,
-                                       extra_unset=extra_unset)
+                                       extra_unset=extra_unset,
+                                       now=now)
 
         # Also inspect other tasks of the same job, and possibly update the job status as well.
         current_flamenco.job_manager.update_job_after_task_status_change(
@@ -173,12 +179,9 @@ class TaskManager(object):
         self._log.info('Flipping all tasks of job %s from status %r to %r',
                        job_id, from_status, to_status)
 
-        from flamenco import current_flamenco
-
-        current_flamenco.update_status_q('tasks',
-                                         {'job': job_id, 'status': from_status},
-                                         to_status,
-                                         now=now)
+        tasks_coll = self.collection()
+        for task in tasks_coll.find({'job': job_id, 'status': from_status}):
+            self.api_set_task_status(task, to_status, now=now)
 
     def api_set_activity(self, task_query: dict, new_activity: str):
         """Updates the activity for all tasks that match the query."""
