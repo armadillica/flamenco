@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "flamenco"
+version = "2.3dev0"
+description = ""
+authors = [
+    "Francesco Siddi <francesco@blender.org>",
+    "Pablo Vazquez <pablo@blender.studio>",
+    "Sybren Stüvel <sybren@blender.studio>",
+]
+include = ["CHANGELOG.md", "README.md", "LICENSE.txt"]
+
+[tool.poetry.dependencies]
+python = "~3.6"
+pillar = {path = "../pillar"}
+pyjwt = "1.7.1"
+
+[tool.poetry.dev-dependencies]
+
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

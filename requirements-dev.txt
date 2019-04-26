@@ -1,5 +1,0 @@
-# Development requirements
--r requirements.txt
--r ../pillar/requirements-dev.txt
-
--e ../flamenco  # also works from parent project, like blender-cloud

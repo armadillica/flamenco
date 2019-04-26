@@ -1,5 +1,0 @@
-# Primary requirements:
--r ../pillar-python-sdk/requirements.txt
--r ../pillar/requirements.txt
-
-pyjwt==1.7.1
