@@ -15,7 +15,7 @@ pillar = {path = "../pillar"}
 pyjwt = "1.7.1"
 
 [tool.poetry.dev-dependencies]
-
+pillar-devdeps = {path = "../pillar/devdeps"}
 
 [build-system]
 requires = ["poetry>=0.12"]

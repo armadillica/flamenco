@@ -1,5 +1,4 @@
 import datetime
-import mock
 
 import bson
 from bson import tz_util

@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 
 from pillar.tests import common_test_data as ctd
 from abstract_flamenco_test import AbstractFlamencoTest
