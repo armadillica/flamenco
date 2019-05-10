@@ -7,6 +7,7 @@ Flamenco Server Changelog
 - Re-queueing a task erases the `failed_by_workers` list, so that workers that previously failed
   the task can try again. This is essential when the task was failing due to external conditions,m
   for example failure due to a crash that was fixed by upgrading Blender.
+- Switched to [Poetry](https://poetry.eustace.io/) for dependency management.
 
 
 ## Version 2.2 (released 2019-03-25)
