@@ -5,10 +5,10 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-sed "s/version='[^']*'/version='$1'/" -i setup.py
+poetry version "$1"
 
 git diff
 echo
 echo "Don't forget to commit and tag:"
-echo git commit -m \'Bumped version to $1\' setup.py
+echo git commit -m \'Bumped version to $1\' pypackage.toml
 echo git tag -a v$1 -m \'Tagged version $1\'
