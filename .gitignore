@@ -18,3 +18,4 @@ __pycache__
 /flamenco/static/assets/css/
 /flamenco/static/assets/js/generated/
 
+/poetry.lock
