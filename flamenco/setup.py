@@ -36,13 +36,12 @@ def create_manager(owner_email, name, description):
     :returns: tuple (mngr_doc, account, token)
     """
 
-    from pymongo.cursor import Cursor
-
     # Find the owner, to add it to the owner group afterward.
-    possible_owners: Cursor = current_app.db('users').find(
+    possible_owners = list(current_app.db('users').find(
         {'email': owner_email},
-        {'_id': 1, 'full_name': 1})
-    owner_count = possible_owners.count()
+        {'_id': 1, 'full_name': 1}))
+
+    owner_count = len(possible_owners)
     if owner_count == 0:
         raise ValueError(f'No user found with email address {owner_email}; '
                          'cannot assign ownership of Manager')

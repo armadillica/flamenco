@@ -187,20 +187,20 @@ def setup_for_flamenco(project: pillarsdk.Project):
 
     # Find the Managers available to this user, so we can auto-assign if there is exactly one.
     man_man = current_flamenco.manager_manager
-    managers = man_man.owned_managers([bson.ObjectId(gid) for gid in current_user.groups])
-    manager_count = managers.count()
+    managers, managers_count = man_man.owned_managers(
+        [bson.ObjectId(gid) for gid in current_user.groups])
 
     project_oid = str2id(project_id)
     user_id = current_user_id()
 
-    if manager_count == 0:
+    if managers_count == 0:
         _, mngr_doc, _ = man_man.create_new_manager('My Manager', '', user_id)
         assign_man_oid = mngr_doc['_id']
         log.info('Created and auto-assigning Manager %s to project %s upon setup for Flamenco.',
                  assign_man_oid, project_oid)
         man_man.api_assign_to_project(assign_man_oid, project_oid, 'assign')
 
-    elif manager_count == 1:
+    elif managers_count == 1:
         assign_manager = managers.next()
         assign_man_oid = str2id(assign_manager['_id'])
         log.info('Auto-assigning Manager %s to project %s upon setup for Flamenco.',

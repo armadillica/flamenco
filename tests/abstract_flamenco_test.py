@@ -93,7 +93,7 @@ class AbstractFlamencoTest(AbstractPillarTest):
 
             # Make sure there is an owner for this manager.
             users_coll = self.app.db('users')
-            count = users_coll.find({'email': owner_email}).count()
+            count = users_coll.count_documents({'email': owner_email})
             if count == 0:
                 self.create_user(user_id=ObjectId(), email=owner_email)
             elif count > 1:

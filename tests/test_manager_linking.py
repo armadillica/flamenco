@@ -43,7 +43,7 @@ class ManagerLinkTest(AbstractFlamencoTest):
 
         with self.app.app_context():
             coll = self.flamenco.db('manager_linking_keys')
-            self.assertEqual(0, coll.count())
+            self.assertEqual(0, coll.count_documents({}))
 
     def test_exchange_secret_key_no_key(self):
         self.post('/api/flamenco/managers/link/exchange',
@@ -52,7 +52,7 @@ class ManagerLinkTest(AbstractFlamencoTest):
 
         with self.app.app_context():
             coll = self.flamenco.db('manager_linking_keys')
-            self.assertEqual(0, coll.count())
+            self.assertEqual(0, coll.count_documents({}))
 
     def test_reset_auth_token_happy(self):
         import secrets
@@ -68,7 +68,7 @@ class ManagerLinkTest(AbstractFlamencoTest):
             self.post('/api/flamenco/managers/link/exchange', json={'key': 'aabbccddeeff'})
 
             coll = self.flamenco.db('manager_linking_keys')
-            self.assertEqual(2, coll.count())
+            self.assertEqual(2, coll.count_documents({}))
 
             # Bind them to the same Manager
             coll.update_many({}, {'$set': {'manager_id': manager_id}})

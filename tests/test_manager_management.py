@@ -185,14 +185,14 @@ class ManagerAccessTest(AbstractFlamencoTest):
             service.generate_auth_token(service_account_id)
             service.generate_auth_token(service_account_id)
 
-            all_tokens = tokens_coll.find({'user': service_account_id})
-            self.assertEqual(all_tokens.count(), 4)
+            token_count = tokens_coll.count_documents({'user': service_account_id})
+            self.assertEqual(token_count, 4)
 
             token = self.flamenco.manager_manager.gen_new_auth_token(self.mngr_id)
 
             # There can be only one, rest should have been deleted.
-            all_tokens = tokens_coll.find({'user': service_account_id})
-            self.assertEqual(all_tokens.count(), 1)
+            token_count = tokens_coll.count_documents({'user': service_account_id})
+            self.assertEqual(token_count, 1)
 
         self.assertNotEqual(token.token, self.mngr_token)
         self.assertTrue(token.token.startswith('SRV'))
@@ -210,14 +210,14 @@ class ManagerAccessTest(AbstractFlamencoTest):
             service.generate_auth_token(service_account_id)
             service.generate_auth_token(service_account_id)
 
-            all_tokens = tokens_coll.find({'user': service_account_id})
-            self.assertEqual(all_tokens.count(), 4)
+            token_count = tokens_coll.count_documents({'user': service_account_id})
+            self.assertEqual(token_count, 4)
 
             self.flamenco.manager_manager.revoke_auth_token(self.mngr_id)
 
             # All should have been deleted.
-            all_tokens = tokens_coll.find({'user': service_account_id})
-            self.assertEqual(all_tokens.count(), 0)
+            token_count = tokens_coll.count_documents({'user': service_account_id})
+            self.assertEqual(token_count, 0)
 
     def test_share(self):
 

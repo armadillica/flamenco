@@ -200,8 +200,8 @@ class JobManager(object):
 
         if new_task_status == 'failed':
             # Count the number of failed tasks. If it is more than 10%, fail the job.
-            total_count = tasks_coll.find({'job': job_id}).count()
-            fail_count = tasks_coll.find({'job': job_id, 'status': 'failed'}).count()
+            total_count = tasks_coll.count_documents({'job': job_id})
+            fail_count = tasks_coll.count_documents({'job': job_id, 'status': 'failed'})
             fail_perc = fail_count / float(total_count) * 100
             if fail_perc >= TASK_FAIL_JOB_PERCENTAGE:
                 msg = f'Failing job {job_id} because {fail_count} of its {total_count} tasks ' \
@@ -374,8 +374,8 @@ class JobManager(object):
         """
 
         tasks_coll = current_flamenco.db('tasks')
-        total_tasks = tasks_coll.find({'job': job_id}).count()
-        completed_tasks = tasks_coll.find({'job': job_id, 'status': 'completed'}).count()
+        total_tasks = tasks_coll.count_documents({'job': job_id})
+        completed_tasks = tasks_coll.count_documents({'job': job_id, 'status': 'completed'})
         if completed_tasks < total_tasks:
             # Not yet completed, so just stay at current status.
             self._log.debug('Job %s has %d of %d tasks completed, staying at status %r',

@@ -374,8 +374,8 @@ class ManagerManager(object):
 
         # Check that there is at least one user left in the group.
         users_coll = current_app.db('users')
-        owners = users_coll.find({'groups': owner_gid})
-        if share_action == ShareAction.unshare and owners.count() < 2:
+        owner_count = users_coll.count_documents({'groups': owner_gid})
+        if share_action == ShareAction.unshare and owner_count < 2:
             self._log.warning('User %s tried to make Manager %s ownerless',
                               current_user.user_id, manager_id)
             raise ValueError('Manager cannot become ownerless.')
@@ -404,19 +404,24 @@ class ManagerManager(object):
         return [m['_id'] for m in managers]
 
     def owned_managers(self, user_group_ids: typing.List[bson.ObjectId],
-                       projection: typing.Optional[dict] = None) -> pymongo.cursor.Cursor:
+                       projection: typing.Optional[dict] = None) \
+            -> typing.Tuple[pymongo.cursor.Cursor, int]:
         """Returns a Mongo cursor of Manager object IDs owned by the given user.
 
         :param user_group_ids: list of the group IDs of the user.
         :param projection: When not None, it is used instead of the default {'_id': 1}.
+        :return: tuple (cursor, manager count)
         """
 
         if projection is None:
             projection = {'_id': 1}
 
         managers_coll = current_flamenco.db('managers')
-        managers = managers_coll.find({'owner': {'$in': user_group_ids}}, projection)
-        return managers
+        query = {'owner': {'$in': user_group_ids}}
+        manager_cursor = managers_coll.find(query, projection)
+        manager_count = managers_coll.count_documents(query)
+
+        return manager_cursor, manager_count
 
     def queue_task_log_request(self, manager_id: bson.ObjectId, job_id: bson.ObjectId,
                                task_id: bson.ObjectId):

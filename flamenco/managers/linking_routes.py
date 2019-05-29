@@ -44,10 +44,10 @@ def index():
 
     # Fetch available Managers.
     man_man = current_flamenco.manager_manager
-    managers = list(man_man.owned_managers(
-        current_user.group_ids, {'_id': 1, 'name': 1}))
-    manager_limit_reached = not current_user.has_cap('admin') and \
-                            len(managers) >= flamenco.auth.MAX_MANAGERS_PER_USER
+    manager_cursor, manager_count = man_man.owned_managers(
+        current_user.group_ids, {'_id': 1, 'name': 1})
+    manager_limit_reached = (not current_user.has_cap('admin')) and \
+                            manager_count >= flamenco.auth.MAX_MANAGERS_PER_USER
 
     # Get the query arguments
     identifier: str = request.args.get('identifier', '')
@@ -115,5 +115,5 @@ def index():
         return redirect(direct_to, 307)
 
     return render_template('flamenco/managers/linking/choose_manager.html',
-                           managers=managers,
+                           managers=list(manager_cursor),
                            can_create_manager=not manager_limit_reached)

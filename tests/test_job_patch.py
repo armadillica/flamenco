@@ -351,7 +351,7 @@ class RNAOverridesTestProgressiveRender(AbstractRNAOverridesTest):
             render_tasks = list(tasks_coll.find({'job': self.job_id,
                                                  'task_type': 'blender-render',
                                                  'parents': [rm_tree_task['_id']]}))
-            task_count = tasks_coll.count({'job': self.job_id})
+            task_count = tasks_coll.count_documents({'job': self.job_id})
 
         # Just checking some assumptions this test relies on.
         for task in render_tasks:

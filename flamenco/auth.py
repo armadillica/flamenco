@@ -105,10 +105,6 @@ class Auth(object):
             return True
 
         managers_coll = current_flamenco.db('managers')
-        managers = managers_coll.find({'projects': project_id})
+        managers_count = managers_coll.count_documents({'projects': project_id})
 
-        if self._log.isEnabledFor(logging.DEBUG):
-            self._log.debug('User has access to the following managers for this project: %s',
-                            [m['_id'] for m in managers])
-
-        return managers.count() > 0
+        return managers_count > 0

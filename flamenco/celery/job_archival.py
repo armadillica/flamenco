@@ -73,6 +73,7 @@ def archive_job(job_id: str):
     # Run each task log compression in a separate Celery task.
     tasks_coll = current_flamenco.db('tasks')
     tasks = tasks_coll.find({'job': job_oid}, {'_id': 1})
+    tasks_count = tasks_coll.count_documents({'job': job_oid})
 
     # The chain of everything except downloading tasks & logs. Celery can't handle empty
     # groups, so we have to be careful in constructing the download_tasks group.
@@ -82,7 +83,7 @@ def archive_job(job_id: str):
             cleanup.si(storage_path)
     )
 
-    if tasks.count():
+    if tasks_count:
         download_tasks = celery.group(*(
             download_task_and_log.si(storage_path, str(task['_id']))
             for task in tasks))
@@ -100,12 +101,13 @@ def resume_job_archiving():
     """
     age = current_app.config['FLAMENCO_RESUME_ARCHIVING_AGE']
     jobs_coll = current_flamenco.db('jobs')
-    archiving = jobs_coll.find({
+    query = {
         'status': 'archiving',
         '_updated': {'$lte': utcnow() - age},
-    })
+    }
+    archiving = jobs_coll.find(query)
 
-    log.info('Resume archiving %d jobs', archiving.count())
+    log.info('Resume archiving %d jobs', jobs_coll.count_documents(query))
     for job in archiving:
         log.debug('Resume archiving job %s', job['_id'])
         archive_job.delay(str(job['_id']))
