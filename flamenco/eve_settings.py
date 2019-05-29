@@ -29,18 +29,18 @@ managers_schema = {
     # on how a job type looks like (in terms of tasks).
     'job_types': {
         'type': 'dict',
-        'keyschema': {  # name of the job type
+        'keysrules': {  # name of the job type
             'type': 'string',
         },
-        'valueschema': {  # configuration of the job type
+        'valuesrules': {  # configuration of the job type
             'type': 'dict',
             'schema': {
                 'vars': {
                     'type': 'dict',
-                    'keyschema': {  # name of the variable
+                    'keysrules': {  # name of the variable
                         'type': 'string',
                     },
-                    'valueschema': {  # variable values for different platforms.
+                    'valuesrules': {  # variable values for different platforms.
                         'type': 'dict',
                         'schema': {
                             'linux': {'type': 'string'},
