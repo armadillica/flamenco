@@ -430,7 +430,7 @@ class ManagerAccessTest(AbstractFlamencoTest):
 
         owner_ids = {o['_id'] for o in owners}
 
-        self.assertEquals(
+        self.assertEqual(
             owner_ids, {self.mngr_owner, bson.ObjectId(24 * 'a'), bson.ObjectId(24 * 'c')})
 
         # Try with a non existing group
@@ -440,4 +440,4 @@ class ManagerAccessTest(AbstractFlamencoTest):
             owners = self.flamenco.manager_manager.owning_users(faux_owner_gid)
 
         owner_ids = {o['_id'] for o in owners}
-        self.assertEquals(owner_ids, set())
+        self.assertEqual(owner_ids, set())
