@@ -1,26 +1,26 @@
-var argv         = require('minimist')(process.argv.slice(2));
-var autoprefixer = require('gulp-autoprefixer');
-var cache        = require('gulp-cached');
-var chmod        = require('gulp-chmod');
-var concat       = require('gulp-concat');
-var git          = require('gulp-git');
-var gulp         = require('gulp');
-var gulpif       = require('gulp-if');
-var plumber      = require('gulp-plumber');
-var pug          = require('gulp-pug');
-var rename       = require('gulp-rename');
-var sass         = require('gulp-sass');
-var sourcemaps   = require('gulp-sourcemaps');
-var uglify       = require('gulp-uglify-es').default;
-var browserify   = require('browserify');
-var babelify     = require('babelify');
-var sourceStream = require('vinyl-source-stream');
-var glob         = require('glob');
-var es           = require('event-stream');
-var path         = require('path');
-var buffer 		 = require('vinyl-buffer');
+let argv         = require('minimist')(process.argv.slice(2));
+let autoprefixer = require('gulp-autoprefixer');
+let cache        = require('gulp-cached');
+let chmod        = require('gulp-chmod');
+let concat       = require('gulp-concat');
+let git          = require('gulp-git');
+let gulp         = require('gulp');
+let gulpif       = require('gulp-if');
+let plumber      = require('gulp-plumber');
+let pug          = require('gulp-pug');
+let rename       = require('gulp-rename');
+let sass         = require('gulp-sass');
+let sourcemaps   = require('gulp-sourcemaps');
+let uglify       = require('gulp-uglify-es').default;
+let browserify   = require('browserify');
+let babelify     = require('babelify');
+let sourceStream = require('vinyl-source-stream');
+let glob         = require('glob');
+let es           = require('event-stream');
+let path         = require('path');
+let buffer       = require('vinyl-buffer');
 
-var enabled = {
+let enabled = {
     chmod: argv.production,
     cleanup: argv.production,
     failCheck: argv.production,
@@ -29,7 +29,7 @@ var enabled = {
     uglify: argv.production,
 };
 
-var destination = {
+let destination = {
     css: 'flamenco/static/assets/css',
     pug: 'flamenco/templates',
     js: 'flamenco/static/assets/js/generated',
@@ -37,7 +37,7 @@ var destination = {
 
 
 /* CSS */
-gulp.task('styles', function() {
+gulp.task('styles', function(done) {
     gulp.src('src/styles/**/*.sass')
         .pipe(gulpif(enabled.failCheck, plumber()))
         .pipe(gulpif(enabled.maps, sourcemaps.init()))
@@ -47,11 +47,12 @@ gulp.task('styles', function() {
         .pipe(autoprefixer("last 3 versions"))
         .pipe(gulpif(enabled.maps, sourcemaps.write(".")))
         .pipe(gulp.dest(destination.css));
+    done();
 });
 
 
 /* Templates - Pug */
-gulp.task('templates', function() {
+gulp.task('templates', function(done) {
     gulp.src('src/templates/**/*.pug')
         .pipe(gulpif(enabled.failCheck, plumber()))
         .pipe(cache('templating'))
@@ -59,11 +60,12 @@ gulp.task('templates', function() {
             pretty: enabled.prettyPug
         }))
         .pipe(gulp.dest(destination.pug));
+    done();
 });
 
 
 /* Individual Uglified Scripts */
-gulp.task('scripts', function() {
+gulp.task('scripts', function(done) {
     gulp.src('src/scripts/*.js')
         .pipe(gulpif(enabled.failCheck, plumber()))
         .pipe(cache('scripting'))
@@ -73,6 +75,7 @@ gulp.task('scripts', function() {
         .pipe(gulpif(enabled.maps, sourcemaps.write(".")))
         .pipe(gulpif(enabled.chmod, chmod(0o644)))
         .pipe(gulp.dest(destination.js));
+    done();
 });
 
 function browserify_base(entry) {
@@ -101,7 +104,7 @@ gulp.task('scripts_browserify', function(done) {
     glob('src/scripts/js/es6/individual/**/init.js', function(err, files) {
         if(err) done(err);
 
-        var tasks = files.map(function(entry) {
+        let tasks = files.map(function(entry) {
             return browserify_base(entry)
             .pipe(gulpif(enabled.maps, sourcemaps.init()))
             .pipe(gulpif(enabled.uglify, uglify()))
@@ -145,17 +148,17 @@ gulp.task('scripts_copy_vendor', function(done) {
 
 // While developing, run 'gulp watch'
 gulp.task('watch',function(done) {
-    gulp.watch('src/styles/**/*.sass',['styles']);
-    gulp.watch('src/templates/**/*.pug',['templates']);
-    gulp.watch('src/scripts/*.js',['scripts']);
-    gulp.watch('src/scripts/tutti/*.js',['scripts_tutti']);
-    gulp.watch('src/scripts/js/**/*.js', ['scripts_browserify', 'scripts_tutti']);
+    gulp.watch('src/styles/**/*.sass',gulp.series('styles'));
+    gulp.watch('src/templates/**/*.pug',gulp.series('templates'));
+    gulp.watch('src/scripts/*.js',gulp.series('scripts'));
+    gulp.watch('src/scripts/tutti/*.js',gulp.series('scripts_tutti'));
+    gulp.watch('src/scripts/js/**/*.js', gulp.series('scripts_browserify', 'scripts_tutti'));
     done();
 });
 
 // Erases all generated files in output directories.
-gulp.task('cleanup', function() {
-    var paths = [];
+gulp.task('cleanup', function(done) {
+    let paths = [];
     for (attr in destination) {
         paths.push(destination[attr]);
     }
@@ -163,16 +166,16 @@ gulp.task('cleanup', function() {
     git.clean({ args: '-f -X ' + paths.join(' ') }, function (err) {
         if(err) throw err;
     });
-
+    done();
 });
 
 // Run 'gulp' to build everything at once
-var tasks = [];
+let tasks = [];
 if (enabled.cleanup) tasks.push('cleanup');
-gulp.task('default', tasks.concat([
+gulp.task('default', gulp.parallel(tasks.concat([
     'styles',
     'templates',
     'scripts',
     'scripts_tutti',
     'scripts_copy_vendor',
-]));
+])));
