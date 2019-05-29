@@ -6,7 +6,6 @@ var concat       = require('gulp-concat');
 var git          = require('gulp-git');
 var gulp         = require('gulp');
 var gulpif       = require('gulp-if');
-var livereload   = require('gulp-livereload');
 var plumber      = require('gulp-plumber');
 var pug          = require('gulp-pug');
 var rename       = require('gulp-rename');
@@ -25,7 +24,6 @@ var enabled = {
     chmod: argv.production,
     cleanup: argv.production,
     failCheck: argv.production,
-    liveReload: !argv.production,
     maps: argv.production,
     prettyPug: !argv.production,
     uglify: argv.production,
@@ -48,8 +46,7 @@ gulp.task('styles', function() {
             ))
         .pipe(autoprefixer("last 3 versions"))
         .pipe(gulpif(enabled.maps, sourcemaps.write(".")))
-        .pipe(gulp.dest(destination.css))
-        .pipe(gulpif(enabled.liveReload, livereload()));
+        .pipe(gulp.dest(destination.css));
 });
 
 
@@ -61,8 +58,7 @@ gulp.task('templates', function() {
         .pipe(pug({
             pretty: enabled.prettyPug
         }))
-        .pipe(gulp.dest(destination.pug))
-        .pipe(gulpif(enabled.liveReload, livereload()));
+        .pipe(gulp.dest(destination.pug));
 });
 
 
@@ -76,8 +72,7 @@ gulp.task('scripts', function() {
         .pipe(rename({suffix: '.min'}))
         .pipe(gulpif(enabled.maps, sourcemaps.write(".")))
         .pipe(gulpif(enabled.chmod, chmod(0o644)))
-        .pipe(gulp.dest(destination.js))
-        .pipe(gulpif(enabled.liveReload, livereload()));
+        .pipe(gulp.dest(destination.js));
 });
 
 function browserify_base(entry) {
@@ -130,8 +125,7 @@ gulp.task('scripts_tutti', function(done) {
         .pipe(gulpif(enabled.uglify, uglify()))
         .pipe(gulpif(enabled.maps, sourcemaps.write(".")))
         .pipe(gulpif(enabled.chmod, chmod(0o644)))
-        .pipe(gulp.dest(destination.js))
-        .pipe(gulpif(enabled.liveReload, livereload()));
+        .pipe(gulp.dest(destination.js));
     done();
 });
 
@@ -151,11 +145,6 @@ gulp.task('scripts_copy_vendor', function(done) {
 
 // While developing, run 'gulp watch'
 gulp.task('watch',function(done) {
-    // Only listen for live reloads if ran with --livereload
-    if (argv.livereload){
-        livereload.listen();
-    }
-
     gulp.watch('src/styles/**/*.sass',['styles']);
     gulp.watch('src/templates/**/*.pug',['templates']);
     gulp.watch('src/scripts/*.js',['scripts']);
