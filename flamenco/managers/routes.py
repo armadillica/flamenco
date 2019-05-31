@@ -1,16 +1,16 @@
 import logging
 
-import attr
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, session
 import flask_wtf.csrf
 import werkzeug.exceptions as wz_exceptions
 
 from pillar import current_app
 from pillar.web.projects.routes import project_navigation_links
-from pillarsdk import User, Project
+from pillarsdk import Project
 
 import pillar.flask_extra
-from pillar.api.utils import authorization, str2id, gravatar
+from pillar.api.utils import authorization, str2id
+import pillar.api.users.avatar
 from pillar.web.system_util import pillar_api
 from pillar.auth import current_user
 
@@ -91,7 +91,7 @@ def view_embed(manager_id: str):
     owners = current_flamenco.manager_manager.owning_users(owner_gid)
 
     for owner in owners:
-        owner['avatar'] = gravatar(owner.get('email'))
+        owner['avatar'] = pillar.api.users.avatar.url(owner)
         owner['_id'] = str(owner['_id'])
 
     manager_oid = str2id(manager_id)
