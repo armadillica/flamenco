@@ -9,7 +9,7 @@
 	"devDependencies": {
 		"@babel/core": "^7.1.6",
 		"@babel/preset-env": "^7.1.6",
-		"acorn": "^5.7.3",
+		"acorn": "^5.7.4",
 		"babel-core": "^7.0.0-bridge.0",
 		"babelify": "^10.0.0",
 		"browserify": "^16.2.3",
