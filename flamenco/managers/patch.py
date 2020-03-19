@@ -100,7 +100,7 @@ class ManagerPatchHandler(patch_handler.AbstractPatchHandler):
         self.log.info('User %s edits Manager %s: %s', current_user_id(), manager_id, update)
 
         validator = current_app.validator_for_resource('flamenco_managers')
-        if not validator.validate_update(update, manager_id):
+        if not validator.validate_update(update, manager_id, persisted_document={}):
             resp = jsonify({
                 '_errors': validator.errors,
                 '_message': ', '.join(f'{field}: {error}'
