@@ -213,3 +213,76 @@ class ResumeArchiveJobsTest(AbstractJobArchivalTest):
 
         mock_archive_job.delay.assert_called_once()
         mock_archive_job.delay.assert_called_with(str(self.job1_id))
+
+
+class CleanOrphanLogsTest(AbstractJobArchivalTest):
+    """Test cli.delete_orphan_task_logs.
+
+    This test is here in and not in a CLI module test file, because it performs the same kind of
+    functionality as the job_archival module and requires the same kind of test setup.
+    """
+    TASK_COUNT = 4
+    UPDATES_PER_TASK = 3
+    ORPHAN_COUNT = 1700
+
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+
+        self.job_id = self.create_job()
+        self.task_ids = [bson.ObjectId(t['_id'])
+                         for t in self.do_schedule_tasks()]
+        self.enter_app_context()
+
+    def _perform_task_updates(self):
+        """Send some log entries."""
+
+        for batch_idx in range(3):
+            now = datetime.datetime.now(tz=bson.tz_util.utc)
+            update_batch = [
+                {'_id': str(bson.ObjectId()),
+                 'task_id': str(task_id),
+                 'activity': f'testing logging batch {batch_idx}',
+                 'log': 40 * f'This is batch {batch_idx} mülti→line log entry\n',
+                 'received_on_manager': now}
+                for task_id in self.task_ids
+            ]
+            self.post(f'/api/flamenco/managers/{self.mngr_id}/task-update-batch',
+                      json=update_batch,
+                      auth_token=self.mngr_token)
+
+    def test_orphan_log_cleanup(self):
+        from flamenco import cli
+
+        logs_coll = self.flamenco.db('task_logs')
+
+        # Create some genuine log entries.
+        self._perform_task_updates()
+        self.assertEqual(self.TASK_COUNT * self.UPDATES_PER_TASK, logs_coll.count_documents({}))
+
+        # Create some orphan log entries.
+        for orphan_idx in range(self.ORPHAN_COUNT):
+            now = datetime.datetime.now(tz=bson.tz_util.utc)
+            logs_coll.insert_one({
+                "task": bson.ObjectId(),
+                "received_on_manager": now,
+                "log": f"{now}: orphan log entry #{orphan_idx}"
+            })
+
+        tasks_coll = self.flamenco.db('tasks')
+        logs_coll = self.flamenco.db('task_logs')
+
+        # Count all the data pre-cleanup.
+        self.assertEqual(self.TASK_COUNT, tasks_coll.count_documents({'job': self.job_id}))
+        self.assertEqual(self.TASK_COUNT * self.UPDATES_PER_TASK,
+                         logs_coll.count_documents({'task': {'$in': self.task_ids}}))
+        self.assertEqual(self.TASK_COUNT * self.UPDATES_PER_TASK + self.ORPHAN_COUNT,
+                         logs_coll.count_documents({}))
+
+        cli.delete_orphan_task_logs()
+
+        # After the cleanup only the orphan log entries should have been removed.
+        self.assertEqual(self.TASK_COUNT, tasks_coll.count_documents({'job': self.job_id}))
+        self.assertEqual(self.TASK_COUNT * self.UPDATES_PER_TASK,
+                         logs_coll.count_documents({'task': {'$in': self.task_ids}}))
+        self.assertEqual(self.TASK_COUNT * self.UPDATES_PER_TASK,
+                         logs_coll.count_documents({}))

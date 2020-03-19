@@ -1,9 +1,11 @@
 """Commandline interface for Flamenco."""
 
 import logging
+from typing import Optional, Dict
 
 from flask import current_app
 from flask_script import Manager
+from bson import ObjectId
 
 from pillar.cli import manager
 from pillar.api.utils import authentication, str2id
@@ -213,3 +215,74 @@ def runability_check():
 
     log.info('Creating Celery background tasks for runability checks of jobs')
     job_runnability_check.schedule_checks()
+
+
+@manager_flamenco.command
+def delete_orphan_task_logs():
+    """Remove all task log entries for non-existant tasks."""
+    from flamenco import current_flamenco
+
+    removal_batch_size = 1000
+
+    tasks_coll = current_flamenco.db('tasks')
+    logs_coll = current_flamenco.db('task_logs')
+
+    logs_count = logs_coll.estimated_document_count()
+    log.info('Removing orphan task logs. Estimated log count before removal: %d', logs_count)
+
+    task_exists: Dict[str, bool] = {}
+
+    def check_task_exists(task_id: Optional[ObjectId]) -> bool:
+        if not task_id:
+            # It's MongoDB, you never know for sure.
+            return False
+
+        exists: Optional[bool] = task_exists.get(task_id)
+        if exists is not None:
+            return exists
+
+        exists = tasks_coll.count_documents({'_id': task_id}) > 0
+        task_exists[task_id] = exists
+        return exists
+
+    logs_seen = 0
+    logs_removed = 0
+
+    cursor = logs_coll.find(filter={},
+                            projection={
+                                '_id': True,
+                                'task': True,
+                            },
+                            batch_size=10000,
+                            comment='Orphan task log cleanup'
+                            )
+    to_remove = []
+
+    def remove_log_batch():
+        nonlocal logs_removed
+        delete_result = logs_coll.delete_many({'_id': {'$in': to_remove}})
+        log.info("  deleted %d orphan task log entries", delete_result.deleted_count)
+        logs_removed += delete_result.deleted_count
+        to_remove.clear()
+
+    try:
+        for task_log in cursor:
+            logs_seen += 1
+            if check_task_exists(task_log.get('task')):
+                continue
+
+            # Batch up removals.
+            to_remove.append(task_log['_id'])
+            if len(to_remove) < removal_batch_size:
+                continue
+
+            remove_log_batch()
+    except KeyboardInterrupt:
+        log.info('Received keyboard interrupt, removing %d more log entries and stopping',
+                 len(to_remove))
+
+    if to_remove:
+        remove_log_batch()
+
+    log.info('Deleted %d orphan task logs in total, estimated %d task log entries remaining',
+             logs_removed, logs_coll.estimated_document_count())
