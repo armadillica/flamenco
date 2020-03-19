@@ -43,19 +43,18 @@ class JobArchivalTest(AbstractJobArchivalTest):
 
         self.job_id = self.create_job()
 
-        self.task_ids = [t['_id'] for t in self.do_schedule_tasks()]
+        self.task_ids = [bson.ObjectId(t['_id'])
+                         for t in self.do_schedule_tasks()]
         self.enter_app_context()
 
-    def test_compress_flamenco_task_log(self):
-        from pillar.api.utils import dumps
-        from flamenco.celery import job_archival
+    def _perform_task_updates(self):
+        """Send some log entries."""
 
-        # Make sure there are log entries.
         for batch_idx in range(3):
             now = datetime.datetime.now(tz=bson.tz_util.utc)
             update_batch = [
                 {'_id': str(bson.ObjectId()),
-                 'task_id': task_id,
+                 'task_id': str(task_id),
                  'activity': f'testing logging batch {batch_idx}',
                  'log': 40 * f'This is batch {batch_idx} mülti→line log entry\n',
                  'received_on_manager': now}
@@ -64,6 +63,12 @@ class JobArchivalTest(AbstractJobArchivalTest):
             self.post(f'/api/flamenco/managers/{self.mngr_id}/task-update-batch',
                       json=update_batch,
                       auth_token=self.mngr_token)
+
+    def test_compress_flamenco_task_log(self):
+        from pillar.api.utils import dumps
+        from flamenco.celery import job_archival
+
+        self._perform_task_updates()
 
         expected_log = ''.join(
             40 * f'This is batch {batch_idx} mülti→line log entry\n'
@@ -90,6 +95,24 @@ class JobArchivalTest(AbstractJobArchivalTest):
                 read_task = json.load(infile)
                 self.assertEqual(set(expected_task.keys()), set(read_task.keys()))
                 self.assertEqual(expected_task, read_task)
+
+    def test_task_and_log_deletion(self):
+        from flamenco.celery import job_archival
+
+        self._perform_task_updates()
+
+        tasks_coll = self.flamenco.db('tasks')
+        logs_coll = self.flamenco.db('task_logs')
+
+        self.assertEqual(4, tasks_coll.count_documents({'job': self.job_id}))
+        self.assertEqual(4*3, logs_coll.count_documents({'task': {'$in': self.task_ids}}))
+        self.assertEqual(4*3, logs_coll.count_documents({}))
+
+        job_archival.update_mongo('testblob', str(self.job_id))
+
+        self.assertEqual(0, tasks_coll.count_documents({'job': self.job_id}))
+        self.assertEqual(0, logs_coll.count_documents({'task': {'$in': self.task_ids}}))
+        self.assertEqual(0, logs_coll.count_documents({}))
 
     @mock.patch('celery.group')
     def test_write_job_as_json(self, mocked_group):

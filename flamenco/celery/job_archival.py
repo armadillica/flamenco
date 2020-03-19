@@ -215,8 +215,13 @@ def update_mongo(archive_blob_name: str, job_id: str):
         task['_id']
         for task in tasks_coll.find({'job': job_oid})
     ]
-    logs_coll.delete_many({'task_id': {'$in': task_ids}})
-    tasks_coll.delete_many({'job': job_oid})
+
+    delete_result = logs_coll.delete_many({'task': {'$in': task_ids}})
+    log.info("  deleted %d task log entries for job %s: %s", delete_result.deleted_count, job_oid,
+             delete_result.raw_result)
+
+    delete_result = tasks_coll.delete_many({'job': job_oid})
+    log.info("  deleted %d tasks for job %s", delete_result.deleted_count, job_oid)
 
     # Update the job's archive blob name
     res = jobs_coll.update_one({'_id': job_oid},
