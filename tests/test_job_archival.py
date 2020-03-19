@@ -37,6 +37,7 @@ class AbstractJobArchivalTest(AbstractTaskBatchUpdateTest):
 
 class JobArchivalTest(AbstractJobArchivalTest):
     TASK_COUNT = 4
+    UPDATES_PER_TASK = 3
 
     def setUp(self, **kwargs):
         super().setUp(**kwargs)
@@ -50,7 +51,7 @@ class JobArchivalTest(AbstractJobArchivalTest):
     def _perform_task_updates(self):
         """Send some log entries."""
 
-        for batch_idx in range(3):
+        for batch_idx in range(self.UPDATES_PER_TASK):
             now = datetime.datetime.now(tz=bson.tz_util.utc)
             update_batch = [
                 {'_id': str(bson.ObjectId()),
@@ -104,9 +105,10 @@ class JobArchivalTest(AbstractJobArchivalTest):
         tasks_coll = self.flamenco.db('tasks')
         logs_coll = self.flamenco.db('task_logs')
 
-        self.assertEqual(4, tasks_coll.count_documents({'job': self.job_id}))
-        self.assertEqual(4*3, logs_coll.count_documents({'task': {'$in': self.task_ids}}))
-        self.assertEqual(4*3, logs_coll.count_documents({}))
+        self.assertEqual(self.TASK_COUNT, tasks_coll.count_documents({'job': self.job_id}))
+        self.assertEqual(self.TASK_COUNT * self.UPDATES_PER_TASK,
+                         logs_coll.count_documents({'task': {'$in': self.task_ids}}))
+        self.assertEqual(self.TASK_COUNT * self.UPDATES_PER_TASK, logs_coll.count_documents({}))
 
         job_archival.update_mongo('testblob', str(self.job_id))
 
