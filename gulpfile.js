@@ -140,7 +140,7 @@ gulp.task('scripts_copy_vendor', function(done) {
         'node_modules/dagre-d3/dist/dagre-d3.min.js',
     ];
 
-    gulp.src(toCopy)
+    gulp.src(toCopy, {allowEmpty: true})
         .pipe(gulp.dest(destination.js + '/vendor/'));
     done();
 });
