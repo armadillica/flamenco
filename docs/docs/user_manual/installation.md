@@ -37,6 +37,10 @@ Workers, which you also run locally, and the Server, which runs on the
 
 To run Flamenco Manager for the first time, follow these steps:
 
+!!! note
+    Flamenco manager currently only works in FireFox browser when linking (step 5)
+    
+
 0. Optionally install [ImageMagick](https://www.imagemagick.org/script/download.php), if you want to
    show the latest rendered image in the Manager's dashboard, and make sure that the `convert`
    command can be found on `$PATH`. Since there are multiple builds of ImageMagick available, make
